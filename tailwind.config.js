@@ -1,14 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
-        "./index.html",
-        "./src/**/*.{js,ts,jsx,tsx}",
         "./app/**/*.{js,ts,jsx,tsx}",
         "./components/**/*.{js,ts,jsx,tsx}",
         "./packages/studio/src/**/*.{js,jsx}",
-        "./packages/Open-AI-Design-Agent/packages/design-agent/src/**/*.{js,jsx}",
-        "./packages/Open-Poe-AI/packages/agents/src/**/*.{js,jsx,ts,tsx}",
-        "./packages/Vibe-Workflow/packages/workflow-builder/src/**/*.{js,jsx,ts,tsx}",
     ],
     theme: {
         extend: {
@@ -24,7 +19,7 @@ module.exports = {
                 muted: '#52525b',
             },
             fontFamily: {
-                sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                sans: ['var(--font-inter)', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
             },
             borderRadius: {
                 'xl': '1rem',
