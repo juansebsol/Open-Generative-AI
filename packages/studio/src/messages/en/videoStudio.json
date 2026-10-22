@@ -48,6 +48,7 @@
     "generating": "Generating..."
   },
   "gallery": {
+    "extend": "Extend",
     "download": "Download",
     "delete": "Delete",
     "confirmDelete": "Are you sure you want to delete this generated item?",

@@ -11,6 +11,7 @@ const registry = createGroupedVideoRegistry({
   registerVariants(register) {
     register("grok-imagine-text-to-video", "grok-imagine-video", [null]);
     register("grok-imagine-image-to-video", "grok-imagine-video", ["references"]);
+    register("grok-imagine-video-extend", "grok-imagine-video", ["extend_uploaded_video"]);
     register("grok-imagine-video-1-5-preview", "grok-imagine-video-1.5", ["animate_image", "references"]);
   },
 });

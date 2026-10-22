@@ -1,0 +1,1 @@
+{"xai/grok-imagine-video/extend-video":{"required":["prompt","video_url"],"props":{"video_url":{"type":"string"},"enable_safety_checker":{"type":"boolean","default":true},"prompt":{"type":"string"},"duration":{"type":"integer","default":6,"minimum":2,"maximum":10}}}}

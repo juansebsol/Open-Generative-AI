@@ -212,6 +212,14 @@ function ActionIcon({ kind }) {
     return <CopyContentIcon kind="image" />;
   }
 
+  if (kind === "extend") {
+    return (
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 12h12M12 6l6 6-6 6M20 5v14" />
+      </svg>
+    );
+  }
+
   if (kind === "download") {
     return (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

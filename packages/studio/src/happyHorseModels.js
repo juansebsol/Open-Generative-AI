@@ -13,6 +13,7 @@ const registry = createGroupedVideoRegistry({
       register(`${familyId}-text-to-video`, familyId, [null]);
       register(`${familyId}-image-to-video`, familyId, ["animate_image"]);
       register(`${familyId}-reference-to-video`, familyId, ["references"]);
+      register(`${familyId}-video-extend`, familyId, ["extend_uploaded_video"]);
     }
     register("happy-horse-1-video-edit", "happy-horse-1", ["edit_video"]);
   },

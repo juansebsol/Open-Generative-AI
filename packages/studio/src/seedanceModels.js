@@ -6,6 +6,10 @@ const FACETS = Object.freeze(["profile", "speed", "resolution"]);
 const modelIds = new Set(
   [...t2vModels, ...i2vModels, ...v2vModels].map((model) => model.id),
 );
+// Models that take a native resolution input never use an implied endpoint size.
+const nativeResolutionModelIds = new Set(
+  [...t2vModels, ...i2vModels, ...v2vModels].filter((model) => model.inputs?.resolution).map((model) => model.id),
+);
 const configurations = new Map();
 
 const SEEDANCE_FAMILY_NAMES = Object.freeze({
@@ -92,6 +96,11 @@ for (const profile of ["standard", "vip", "mini"]) {
   }
 }
 
+// Seedance 2.0 extend endpoints take a native resolution input.
+register("seedance-2.0-video-extend", "seedance-2", ["extend_uploaded_video"]);
+register("seedance-2.0-fast-video-extend", "seedance-2", ["extend_uploaded_video"], { speed: "fast" });
+register("seedance-2.0-mini-video-extend", "seedance-2", ["extend_uploaded_video"], { profile: "mini" });
+
 for (const [stem, workflowId] of [
   ["t2v", null],
   ["i2v", "animate_image"],
@@ -124,7 +133,7 @@ export function getSeedanceConfiguration(modelId) {
 // Older API routes with no documented size deliberately remain unspecified.
 export function getSeedanceEndpointResolution(modelId) {
   const config = getSeedanceConfiguration(modelId);
-  if (!config) return undefined;
+  if (!config || nativeResolutionModelIds.has(modelId)) return undefined;
   if (config.resolution !== "default") return config.resolution;
   if (config.familyId === "seedance-2.5" ||
       (config.familyId === "seedance-2" && ["standard", "vip"].includes(config.profile))) return "720p";

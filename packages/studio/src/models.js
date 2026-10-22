@@ -21409,6 +21409,798 @@ const ALL_v2vModels = [
     "provider": "topaz",
     "provider_name": "FAL_AI",
     "description": "Upscale a video faithfully with Topaz's precision model library (Proteus, Artemis, Iris, Dione, Gaia, Rhea, Theia), tuned for clean broadcast/CGI/animation sources."
+  },
+  {
+    "id": "veo3.1-video-extend",
+    "name": "Veo 3.1 Extend",
+    "endpoint": "veo3.1-video-extend",
+    "family": "veo3.1",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "720p",
+          "1080p"
+        ],
+        "default": "1080p"
+      },
+      "negative_prompt": {
+        "type": "string",
+        "title": "Negative prompt",
+        "name": "negative_prompt",
+        "description": "What to leave out of the continuation."
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Continue a Veo 3.1 video by about 7 seconds. Only works on videos Veo 3.1 generated (16:9 or 9:16).",
+    "provider": "google",
+    "provider_name": "Google"
+  },
+  {
+    "id": "veo3.1-fast-video-extend",
+    "name": "Veo 3.1 Fast Extend",
+    "endpoint": "veo3.1-fast-video-extend",
+    "family": "veo3.1",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "720p",
+          "1080p"
+        ],
+        "default": "1080p"
+      },
+      "negative_prompt": {
+        "type": "string",
+        "title": "Negative prompt",
+        "name": "negative_prompt",
+        "description": "What to leave out of the continuation."
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Faster Veo 3.1 continuation in 7-second steps. Only works on videos Veo 3.1 generated (16:9 or 9:16).",
+    "provider": "google",
+    "provider_name": "Google"
+  },
+  {
+    "id": "seedance-2.0-video-extend",
+    "name": "Seedance 2.0 Extend",
+    "endpoint": "seedance-2.0-video-extend",
+    "family": "sd-2",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "480p",
+          "720p",
+          "1080p",
+          "4k"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "default": 5,
+        "minValue": 4,
+        "maxValue": 15,
+        "step": 1
+      },
+      "generate_audio": {
+        "type": "boolean",
+        "title": "Generate Audio",
+        "name": "generate_audio",
+        "description": "Generate audio for the new segment.",
+        "default": true
+      }
+    },
+    "description": "Continue any video from its last frame with Seedance 2.0.",
+    "provider": "bytedance",
+    "provider_name": "ByteDance"
+  },
+  {
+    "id": "seedance-2.0-fast-video-extend",
+    "name": "Seedance 2.0 Fast Extend",
+    "endpoint": "seedance-2.0-fast-video-extend",
+    "family": "sd-2",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "480p",
+          "720p",
+          "1080p",
+          "4k"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "default": 5,
+        "minValue": 4,
+        "maxValue": 15,
+        "step": 1
+      },
+      "generate_audio": {
+        "type": "boolean",
+        "title": "Generate Audio",
+        "name": "generate_audio",
+        "description": "Generate audio for the new segment.",
+        "default": true
+      }
+    },
+    "description": "Faster Seedance 2.0 continuation from the last frame of any video.",
+    "provider": "bytedance",
+    "provider_name": "ByteDance"
+  },
+  {
+    "id": "seedance-2.0-mini-video-extend",
+    "name": "Seedance 2.0 Mini Extend",
+    "endpoint": "seedance-2.0-mini-video-extend",
+    "family": "seedance-2.0-mini",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "480p",
+          "720p",
+          "1080p",
+          "4k"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "default": 5,
+        "minValue": 4,
+        "maxValue": 15,
+        "step": 1
+      },
+      "generate_audio": {
+        "type": "boolean",
+        "title": "Generate Audio",
+        "name": "generate_audio",
+        "description": "Generate audio for the new segment.",
+        "default": true
+      }
+    },
+    "description": "Lower-cost Seedance 2.0 Mini continuation from the last frame of any video.",
+    "provider": "bytedance",
+    "provider_name": "ByteDance"
+  },
+  {
+    "id": "grok-imagine-video-extend",
+    "name": "Grok Imagine Extend",
+    "endpoint": "grok-imagine-video-extend",
+    "family": "grok",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "enum": [
+          6,
+          10
+        ],
+        "default": 6
+      }
+    },
+    "description": "Continue a short clip with Grok Imagine Video.",
+    "provider": "xai",
+    "provider_name": "xAI"
+  },
+  {
+    "id": "kling-v4.0-video-extend",
+    "name": "Kling 4.0 Extend",
+    "endpoint": "kling-v4.0-video-extend",
+    "family": "kling-v4.0",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "720p",
+          "1080p"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "default": 5,
+        "minValue": 3,
+        "maxValue": 30,
+        "step": 1
+      }
+    },
+    "description": "Continue any video from its last frame by 3 to 30 seconds with Kling 4.0, with synchronized audio.",
+    "provider": "kling",
+    "provider_name": "Kling"
+  },
+  {
+    "id": "wan3.0-video-extend",
+    "name": "Wan 3.0 Extend",
+    "endpoint": "wan3.0-video-extend",
+    "family": "wan3.0",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "480p",
+          "720p",
+          "1080p"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "default": 5,
+        "minValue": 2,
+        "maxValue": 30,
+        "step": 1
+      },
+      "generate_audio": {
+        "type": "boolean",
+        "title": "Generate Audio",
+        "name": "generate_audio",
+        "description": "Generate audio for the new segment.",
+        "default": true
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Continue any video with Wan 3.0, keeping the original clip and its audio.",
+    "provider": "alibaba",
+    "provider_name": "Alibaba"
+  },
+  {
+    "id": "wan3.0-prime-video-extend",
+    "name": "Wan 3.0 Prime Extend",
+    "endpoint": "wan3.0-prime-video-extend",
+    "family": "wan3.0",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "480p",
+          "720p",
+          "1080p"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "default": 5,
+        "minValue": 2,
+        "maxValue": 30,
+        "step": 1
+      },
+      "generate_audio": {
+        "type": "boolean",
+        "title": "Generate Audio",
+        "name": "generate_audio",
+        "description": "Generate audio for the new segment.",
+        "default": true
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Higher-quality Wan 3.0 Prime continuation of any video.",
+    "provider": "alibaba",
+    "provider_name": "Alibaba"
+  },
+  {
+    "id": "wan2.6-video-extend",
+    "name": "Wan 2.6 Extend",
+    "endpoint": "wan2.6-video-extend",
+    "family": "wan2.6",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "720p",
+          "1080p"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "enum": [
+          5,
+          10,
+          15
+        ],
+        "default": 5
+      },
+      "negative_prompt": {
+        "type": "string",
+        "title": "Negative prompt",
+        "name": "negative_prompt",
+        "description": "What to leave out of the continuation."
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Continue any video with Wan 2.6.",
+    "provider": "alibaba",
+    "provider_name": "Alibaba"
+  },
+  {
+    "id": "wan2.5-video-extend",
+    "name": "Wan 2.5 Extend",
+    "endpoint": "wan2.5-video-extend",
+    "family": "wan2.5",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "480p",
+          "720p",
+          "1080p"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "enum": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "default": 5
+      },
+      "negative_prompt": {
+        "type": "string",
+        "title": "Negative prompt",
+        "name": "negative_prompt",
+        "description": "What to leave out of the continuation."
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Continue any video with Wan 2.5.",
+    "provider": "alibaba",
+    "provider_name": "Alibaba"
+  },
+  {
+    "id": "wan2.5-video-extend-fast",
+    "name": "Wan 2.5 Fast Extend",
+    "endpoint": "wan2.5-video-extend-fast",
+    "family": "wan2.5",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "720p",
+          "1080p"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "enum": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "default": 5
+      },
+      "negative_prompt": {
+        "type": "string",
+        "title": "Negative prompt",
+        "name": "negative_prompt",
+        "description": "What to leave out of the continuation."
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Faster Wan 2.5 continuation of any video.",
+    "provider": "alibaba",
+    "provider_name": "Alibaba"
+  },
+  {
+    "id": "happy-horse-1.1-video-extend",
+    "name": "HappyHorse 1.1 Extend",
+    "endpoint": "happy-horse-1.1-video-extend",
+    "family": "happy-horse-1.1",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "480p",
+          "720p",
+          "1080p"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "default": 5,
+        "minValue": 3,
+        "maxValue": 15,
+        "step": 1
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Continue any video with HappyHorse 1.1.",
+    "provider": "alibaba",
+    "provider_name": "Alibaba"
+  },
+  {
+    "id": "happy-horse-1-video-extend",
+    "name": "HappyHorse 1.0 Extend",
+    "endpoint": "happy-horse-1-video-extend",
+    "family": "happy-horse-1",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "What should happen next: action, camera movement and mood for the continuation."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to extend",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to continue."
+      },
+      "resolution": {
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "720p",
+          "1080p"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "description": "Length of the new segment in seconds.",
+        "default": 5,
+        "minValue": 3,
+        "maxValue": 15,
+        "step": 1
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Continue any video with HappyHorse 1.0.",
+    "provider": "alibaba",
+    "provider_name": "Alibaba"
   }
 ];
 export const v2vModels = [...withRoutes(ALL_v2vModels)];

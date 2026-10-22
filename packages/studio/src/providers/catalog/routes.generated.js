@@ -1818,6 +1818,96 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "extend": {
+  "veo3.1-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "google/veo3.1/video-extend"
+   }
+  ],
+  "veo3.1-fast-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "google/veo3.1-fast/video-extend"
+   }
+  ],
+  "seedance-2.0-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "bytedance/seedance-2.0/video-extend"
+   }
+  ],
+  "seedance-2.0-fast-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "bytedance/seedance-2.0-fast/video-extend"
+   }
+  ],
+  "seedance-2.0-mini-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "bytedance/seedance-2.0-mini/video-extend"
+   }
+  ],
+  "grok-imagine-video-extend": [
+   {
+    "provider": "fal",
+    "endpoint": "xai/grok-imagine-video/extend-video"
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "x-ai/grok-imagine-video/video-extend"
+   }
+  ],
+  "kling-v4.0-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "kwaivgi/kling-v4.0/video-extend"
+   }
+  ],
+  "wan3.0-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "alibaba/wan-3.0/video-extend"
+   }
+  ],
+  "wan3.0-prime-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "alibaba/wan-3.0-prime/video-extend"
+   }
+  ],
+  "wan2.6-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "alibaba/wan-2.6/video-extend"
+   }
+  ],
+  "wan2.5-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "alibaba/wan-2.5/video-extend"
+   }
+  ],
+  "wan2.5-video-extend-fast": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "alibaba/wan-2.5/video-extend-fast"
+   }
+  ],
+  "happy-horse-1.1-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "alibaba/happyhorse-1.1/video-extend"
+   }
+  ],
+  "happy-horse-1-video-extend": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "alibaba/happyhorse-1.0/video-extend"
+   }
+  ]
+ },
  "image": {
   "ai-image-upscale": [
    {

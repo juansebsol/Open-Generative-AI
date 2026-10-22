@@ -24,6 +24,7 @@ const registry = createGroupedVideoRegistry({
         register(`${stem}-text-to-video`, familyId, [null], { speed });
         register(`${stem}-image-to-video`, familyId,
           familyId === "veo-3.1" ? ["animate_image", "keyframes"] : ["animate_image"], { speed });
+        register(`${stem}-video-extend`, familyId, ["extend_uploaded_video"], { speed });
       }
     }
     register("veo3.1-reference-to-video", "veo-3.1", ["references"]);

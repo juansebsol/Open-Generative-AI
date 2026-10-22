@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, useId } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { generateVideo, generateI2V, processV2V, uploadFile } from "../generation.js";
+import { isEndpointAvailable } from "../providers/client.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import DrawModal from "./DrawModal.jsx";
 import ModelParameterControls from "./ModelParameterControls.jsx";
@@ -116,6 +117,31 @@ function mergeReferenceUrls(current, incoming, limit) {
 }
 
 const EMPTY_WORKFLOW_MEDIA_DRAFT = Object.freeze({});
+
+const EXTEND_WORKFLOW_ID = "extend_uploaded_video";
+// Extenders that accept any video, tried after the source model's own family.
+// (Veo 3.1 extend only accepts Veo 3.1 output, so it is never used here.)
+const GENERAL_EXTEND_MODEL_IDS = Object.freeze([
+  "seedance-2.0-video-extend",
+  "kling-v4.0-video-extend",
+  "wan3.0-video-extend",
+  "seedance-2.5-video-extend",
+  "happy-horse-1.1-video-extend",
+  "grok-imagine-video-extend",
+]);
+
+// Picks the extend model for a finished video: same family first, then a
+// general extender, preferring models the visitor's providers can run.
+function findExtendModelId(sourceModelId) {
+  const familyId = videoModelCatalog.familyByVariantId.get(sourceModelId)?.id;
+  const familyExtenders = getVideoWorkflowFamily(familyId)
+    ?.workflowById.get(EXTEND_WORKFLOW_ID)?.variants.map((variant) => variant.model.id) || [];
+  const candidates = [...new Set([...familyExtenders, ...GENERAL_EXTEND_MODEL_IDS])]
+    .filter((id) => videoModelCatalog.variantById.has(id));
+  return candidates.find((id) => isEndpointAvailable(videoModelCatalog.variantById.get(id).model.endpoint || id))
+    || candidates[0]
+    || null;
+}
 
 function workflowContextKey(familyId, workflowId) {
   return `${familyId}:${workflowId || "base"}`;
@@ -2196,6 +2222,29 @@ export default function VideoStudio({
     setTimeout(() => textareaRef.current?.focus(), 50);
   }, [applyUserSelectedVariant, resetToPromptBar]);
 
+  // One-click extend: load a finished video into an extend model and wait
+  // for the user to describe what happens next.
+  const handleExtend = useCallback((entry) => {
+    const targetId = findExtendModelId(entry.model);
+    if (!targetId || !entry.url) return;
+    const variant = videoModelCatalog.variantById.get(targetId);
+    const family = videoModelCatalog.familyByVariantId.get(targetId);
+    const workflowId = getVideoWorkflowFamily(family.id)?.workflowById.get(EXTEND_WORKFLOW_ID)
+      ? EXTEND_WORKFLOW_ID
+      : null;
+
+    resetToPromptBar();
+    setPrompt("");
+    applyUserSelectedVariant(variant, "v2v", family, workflowId);
+    if (workflowId) {
+      const draftKey = getVideoWorkflowDraftKey(family.id, workflowId);
+      setWorkflowMediaDrafts((drafts) => ({ ...drafts, [draftKey]: { sourceVideo: [entry.url] } }));
+    } else {
+      setUploadedVideoUrls([entry.url]);
+    }
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  }, [applyUserSelectedVariant, resetToPromptBar]);
+
   // ── derived UI values ────────────────────────────────────────────────────
   const currentModelObj = selectedVariant?.model;
   const isMotionControlModel = isMotionControlSelection(selectedModel, v2vMode);
@@ -2310,6 +2359,22 @@ export default function VideoStudio({
                       prompt={entry.prompt}
                       onCopyError={onGenerationError}
                     />
+                    {findExtendModelId(entry.model) && (
+                      <button
+                        type="button"
+                        title={copy.gallery.extend}
+                        aria-label={copy.gallery.extend}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleExtend(entry);
+                        }}
+                        className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 12h12M12 6l6 6-6 6M20 5v14" />
+                        </svg>
+                      </button>
+                    )}
                     <button
                       type="button"
                       title={copy.gallery.download}
@@ -2346,6 +2411,11 @@ export default function VideoStudio({
                     prompt={entry.prompt}
                     onCopyError={onGenerationError}
                     actions={[
+                      findExtendModelId(entry.model) && {
+                        kind: "extend",
+                        label: copy.gallery.extend,
+                        onSelect: () => handleExtend(entry),
+                      },
                       {
                         kind: "download",
                         label: copy.gallery.download,

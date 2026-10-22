@@ -48,6 +48,7 @@
     "generating": "生成中..."
   },
   "gallery": {
+    "extend": "延长",
     "download": "下载",
     "delete": "删除",
     "confirmDelete": "确定要删除此生成项吗？",
