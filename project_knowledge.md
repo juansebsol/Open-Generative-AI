@@ -1,99 +1,25 @@
-# Open Generative AI: Technical Documentation & Context
+# Project knowledge
 
-This document serves as a comprehensive knowledge base for the Open Generative AI project. It details the architecture, key components, API integration patterns, and state management strategies used in the application.
+Context for contributors and coding agents. User-facing docs are in [README.md](README.md).
 
-## 1. Project Vision & Overview
+## Shape of the app
 
-**Open Generative AI** is an ambitious open-source project for AI image and video generation.
+- Next.js 15 App Router app at the repo root. One page (`app/studio/[[...slug]]`, plus `app/zh/...` for Chinese) renders `components/StandaloneShell.js`, which hosts every studio.
+- Studios live in the `packages/studio` workspace (`studio` package, plain JS/JSX, Tailwind classes). They import generation functions from `packages/studio/src/generation.js`.
+- No database and no server-side state. Visitor settings, provider keys and history live in the browser (`localStorage`).
 
-- **Core Goal:** To build a feature-complete, self-hosted generative AI studio, starting with **Image Generation** (Nano) and expanding into **Video Generation** (Cinema) and other creative tools.
-- **Current State:** The Image Studio ("Nano Banana Pro" interface) is fully operational, featuring a premium dark-mode UI, history management, and multi-model support via the [Muapi.ai](https://muapi.ai) engine.
-- **Future Direction:** The architecture is designed to scale for video generation, model training interfaces, and advanced editing tools.
+## Provider layer (`packages/studio/src/providers/`)
 
-- **Stack:** Vite, Vanilla JavaScript, Tailwind CSS v4.
-- **Repository:** `https://github.com/Anil-matcha/Open-Generative-AI`
-- **Primary Branch:** `main`
+- `directProviders.js`: registry of providers (id, label, kind cloud/local, key URL).
+- `keys.js`: per-visitor settings in `localStorage` key `oga_providers_v1` (`keys`, `urls`, `options`, `order`). Also clears the legacy `muapi_*` storage keys and cookie once.
+- `catalog/routes/*.json`: catalog endpoint slug → ordered provider routes. Edited by hand, one file per model family group. `catalog/routes.generated.js` and `catalog/schemas.generated.js` are build artifacts of `scripts/build-catalog-index.mjs` (committed so the app builds without running scripts).
+- `mapper.js`: pure function `mapInput(payload, route, schema)`; shared by the server and `scripts/validate-routes.mjs`.
+- `client.js` (browser): `runEndpoint(endpoint, payload)` picks a route, calls `/api/generate`, polls `/api/jobs`; `uploadMedia(file)` gets a signed URL from `/api/uploads` and PUTs the file to provider storage.
+- `server/` (Node only, imported by `app/api/*` as `studio/providers/server`): adapters for fal (queue), WaveSpeed (v3), Google Gemini, OpenAI Images, OpenRouter (chat completions with image output).
+- `local/`: ComfyUI and sd-server connectors that run in the browser against the visitor's own machine.
 
-## 2. Architecture & File Structure
+## Conventions
 
-The project follows a component-based architecture using vanilla JS, where each component is a function that returns a DOM element.
-
-```tree
-src/
-├── components/
-│   ├── ImageStudio.js    # Core logic: Prompts, model picking, canvas, history.
-│   ├── Header.js         # Navigation, user settings, auth status.
-│   ├── AuthModal.js      # Modal for capturing and validating the API key.
-│   ├── SettingsModal.js   # Panel for managing settings (clearing API key).
-│   └── Sidebar.js        # (Currently unused/placeholder) Navigation sidebar.
-├── lib/
-│   ├── muapi.js          # The API Client. Handles auth, submission, and polling.
-│   └── models.js         # Source of truth for model definitions and endpoints.
-├── styles/
-│   ├── global.css        # Global resets, fonts, and animation keyframes.
-│   ├── studio.css        # Specific styles for the studio interface.
-│   └── variables.css     # CSS custom properties (colors, blur amounts).
-├── main.js               # Entry point. Renders the app layout and Header/Studio.
-└── style.css             # Tailwind CSS entry file (imports other CSS).
-```
-
-## 3. Key Components & Logic
-
-### `ImageStudio.js` (The Brain)
-This is the most complex component. It handles:
-- **State:** Selected model (`selectedModel`), aspect ratio (`selectedAr`), and generation status.
-- **Prompt Input:** A textarea with auto-grow logic and max-height constraints (fixed in `bf2efdb`).
-- **Dynamic Controls:**
-    - **Model Picker:** Lists models from `models.js`.
-    - **Quality/Resolution:** Only appears for models with explicit resolution support (like `nano-banana-pro`). Hidden for others (like `flux-schnell`).
-- **Generation Flow:**
-    1. Checks for API key in `localStorage`. If missing, opens `AuthModal`.
-    2. Calls `muapi.generateImage()`.
-    3. Polling loop waits for result.
-    4. On success, adds result to `generationHistory` and displays it.
-- **History:**
-    - Stored in `localStorage` key `muapi_history`.
-    - Slides in from the right sidebar.
-    - Thumbnails are clickable to re-view; hover to download.
-
-### `muapi.js` (The Engine)
-Encapsulates all communication with `api.muapi.ai`.
-- **Authentication:** Uses `x-api-key` header (NOT `Authorization: Bearer`).
-- **Pattern:** Submit -> Poll.
-    - `POST` to endpoint (e.g., `/api/v1/nano-banana-pro`).
-    - API returns a `request_id`.
-    - `POST` / `GET` loop on `/api/v1/predictions/{id}/result` until status is `completed`, `succeeded`, or `failed`.
-- **Normalization:** The polling response structure varies. `muapi.js` normalizes the result to ensure `url` is always populated (extracting from `outputs[0]` if necessary).
-
-### `models.js` (The Data)
-Contains the `t2iModels` array.
-- Each model has an `id`, `name`, `inputs` schema (resolution, aspect ratio support), and a crucial `endpoint` property.
-- **Crucial:** The `endpoint` property maps the internal ID to the API path (e.g., `flux-schnell` -> `flux-schnell-image`).
-
-## 4. UI & Styling (Tailwind v4)
-
-- **Theme:** Dark mode by default (`bg-app-bg` = `#050505`).
-- **Accent:** Electric Cyan (`#22d3ee`) used for primary actions and glows.
-- **Glassmorphism:** Extensive use of `backdrop-blur` and `bg-white/5` or `bg-black/60` for panels, headers, and modals.
-- **Responsiveness:**
-    - **Mobile:** Stacked layout, simplified controls, hidden sidebar.
-    - **Desktop:** Wide canvas, floating prompt bar, side-by-side history.
-- **Animations:** Custom keyframes in `global.css` for `fade-in-up`, `pulse-glow`, etc.
-
-## 5. Development Setup
-
-- **Vite Proxy:** Local development uses a proxy in `vite.config.js` to route `/api` requests to `https://api.muapi.ai` to avoid CORS issues.
-- **Environment:** `muapi.js` detects `import.meta.env.DEV` to decide whether to use the relative `/api` path (proxy) or the full URL (production).
-
-## 6. Known Gotchas & Fixes
-
-- **Prompt Bar Overflow:** Fixed by limiting textarea max-height and enabling scrolling.
-- **Flux Resolution Picker:** Fixed logic to only show the resolution picker if the model *explicitly* lists enum values for resolution/megapixels.
-- **Hero Visibility:** The "Nano Banana Pro" hero text is completely hidden (`display: none`) when an image is shown to prevent bleed-through.
-- **API Key Logging:** Debug logs printing the API key were removed for security.
-
-## 7. Future Roadmap (Potential)
-
-- **Video Generation:** Expand `models.js` and `ImageStudio.js` to support video models (already present in `schema_data` but not wired up).
-- **In-painting/Out-painting:** Add canvas editing tools.
-- **User Accounts:** Move beyond local storage for history.
+- Catalog models without any route are filtered out in `models.js` (`withRoutes`). `ALL_MODEL_LISTS` keeps the unfiltered lists for the validator.
+- Studio components still receive an `apiKey` prop. It is a non-secret marker (`'byok'` once any provider is configured), used for gating buttons and scoping `localStorage` keys. Real keys are read per provider inside `client.js`.
+- After editing route files: `node scripts/sync-provider-schemas.mjs` then `node scripts/validate-routes.mjs --verbose` (0 errors expected).
