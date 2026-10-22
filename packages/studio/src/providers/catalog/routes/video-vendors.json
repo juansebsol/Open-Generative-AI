@@ -1,0 +1,1199 @@
+{
+  "minimax-voice-clone": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/voice-clone",
+      "rename": {
+        "prompt": "text"
+      }
+    }
+  ],
+  "minimax-speech-2.6-hd": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/speech-2.6-hd",
+      "rename": {
+        "prompt": "text"
+      }
+    }
+  ],
+  "minimax-speech-2.6-turbo": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/speech-2.6-turbo",
+      "rename": {
+        "prompt": "text"
+      }
+    }
+  ],
+  "minimax-music-3.0": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/music-3.0"
+    },
+    {
+      "provider": "fal",
+      "endpoint": "minimax/music-3"
+    }
+  ],
+  "minimax-01-subject-reference": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/image-01/subject-reference"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/image-01/image-to-image"
+    }
+  ],
+  "kling-o1-edit-image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-image/o1"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-image-o1"
+    }
+  ],
+  "vidu-q2-reference-to-image": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/reference-to-image-q2",
+      "values": {
+        "resolution": {
+          "1k": "1080p"
+        }
+      }
+    },
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q2/reference-to-image"
+    }
+  ],
+  "kling-o3-image-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-image/o3/image-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-image-o3/edit"
+    }
+  ],
+  "kling-v2.1-master-i2v": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.1-i2v-master",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "kling-v2.1-standard-i2v": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.1-i2v-standard",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "kling-v2.1-pro-i2v": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.1-i2v-pro",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "pixverse-v4.5-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v4.5/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v4.5-i2v",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "vidu-q1-reference": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q1/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/reference-to-video-q1"
+    }
+  ],
+  "minimax-hailuo-02-standard-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/hailuo-02/standard/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/hailuo-02/i2v-standard"
+    }
+  ],
+  "minimax-hailuo-02-pro-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/hailuo-02/pro/image-to-video",
+      "drop": [
+        "duration",
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/hailuo-02/i2v-pro",
+      "drop": [
+        "duration",
+        "resolution"
+      ]
+    }
+  ],
+  "pixverse-v5-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v5/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v5-i2v",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "kling-v2.5-turbo-pro-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v2.5-turbo/pro/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.5-turbo-pro/image-to-video"
+    }
+  ],
+  "ltx-2-pro-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "lightricks/ltx-2-pro/image-to-video"
+    }
+  ],
+  "ltx-2-fast-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "lightricks/ltx-2-fast/image-to-video"
+    }
+  ],
+  "vidu-q2-reference": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/reference-to-video-q2"
+    }
+  ],
+  "vidu-q2-turbo-start-end-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q2/image-to-video/turbo"
+    }
+  ],
+  "vidu-q2-pro-start-end-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q2/image-to-video/pro"
+    }
+  ],
+  "minimax-hailuo-2.3-pro-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/hailuo-2.3/pro/image-to-video",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/hailuo-2.3/i2v-pro",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "minimax-hailuo-2.3-standard-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/hailuo-2.3/standard/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/hailuo-2.3/i2v-standard"
+    }
+  ],
+  "minimax-hailuo-2.3-fast": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/hailuo-2.3-fast/standard/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/hailuo-2.3/fast"
+    }
+  ],
+  "kling-v2.5-turbo-std-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v2.5-turbo/standard/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.5-turbo-std/image-to-video"
+    }
+  ],
+  "kling-o1-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o1/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o1/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "kling-o1-reference-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o1/reference-to-video"
+    },
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o1/reference-to-video"
+    }
+  ],
+  "kling-v2.6-pro-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v2.6/pro/image-to-video",
+      "rename": {
+        "sound": "generate_audio"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.6-pro/image-to-video"
+    }
+  ],
+  "pixverse-v5.5-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v5.5/image-to-video",
+      "rename": {
+        "thinking": "thinking_type",
+        "audio": "generate_audio_switch",
+        "multi_clip": "generate_multi_clip_switch"
+      },
+      "drop": [
+        "aspect_ratio"
+      ],
+      "values": {
+        "style": {
+          "none": null
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v5.5/image-to-video",
+      "rename": {
+        "thinking": "thinking_type",
+        "audio": "generate_audio_switch",
+        "multi_clip": "generate_multi_clip_switch"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "kling-o1-standard-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o1/standard/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o1-std/image-to-video"
+    }
+  ],
+  "kling-o1-standard-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o1/standard/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o1-std/reference-to-video"
+    }
+  ],
+  "ltx-2-19b-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ltx-2-19b/image-to-video"
+    }
+  ],
+  "kling-v3.0-omni-standard-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o3/standard/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o3-std/reference-to-video"
+    }
+  ],
+  "kling-v3.0-omni-pro-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o3/pro/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o3-pro/reference-to-video"
+    }
+  ],
+  "kling-v3.0-omni-4k-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o3/4k/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o3-4k/reference-to-video"
+    }
+  ],
+  "kling-v3.0-pro-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/pro/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3.0-pro/image-to-video"
+    }
+  ],
+  "kling-v3.0-standard-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/standard/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3.0-std/image-to-video"
+    }
+  ],
+  "ltx-2.3-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ltx-2.3/image-to-video"
+    }
+  ],
+  "pixverse-v6-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v6/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v6/image-to-video"
+    }
+  ],
+  "pixverse-v6-transition": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v6/transition",
+      "rename": {
+        "image_url": "first_image_url"
+      },
+      "values": {
+        "thinking_type": {
+          "true": "enabled",
+          "false": "disabled"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v6/transition"
+    }
+  ],
+  "kling-v3.0-4k-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/4k/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3.0-4k/image-to-video"
+    }
+  ],
+  "vidu-q3-pro-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q3/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/q3-pro/image-to-video",
+      "rename": {
+        "audio": "generate_audio"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "vidu-q3-pro-first-last-frames": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q3/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/q3-pro/start-end-to-video",
+      "rename": {
+        "audio": "generate_audio"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "vidu-q3-turbo-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q3/image-to-video/turbo",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/q3-turbo/image-to-video",
+      "rename": {
+        "audio": "generate_audio"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "vidu-q3-turbo-first-last-frames": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q3/image-to-video/turbo",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/q3-turbo/start-end-to-video",
+      "rename": {
+        "audio": "generate_audio"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "vidu-q4-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q4/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/q4-preview/image-to-video",
+      "rename": {
+        "audio": "generate_audio"
+      }
+    }
+  ],
+  "vidu-q4-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q4/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/q4-preview/reference-to-video",
+      "rename": {
+        "audio": "generate_audio"
+      }
+    }
+  ],
+  "vidu-q2-pro-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q2/image-to-video/pro",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/image-to-video-q2-pro",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "vidu-q2-turbo-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q2/image-to-video/turbo",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/image-to-video-q2-turbo",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "kling-v3-turbo-standard-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/turbo/standard/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3-turbo-std/image-to-video"
+    }
+  ],
+  "kling-v3-turbo-pro-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/turbo/pro/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3-turbo-pro/image-to-video"
+    }
+  ],
+  "minimax-h3-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "minimax/h3/image-to-video",
+      "rename": {
+        "last_image_url": "end_image_url"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/h3/image-to-video",
+      "rename": {
+        "last_image_url": "last_image"
+      }
+    }
+  ],
+  "minimax-h3-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "minimax/h3/reference-to-video",
+      "rename": {
+        "reference_images": "reference_image_urls",
+        "reference_videos": "reference_video_urls",
+        "reference_audios": "reference_audio_urls"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/h3/reference-to-video"
+    }
+  ],
+  "minimax-h3-open-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/minimax-h3/image-to-video"
+    }
+  ],
+  "minimax-h3-open-reference-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/minimax-h3/reference-to-video"
+    }
+  ],
+  "minimax-h3-image-to-video-lora": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/minimax-h3/image-to-video-lora"
+    }
+  ],
+  "minimax-h3-reference-to-video-lora": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/minimax-h3/reference-to-video-lora"
+    }
+  ],
+  "ltx-2.5-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ltx-2.5/image-to-video"
+    }
+  ],
+  "minimax-h3-max-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "minimax/h3-max/image-to-video"
+    }
+  ],
+  "minimax-h3-max-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "minimax/h3-max/reference-to-video",
+      "rename": {
+        "reference_images": "reference_image_urls",
+        "reference_videos": "reference_video_urls",
+        "reference_audios": "reference_audio_urls"
+      }
+    }
+  ],
+  "minimax-h3-max-turbo-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "minimax/h3-max-turbo/image-to-video"
+    }
+  ],
+  "ltx-2.3-lipsync": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ltx-2.3/lipsync"
+    }
+  ],
+  "ltx-2-19b-lipsync": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ltx-2-19b/lipsync"
+    }
+  ],
+  "kling-v1-avatar-standard": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v1/standard/ai-avatar"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v1-ai-avatar-standard"
+    }
+  ],
+  "kling-v1-avatar-pro": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v1/pro/ai-avatar"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v1-ai-avatar-pro"
+    }
+  ],
+  "kling-v2-avatar-standard": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/ai-avatar/v2/standard"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2-ai-avatar-standard"
+    }
+  ],
+  "kling-v2-avatar-pro": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/ai-avatar/v2/pro"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2-ai-avatar-pro"
+    }
+  ],
+  "kling-v3.0-pro-motion-control": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/pro/motion-control"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3.0-pro/motion-control"
+    }
+  ],
+  "kling-o1-text-to-image": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-image-o1"
+    }
+  ],
+  "vidu-q2-text-to-image": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/text-to-image-q2",
+      "values": {
+        "resolution": {
+          "1k": "1080p"
+        }
+      }
+    },
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q2/text-to-image"
+    }
+  ],
+  "kling-o3-image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-image/o3/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-image-o3/text-to-image"
+    }
+  ],
+  "kling-v2.1-master-t2v": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.1-t2v-master"
+    }
+  ],
+  "kling-v2.5-turbo-pro-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v2.5-turbo/pro/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.5-turbo-pro/text-to-video"
+    }
+  ],
+  "kling-v2.6-pro-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v2.6/pro/text-to-video",
+      "rename": {
+        "sound": "generate_audio"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.6-pro/text-to-video"
+    }
+  ],
+  "kling-o1-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o1/text-to-video"
+    }
+  ],
+  "kling-v3.0-pro-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/pro/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3.0-pro/text-to-video"
+    }
+  ],
+  "kling-v3.0-standard-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/standard/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3.0-std/text-to-video"
+    }
+  ],
+  "pixverse-v4.5-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v4.5/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v4.5-t2v"
+    }
+  ],
+  "pixverse-v5-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v5/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v5-t2v"
+    }
+  ],
+  "pixverse-v5.5-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v5.5/text-to-video",
+      "rename": {
+        "thinking": "thinking_type",
+        "audio": "generate_audio_switch",
+        "multi_clip": "generate_multi_clip_switch"
+      },
+      "values": {
+        "style": {
+          "none": null
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v5.5/text-to-video",
+      "rename": {
+        "thinking": "thinking_type",
+        "audio": "generate_audio_switch",
+        "multi_clip": "generate_multi_clip_switch",
+        "aspect_ratio": "resolution_ratio"
+      }
+    }
+  ],
+  "minimax-hailuo-02-standard-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/hailuo-02/standard/text-to-video",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/hailuo-02/t2v-standard",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "minimax-hailuo-02-pro-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/hailuo-02/pro/text-to-video",
+      "drop": [
+        "duration",
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/hailuo-02/t2v-pro",
+      "drop": [
+        "duration",
+        "resolution"
+      ]
+    }
+  ],
+  "minimax-hailuo-2.3-pro-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/hailuo-2.3/pro/text-to-video",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/hailuo-2.3/t2v-pro",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "minimax-hailuo-2.3-standard-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/minimax/hailuo-2.3/standard/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/hailuo-2.3/t2v-standard"
+    }
+  ],
+  "ltx-2-pro-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "lightricks/ltx-2-pro/text-to-video"
+    }
+  ],
+  "ltx-2-fast-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "lightricks/ltx-2-fast/text-to-video"
+    }
+  ],
+  "ltx-2-19b-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ltx-2-19b/text-to-video"
+    }
+  ],
+  "ltx-2.3-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ltx-2.3/text-to-video"
+    }
+  ],
+  "pixverse-v6-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v6/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v6/text-to-video"
+    }
+  ],
+  "kling-v3.0-4k-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/4k/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3.0-4k/text-to-video"
+    }
+  ],
+  "vidu-q3-pro-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q3/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "vidu/q3/text-to-video",
+      "rename": {
+        "audio": "generate_audio"
+      }
+    }
+  ],
+  "vidu-q3-turbo-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q3/text-to-video/turbo"
+    }
+  ],
+  "vidu-q2-pro-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q2/text-to-video"
+    }
+  ],
+  "vidu-q2-turbo-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/vidu/q2/text-to-video"
+    }
+  ],
+  "kling-v3.0-omni-standard-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o3/standard/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o3-std/text-to-video"
+    }
+  ],
+  "kling-v3.0-omni-pro-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o3/pro/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o3-pro/text-to-video"
+    }
+  ],
+  "kling-v3.0-omni-4k-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o3/4k/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o3-4k/text-to-video"
+    }
+  ],
+  "kling-v3-turbo-standard-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/turbo/standard/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3-turbo-std/text-to-video"
+    }
+  ],
+  "kling-v3-turbo-pro-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/turbo/pro/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3-turbo-pro/text-to-video"
+    }
+  ],
+  "minimax-h3-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "minimax/h3/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "minimax/h3/text-to-video"
+    }
+  ],
+  "minimax-h3-open-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/minimax-h3/text-to-video"
+    }
+  ],
+  "minimax-h3-text-to-video-lora": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/minimax-h3/text-to-video-lora"
+    }
+  ],
+  "ltx-2.5-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ltx-2.5/text-to-video"
+    }
+  ],
+  "minimax-h3-max-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "minimax/h3-max/text-to-video"
+    }
+  ],
+  "minimax-h3-max-turbo-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "minimax/h3-max-turbo/text-to-video"
+    }
+  ],
+  "kling-v2.6-std-motion-control": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v2.6/standard/motion-control"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.6-std/motion-control"
+    }
+  ],
+  "kling-v3.0-std-motion-control": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v3/standard/motion-control"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v3.0-std/motion-control"
+    }
+  ],
+  "kling-o1-video-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o1/video-to-video/edit",
+      "rename": {
+        "keep_original_sound": "keep_audio"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o1/video-edit",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "kling-o1-video-edit-fast": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o1/video-edit-fast"
+    }
+  ],
+  "kling-o1-standard-video-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/o1/standard/video-to-video/edit",
+      "rename": {
+        "keep_original_sound": "keep_audio"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-video-o1-std/video-edit"
+    }
+  ],
+  "ltx-2.3-video-extend": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ltx-2.3/video-extend"
+    }
+  ],
+  "pixverse-v6-extend": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/pixverse/v6/extend"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "pixverse/pixverse-v6/extend"
+    }
+  ],
+  "kling-v2.6-pro-motion-control": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/kling-video/v2.6/pro/motion-control"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "kwaivgi/kling-v2.6-pro/motion-control"
+    }
+  ]
+}

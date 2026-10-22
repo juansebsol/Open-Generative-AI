@@ -1,0 +1,1666 @@
+{
+  "bytedance-seedream-edit-v4": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedream/v4/edit",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v4/edit",
+      "drop": [
+        "resolution",
+        "num_images"
+      ]
+    }
+  ],
+  "bytedance-seedream-v4.5-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedream/v4.5/edit",
+      "imageArea": 4194304
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v4.5/edit",
+      "imageArea": 4194304
+    }
+  ],
+  "seedream-5.0-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedream/v5/lite/edit",
+      "imageArea": 4194304
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v5.0-lite/edit",
+      "imageArea": 4194304
+    }
+  ],
+  "seedream-5.0-pro-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedream/v5/pro/edit",
+      "drop": [
+        "resolution"
+      ],
+      "imageArea": 4194304
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v5.0-pro/edit",
+      "imageArea": 4194304
+    }
+  ],
+  "bytedance-seedream-5.0-pro-layer": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedream/v5/pro/layerize",
+      "drop": [
+        "output_format"
+      ],
+      "values": {
+        "image_size": {
+          "1K": "auto_1K",
+          "1.5K": "auto_1.5K",
+          "2K": "auto_2K"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v5.0-pro/layer-decomposition",
+      "values": {
+        "resolution": {
+          "auto": "1k"
+        }
+      }
+    }
+  ],
+  "seedream-5.0-flash-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedream/v5/flash/edit",
+      "drop": [
+        "resolution"
+      ],
+      "imageArea": 4194304
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v5.0-flash/edit",
+      "imageArea": 4194304
+    }
+  ],
+  "seedream-5.0-flash-layerize": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedream/v5/flash/layerize",
+      "drop": [
+        "output_format"
+      ],
+      "values": {
+        "image_size": {
+          "1K": "auto_1K",
+          "1.5K": "auto_1.5K",
+          "2K": "auto_2K"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v5.0-flash/layer-decomposition",
+      "values": {
+        "resolution": {
+          "auto": "1k"
+        }
+      }
+    }
+  ],
+  "seedance-pro-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedance/v1/pro/image-to-video"
+    }
+  ],
+  "seedance-pro-i2v-fast": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedance/v1/pro/fast/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-v1-pro-fast/image-to-video"
+    }
+  ],
+  "seedance-v1.5-pro-i2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedance/v1.5/pro/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-v1.5-pro/image-to-video"
+    }
+  ],
+  "seedance-v1.5-pro-i2v-fast": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-v1.5-pro/image-to-video-fast"
+    }
+  ],
+  "seedance-2.0-i2v-480p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "480p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/image-to-video",
+      "fixed": {
+        "resolution": "480p"
+      }
+    }
+  ],
+  "seedance-2.0-omni-reference-480p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "480p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/text-to-video",
+      "fixed": {
+        "resolution": "480p"
+      }
+    }
+  ],
+  "seedance-2-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/image-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "seedance-2-image-to-video-fast": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/fast/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-fast/image-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "seedance-2-first-last-frame": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "split": {
+        "images_list": [
+          "image_url",
+          "end_image_url"
+        ]
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/image-to-video",
+      "split": {
+        "images_list": [
+          "image",
+          "last_image"
+        ]
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-2-first-last-frame-fast": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/fast/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "split": {
+        "images_list": [
+          "image_url",
+          "end_image_url"
+        ]
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-fast/image-to-video",
+      "split": {
+        "images_list": [
+          "image",
+          "last_image"
+        ]
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-2-omni-reference-no-video": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "seedance-2-omni-reference-no-video-fast": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/fast/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-fast/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "seedance-2-vip-omni-reference": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "seedance-2-vip-omni-reference-fast": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/fast/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-fast/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "sd-2-vip-image-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/image-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "sd-2-vip-image-to-video-fast-1080p": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-fast/image-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "sd-2-vip-omni-reference-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "sd-2-vip-omni-reference-fast-1080p": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-fast/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "sd-2-vip-first-last-frame-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "split": {
+        "images_list": [
+          "image_url",
+          "end_image_url"
+        ]
+      },
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/image-to-video",
+      "split": {
+        "images_list": [
+          "image",
+          "last_image"
+        ]
+      },
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-2.5-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p",
+        "aspect_ratio": "auto"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/image-to-video",
+      "fixed": {
+        "resolution": "720p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2-mini-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/mini/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-mini/image-to-video"
+    }
+  ],
+  "sd-2-vip-image-to-video-4k": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "4k"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/image-to-video",
+      "fixed": {
+        "resolution": "4k"
+      }
+    }
+  ],
+  "sd-2-vip-first-last-frame-4k": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "split": {
+        "images_list": [
+          "image_url",
+          "end_image_url"
+        ]
+      },
+      "fixed": {
+        "resolution": "4k"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/image-to-video",
+      "split": {
+        "images_list": [
+          "image",
+          "last_image"
+        ]
+      },
+      "fixed": {
+        "resolution": "4k"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "sd-2-vip-omni-reference-4k": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "4k"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/text-to-video",
+      "fixed": {
+        "resolution": "4k"
+      }
+    }
+  ],
+  "seedance-2.5-image-to-video-480p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "480p",
+        "aspect_ratio": "auto"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/image-to-video",
+      "fixed": {
+        "resolution": "480p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-first-last-frame": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "split": {
+        "images_list": [
+          "image_url",
+          "end_image_url"
+        ]
+      },
+      "fixed": {
+        "resolution": "720p",
+        "aspect_ratio": "auto"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/image-to-video",
+      "split": {
+        "images_list": [
+          "image",
+          "last_image"
+        ]
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-first-last-frame-480p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "split": {
+        "images_list": [
+          "image_url",
+          "end_image_url"
+        ]
+      },
+      "fixed": {
+        "resolution": "480p",
+        "aspect_ratio": "auto"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/image-to-video",
+      "split": {
+        "images_list": [
+          "image",
+          "last_image"
+        ]
+      },
+      "fixed": {
+        "resolution": "480p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-omni-reference": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/reference-to-video",
+      "rename": {
+        "omni_reference_task_type": "task",
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "task": {
+          "edit": "editing",
+          "extend": "extension"
+        },
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      },
+      "drop": [
+        "omni_reference_task_type"
+      ],
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-2.5-omni-reference-480p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/reference-to-video",
+      "rename": {
+        "omni_reference_task_type": "task",
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "480p"
+      },
+      "values": {
+        "task": {
+          "edit": "editing",
+          "extend": "extension"
+        },
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/text-to-video",
+      "fixed": {
+        "resolution": "480p"
+      },
+      "drop": [
+        "omni_reference_task_type"
+      ],
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-2.5-image-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "1080p",
+        "aspect_ratio": "auto"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/image-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-image-to-video-4k": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/image-to-video",
+      "fixed": {
+        "resolution": "4k"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-first-last-frame-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/image-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "split": {
+        "images_list": [
+          "image_url",
+          "end_image_url"
+        ]
+      },
+      "fixed": {
+        "resolution": "1080p",
+        "aspect_ratio": "auto"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/image-to-video",
+      "split": {
+        "images_list": [
+          "image",
+          "last_image"
+        ]
+      },
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-first-last-frame-4k": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/image-to-video",
+      "split": {
+        "images_list": [
+          "image",
+          "last_image"
+        ]
+      },
+      "fixed": {
+        "resolution": "4k"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-omni-reference-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/reference-to-video",
+      "rename": {
+        "omni_reference_task_type": "task",
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "values": {
+        "task": {
+          "edit": "editing",
+          "extend": "extension"
+        },
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "drop": [
+        "omni_reference_task_type"
+      ],
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-2.5-omni-reference-4k": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/text-to-video",
+      "fixed": {
+        "resolution": "4k"
+      },
+      "drop": [
+        "omni_reference_task_type"
+      ],
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "omnihuman-1-5": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/omnihuman/v1.5",
+      "rename": {
+        "output_resolution": "resolution"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/avatar-omni-human-1.5",
+      "drop": [
+        "prompt",
+        "output_resolution"
+      ]
+    }
+  ],
+  "seedance-2.5-motion-control": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/motion-control"
+    }
+  ],
+  "bytedance-seedream-v4": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedream/v4/text-to-image",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v4",
+      "drop": [
+        "resolution",
+        "num_images"
+      ]
+    }
+  ],
+  "bytedance-seedream-v4.5": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedream/v4.5/text-to-image",
+      "imageArea": 4194304
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v4.5",
+      "imageArea": 4194304
+    }
+  ],
+  "seedream-5.0": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedream/v5/lite/text-to-image",
+      "imageArea": 4194304
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v5.0-lite",
+      "imageArea": 4194304
+    }
+  ],
+  "seedream-5.0-pro": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedream/v5/pro/text-to-image",
+      "drop": [
+        "resolution"
+      ],
+      "imageArea": 4194304
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v5.0-pro",
+      "imageArea": 4194304
+    }
+  ],
+  "seedream-5.0-flash": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedream/v5/flash/text-to-image",
+      "drop": [
+        "resolution"
+      ],
+      "imageArea": 4194304
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedream-v5.0-flash",
+      "imageArea": 4194304
+    }
+  ],
+  "seedance-pro-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedance/v1/pro/text-to-video"
+    }
+  ],
+  "seedance-pro-t2v-fast": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedance/v1/pro/fast/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-v1-pro-fast/text-to-video"
+    }
+  ],
+  "seedance-v1.5-pro-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bytedance/seedance/v1.5/pro/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-v1.5-pro/text-to-video"
+    }
+  ],
+  "seedance-v1.5-pro-t2v-fast": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-v1.5-pro/text-to-video-fast"
+    }
+  ],
+  "seedance-2.0-t2v-480p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/text-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "480p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/text-to-video",
+      "fixed": {
+        "resolution": "480p"
+      }
+    }
+  ],
+  "seedance-2-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/text-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "seedance-2-text-to-video-fast": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/fast/text-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-fast/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "sd-2-vip-text-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/text-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "sd-2-vip-text-to-video-fast-1080p": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-fast/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "seedance-2.5-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/text-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-2.5-text-to-video-480p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/text-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "480p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/text-to-video",
+      "fixed": {
+        "resolution": "480p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-2-mini-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/mini/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-mini/text-to-video"
+    }
+  ],
+  "seedance-2-mini-omni-reference": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/mini/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0-mini/text-to-video"
+    }
+  ],
+  "sd-2-vip-text-to-video-4k": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.0/us/text-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "4k"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/text-to-video",
+      "fixed": {
+        "resolution": "4k"
+      }
+    }
+  ],
+  "seedance-2.5-text-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/text-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": "auto"
+        },
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-2.5-text-to-video-4k": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/text-to-video",
+      "fixed": {
+        "resolution": "4k"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "seedance-v1.5-pro-video-extend": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-v1.5-pro/video-extend"
+    }
+  ],
+  "seedance-v1.5-pro-video-extend-fast": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-v1.5-pro/video-extend-fast"
+    }
+  ],
+  "seedance-2.5-video-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "task": "editing",
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/video-edit",
+      "fixed": {
+        "resolution": "720p"
+      },
+      "drop": [
+        "duration",
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-video-edit-480p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "task": "editing",
+        "resolution": "480p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/video-edit",
+      "fixed": {
+        "resolution": "480p"
+      },
+      "drop": [
+        "duration",
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-video-edit-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/reference-to-video",
+      "rename": {
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "task": "editing",
+        "resolution": "1080p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/video-edit",
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "drop": [
+        "duration",
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-video-edit-4k": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/video-edit",
+      "fixed": {
+        "resolution": "4k"
+      },
+      "drop": [
+        "duration",
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-video-extend": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/reference-to-video",
+      "rename": {
+        "last_image": "image_urls",
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "task": "extension",
+        "resolution": "720p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/video-extend",
+      "fixed": {
+        "resolution": "720p"
+      },
+      "drop": [
+        "last_image",
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-video-extend-480p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/reference-to-video",
+      "rename": {
+        "last_image": "image_urls",
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "task": "extension",
+        "resolution": "480p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/video-extend",
+      "fixed": {
+        "resolution": "480p"
+      },
+      "drop": [
+        "last_image",
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-video-extend-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "bytedance/seedance-2.5/us/reference-to-video",
+      "rename": {
+        "last_image": "image_urls",
+        "high_bitrate": "bitrate_mode"
+      },
+      "fixed": {
+        "task": "extension",
+        "resolution": "1080p"
+      },
+      "values": {
+        "bitrate_mode": {
+          "true": "high",
+          "false": "standard"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/video-extend",
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "drop": [
+        "last_image",
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-2.5-video-extend-4k": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.5/video-extend",
+      "fixed": {
+        "resolution": "4k"
+      },
+      "drop": [
+        "last_image",
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "seedance-v2.0-video-edit": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/seedance-2.0/video-edit",
+      "rename": {
+        "video_urls": "video"
+      }
+    }
+  ]
+}

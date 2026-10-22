@@ -150,9 +150,8 @@ export function getSeedanceConfiguration(modelId) {
   return configurations.get(modelId) || null;
 }
 
-// MuAPI's family tables specify 720p for unsuffixed services that do not
-// expose a native resolution input:
-// https://muapi.ai/seedance-2.5 and https://muapi.ai/seedance-2 (2026-09-09).
+// The upstream Seedance 2 / 2.5 family docs specify 720p for unsuffixed
+// services that do not expose a native resolution input (2026-09-09).
 // Older API routes with no documented size deliberately remain unspecified.
 export function getSeedanceEndpointResolution(modelId) {
   const config = getSeedanceConfiguration(modelId);

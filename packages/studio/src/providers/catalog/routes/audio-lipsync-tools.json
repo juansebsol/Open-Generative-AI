@@ -1,0 +1,150 @@
+{
+  "mmaudio-v2/text-to-audio": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/mmaudio-v2/text-to-audio"
+    }
+  ],
+  "elevenlabs-tts-turbo-2-5": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/elevenlabs/tts/turbo-v2.5",
+      "rename": {
+        "prompt": "text",
+        "voice_id": "voice"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "elevenlabs/turbo-v2.5",
+      "rename": {
+        "prompt": "text",
+        "similarity_boost": "similarity"
+      }
+    }
+  ],
+  "elevenlabs-v4": [
+    {
+      "provider": "fal",
+      "endpoint": "elevenlabs/tts/eleven-v4",
+      "rename": {
+        "prompt": "text",
+        "voice_id": "voice"
+      },
+      "values": {
+        "voice": {
+          "voice_daniel": "Daniel",
+          "voice_liam": "Liam"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "elevenlabs/eleven-v4",
+      "rename": {
+        "prompt": "text"
+      },
+      "values": {
+        "voice_id": {
+          "voice_daniel": "Daniel",
+          "voice_liam": "Liam"
+        }
+      }
+    }
+  ],
+  "lyria-3-pro": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/lyria3/pro"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/lyria-3-pro/music"
+    }
+  ],
+  "lyria-3": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/lyria3"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/lyria-3-clip/music"
+    }
+  ],
+  "lyria-2": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/lyria2"
+    }
+  ],
+  "infinitetalk-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/infinitalk",
+      "defaults": {
+        "prompt": "A person speaking naturally to the camera."
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/infinitetalk"
+    }
+  ],
+  "wan2.2-speech-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.2-14b/speech-to-video",
+      "defaults": {
+        "prompt": "A person speaking naturally to the camera."
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/wan-2.2/speech-to-video"
+    }
+  ],
+  "sync-lipsync": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/sync-lipsync"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "sync/lipsync-1.9.0-beta"
+    }
+  ],
+  "latentsync-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/latentsync"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bytedance/latentsync"
+    }
+  ],
+  "veed-lipsync": [
+    {
+      "provider": "fal",
+      "endpoint": "veed/lipsync"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "veed/lipsync"
+    }
+  ],
+  "infinitetalk-video-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/infinitalk/video-to-video",
+      "defaults": {
+        "prompt": "A person speaking naturally to the camera."
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/infinitetalk/video-to-video"
+    }
+  ]
+}

@@ -1,0 +1,1152 @@
+{
+  "ai-image-upscale": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/esrgan"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/image-upscaler"
+    }
+  ],
+  "ai-image-face-swap": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/image-face-swap",
+      "rename": {
+        "swap_url": "face_image"
+      }
+    }
+  ],
+  "ai-dress-change": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/fashn/tryon/v1.6",
+      "rename": {
+        "model_image_url": "model_image",
+        "garment_image_url": "garment_image"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ai-clothes-changer",
+      "rename": {
+        "model_image_url": "image",
+        "garment_image_url": "clothes_images"
+      }
+    }
+  ],
+  "ai-background-remover": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bria/background/remove"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bria/remove-background"
+    }
+  ],
+  "ai-image-extension": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/image-apps-v2/outpaint"
+    }
+  ],
+  "ai-product-shot": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bria/product-shot"
+    }
+  ],
+  "ai-skin-enhancer": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/retoucher"
+    }
+  ],
+  "ai-color-photo": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/ddcolor"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ai-photo-colorizer"
+    }
+  ],
+  "flux-kontext-dev-i2i": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-kontext/dev",
+      "rename": {
+        "aspect_ratio": "resolution_mode"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-kontext-dev"
+    }
+  ],
+  "ai-product-photography": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bria/product-shot",
+      "rename": {
+        "person_image_url": "image_url",
+        "prompt": "scene_description"
+      }
+    }
+  ],
+  "ai-ghibli-style": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/ghiblify"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/ghibli"
+    }
+  ],
+  "ai-object-eraser": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/bria/eraser"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "bria/eraser"
+    }
+  ],
+  "flux-kontext-pro-i2i": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-pro/kontext",
+      "values": {
+        "aspect_ratio": {
+          "16:21": "9:21"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-kontext-pro",
+      "values": {
+        "aspect_ratio": {
+          "16:21": "9:21"
+        }
+      }
+    }
+  ],
+  "flux-kontext-max-i2i": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-pro/kontext/max",
+      "values": {
+        "aspect_ratio": {
+          "16:21": "9:21"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-kontext-max",
+      "values": {
+        "aspect_ratio": {
+          "16:21": "9:21"
+        }
+      }
+    }
+  ],
+  "ideogram-character": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/ideogram/character",
+      "rename": {
+        "image_url": "reference_image_urls",
+        "render_speed": "rendering_speed"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "ideogram-ai/ideogram-character",
+      "rename": {
+        "render_speed": "rendering_speed"
+      },
+      "values": {
+        "rendering_speed": {
+          "Balanced": "Default"
+        }
+      }
+    }
+  ],
+  "flux-pulid": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-pulid"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-pulid"
+    }
+  ],
+  "nano-banana-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/nano-banana/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana/edit",
+      "values": {
+        "aspect_ratio": {
+          "Auto": null
+        }
+      }
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-2.5-flash-image"
+    }
+  ],
+  "ideogram-v3-reframe": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/ideogram/v3/reframe",
+      "rename": {
+        "render_speed": "rendering_speed"
+      }
+    }
+  ],
+  "flux-redux": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux/dev/redux"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-redux-dev"
+    }
+  ],
+  "topaz-image-upscale": [
+    {
+      "provider": "fal",
+      "endpoint": "topaz/upscale/image/precision"
+    }
+  ],
+  "seedvr2-image-upscale": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/seedvr/upscale/image",
+      "rename": {
+        "resolution": "target_resolution"
+      },
+      "fixed": {
+        "upscale_mode": "target"
+      },
+      "values": {
+        "target_resolution": {
+          "2k": "1440p",
+          "4k": "2160p",
+          "8k": "2160p"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/seedvr2/image",
+      "rename": {
+        "resolution": "target_resolution"
+      }
+    }
+  ],
+  "nano-banana-pro-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/nano-banana-pro/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana-pro/edit"
+    },
+    {
+      "provider": "google",
+      "endpoint": "gemini-3-pro-image"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-3-pro-image"
+    }
+  ],
+  "flux-2-dev-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-dev/edit"
+    }
+  ],
+  "flux-2-flex-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2-flex/edit",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-flex/edit",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "flux-2-pro-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2-pro/edit",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-pro/edit",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "gpt-image-2-image-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "openai/gpt-image-2/edit",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "openai/gpt-image-2/edit",
+      "values": {
+        "aspect_ratio": {
+          "auto": null
+        }
+      }
+    },
+    {
+      "provider": "openai",
+      "endpoint": "gpt-image-2"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "openai/gpt-5.4-image-2"
+    }
+  ],
+  "gpt-image-1.5-edit": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "openai/gpt-image-1.5/edit"
+    },
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/gpt-image-1.5/edit",
+      "values": {
+        "image_size": {
+          "square_hd": "1024x1024"
+        }
+      }
+    }
+  ],
+  "flux-2-klein-4b-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2/klein/4b/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-klein-4b/edit"
+    }
+  ],
+  "flux-2-klein-9b-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2/klein/9b/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-klein-9b/edit"
+    }
+  ],
+  "nano-banana-2-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/nano-banana-2/edit",
+      "rename": {
+        "google_search": "enable_web_search"
+      },
+      "values": {
+        "output_format": {
+          "jpg": "jpeg"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana-2/edit",
+      "rename": {
+        "google_search": "enable_web_search"
+      },
+      "values": {
+        "output_format": {
+          "jpg": "jpeg"
+        },
+        "aspect_ratio": {
+          "auto": null
+        }
+      }
+    },
+    {
+      "provider": "google",
+      "endpoint": "gemini-3.1-flash-image"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-3.1-flash-image"
+    }
+  ],
+  "nano-banana-2-1-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "google/nano-banana-2.1/edit",
+      "values": {
+        "output_format": {
+          "jpg": "jpeg"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana-2.1/edit",
+      "values": {
+        "output_format": {
+          "jpg": "jpeg"
+        },
+        "aspect_ratio": {
+          "auto": null
+        }
+      }
+    },
+    {
+      "provider": "google",
+      "endpoint": "gemini-nano-banana-2.1"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-nano-banana-2.1"
+    }
+  ],
+  "flux-2-klein-4b-edit-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2/klein/4b/edit/lora",
+      "rename": {
+        "lora_list": "loras"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-klein-4b/edit-lora",
+      "rename": {
+        "lora_list": "loras"
+      }
+    }
+  ],
+  "flux-2-klein-9b-edit-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2/klein/9b/edit/lora",
+      "rename": {
+        "lora_list": "loras"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-klein-9b/edit-lora",
+      "rename": {
+        "lora_list": "loras"
+      }
+    }
+  ],
+  "nano-banana-2-lite-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "google/nano-banana-lite/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana-2-lite/edit"
+    },
+    {
+      "provider": "google",
+      "endpoint": "gemini-3.1-flash-lite-image"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-3.1-flash-lite-image"
+    }
+  ],
+  "z-image-turbo-image-to-image-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/z-image/turbo/image-to-image/lora"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/z-image-turbo/image-to-image-lora"
+    }
+  ],
+  "face-expression-change": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image-edit-plus-lora-gallery/multiple-angles"
+    }
+  ],
+  "muse-image-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "meta/muse-image/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "meta/muse-image/edit"
+    }
+  ],
+  "gpt-image-2.5-flare-image-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "openai/gpt-image-2.5/flare/edit",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "openai/gpt-image-2.5-flare/edit",
+      "values": {
+        "aspect_ratio": {
+          "auto": null,
+          "27:16": "16:9",
+          "16:27": "9:16",
+          "9:8": "5:4",
+          "8:9": "4:5"
+        }
+      }
+    },
+    {
+      "provider": "openai",
+      "endpoint": "gpt-image-2.5-flare"
+    }
+  ],
+  "gpt-image-2.5-sunburst-image-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "openai/gpt-image-2.5/sunburst/edit",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "openai/gpt-image-2.5-sunburst/edit",
+      "values": {
+        "aspect_ratio": {
+          "auto": null,
+          "27:16": "16:9",
+          "16:27": "9:16",
+          "9:8": "5:4",
+          "8:9": "4:5"
+        }
+      }
+    },
+    {
+      "provider": "openai",
+      "endpoint": "gpt-image-2.5-sunburst"
+    }
+  ],
+  "topaz-upscale-image-creative": [
+    {
+      "provider": "fal",
+      "endpoint": "topaz/upscale/image/creative"
+    }
+  ],
+  "topaz-upscale-image-generative": [
+    {
+      "provider": "fal",
+      "endpoint": "topaz/upscale/image/generative"
+    }
+  ],
+  "topaz-upscale-image-precision": [
+    {
+      "provider": "fal",
+      "endpoint": "topaz/upscale/image/precision"
+    }
+  ],
+  "leonardoai-motion-2.0": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "leonardoai/motion-2.0"
+    }
+  ],
+  "nano-banana": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/nano-banana"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana/text-to-image"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-2.5-flash-image"
+    }
+  ],
+  "flux-dev-image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux/dev"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-dev"
+    }
+  ],
+  "flux-kontext-dev-t2i": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-kontext-lora/text-to-image"
+    }
+  ],
+  "hidream_i1_fast_image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hidream-i1-fast"
+    }
+  ],
+  "hidream_i1_dev_image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hidream-i1-dev"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/hidream-i1-dev"
+    }
+  ],
+  "hidream_i1_full_image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hidream-i1-full"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/hidream-i1-full"
+    }
+  ],
+  "flux-kontext-pro-t2i": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-pro/kontext/text-to-image",
+      "values": {
+        "aspect_ratio": {
+          "16:21": "9:21"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-kontext-pro/text-to-image",
+      "values": {
+        "aspect_ratio": {
+          "16:21": "9:21"
+        }
+      }
+    }
+  ],
+  "flux-kontext-max-t2i": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-pro/kontext/max/text-to-image",
+      "values": {
+        "aspect_ratio": {
+          "16:21": "9:21"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-kontext-max/text-to-image",
+      "values": {
+        "aspect_ratio": {
+          "16:21": "9:21"
+        }
+      }
+    }
+  ],
+  "flux-schnell-image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux/schnell"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-schnell"
+    }
+  ],
+  "ideogram-v3-t2i": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/ideogram/v3",
+      "rename": {
+        "render_speed": "rendering_speed"
+      }
+    }
+  ],
+  "sdxl-image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/fast-sdxl"
+    }
+  ],
+  "flux-krea-dev": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux/krea"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-krea-dev-lora"
+    }
+  ],
+  "perfect-pony-xl": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/prefect-pony-xl"
+    }
+  ],
+  "neta-lumina": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/neta-lumina"
+    }
+  ],
+  "nano-banana-pro": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/nano-banana-pro"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana-pro/text-to-image"
+    },
+    {
+      "provider": "google",
+      "endpoint": "gemini-3-pro-image"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-3-pro-image"
+    }
+  ],
+  "z-image-turbo": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/z-image/turbo"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/z-image/turbo"
+    }
+  ],
+  "flux-2-dev": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-dev/text-to-image"
+    }
+  ],
+  "flux-2-flex": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2-flex",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-flex/text-to-image",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "flux-2-pro": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2-pro",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-pro/text-to-image",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "gpt-image-1.5": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "openai/gpt-image-1.5/text-to-image"
+    },
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/gpt-image-1.5",
+      "values": {
+        "image_size": {
+          "square_hd": "1024x1024"
+        }
+      }
+    }
+  ],
+  "gpt-image-2-text-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "openai/gpt-image-2",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "openai/gpt-image-2/text-to-image",
+      "values": {
+        "aspect_ratio": {
+          "auto": null
+        }
+      }
+    },
+    {
+      "provider": "openai",
+      "endpoint": "gpt-image-2"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "openai/gpt-5.4-image-2"
+    }
+  ],
+  "flux-2-klein-4b": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2/klein/4b"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-klein-4b/text-to-image"
+    }
+  ],
+  "flux-2-klein-9b": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2/klein/9b"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-klein-9b/text-to-image"
+    }
+  ],
+  "z-image-base": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/z-image/base"
+    },
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/z-image/base"
+    }
+  ],
+  "nano-banana-2": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/nano-banana-2",
+      "rename": {
+        "google_search": "enable_web_search"
+      },
+      "values": {
+        "output_format": {
+          "jpg": "jpeg"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana-2/text-to-image",
+      "rename": {
+        "google_search": "enable_web_search"
+      },
+      "values": {
+        "output_format": {
+          "jpg": "jpeg"
+        },
+        "aspect_ratio": {
+          "auto": null
+        }
+      }
+    },
+    {
+      "provider": "google",
+      "endpoint": "gemini-3.1-flash-image"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-3.1-flash-image"
+    }
+  ],
+  "nano-banana-2-1": [
+    {
+      "provider": "fal",
+      "endpoint": "google/nano-banana-2.1",
+      "values": {
+        "output_format": {
+          "jpg": "jpeg"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana-2.1/text-to-image",
+      "values": {
+        "output_format": {
+          "jpg": "jpeg"
+        },
+        "aspect_ratio": {
+          "auto": null
+        }
+      }
+    },
+    {
+      "provider": "google",
+      "endpoint": "gemini-nano-banana-2.1"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-nano-banana-2.1"
+    }
+  ],
+  "flux-2-klein-4b-text-to-image-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2/klein/4b/lora",
+      "rename": {
+        "lora_list": "loras"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-klein-4b/text-to-image-lora",
+      "rename": {
+        "lora_list": "loras"
+      }
+    }
+  ],
+  "flux-2-klein-9b-text-to-image-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/flux-2/klein/9b/lora",
+      "rename": {
+        "lora_list": "loras"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/flux-2-klein-9b/text-to-image-lora",
+      "rename": {
+        "lora_list": "loras"
+      }
+    }
+  ],
+  "nano-banana-2-lite": [
+    {
+      "provider": "fal",
+      "endpoint": "google/nano-banana-2-lite"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/nano-banana-2-lite/text-to-image"
+    },
+    {
+      "provider": "google",
+      "endpoint": "gemini-3.1-flash-lite-image"
+    },
+    {
+      "provider": "openrouter",
+      "endpoint": "google/gemini-3.1-flash-lite-image"
+    }
+  ],
+  "z-image-base-text-to-image-lora": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/z-image/base-lora"
+    },
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/z-image/base/lora"
+    }
+  ],
+  "z-image-turbo-text-to-image-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/z-image/turbo/lora"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/z-image/turbo-lora"
+    }
+  ],
+  "krea-v2-turbo": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/krea-v2/turbo"
+    },
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/krea-2/turbo",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "krea-v2-turbo-lora": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/krea-v2/turbo-lora"
+    },
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/krea-2/turbo/lora",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "muse-image-text-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "meta/muse-image/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "meta/muse-image/text-to-image"
+    }
+  ],
+  "gpt-image-2.5-flare-text-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "openai/gpt-image-2.5/flare/text-to-image",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "openai/gpt-image-2.5-flare/text-to-image",
+      "values": {
+        "aspect_ratio": {
+          "auto": null,
+          "27:16": "16:9",
+          "16:27": "9:16",
+          "9:8": "5:4",
+          "8:9": "4:5"
+        }
+      }
+    },
+    {
+      "provider": "openai",
+      "endpoint": "gpt-image-2.5-flare"
+    }
+  ],
+  "gpt-image-2.5-sunburst-text-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "openai/gpt-image-2.5/sunburst/text-to-image",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "openai/gpt-image-2.5-sunburst/text-to-image",
+      "values": {
+        "aspect_ratio": {
+          "auto": null,
+          "27:16": "16:9",
+          "16:27": "9:16",
+          "9:8": "5:4",
+          "8:9": "4:5"
+        }
+      }
+    },
+    {
+      "provider": "openai",
+      "endpoint": "gpt-image-2.5-sunburst"
+    }
+  ],
+  "ideogram-v4": [
+    {
+      "provider": "fal",
+      "endpoint": "ideogram/v4",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "ideogram-ai/ideogram-v4"
+    }
+  ],
+  "ai-captions": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/auto-caption"
+    }
+  ],
+  "gemini-omni-flash-1-1-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "google/gemini-omni-flash/v1.1/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/gemini-omni-1.1-flash/video-edit"
+    }
+  ],
+  "depth-anything": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/depth-anything-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/depth-anything/video"
+    }
+  ]
+}

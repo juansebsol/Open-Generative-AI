@@ -1,0 +1,1489 @@
+{
+  "qwen-image-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image-edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image/edit",
+      "values": {
+        "size": {
+          "1568*672": "1536*656",
+          "672*1568": "656*1536"
+        }
+      }
+    }
+  ],
+  "qwen-image-edit-plus": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image-edit-plus"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image/edit-plus"
+    }
+  ],
+  "wan2.5-image-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan-25-preview/image-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.5/image-edit"
+    }
+  ],
+  "qwen-image-edit-plus-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image-edit-plus-lora-gallery/multiple-angles"
+    }
+  ],
+  "qwen-image-edit-2511": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image-edit-2511"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image/edit-2511"
+    }
+  ],
+  "wan2.6-image-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "wan/v2.6/image-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.6/image-edit"
+    }
+  ],
+  "qwen-text-to-image-2512": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image-2512"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image/text-to-image-2512"
+    }
+  ],
+  "grok-imagine-image-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "xai/grok-imagine-image/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "x-ai/grok-imagine-image/edit"
+    }
+  ],
+  "qwen-image-2.0-edit": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image-2.0/edit"
+    }
+  ],
+  "qwen-image-2.0-pro-edit": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image-2.0-pro/edit"
+    }
+  ],
+  "wan2.7-image-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.7/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.7/image-edit"
+    }
+  ],
+  "wan2.7-image-edit-pro": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.7/pro/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.7/image-edit-pro"
+    }
+  ],
+  "qwen3-image-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/qwen-image-3/edit",
+      "rename": {
+        "prompt_extend": "enable_prompt_expansion"
+      },
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/qwen-image-3.0/edit",
+      "rename": {
+        "prompt_extend": "enable_prompt_expansion"
+      }
+    }
+  ],
+  "qwen3-pro-image-to-image": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/qwen-image-3.0-pro/edit",
+      "rename": {
+        "prompt_extend": "enable_prompt_expansion"
+      }
+    }
+  ],
+  "qwen-image-edit-2511-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image-edit-2511/lora"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image/edit-2511-lora",
+      "values": {
+        "size": {
+          "1568*672": "1536*656",
+          "672*1568": "656*1536"
+        }
+      }
+    }
+  ],
+  "qwen-image-edit-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image-edit-lora"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image/edit-lora",
+      "values": {
+        "size": {
+          "1568*672": "1536*656",
+          "672*1568": "656*1536"
+        }
+      }
+    }
+  ],
+  "veo3-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3/image-to-video"
+    }
+  ],
+  "veo3-fast-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3-fast/image-to-video"
+    }
+  ],
+  "wan2.1-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan-i2v",
+      "drop": [
+        "duration"
+      ]
+    }
+  ],
+  "hunyuan-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-video-image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/hunyuan-video/i2v"
+    }
+  ],
+  "wan2.2-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.2-a14b/image-to-video",
+      "rename": {
+        "duration": "num_frames"
+      },
+      "values": {
+        "num_frames": {
+          "3": 49,
+          "4": 65,
+          "5": 81,
+          "6": 97,
+          "7": 113,
+          "8": 129,
+          "9": 145,
+          "10": 161
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/wan-2.2/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "wan2.1-reference-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan-vace-14b",
+      "rename": {
+        "images_list": "ref_image_urls",
+        "duration": "num_frames"
+      },
+      "values": {
+        "num_frames": {
+          "3": 49,
+          "4": 65,
+          "5": 81,
+          "6": 97,
+          "7": 113,
+          "8": 129,
+          "9": 145,
+          "10": 161
+        }
+      }
+    }
+  ],
+  "wan2.5-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan-25-preview/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.5/image-to-video"
+    }
+  ],
+  "wan2.5-image-to-video-fast": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.5/image-to-video-fast"
+    }
+  ],
+  "ovi-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/ovi/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "character-ai/ovi/image-to-video"
+    }
+  ],
+  "veo3.1-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3.1/image-to-video"
+    }
+  ],
+  "veo3.1-fast-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3.1-fast/image-to-video"
+    }
+  ],
+  "veo3.1-lite-image-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3.1-lite/image-to-video",
+      "values": {
+        "resolution": {
+          "4k": "1080p"
+        }
+      }
+    }
+  ],
+  "veo3.1-reference-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3.1/reference-to-video",
+      "drop": [
+        "duration"
+      ]
+    }
+  ],
+  "grok-imagine-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "xai/grok-imagine-video/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "x-ai/grok-imagine-video/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "wan2.6-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "wan/v2.6/image-to-video",
+      "rename": {
+        "shot_type": "multi_shots"
+      },
+      "values": {
+        "multi_shots": {
+          "single": false,
+          "multi": true
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.6/image-to-video"
+    }
+  ],
+  "wan2.7-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.7/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.7/image-to-video"
+    }
+  ],
+  "wan2.7-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.7/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.7/reference-to-video"
+    }
+  ],
+  "happy-horse-1-image-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/image-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/image-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "happy-horse-1-image-to-video-720p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/image-to-video",
+      "fixed": {
+        "resolution": "720p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/image-to-video",
+      "fixed": {
+        "resolution": "720p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "happy-horse-1-reference-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/reference-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/reference-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "happy-horse-1-reference-to-video-720p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/reference-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/reference-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "gemini-omni-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "google/gemini-omni-flash/reference-to-video",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/gemini-omni-flash/reference-to-video",
+      "rename": {
+        "image_urls": "images"
+      },
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "grok-imagine-video-1-5-preview": [
+    {
+      "provider": "fal",
+      "endpoint": "xai/grok-imagine-video/v1.5/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "x-ai/grok-imagine-video-v1.5/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "happy-horse-1.1-image-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/v1.1/image-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.1/image-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "happy-horse-1.1-image-to-video-720p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/v1.1/image-to-video",
+      "fixed": {
+        "resolution": "720p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.1/image-to-video",
+      "fixed": {
+        "resolution": "720p"
+      },
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "happy-horse-1.1-reference-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/v1.1/reference-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.1/reference-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "happy-horse-1.1-reference-to-video-720p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/v1.1/reference-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.1/reference-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "flux-3-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "blackforestlabs/flux-3/image-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "black-forest-labs/flux-3/image-to-video"
+    }
+  ],
+  "wan3.0-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/wan-3.0/image-to-video",
+      "rename": {
+        "thinking_mode": "enable_thinking",
+        "enable_audio": "audio"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-3.0/image-to-video",
+      "rename": {
+        "enable_audio": "generate_audio"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "wan3.0-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/wan-3.0/reference-to-video",
+      "rename": {
+        "thinking_mode": "enable_thinking",
+        "enable_audio": "audio"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-3.0/reference-to-video",
+      "rename": {
+        "enable_audio": "generate_audio"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "wan3.0-prime-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/wan-3.0-prime/image-to-video",
+      "rename": {
+        "thinking_mode": "enable_thinking",
+        "enable_audio": "audio"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-3.0-prime/image-to-video",
+      "rename": {
+        "enable_audio": "generate_audio"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "wan3.0-prime-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/wan-3.0-prime/reference-to-video",
+      "rename": {
+        "thinking_mode": "enable_thinking",
+        "enable_audio": "audio"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-3.0-prime/reference-to-video",
+      "rename": {
+        "enable_audio": "generate_audio"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "flux-3-start-end-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "blackforestlabs/flux-3/first-last-frame-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "black-forest-labs/flux-3/start-end-to-video"
+    }
+  ],
+  "gemini-omni-flash-1-1-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "google/gemini-omni-flash/v1.1/image-to-video",
+      "rename": {
+        "first_frame_url": "image_url",
+        "last_frame_url": "end_image_url"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/gemini-omni-1.1-flash/image-to-video",
+      "rename": {
+        "first_frame_url": "image",
+        "last_frame_url": "last_image"
+      }
+    }
+  ],
+  "gemini-omni-flash-1-1-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "google/gemini-omni-flash/v1.1/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/gemini-omni-1.1-flash/reference-to-video",
+      "rename": {
+        "image_urls": "images",
+        "reference_video_urls": "reference_videos"
+      }
+    }
+  ],
+  "happy-horse-1-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "happy-horse-1-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/reference-to-video"
+    }
+  ],
+  "happy-horse-1.1-image-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/v1.1/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.1/image-to-video",
+      "drop": [
+        "aspect_ratio"
+      ]
+    }
+  ],
+  "happy-horse-1.1-reference-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/v1.1/reference-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.1/reference-to-video"
+    }
+  ],
+  "wan2.2-animate": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/wan-2.2/animate"
+    }
+  ],
+  "wan2.1-text-to-image": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/wan-2.1/text-to-image"
+    }
+  ],
+  "qwen-image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image/text-to-image",
+      "values": {
+        "size": {
+          "1568*672": "1536*656",
+          "672*1568": "656*1536"
+        }
+      }
+    }
+  ],
+  "hunyuan-image-2.1": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-image/v2.1/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/hunyuan-image-2.1"
+    }
+  ],
+  "wan2.5-text-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan-25-preview/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.5/text-to-image"
+    }
+  ],
+  "hunyuan-image-3.0": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-image/v3/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/hunyuan-image-3"
+    }
+  ],
+  "grok-imagine-text-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "xai/grok-imagine-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "x-ai/grok-imagine-image/text-to-image"
+    }
+  ],
+  "wan2.6-text-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "wan/v2.6/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.6/text-to-image"
+    }
+  ],
+  "qwen-image-2.0": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image-2.0/text-to-image"
+    }
+  ],
+  "qwen-image-2.0-pro": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image-2.0-pro/text-to-image"
+    }
+  ],
+  "wan2.7-text-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.7/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.7/text-to-image"
+    }
+  ],
+  "wan2.7-text-to-image-pro": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.7/pro/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.7/text-to-image-pro"
+    }
+  ],
+  "grok-imagine-text-to-image-quality": [
+    {
+      "provider": "fal",
+      "endpoint": "xai/grok-imagine-image/quality/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "x-ai/grok-imagine-image-quality/text-to-image"
+    }
+  ],
+  "qwen3-text-to-image": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/qwen-image-3/text-to-image",
+      "rename": {
+        "prompt_extend": "enable_prompt_expansion"
+      },
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/qwen-image-3.0/text-to-image",
+      "rename": {
+        "prompt_extend": "enable_prompt_expansion"
+      }
+    }
+  ],
+  "qwen3-pro-text-to-image": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/qwen-image-3.0-pro/text-to-image",
+      "rename": {
+        "prompt_extend": "enable_prompt_expansion"
+      }
+    }
+  ],
+  "grok-imagine-image-2": [
+    {
+      "provider": "fal",
+      "endpoint": "xai/grok-imagine-image/v2.0/text-to-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "x-ai/grok-imagine-image-v2.0/text-to-image"
+    }
+  ],
+  "qwen-image-text-to-image-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image/text-to-image-lora",
+      "values": {
+        "size": {
+          "1568*672": "1536*656",
+          "672*1568": "656*1536"
+        }
+      }
+    }
+  ],
+  "qwen-image-text-to-image-2512-lora": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/qwen-image-2512/lora"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/qwen-image/text-to-image-2512-lora",
+      "values": {
+        "size": {
+          "1568*672": "1536*656",
+          "672*1568": "656*1536"
+        }
+      }
+    }
+  ],
+  "veo3-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3"
+    }
+  ],
+  "veo3-fast-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3-fast"
+    }
+  ],
+  "veo3.1-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3.1/text-to-video"
+    }
+  ],
+  "veo3.1-fast-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3.1-fast/text-to-video"
+    }
+  ],
+  "veo3.1-lite-text-to-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/veo3.1-lite/text-to-video",
+      "values": {
+        "resolution": {
+          "4k": "1080p"
+        }
+      }
+    }
+  ],
+  "wan2.1-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan-t2v",
+      "drop": [
+        "duration"
+      ]
+    }
+  ],
+  "wan2.2-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.2-a14b/text-to-video",
+      "rename": {
+        "duration": "num_frames"
+      },
+      "values": {
+        "num_frames": {
+          "3": 49,
+          "4": 65,
+          "5": 81,
+          "6": 97,
+          "7": 113,
+          "8": 129,
+          "9": 145,
+          "10": 161
+        }
+      }
+    }
+  ],
+  "wan2.2-5b-fast-t2v": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.2-5b/text-to-video/fast-wan"
+    }
+  ],
+  "wan2.5-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan-25-preview/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.5/text-to-video",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "wan2.5-text-to-video-fast": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.5/text-to-video-fast",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "wan2.6-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "wan/v2.6/text-to-video",
+      "rename": {
+        "shot_type": "multi_shots"
+      },
+      "values": {
+        "multi_shots": {
+          "single": false,
+          "multi": true
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.6/text-to-video",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "hunyuan-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/hunyuan-video/t2v"
+    }
+  ],
+  "ovi-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/ovi",
+      "rename": {
+        "aspect_ratio": "resolution"
+      },
+      "values": {
+        "resolution": {
+          "16:9": "992x512",
+          "9:16": "512x992",
+          "1:1": "720x720"
+        }
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "character-ai/ovi/text-to-video"
+    }
+  ],
+  "grok-imagine-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "xai/grok-imagine-video/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "x-ai/grok-imagine-video/text-to-video",
+      "values": {
+        "aspect_ratio": {
+          "2:3": "9:16",
+          "3:2": "16:9"
+        }
+      }
+    }
+  ],
+  "wan2.7-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.7/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.7/text-to-video"
+    }
+  ],
+  "happy-horse-1-text-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "happy-horse-1-text-to-video-720p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "gemini-omni-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "google/gemini-omni-flash",
+      "drop": [
+        "resolution"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/gemini-omni-flash/text-to-video",
+      "drop": [
+        "resolution"
+      ]
+    }
+  ],
+  "happy-horse-1.1-text-to-video-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/v1.1/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.1/text-to-video",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "happy-horse-1.1-text-to-video-720p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/v1.1/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.1/text-to-video",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "flux-3-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "blackforestlabs/flux-3/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "black-forest-labs/flux-3/text-to-video"
+    }
+  ],
+  "wan3.0-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/wan-3.0/text-to-video",
+      "rename": {
+        "thinking_mode": "enable_thinking",
+        "enable_audio": "audio"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-3.0/text-to-video",
+      "rename": {
+        "enable_audio": "generate_audio"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "wan3.0-prime-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/wan-3.0-prime/text-to-video",
+      "rename": {
+        "thinking_mode": "enable_thinking",
+        "enable_audio": "audio"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-3.0-prime/text-to-video",
+      "rename": {
+        "enable_audio": "generate_audio"
+      },
+      "values": {
+        "aspect_ratio": {
+          "adaptive": null
+        }
+      }
+    }
+  ],
+  "flux-3-text-to-video-draft": [
+    {
+      "provider": "fal",
+      "endpoint": "blackforestlabs/flux-3/text-to-video/draft"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "black-forest-labs/flux-3/text-to-video-draft"
+    }
+  ],
+  "gemini-omni-flash-1-1-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "google/gemini-omni-flash/v1.1/reference-to-video",
+      "rename": {
+        "video_url": "reference_video_urls"
+      },
+      "drop": [
+        "trim_start",
+        "trim_end"
+      ]
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/gemini-omni-1.1-flash/reference-to-video",
+      "rename": {
+        "image_urls": "images",
+        "video_url": "reference_videos"
+      },
+      "drop": [
+        "trim_start",
+        "trim_end"
+      ]
+    }
+  ],
+  "happy-horse-1-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/text-to-video"
+    }
+  ],
+  "happy-horse-1.1-text-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/v1.1/text-to-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.1/text-to-video"
+    }
+  ],
+  "video-watermark-remover": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/video-watermark-remover"
+    }
+  ],
+  "ai-video-face-swap": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/video-face-swap",
+      "rename": {
+        "image_url": "face_image"
+      }
+    }
+  ],
+  "mmaudio-v2/video-to-video": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/mmaudio-v2"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/mmaudio-v2"
+    }
+  ],
+  "ai-video-upscaler": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/video-upscaler",
+      "rename": {
+        "resolution": "target_resolution"
+      }
+    }
+  ],
+  "wan2.2-edit-video": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/wan-2.2/video-edit"
+    }
+  ],
+  "heygen-video-translate": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/heygen/v2/translate/precision",
+      "rename": {
+        "language": "output_language"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "heygen/video-translate",
+      "rename": {
+        "language": "output_language"
+      }
+    }
+  ],
+  "topaz-video-upscale": [
+    {
+      "provider": "fal",
+      "endpoint": "topaz/upscale/video/precision"
+    }
+  ],
+  "ai-video-upscaler-pro": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/video-upscaler-pro"
+    }
+  ],
+  "wan2.7-video-extend": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.7/video-extend"
+    }
+  ],
+  "wan2.7-video-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/wan/v2.7/edit-video",
+      "rename": {
+        "images_list": "reference_image_url"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/wan-2.7/video-edit"
+    }
+  ],
+  "happy-horse-1-video-edit-1080p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/video-edit",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/video-edit",
+      "fixed": {
+        "resolution": "1080p"
+      }
+    }
+  ],
+  "happy-horse-1-video-edit-720p": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/video-edit",
+      "fixed": {
+        "resolution": "720p"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/video-edit",
+      "fixed": {
+        "resolution": "720p"
+      }
+    }
+  ],
+  "gemini-omni-video-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "google/gemini-omni-flash/edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "google/gemini-omni-flash/video-edit"
+    }
+  ],
+  "video-background-remover": [
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/video-background-remover"
+    }
+  ],
+  "flux-3-video-extend": [
+    {
+      "provider": "fal",
+      "endpoint": "blackforestlabs/flux-3/extend-video"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "black-forest-labs/flux-3/video-extend"
+    }
+  ],
+  "flux-3-video-upscaler": [
+    {
+      "provider": "fal",
+      "endpoint": "blackforestlabs/flux-video-upscale"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "black-forest-labs/flux-3/video-upscale"
+    }
+  ],
+  "flux-3-video-extend-draft": [
+    {
+      "provider": "fal",
+      "endpoint": "blackforestlabs/flux-3/extend-video/draft"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "black-forest-labs/flux-3/video-extend-draft"
+    }
+  ],
+  "happy-horse-1-video-edit": [
+    {
+      "provider": "fal",
+      "endpoint": "alibaba/happy-horse/video-edit"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "alibaba/happyhorse-1.0/video-edit"
+    }
+  ],
+  "topaz-upscale-video-creative": [
+    {
+      "provider": "fal",
+      "endpoint": "topaz/upscale/video/creative"
+    }
+  ],
+  "topaz-upscale-video-generative": [
+    {
+      "provider": "fal",
+      "endpoint": "topaz/upscale/video/generative"
+    }
+  ],
+  "topaz-upscale-video-precision": [
+    {
+      "provider": "fal",
+      "endpoint": "topaz/upscale/video/precision"
+    }
+  ]
+}
