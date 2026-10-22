@@ -1,7 +1,6 @@
 import { createGroupedVideoRegistry } from "./groupedVideoRegistry.js";
 
-export const VEO_FAMILY_NAMES = Object.freeze({
-  "veo-4": "Veo 4",
+const VEO_FAMILY_NAMES = Object.freeze({
   "veo-3.1": "Veo 3.1",
   "veo-3": "Veo 3",
 });
@@ -16,12 +15,9 @@ const registry = createGroupedVideoRegistry({
   },
   facetLabels: { speed: "Speed" },
   registerVariants(register) {
-    // Generation variants only. Extension and 4K upscaling require a previous
-    // request ID and remain separate tools in the model menu.
     for (const [familyId, prefix, speeds] of [
       ["veo-3", "veo3", ["standard", "fast"]],
       ["veo-3.1", "veo3.1", ["standard", "fast", "lite"]],
-      ["veo-4", "veo-4", ["standard"]],
     ]) {
       for (const speed of speeds) {
         const stem = `${prefix}${speed === "standard" ? "" : `-${speed}`}`;
@@ -34,20 +30,7 @@ const registry = createGroupedVideoRegistry({
   },
 });
 
-const tools = new Map([
-  ["veo3.1-extend-video", { key: "continueGenerated", order: 0 }],
-  ["veo3.1-4k-video", { key: "upscale", order: 1 }],
-]);
-
-export function getVeoToolConfiguration(modelId) {
-  return tools.get(modelId);
-}
-
-export const {
-  workflowVariants: VEO_WORKFLOW_VARIANTS,
-  getConfiguration: getVeoConfiguration,
-  getVariantOptions: getVeoVariantOptions,
-} = registry;
+export const { getConfiguration: getVeoConfiguration } = registry;
 
 export function resolveVeoVariant(options) {
   const { changes = {} } = options;
@@ -59,7 +42,7 @@ export const VEO_MODEL_GROUP = Object.freeze({
   copyKey: "veo",
   familyNames: VEO_FAMILY_NAMES,
   configurations: registry.configurations,
-  workflowVariants: VEO_WORKFLOW_VARIANTS,
+  workflowVariants: registry.workflowVariants,
   resolveVariant: resolveVeoVariant,
-  getVariantOptions: getVeoVariantOptions,
+  getVariantOptions: registry.getVariantOptions,
 });

@@ -1,6 +1,6 @@
 import { createGroupedVideoRegistry } from "./groupedVideoRegistry.js";
 
-export const LTX_FAMILY_NAMES = Object.freeze({
+const LTX_FAMILY_NAMES = Object.freeze({
   "ltx-2.5": "LTX 2.5",
   "ltx-2.3": "LTX 2.3",
   "ltx-2": "LTX 2",

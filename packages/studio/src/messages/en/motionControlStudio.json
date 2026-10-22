@@ -1,6 +1,5 @@
 {
   "labels": {
-    "referenceVideo": "Reference Video",
     "characterImages": "Performer / Character Images",
     "addImage": "Add Image",
     "library": "Library",
@@ -8,8 +7,6 @@
     "motionTransfer": "Motion Transfer",
     "objectsSwap": "Objects Swap",
     "duration": "Duration",
-    "durationSeconds": "{count}s",
-    "quality": "Quality",
     "highBitrate": "High Bitrate",
     "generateAudio": "Generate Audio",
     "seed": "Seed",
@@ -44,11 +41,7 @@
   "dropdowns": {
     "model": "Model",
     "selectModel": "Select model",
-    "aspectRatio": "Aspect Ratio",
-    "qualityBasic": "Basic",
-    "qualityHigh": "High",
-    "qualityBasicDesc": "Faster generation, standard resolution",
-    "qualityHighDesc": "Highest cinematic detail and motion consistency"
+    "aspectRatio": "Aspect Ratio"
   },
   "modes": {
     "motionTransfer": "Motion Transfer",
@@ -65,7 +58,6 @@
     "prompt": "Optional — describe additional scene details, lighting, or motion nuances..."
   },
   "badges": {
-    "motionControl": "Motion Control",
     "motionTransfer": "Motion Transfer",
     "objectsSwap": "Objects Swap"
   },

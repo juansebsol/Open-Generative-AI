@@ -1,6 +1,6 @@
 import { createGroupedVideoRegistry } from "./groupedVideoRegistry.js";
 
-export const PIXVERSE_FAMILY_NAMES = Object.freeze({
+const PIXVERSE_FAMILY_NAMES = Object.freeze({
   "pixverse-6": "PixVerse 6",
   "pixverse-5.5": "PixVerse 5.5",
   "pixverse-5": "PixVerse 5",

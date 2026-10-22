@@ -1,18 +1,3 @@
-export const T2I_DIMENSION_RATIOS = Object.freeze([
-  '1:1',
-  '16:9',
-  '9:16',
-  '4:3',
-  '3:2',
-  '21:9',
-]);
-
-export const I2I_DIMENSION_RATIOS = Object.freeze([
-  '1:1',
-  '16:9',
-  '9:16',
-]);
-
 const gcd = (left, right) => {
   let a = Math.abs(left);
   let b = Math.abs(right);
@@ -55,7 +40,7 @@ const isDimensionInput = (input) => {
     minimum % step === 0;
 };
 
-export const getImageSizeCapability = (model) => {
+const getImageSizeCapability = (model) => {
   const aspectRatio = model?.inputs?.aspect_ratio;
   if (Array.isArray(aspectRatio?.enum) && aspectRatio.enum.length > 0) {
     return { type: 'aspect_ratio', input: aspectRatio };
@@ -70,7 +55,7 @@ export const getImageSizeCapability = (model) => {
   return { type: 'none' };
 };
 
-export const resolveImageDimensions = (model, aspectRatio) => {
+const resolveImageDimensions = (model, aspectRatio) => {
   const capability = getImageSizeCapability(model);
   const ratio = parseAspectRatio(aspectRatio);
   if (capability.type !== 'dimensions' || !ratio) return null;
@@ -101,19 +86,6 @@ export const resolveImageDimensions = (model, aspectRatio) => {
     width: ratio.width * scale,
     height: ratio.height * scale,
   };
-};
-
-export const getAspectRatioOptions = (model, dimensionRatios) => {
-  const capability = getImageSizeCapability(model);
-  if (capability.type === 'aspect_ratio') {
-    return capability.input.enum;
-  }
-
-  if (capability.type === 'dimensions') {
-    return dimensionRatios.filter((ratio) => resolveImageDimensions(model, ratio));
-  }
-
-  return [];
 };
 
 export const buildImageSizePayload = (model, aspectRatio) => {

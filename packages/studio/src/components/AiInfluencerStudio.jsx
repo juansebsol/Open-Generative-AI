@@ -317,7 +317,6 @@ function OptionPill({ label, onClick }) {
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 export default function AiInfluencerStudio({
-  apiKey,
   onGenerate,
   onGenerationStart,
   onGenerationEnd,
@@ -393,7 +392,7 @@ export default function AiInfluencerStudio({
       if (onGenerate) {
         res = await onGenerate({ prompt, aspectRatio, selections: selectedOptions });
       } else {
-        res = await generateImage(apiKey, {
+        res = await generateImage({
           model: INFLUENCER_MODEL,
           prompt,
           aspect_ratio: aspectRatio,

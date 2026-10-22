@@ -50,23 +50,9 @@ const CONTRACTS = Object.freeze({
       requiredImage("mask_image_url", "Mask image"),
     ]),
   }),
-  "i2i:gpt4o-edit": Object.freeze({
-    primaryImageLabel: "Source image",
-    promptRequired: true,
-    promptPlaceholder: "Describe how to edit the image",
-    auxiliaryImages: Object.freeze([
-      requiredImage("mask_image_url", "Mask image"),
-    ]),
-  }),
-  "i2i:add-image-watermark": Object.freeze({
-    primaryImageLabel: "Source image",
-    auxiliaryImages: Object.freeze([
-      requiredImage("watermark_image_url", "Watermark image"),
-    ]),
-  }),
 });
 
-export function getImageInputContract(model, mode) {
+function getImageInputContract(model, mode) {
   const contractKey = `${mode}:${model?.id}`;
   const patch = Object.hasOwn(CONTRACTS, contractKey)
     ? CONTRACTS[contractKey]

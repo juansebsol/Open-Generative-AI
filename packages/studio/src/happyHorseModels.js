@@ -1,6 +1,6 @@
 import { createGroupedVideoRegistry } from "./groupedVideoRegistry.js";
 
-export const HAPPY_HORSE_FAMILY_NAMES = Object.freeze({
+const HAPPY_HORSE_FAMILY_NAMES = Object.freeze({
   "happy-horse-1.1": "Happy Horse 1.1",
   "happy-horse-1": "Happy Horse 1.0",
 });
@@ -13,8 +13,8 @@ const registry = createGroupedVideoRegistry({
       register(`${familyId}-text-to-video`, familyId, [null]);
       register(`${familyId}-image-to-video`, familyId, ["animate_image"]);
       register(`${familyId}-reference-to-video`, familyId, ["references"]);
-      register(`${familyId}-video-edit`, familyId, ["edit_video"]);
     }
+    register("happy-horse-1-video-edit", "happy-horse-1", ["edit_video"]);
   },
 });
 

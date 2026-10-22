@@ -185,26 +185,16 @@ const KLING_EDIT_TOOL_IDS = Object.freeze([
   "kling-o1-standard-video-edit",
 ]);
 
-const HAPPY_HORSE_EDIT_TOOL_IDS = Object.freeze([
-  "happy-horse-1-video-edit-1080p",
-  "happy-horse-1-video-edit-720p",
-  "happy-horse-1.1-video-edit-1080p",
-  "happy-horse-1.1-video-edit-720p",
-]);
-
-const REQUIRED_EDIT_TOOL_IDS = Object.freeze([
+// Edit and extend tools always forward the prompt to the provider.
+const PROMPT_TOOL_IDS = Object.freeze([
   ...KLING_EDIT_TOOL_IDS,
   "gemini-omni-video-edit",
-  "runway-aleph-v2v",
   "wan2.2-edit-video",
   "wan2.7-video-edit",
-  ...HAPPY_HORSE_EDIT_TOOL_IDS,
-]);
-
-const REQUIRED_EXTEND_TOOL_IDS = Object.freeze([
+  "happy-horse-1-video-edit-1080p",
+  "happy-horse-1-video-edit-720p",
   "seedance-v1.5-pro-video-extend",
   "seedance-v1.5-pro-video-extend-fast",
-  "wan2.2-spicy-video-extend",
   "wan2.7-video-extend",
   "pixverse-v6-extend",
 ]);
@@ -214,35 +204,10 @@ const KLING_ASPECT_RATIO_TOOL_IDS = new Set([
   "kling-o1-video-edit-fast",
 ]);
 
-const HAPPY_HORSE_VIDEO_CONSTRAINTS = Object.freeze({
-  key: "happy-horse-video-edit",
-  allowedMimeTypes: Object.freeze(["video/mp4", "video/quicktime"]),
-  allowedExtensions: Object.freeze([".mp4", ".mov"]),
-  maxBytes: 100 * 1024 * 1024,
-  minDurationSeconds: 3,
-  maxDurationSeconds: 60,
-  minShortSide: 320,
-  maxLongSide: 2160,
-  requirements:
-    "MP4 or MOV, 3–60 seconds, up to 100 MB, shorter side at least 320px, and longer side at most 2160px. H.264 is recommended; frame rate above 8 fps is verified by the provider.",
-});
-
 const VIDEO_TOOL_OVERRIDES = Object.create(null);
 
-for (const id of REQUIRED_EDIT_TOOL_IDS) {
-  VIDEO_TOOL_OVERRIDES[id] = {
-    hasPrompt: true,
-    promptRequired: true,
-    operation: "edit",
-  };
-}
-
-for (const id of REQUIRED_EXTEND_TOOL_IDS) {
-  VIDEO_TOOL_OVERRIDES[id] = {
-    hasPrompt: true,
-    promptRequired: true,
-    operation: "extend",
-  };
+for (const id of PROMPT_TOOL_IDS) {
+  VIDEO_TOOL_OVERRIDES[id] = { hasPrompt: true };
 }
 
 for (const id of KLING_EDIT_TOOL_IDS) {
@@ -274,13 +239,9 @@ for (const id of KLING_EDIT_TOOL_IDS) {
 Object.assign(VIDEO_TOOL_OVERRIDES, {
   "video-watermark-remover": {
     hasPrompt: false,
-    operation: "watermark",
   },
   "ai-video-upscaler": {
     hasPrompt: false,
-    operation: "upscale",
-    summary:
-      "Upscale the source video to the selected resolution. This integration exposes target resolution and audio preservation; it does not expose an output-format setting.",
     inputs: {
       resolution: {
         title: "Target resolution",
@@ -299,9 +260,6 @@ Object.assign(VIDEO_TOOL_OVERRIDES, {
   },
   "heygen-video-translate": {
     hasPrompt: false,
-    operation: "translate",
-    summary:
-      "Source language is automatic and cannot be configured in this integration. Choose a target language. Voice translation and lip sync are automatic; separate audio and subtitle settings are not available.",
     inputs: {
       language: {
         title: "Target language",
@@ -314,9 +272,6 @@ Object.assign(VIDEO_TOOL_OVERRIDES, {
   },
   "topaz-video-upscale": {
     hasPrompt: false,
-    operation: "upscale",
-    summary:
-      "Upscale the source video by the selected factor. Processing time varies; an estimate isn't available for this tool.",
     inputs: {
       upscale_factor: {
         title: "Upscale factor",
@@ -329,69 +284,8 @@ Object.assign(VIDEO_TOOL_OVERRIDES, {
   },
   "ltx-2.3-video-extend": {
     hasPrompt: true,
-    promptRequired: false,
-    operation: "extend",
-    estimateCost: true,
     inputs: {
       duration: {
-        configurable: true,
-      },
-    },
-  },
-  "seedance-v2.0-extend": {
-    hasPrompt: true,
-    promptRequired: false,
-    operation: "extend",
-  },
-  "seedance-2-extend": {
-    hasPrompt: true,
-    promptRequired: false,
-    operation: "extend",
-  },
-  "seedance-2-vip-extend": {
-    hasPrompt: true,
-    promptRequired: false,
-    operation: "extend",
-  },
-  "seedance-2-vip-extend-1080p": {
-    hasPrompt: true,
-    promptRequired: false,
-    operation: "extend",
-  },
-  "veo3.1-extend-video": {
-    hasPrompt: true,
-    promptRequired: true,
-    operation: "extend",
-  },
-  "veo3.1-4k-video": {
-    hasPrompt: false,
-    promptRequired: false,
-    operation: "upscale",
-    actionLabel: "Create 4K video",
-    summary: "Create a 4K version of a completed Veo 3.1 video.",
-  },
-  "grok-imagine-extend": {
-    hasPrompt: true,
-    promptRequired: true,
-    operation: "extend",
-    inputs: {
-      extend_times: {
-        title: "Extend duration",
-        type: "integer",
-        enum: [6, 10],
-        default: 6,
-        configurable: true,
-      },
-    },
-  },
-  "runway-aleph-v2v": {
-    ...VIDEO_TOOL_OVERRIDES["runway-aleph-v2v"],
-    inputs: {
-      aspect_ratio: {
-        title: "Aspect ratio",
-        type: "string",
-        enum: ["9:16", "16:9", "1:1", "4:3", "3:4", "21:9"],
-        default: "16:9",
         configurable: true,
       },
     },
@@ -423,7 +317,6 @@ Object.assign(VIDEO_TOOL_OVERRIDES, {
 for (const id of ["seedance-v1.5-pro-video-extend", "seedance-v1.5-pro-video-extend-fast"]) {
   VIDEO_TOOL_OVERRIDES[id] = {
     ...VIDEO_TOOL_OVERRIDES[id],
-    estimateCost: id === "seedance-v1.5-pro-video-extend",
     inputs: {
       resolution: { configurable: true },
       duration: { configurable: true },
@@ -432,111 +325,6 @@ for (const id of ["seedance-v1.5-pro-video-extend", "seedance-v1.5-pro-video-ext
     },
   };
 }
-
-for (const id of HAPPY_HORSE_EDIT_TOOL_IDS) {
-  VIDEO_TOOL_OVERRIDES[id] = {
-    ...VIDEO_TOOL_OVERRIDES[id],
-    estimateCost: true,
-    summary:
-      "Edit a source video with a required natural-language instruction.",
-    guidance:
-      "Upload one source video that meets the listed requirements, then describe the edit you want.",
-    videoConstraints: HAPPY_HORSE_VIDEO_CONSTRAINTS,
-  };
-}
-
-const ACTION_LABELS = Object.freeze({
-  edit: "Edit video",
-  extend: "Extend video",
-  process: "Process video",
-  translate: "Translate video",
-  upscale: "Upscale video",
-  watermark: "Remove watermark",
-});
-
-const PROMPT_LABELS = Object.freeze({
-  edit: "Describe how to edit the video",
-  extend: "Describe how to continue the video",
-  process: "Describe the result you want",
-});
-
-const CONTINUATION_FAMILIES = Object.freeze({
-  seedance: {
-    sourceModelIds: Object.freeze([
-      "seedance-v2.0-t2v",
-      "seedance-v2.0-i2v",
-      "seedance-2-t2v",
-      "seedance-2-i2v",
-      "seedance-v2.0-extend",
-      "seedance-2-extend",
-      "seedance-2-vip-extend",
-      "seedance-2-vip-extend-1080p",
-    ]),
-    sourceLabel: "Seedance 2.0 source video",
-    emptySourceMessage:
-      "Select a completed Seedance 2.0 video before continuing.",
-  },
-  veo31: {
-    sourceModelIds: Object.freeze([
-      "veo3.1-text-to-video",
-      "veo3.1-fast-text-to-video",
-      "veo3.1-image-to-video",
-      "veo3.1-fast-image-to-video",
-      "veo3.1-reference-to-video",
-    ]),
-    sourceDefaultResolutions: Object.freeze({
-      "veo3.1-text-to-video": "1080p",
-      "veo3.1-fast-text-to-video": "1080p",
-      "veo3.1-image-to-video": "1080p",
-      "veo3.1-fast-image-to-video": "1080p",
-    }),
-  },
-  grok: {
-    sourceModelIds: Object.freeze([
-      "grok-imagine-text-to-video",
-      "grok-imagine-image-to-video",
-    ]),
-    sourceLabel: "Grok Imagine source video",
-    emptySourceMessage:
-      "Select a completed Grok Imagine video before extending it.",
-  },
-});
-
-const CONTINUATION_TARGETS = Object.freeze({
-  "seedance-v2.0-extend": { family: "seedance" },
-  "seedance-2-extend": { family: "seedance" },
-  "seedance-2-vip-extend": { family: "seedance" },
-  "seedance-2-vip-extend-1080p": { family: "seedance" },
-  "veo3.1-extend-video": {
-    family: "veo31",
-    requiredSourceResolution: "720p",
-    sourceLabel: "Veo 3.1 or Fast 720p source video",
-    emptySourceMessage:
-      "Select a completed 720p Veo 3.1 or Veo 3.1 Fast video before extending it.",
-  },
-  "veo3.1-4k-video": {
-    family: "veo31",
-    sourceLabel: "Veo 3.1 or Fast source video",
-    emptySourceMessage:
-      "Select a completed Veo 3.1 or Veo 3.1 Fast video before creating a 4K version.",
-  },
-  "grok-imagine-extend": { family: "grok" },
-});
-
-const continuationSourceModelIds = new Map(
-  Object.entries(CONTINUATION_FAMILIES).map(([family, config]) => [
-    family, new Set(config.sourceModelIds),
-  ]),
-);
-
-export function isContinuationSourceModel(modelOrId, sourceModelId) {
-  const modelId = typeof modelOrId === "string" ? modelOrId : modelOrId?.id;
-  const family = CONTINUATION_TARGETS[modelId]?.family;
-  return continuationSourceModelIds.get(family)?.has(sourceModelId) || false;
-}
-
-const MIN_CLIENT_TIMESTAMP = Date.UTC(2000, 0, 1);
-const MAX_CLIENT_TIMESTAMP = Date.UTC(2101, 0, 1);
 
 function mergeInputs(modelInputs = {}, overrideInputs = {}) {
   const inputs = { ...modelInputs };
@@ -556,86 +344,13 @@ function getVideoToolCapabilities(model) {
   };
 }
 
-export function getVideoToolPresentation(model) {
-  const capabilities = getVideoToolCapabilities(model);
-  if (!capabilities) {
-    return {
-      actionLabel: ACTION_LABELS.process,
-      promptPlaceholder: PROMPT_LABELS.process,
-      promptRequired: false,
-      showPrompt: false,
-      summary: "Upload a source video to continue.",
-      uploadTitle: "Upload source video",
-      estimateCost: false,
-      guidance: "",
-      videoConstraints: null,
-    };
-  }
-
-  const showPrompt =
-    capabilities.hasPrompt ?? Boolean(capabilities.inputs?.prompt);
-  const promptRequired = showPrompt && Boolean(capabilities.promptRequired);
-  const operation = capabilities.operation || "process";
-  const promptLabel = PROMPT_LABELS[operation] || PROMPT_LABELS.process;
-
-  return {
-    actionLabel:
-      capabilities.actionLabel || ACTION_LABELS[operation] || ACTION_LABELS.process,
-    promptPlaceholder: promptRequired ? promptLabel : `${promptLabel} (optional)`,
-    promptRequired,
-    showPrompt,
-    summary:
-      capabilities.summary ||
-      capabilities.description ||
-      `${capabilities.name || "The selected tool"} is ready to process the video.`,
-    uploadTitle: `Upload source video for ${capabilities.name || "this tool"}`,
-    estimateCost: Boolean(capabilities.estimateCost),
-    guidance: capabilities.guidance || "",
-    videoConstraints: capabilities.videoConstraints || null,
-  };
-}
-
-export function resolveVideoUploadTransition({
-  mode,
-  currentModel,
-  defaultModel,
-}) {
-  const preservesSelection =
-    (mode === "v2v" && Boolean(currentModel)) ||
-    Boolean(currentModel?.inputs?.video_files);
-
-  if (preservesSelection) {
-    return {
-      clearImage: false,
-      clearPrompt: false,
-      mode,
-      model: currentModel,
-    };
-  }
-
-  return {
-    clearImage: mode === "i2v",
-    clearPrompt: true,
-    mode: "v2v",
-    model: defaultModel,
-  };
-}
-
-export function getVideoToolOptionDefinitions(model) {
+function getVideoToolOptionDefinitions(model) {
   const capabilities = getVideoToolCapabilities(model);
   if (!capabilities) return [];
 
   return Object.entries(capabilities.inputs || {})
     .filter(([, input]) => input.configurable)
     .map(([key, input]) => ({ key, ...input }));
-}
-
-export function getDefaultVideoToolOptions(model) {
-  const options = {};
-  for (const input of getVideoToolOptionDefinitions(model)) {
-    if (input.default !== undefined) options[input.key] = input.default;
-  }
-  return options;
 }
 
 export function serializeVideoToolOptions(model, values = {}) {
@@ -676,78 +391,4 @@ export function buildVideoToolPayload(model, params = {}) {
     ...payload,
     ...serializeVideoToolOptions(model, params.options),
   };
-}
-
-export function getContinuationConfig(modelOrId) {
-  const modelId = typeof modelOrId === "string" ? modelOrId : modelOrId?.id;
-  const target = CONTINUATION_TARGETS[modelId];
-  if (!target) return null;
-  const model = typeof modelOrId === "string" ? { id: modelId } : modelOrId;
-  const capabilities = getVideoToolCapabilities(model);
-
-  return {
-    ...CONTINUATION_FAMILIES[target.family],
-    ...target,
-    promptRequired: Boolean(capabilities?.promptRequired),
-  };
-}
-
-function normalizeRequestId(value) {
-  if (typeof value !== "string" && typeof value !== "number") return null;
-  if (typeof value === "number" && !Number.isFinite(value)) return null;
-
-  const requestId = String(value).trim();
-  if (!requestId) return null;
-
-  if (/^\d+$/.test(requestId)) {
-    const numericId = Number(requestId);
-    if (
-      Number.isFinite(numericId) &&
-      numericId >= MIN_CLIENT_TIMESTAMP &&
-      numericId < MAX_CLIENT_TIMESTAMP
-    ) {
-      return null;
-    }
-  }
-
-  return requestId;
-}
-
-function resolveContinuationRequestId(entry) {
-  if (!entry) return null;
-
-  for (const candidate of [entry.requestId, entry.request_id, entry.id]) {
-    const requestId = normalizeRequestId(candidate);
-    if (requestId) return requestId;
-  }
-
-  return null;
-}
-
-export function getCompatibleContinuationSources(modelOrId, history = []) {
-  const config = getContinuationConfig(modelOrId);
-  if (!config) return [];
-  const sources = [];
-
-  for (const entry of history) {
-    if (!entry?.url || !isContinuationSourceModel(modelOrId, entry.model)) continue;
-    const requestId = resolveContinuationRequestId(entry);
-    if (!requestId) continue;
-    if (config.requiredSourceResolution) {
-      const sourceResolution =
-        entry.resolution || config.sourceDefaultResolutions?.[entry.model];
-      if (
-        String(sourceResolution).toLowerCase() !==
-        config.requiredSourceResolution.toLowerCase()
-      ) {
-        continue;
-      }
-    }
-
-    sources.push(
-      entry.requestId === requestId ? entry : { ...entry, requestId },
-    );
-  }
-
-  return sources;
 }

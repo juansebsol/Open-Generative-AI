@@ -1,6 +1,6 @@
 import { createGroupedVideoRegistry } from "./groupedVideoRegistry.js";
 
-export const MINIMAX_FAMILY_NAMES = Object.freeze({
+const MINIMAX_FAMILY_NAMES = Object.freeze({
   "minimax-h3-max": "MiniMax H3 Max",
   "minimax-h3": "MiniMax H3",
   "minimax-hailuo-2.3": "Hailuo 2.3",
@@ -11,7 +11,6 @@ const FACET_OPTIONS = Object.freeze({
   profile: [
     { value: "standard", label: "Standard" },
     { value: "lora", label: "LoRA" },
-    { value: "spicy", label: "Spicy" },
   ],
   speed: [
     { value: "standard", label: "Standard" },
@@ -25,7 +24,7 @@ const registry = createGroupedVideoRegistry({
   facetLabels: FACET_LABELS,
   registerVariants(register) {
     // Standard/Pro and official/Open endpoints are selected by resolution, while
-    // speed and optional LoRA/Spicy profiles remain explicit generation choices.
+    // speed and the optional LoRA profile remain explicit generation choices.
     for (const familyId of ["minimax-hailuo-02", "minimax-hailuo-2.3"]) {
       for (const service of ["standard", "pro"]) {
         register(`${familyId}-${service}-t2v`, familyId, [null], { service });
@@ -49,9 +48,6 @@ const registry = createGroupedVideoRegistry({
     ]) {
       register(`minimax-h3-${stem}-lora`, "minimax-h3", workflowIds, { profile: "lora", service: "open" });
     }
-    register("minimax-h3-image-to-video-spicy", "minimax-h3", ["animate_image", "keyframes"], {
-      profile: "spicy", service: "open",
-    });
 
     register("minimax-h3-max-text-to-video", "minimax-h3-max", [null]);
     register("minimax-h3-max-image-to-video", "minimax-h3-max", ["animate_image", "keyframes"]);
@@ -62,18 +58,16 @@ const registry = createGroupedVideoRegistry({
 });
 
 export const {
-  workflowVariants: MINIMAX_WORKFLOW_VARIANTS,
   getConfiguration: getMiniMaxConfiguration,
   getVariants: getMiniMaxVariants,
   resolveVariant: resolveMiniMaxVariant,
-  getVariantOptions: getMiniMaxVariantOptions,
 } = registry;
 
 export const MINIMAX_MODEL_GROUP = Object.freeze({
   copyKey: "minimax",
   familyNames: MINIMAX_FAMILY_NAMES,
   configurations: registry.configurations,
-  workflowVariants: MINIMAX_WORKFLOW_VARIANTS,
+  workflowVariants: registry.workflowVariants,
   resolveVariant: resolveMiniMaxVariant,
-  getVariantOptions: getMiniMaxVariantOptions,
+  getVariantOptions: registry.getVariantOptions,
 });

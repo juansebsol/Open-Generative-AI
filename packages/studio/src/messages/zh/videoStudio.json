@@ -32,7 +32,6 @@
     "videoReadyRemoveWatermark": "视频已就绪 — 点击生成以去除水印",
     "motionOrEffect": "描述运动或特效",
     "motionOrEffectOptional": "描述运动或特效（可选）",
-    "optionalContinueVideo": "可选：描述如何继续此视频...",
     "describeVideo": "描述你想要创建的视频"
   },
   "dropdowns": {
@@ -40,8 +39,6 @@
     "source": "视频模式",
     "baseGeneration": "基础生成",
     "aspectRatio": "宽高比",
-    "effect": "特效",
-    "effectType": "特效类型",
     "duration": "时长",
     "resolution": "分辨率"
   },
@@ -50,13 +47,8 @@
     "generate": "生成",
     "generating": "生成中..."
   },
-  "extend": {
-    "continuingGeneration": "正在继续上一个 {family} 生成"
-  },
   "gallery": {
     "download": "下载",
-    "extend": "延长",
-    "extendSeedance": "使用 Seedance 2.0 延长功能延长此视频",
     "delete": "删除",
     "confirmDelete": "确定要删除此生成项吗？",
     "noPromptProvided": "未提供提示词",
@@ -80,9 +72,7 @@
     "uploadAtLeastOneReferenceImage": "请先上传至少一张参考图片。",
     "enterPromptToGenerate": "请输入提示词以生成视频。",
     "noVideoUrlReturned": "API 未返回视频链接",
-    "videoGenerationFailed": "视频生成失败",
-    "deleteItemFailed": "删除项目失败",
-    "noContinuationSource": "请选择兼容的 {family} 结果继续生成。"
+    "videoGenerationFailed": "视频生成失败"
   },
   "modelControls": {
     "modes": {
@@ -162,15 +152,10 @@
       "standard": "标准速度",
       "fast": "快速"
     },
-    "tools": "Seedance 视频工具",
     "profiles": {
       "standard": {
         "label": "标准版",
         "description": ""
-      },
-      "intl": {
-        "label": "国际版",
-        "description": "国际部署。"
       },
       "vip": {
         "label": "VIP 版",
@@ -180,33 +165,10 @@
         "label": "Mini 版",
         "description": "轻量模型。"
       },
-      "spicy": {
-        "label": "Spicy 版",
-        "description": "更鲜明的对比和运动效果。"
-      },
-      "mini_spicy": {
-        "label": "Mini Spicy 版",
-        "description": ""
-      },
       "legacy": {
         "label": "Seedance 2.0 API",
         "description": ""
-      },
-      "legacy_new": {
-        "label": "Seedance 2.0 New API",
-        "description": ""
       }
-    },
-    "continueGenerated": "续接 Seedance 2.0 结果",
-    "removeWatermark": "去除水印",
-    "toolNames": {
-      "continueGenerated": "续接 Seedance 2.0",
-      "removeWatermark": "去除水印"
-    },
-    "toolVariants": {
-      "standard": "标准版",
-      "vip": "VIP",
-      "pro": "Pro"
     },
     "editAudio": {
       "title": "新音频",
@@ -241,17 +203,6 @@
       "fast": "生成更快。",
       "lite": "费用更低。"
     },
-    "tools": "Veo 视频工具",
-    "toolNames": {
-      "continueGenerated": "续写 Veo 3.1",
-      "upscale": "创建 4K 副本"
-    },
-    "toolsHelp": "使用已生成的 Veo 3.1 视频。",
-    "sourceVideo": "源视频",
-    "sourceHelp": {
-      "continueGenerated": "请先使用 Veo 3.1 标准或快速模式生成 720p 视频。",
-      "upscale": "请先使用 Veo 3.1 标准或快速模式生成视频。"
-    },
     "adjustments": {
       "speed": "生成方式：{value}"
     }
@@ -267,7 +218,7 @@
       "fast": "更快生成。"
     },
     "provider": "自定义",
-    "providerHelp": "使用 LoRA 或 Spicy 模型。",
+    "providerHelp": "使用 LoRA。",
     "profiles": {
       "standard": {
         "label": "标准",
@@ -276,10 +227,6 @@
       "lora": {
         "label": "LoRA",
         "description": "应用自定义风格或角色。"
-      },
-      "spicy": {
-        "label": "Spicy",
-        "description": "用于图片动画的另一种模型。"
       }
     },
     "adjustments": {
@@ -315,10 +262,6 @@
       },
       "prime": {
         "label": "Prime",
-        "description": ""
-      },
-      "spicy": {
-        "label": "Spicy",
         "description": ""
       }
     },
@@ -467,23 +410,6 @@
           "spicy": "Spicy"
         }
       }
-    }
-  },
-  "sora": {
-    "provider": "生成方式",
-    "providerHelp": "",
-    "profiles": {
-      "standard": {
-        "label": "标准",
-        "description": "适合日常视频。"
-      },
-      "pro": {
-        "label": "Pro",
-        "description": "细节更丰富，最高 1080p。"
-      }
-    },
-    "adjustments": {
-      "profile": "生成方式：{value}"
     }
   },
   "ltx": {

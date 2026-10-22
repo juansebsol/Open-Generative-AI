@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback, useMemo, useId } from "react"
 import toast, { Toaster } from "react-hot-toast";
 import { generateVideo, generateI2V, processV2V, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
-import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import DrawModal from "./DrawModal.jsx";
 import ModelParameterControls from "./ModelParameterControls.jsx";
 import { VideoOptionControl, VideoSettingsControl } from "./VideoModelControls.jsx";
@@ -19,8 +18,6 @@ import {
   getAspectRatiosForI2VModel,
   getDurationsForI2VModel,
   getResolutionsForI2VModel,
-  getEffectsForI2VModel,
-  getDefaultEffectForI2VModel,
 } from "../models.js";
 import {
   getFamilyVariant,
@@ -28,8 +25,7 @@ import {
   videoModelMenuEntries as videoModelPickerEntries,
   videoModelMenuEntryByVariantId as videoModelPickerEntryByVariantId,
 } from "../modelFamilies.js";
-import { getSeedanceEndpointResolution, getSeedanceToolConfiguration } from "../seedanceModels.js";
-import { getVeoToolConfiguration } from "../veoModels.js";
+import { getSeedanceEndpointResolution } from "../seedanceModels.js";
 import { getGroupedVideoConfiguration, getGroupedVideoCopyKey, getGroupedVideoVariantOptions } from "../groupedVideoModels.js";
 import {
   getVideoCommonOptions,
@@ -41,12 +37,10 @@ import {
   planGroupedVideoSelection,
   getGroupedVideoSelectionAdjustments,
 } from "../groupedVideoParameters.js";
-import { migrateSeedanceResolutionSelection } from "../seedanceParameters.js";
 import { getVideoAspectRatioLabel, getVideoDurationLabel, getVideoModeDescription } from "../videoModelCopy.js";
 import {
   buildReferenceParams,
   getModelMediaCapabilities,
-  recordGenerationSource,
   shouldDisableVideoPrompt,
 } from "../modelCapabilities.js";
 import {
@@ -55,7 +49,6 @@ import {
   getSupplementalModelInputs,
   mergeModelParameterValues,
 } from "../modelParameters.js";
-import { getCompatibleContinuationSources, getContinuationConfig, isContinuationSourceModel } from "../videoToolCapabilities.js";
 import {
   appendVideoWorkflowMedia,
   buildVideoWorkflowMediaParams,
@@ -409,44 +402,26 @@ function getProviderStyle(provider) {
   switch (provider) {
     case "grok":
       return { text: "xI", bg: "bg-orange-500/10 text-orange-400 border-orange-500/25" };
-    case "openai":
-      return { text: "O", bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/25" };
     case "google":
       return { text: "G", bg: "bg-blue-500/10 text-blue-400 border-blue-500/25" };
     case "blackforest":
       return { text: "BF", bg: "bg-amber-500/10 text-amber-400 border-amber-500/25" };
     case "bytedance":
       return { text: "BD", bg: "bg-purple-500/10 text-purple-400 border-purple-500/25" };
-    case "midjourney":
-      return { text: "MJ", bg: "bg-indigo-500/10 text-indigo-400 border-indigo-500/25" };
     case "kling":
       return { text: "KL", bg: "bg-rose-500/10 text-rose-400 border-rose-500/25" };
     case "vidu":
       return { text: "VD", bg: "bg-cyan-500/10 text-cyan-400 border-cyan-500/25" };
     case "minimax":
       return { text: "MX", bg: "bg-pink-500/10 text-pink-400 border-pink-500/25" };
-    case "ideogram":
-      return { text: "ID", bg: "bg-yellow-500/10 text-yellow-400 border-yellow-500/25" };
-    case "luma":
-      return { text: "LM", bg: "bg-teal-500/10 text-teal-400 border-teal-500/25" };
     case "alibaba":
       return { text: "AL", bg: "bg-sky-500/10 text-sky-400 border-sky-500/25" };
     case "leonardoai":
       return { text: "LE", bg: "bg-violet-500/10 text-violet-400 border-violet-500/25" };
-    case "stability":
-      return { text: "SD", bg: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/25" };
     default:
       const name = provider ? provider.toUpperCase() : "AI";
       return { text: name.substring(0, 2), bg: "bg-primary/10 text-primary border-primary/25" };
   }
-}
-
-function seedanceToolLabel(tool, copy, includeAction = false) {
-  return [
-    includeAction ? copy.seedance.toolNames[tool.group] : null,
-    copy.seedance.toolVariants[tool.variant],
-    tool.resolution,
-  ].filter(Boolean).join(" · ");
 }
 
 function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
@@ -462,7 +437,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
     {
       id: "t2v",
       label: copy.categories.t2v,
-      entries: videoModelPickerEntries.filter((entry) => entry.variantsByMode.t2v && !getVeoToolConfiguration(entry.defaultVariant.model.id)),
+      entries: videoModelPickerEntries.filter((entry) => entry.variantsByMode.t2v),
     },
     {
       id: "i2v",
@@ -472,7 +447,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
     {
       id: "v2v",
       label: copy.categories.v2v,
-      entries: videoModelPickerEntries.filter((entry) => entry.variantsByMode.v2v || getVeoToolConfiguration(entry.defaultVariant.model.id)),
+      entries: videoModelPickerEntries.filter((entry) => entry.variantsByMode.v2v),
     },
   ];
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -516,27 +491,13 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
     // 2. Filter by search query
     return entry.searchText.includes(lf);
   });
-  const selectedTool = getSeedanceToolConfiguration(selectedModel);
-  const selectedVeoTool = getVeoToolConfiguration(selectedModel);
-  const mainEntries = [];
-  const seedanceToolsByGroup = { continueGenerated: [], removeWatermark: [] };
-  const veoTools = [];
-  for (const entry of filtered) {
-    const tool = getSeedanceToolConfiguration(entry.defaultVariant.model.id);
-    const veoTool = getVeoToolConfiguration(entry.defaultVariant.model.id);
-    if (tool) seedanceToolsByGroup[tool.group][tool.order] = entry;
-    else if (veoTool) veoTools[veoTool.order] = entry;
-    else mainEntries.push(entry);
-  }
-
   const getIconColor = (family) => {
     if (family.id.includes("kling")) return "bg-blue-500/10 text-blue-400 border-blue-500/10";
     if (family.id.includes("veo")) return "bg-purple-500/10 text-purple-400 border-purple-500/10";
-    if (family.id.includes("sora")) return "bg-rose-500/10 text-rose-400 border-rose-500/10";
     return "bg-primary/10 text-primary border-primary/10";
   };
 
-  const renderItem = (entry, label = entry.name) => {
+  const renderItem = (entry) => {
     const { family } = entry;
     const isSelected = selectedEntry === entry;
     return (
@@ -560,7 +521,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
         </div>
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="text-xs font-bold text-white tracking-tight truncate">
-            {label}
+            {entry.name}
           </span>
           <div className="flex items-center gap-1.5">
             {selectedProvider === "all" && family.provider_name && (
@@ -682,34 +643,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
               No models found
             </div>
           ) : (
-            <>
-              {mainEntries.map((entry) => renderItem(entry))}
-              {Object.values(seedanceToolsByGroup).some((entries) => entries.length > 0) && (
-                <details open={Boolean(search.trim()) || Boolean(selectedTool)} className="mt-2 border-t border-white/5 pt-2">
-                  <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-white/50">
-                    {copy.seedance.tools}
-                  </summary>
-                  {["continueGenerated", "removeWatermark"].map((group) => {
-                    const entries = seedanceToolsByGroup[group].filter(Boolean);
-                    return entries.length > 0 && (
-                      <div key={group} role="group" aria-label={copy.seedance[group]} className="pt-2">
-                        <p className="px-3 pb-1 text-[11px] font-semibold text-white/60">{copy.seedance[group]}</p>
-                        {entries.map((entry) => renderItem(entry, seedanceToolLabel(getSeedanceToolConfiguration(entry.defaultVariant.model.id), copy)))}
-                      </div>
-                    );
-                  })}
-                </details>
-              )}
-              {veoTools.length > 0 && (
-                <details open={Boolean(search.trim()) || Boolean(selectedVeoTool)} className="mt-2 border-t border-white/5 pt-2">
-                  <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-white/50">{copy.veo.tools}</summary>
-                  <p className="px-3 pb-2 text-[11px] text-white/45">{copy.veo.toolsHelp}</p>
-                  {veoTools.filter(Boolean).map((entry) => renderItem(
-                    entry, copy.veo.toolNames[getVeoToolConfiguration(entry.defaultVariant.model.id).key],
-                  ))}
-                </details>
-              )}
-            </>
+            filtered.map((entry) => renderItem(entry))
           )}
         </div>
       </div>
@@ -724,25 +658,18 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+const PERSIST_KEY = "hg_video_studio_persistent";
+
 export default function VideoStudio({
-  apiKey,
   onGenerationStart,
   onGenerationEnd,
   onGenerationComplete,
   onGenerationError,
-  historyItems,
-  onDeleteHistoryItem,
   droppedFiles,
   onFilesHandled,
   locale = "en",
 }) {
   const copy = useMemo(() => resolveCopy(en, zh, locale), [locale]);
-  const LEGACY_PERSIST_KEY = "hg_video_studio_persistent";
-  const PERSIST_KEY = scopedPersistKey(LEGACY_PERSIST_KEY, apiKey);
-  useEffect(() => {
-    migrateLegacyPersistKey(LEGACY_PERSIST_KEY, PERSIST_KEY);
-  }, [PERSIST_KEY]);
-
   // ── generation state ──
   const [imageMode, setImageMode] = useState(false); // i2v
   const [v2vMode, setV2vMode] = useState(false);
@@ -765,7 +692,6 @@ export default function VideoStudio({
   const [selectedQuality, setSelectedQuality] = useState(
     defaultModel.inputs?.quality?.default || "",
   );
-  const [selectedEffect, setSelectedEffect] = useState("");
   const [modelParameterValues, setModelParameterValues] = useState(() =>
     createModelParameterValues(defaultModel),
   );
@@ -779,7 +705,6 @@ export default function VideoStudio({
   const [showDuration, setShowDuration] = useState(true);
   const [showResolution, setShowResolution] = useState(false);
   const [showQuality, setShowQuality] = useState(false);
-  const [showEffect, setShowEffect] = useState(false);
 
   // ── uploads ──
   const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
@@ -807,8 +732,6 @@ export default function VideoStudio({
   const [canvasModel, setCanvasModel] = useState(null);
   const [showCanvas, setShowCanvas] = useState(false);
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
-  const [generationSources, setGenerationSources] = useState({});
-  const [selectedVeoSourceId, setSelectedVeoSourceId] = useState("");
 
   // ── history ──
   const [localHistory, setLocalHistory] = useState([]);
@@ -862,19 +785,11 @@ export default function VideoStudio({
   };
 
   // ── derived data ──
-  const history = historyItems ?? localHistory;
+  const history = localHistory;
 
-  // See ImageStudio's handleDeleteEntry: when historyItems is server-backed
-  // (persisted history from the host app), localHistory isn't what's rendered,
-  // so removal has to go through the parent to delete server-side and
-  // update the same state `history` reads from.
-  const handleDeleteEntry = useCallback(async (entry, idx) => {
-    if (historyItems && onDeleteHistoryItem) {
-      await onDeleteHistoryItem(entry);
-    } else {
-      setLocalHistory((prev) => prev.filter((_, i) => i !== idx));
-    }
-  }, [historyItems, onDeleteHistoryItem]);
+  const handleDeleteEntry = useCallback((idx) => {
+    setLocalHistory((prev) => prev.filter((_, i) => i !== idx));
+  }, []);
 
   const getCurrentAspectRatios = useCallback(
     (id) =>
@@ -923,7 +838,6 @@ export default function VideoStudio({
         setShowDuration(options.durations.length > 0);
         setShowResolution(options.resolutions.length > 0);
         setShowQuality(options.qualities.length > 0);
-        setShowEffect(false);
         if (values.aspectRatio !== undefined) setSelectedAr(values.aspectRatio);
         if (values.duration !== undefined) setSelectedDuration(values.duration);
         const resolution = values.resolution ?? getSeedanceEndpointResolution(modelId);
@@ -931,12 +845,11 @@ export default function VideoStudio({
         if (values.quality !== undefined) setSelectedQuality(values.quality);
         return;
       }
-      if (isV2vMode || getVeoToolConfiguration(modelId)) {
+      if (isV2vMode) {
         setShowAr(false);
         setShowDuration(false);
         setShowResolution(false);
         setShowQuality(false);
-        setShowEffect(false);
         return;
       }
 
@@ -979,15 +892,6 @@ export default function VideoStudio({
       } else {
         setSelectedQuality("");
         setShowQuality(false);
-      }
-
-      const effects = isImageMode ? getEffectsForI2VModel(modelId) : [];
-      if (effects.length > 0) {
-        setSelectedEffect(getDefaultEffectForI2VModel(modelId) || effects[0]);
-        setShowEffect(true);
-      } else {
-        setSelectedEffect("");
-        setShowEffect(false);
       }
     },
     [],
@@ -1035,17 +939,7 @@ export default function VideoStudio({
     ],
   );
   const selectedPickerEntry = videoModelPickerEntryByVariantId.get(selectedModel);
-  const selectedTool = getSeedanceToolConfiguration(selectedModel);
-  const selectedVeoTool = getVeoToolConfiguration(selectedModel);
-  const veoContinuation = selectedVeoTool ? getContinuationConfig(selectedModel) : null;
-  const veoSources = useMemo(() => selectedVeoTool
-    ? getCompatibleContinuationSources(selectedModel, history) : [],
-  [selectedModel, selectedVeoTool, history]);
-  const selectedVeoSource = veoSources.find((entry) => entry.requestId === selectedVeoSourceId) || veoSources[0];
-  const selectedPickerLabel = selectedTool
-    ? seedanceToolLabel(selectedTool, copy, true)
-    : selectedVeoTool ? copy.veo.toolNames[selectedVeoTool.key]
-    : selectedPickerEntry?.name || selectedFamily.name;
+  const selectedPickerLabel = selectedPickerEntry?.name || selectedFamily.name;
   const getSelectionPlan = useCallback((options = {}) => planGroupedVideoSelection({
     familyId: selectedFamilyId,
     workflowId: selectedWorkflowId,
@@ -1133,7 +1027,7 @@ export default function VideoStudio({
         };
       })
     : [], [groupedConfiguration, workflowFamily, getSelectionPlan, describeSelectionAdjustments, groupCopy]);
-  const promptDisabled = Boolean(selectedVeoTool && !selectedVariant?.model.inputs?.prompt) || shouldDisableVideoPrompt(
+  const promptDisabled = shouldDisableVideoPrompt(
     selectedVariant?.model,
     currentFamilyMode,
   );
@@ -1264,7 +1158,7 @@ export default function VideoStudio({
         let restoredResolution = data.selectedResolution;
         if (data.selectedModel) {
           const restored = resolvePersistedVideoWorkflowSelection(
-            migrateSeedanceResolutionSelection(data.selectedModel, data.selectedResolution),
+            data.selectedModel,
             data.selectedWorkflowId || null,
             { hasEndFrame: Boolean(data.uploadedEndImageUrl || data.uploadedImageUrls?.[1]) },
           );
@@ -1298,8 +1192,6 @@ export default function VideoStudio({
         if (data.selectedDuration) setSelectedDuration(data.selectedDuration);
         if (restoredResolution) setSelectedResolution(restoredResolution);
         if (data.selectedQuality) setSelectedQuality(data.selectedQuality);
-        if (data.selectedEffect) setSelectedEffect(data.selectedEffect);
-        if (data.selectedVeoSourceId) setSelectedVeoSourceId(data.selectedVeoSourceId);
         if (data.uploadedImageUrls) {
           setUploadedImageUrls(data.uploadedImageUrls);
         } else if (data.uploadedImageUrl) {
@@ -1376,8 +1268,6 @@ export default function VideoStudio({
           selectedDuration,
           selectedResolution,
           selectedQuality,
-          selectedEffect,
-          selectedVeoSourceId,
           modelParameterValues,
           uploadedImageUrls,
           uploadedEndImageUrl,
@@ -1403,8 +1293,6 @@ export default function VideoStudio({
     selectedDuration,
     selectedResolution,
     selectedQuality,
-    selectedEffect,
-    selectedVeoSourceId,
     modelParameterValues,
     uploadedImageUrls,
     uploadedEndImageUrl,
@@ -1549,7 +1437,7 @@ export default function VideoStudio({
         const progress = new Array(selectedFiles.length).fill(0);
         const results = await Promise.allSettled(
           selectedFiles.map((file, index) =>
-            uploadFile(apiKey, file, (value) => {
+            uploadFile(file, (value) => {
               progress[index] = value;
               setProgress(
                 Math.round(progress.reduce((sum, item) => sum + item, 0) / progress.length),
@@ -1579,7 +1467,7 @@ export default function VideoStudio({
         setProgress(0);
       }
     },
-    [apiKey, copy.errors.labelExceedsLimit, copy.errors.labelUploadFailed],
+    [copy.errors.labelExceedsLimit, copy.errors.labelUploadFailed],
   );
 
   const uploadWorkflowSlotFiles = useCallback(
@@ -1824,7 +1712,7 @@ export default function VideoStudio({
     setEndImageProgress(0);
     const selectionAtStart = { ...selectionRef.current };
     try {
-      const url = await uploadFile(apiKey, file, (pct) => {
+      const url = await uploadFile(file, (pct) => {
         setEndImageProgress(pct);
       });
       const latestModel = videoModelCatalog.variantById.get(
@@ -1932,8 +1820,7 @@ export default function VideoStudio({
         return;
       }
       const target = category !== "all"
-        ? category === "v2v" && getVeoToolConfiguration(defaultVariant.model.id)
-          ? defaultVariant : variantsByMode[category]
+        ? variantsByMode[category]
         : variantsByMode[currentFamilyMode] || defaultVariant;
       if (!target) return;
 
@@ -2057,9 +1944,7 @@ export default function VideoStudio({
       workflowId: selectedWorkflowId,
       modelParameterValues: { ...generationParameterValues },
     } : {};
-    const isExtendMode = currentModel?.requiresRequestId;
     const capabilities = getModelMediaCapabilities(currentModel);
-    const requestSource = selectedVeoTool ? selectedVeoSource : generationSources[selectedFamily.id];
     const trimmedPrompt = promptDisabled ? "" : prompt.trim();
     const workflowMedia = selectedWorkflowId
       ? activeWorkflowMediaDraft || {}
@@ -2082,7 +1967,7 @@ export default function VideoStudio({
       alert(`${selectedFamily.name} does not support audio references.`);
       return;
     }
-    if ((currentModel?.promptRequired || veoContinuation?.promptRequired) && !trimmedPrompt) {
+    if (currentModel?.promptRequired && !trimmedPrompt) {
       alert(copy.errors.noPromptForModel);
       return;
     }
@@ -2104,11 +1989,6 @@ export default function VideoStudio({
       }
       if (currentModel?.imageField && !currentModel?.imageOptional && !uploadedImageUrl) {
         alert(copy.errors.uploadReferenceImageForMotion);
-        return;
-      }
-    } else if (isExtendMode) {
-      if (!requestSource?.requestId || (selectedFamily.id === "seedance-2" && !isContinuationSourceModel(currentModel, requestSource.modelId))) {
-        alert(copy.errors.noContinuationSource.replace("{family}", selectedFamily.name));
         return;
       }
     } else if (imageMode) {
@@ -2151,10 +2031,10 @@ export default function VideoStudio({
         if (currentModel?.hasPrompt && trimmedPrompt) {
           v2vParams.prompt = trimmedPrompt;
         }
-        res = await processV2V(apiKey, v2vParams);
+        res = await processV2V(v2vParams);
         if (!res?.url) throw new Error(copy.errors.noVideoUrlReturned);
 
-        const genId = res.request_id || res.id || Date.now().toString();
+        const genId = res.id || Date.now().toString();
         const entry = {
           id: genId,
           url: res.url,
@@ -2187,15 +2067,11 @@ export default function VideoStudio({
         const resolutions = getResolutionsForI2VModel(selectedModel);
         if (!grouped && resolutions.length > 0) i2vParams.resolution = selectedResolution;
         if (!grouped && selectedQuality) i2vParams.quality = selectedQuality;
-        if (showEffect && selectedEffect) i2vParams.name = selectedEffect;
 
-        res = await generateI2V(apiKey, i2vParams);
+        res = await generateI2V(i2vParams);
         if (!res?.url) throw new Error(copy.errors.noVideoUrlReturned);
 
-        const genId = res.request_id || res.id || Date.now().toString();
-        setGenerationSources((sources) =>
-          recordGenerationSource(sources, selectedFamily.id, genId, selectedModel),
-        );
+        const genId = res.id || Date.now().toString();
         const entry = {
           id: genId,
           url: res.url,
@@ -2218,7 +2094,7 @@ export default function VideoStudio({
             type: "video",
           });
       } else {
-        // T2V (including extend mode)
+        // T2V
         const params = {
           model: selectedModel,
           ...buildSupplementalInputPayload(currentModel, generationParameterValues),
@@ -2227,31 +2103,24 @@ export default function VideoStudio({
         };
         if (trimmedPrompt) params.prompt = trimmedPrompt;
 
-        if (isExtendMode) {
-          params.request_id = requestSource.requestId;
-        } else if (!grouped) {
-          params.aspect_ratio = selectedAr;
-        }
+        if (!grouped) params.aspect_ratio = selectedAr;
 
         const durations = getDurationsForModel(selectedModel);
         if (!grouped && durations.length > 0) params.duration = selectedDuration;
         const resolutions = getResolutionsForVideoModel(selectedModel);
         if (!grouped && resolutions.length > 0) params.resolution = selectedResolution;
-        if (!grouped && !selectedVeoTool && selectedQuality) params.quality = selectedQuality;
+        if (!grouped && selectedQuality) params.quality = selectedQuality;
 
-        res = await generateVideo(apiKey, params);
+        res = await generateVideo(params);
         if (!res?.url) throw new Error(copy.errors.noVideoUrlReturned);
 
-        const genId = res.request_id || res.id || Date.now().toString();
-        setGenerationSources((sources) =>
-          recordGenerationSource(sources, selectedFamily.id, genId, selectedModel),
-        );
+        const genId = res.id || Date.now().toString();
         const entry = {
           id: genId,
           url: res.url,
           prompt: trimmedPrompt,
           model: selectedModel,
-          ...(!grouped && !selectedVeoTool ? {
+          ...(!grouped ? {
             aspect_ratio: selectedAr,
             duration: selectedDuration,
           } : {}),
@@ -2278,7 +2147,6 @@ export default function VideoStudio({
       onGenerationEnd?.();
     }
   }, [
-    apiKey,
     copy,
     prompt,
     promptDisabled,
@@ -2291,18 +2159,12 @@ export default function VideoStudio({
     selectedDuration,
     selectedResolution,
     selectedQuality,
-    selectedEffect,
     modelParameterValues,
-    showEffect,
     uploadedImageUrls,
     uploadedEndImageUrl,
     uploadedVideoUrls,
     uploadedAudioUrls,
     activeWorkflowMediaDraft,
-    generationSources,
-    selectedVeoTool,
-    selectedVeoSource,
-    veoContinuation,
     mediaUploading,
     getCurrentModel,
     addToLocalHistory,
@@ -2334,33 +2196,8 @@ export default function VideoStudio({
     setTimeout(() => textareaRef.current?.focus(), 50);
   }, [applyUserSelectedVariant, resetToPromptBar]);
 
-  // Extending needs a provider route for the extend model; it is hidden when
-  // none of the configured providers can continue a previous generation.
-  const canExtendSeedance2 = Boolean(videoModelCatalog.variantById.get("seedance-2-extend"));
-
-  const handleExtend = useCallback((requestId, sourceModelId) => {
-    if (!requestId || !canExtendSeedance2) return;
-    resetToPromptBar();
-    setPrompt("");
-    setUploadedImageUrls([]);
-    setUploadedEndImageUrl(null);
-    setUploadedVideoUrls([]);
-    setUploadedAudioUrls([]);
-    const family = videoModelCatalog.familyById.get("seedance-2");
-    const target = videoModelCatalog.variantById.get("seedance-2-extend");
-    setGenerationSources((sources) =>
-      recordGenerationSource(sources, family.id, requestId, sourceModelId),
-    );
-    applyUserSelectedVariant(target, "t2v", family);
-    setTimeout(() => textareaRef.current?.focus(), 50);
-  }, [applyUserSelectedVariant, canExtendSeedance2, resetToPromptBar]);
-
   // ── derived UI values ────────────────────────────────────────────────────
   const currentModelObj = selectedVariant?.model;
-  const isExtendMode = currentModelObj?.requiresRequestId;
-  const continuationSource = generationSources[selectedFamily.id];
-  const hasContinuationSource = continuationSource?.requestId &&
-    (!selectedTool || isContinuationSourceModel(currentModelObj, continuationSource.modelId));
   const isMotionControlModel = isMotionControlSelection(selectedModel, v2vMode);
   const workflowMediaConfig = selectedWorkflowId
     ? getVideoWorkflowMediaConfig(currentModelObj, selectedWorkflowId)
@@ -2415,11 +2252,7 @@ export default function VideoStudio({
             ? currentModelObj?.promptRequired
               ? copy.placeholders.motionOrEffect
               : copy.placeholders.motionOrEffectOptional
-            : isExtendMode
-              ? veoContinuation?.promptRequired
-                ? copy.placeholders.continueVideo
-                : copy.placeholders.optionalContinueVideo
-              : copy.placeholders.describeVideo;
+            : copy.placeholders.describeVideo;
 
   const {
     triggerRef: workflowTriggerRef,
@@ -2451,7 +2284,6 @@ export default function VideoStudio({
         {history.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 animate-fade-in-up">
             {history.map((entry, idx) => {
-              const isSeedance2 = canExtendSeedance2 && isContinuationSourceModel("seedance-2-extend", entry.model);
               return (
                 <div
                   key={entry.id || idx}
@@ -2491,30 +2323,13 @@ export default function VideoStudio({
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
                       </svg>
                     </button>
-                    {isSeedance2 && (
-                      <button
-                        type="button"
-                        title={copy.gallery.extendSeedance}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleExtend(entry.id, entry.model);
-                        }}
-                        className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    )}
                     <button
                       type="button"
                       title={copy.gallery.delete}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (confirm(copy.gallery.confirmDelete)) {
-                          handleDeleteEntry(entry, idx).catch((err) => {
-                            onGenerationError?.(err.message || copy.errors.deleteItemFailed);
-                          });
+                          handleDeleteEntry(idx);
                         }
                       }}
                       className="p-2 bg-black/60 backdrop-blur-md rounded-full text-red-400 hover:bg-red-500 hover:text-white transition-all border border-white/10"
@@ -2537,20 +2352,13 @@ export default function VideoStudio({
                         onSelect: () =>
                           downloadFile(entry.url, `video-${entry.id || idx}.mp4`),
                       },
-                      isSeedance2 && {
-                        kind: "extend",
-                        label: copy.gallery.extend,
-                        onSelect: () => handleExtend(entry.id, entry.model),
-                      },
                       {
                         kind: "delete",
                         label: copy.gallery.delete,
                         danger: true,
                         onSelect: () => {
                           if (confirm(copy.gallery.confirmDelete)) {
-                            handleDeleteEntry(entry, idx).catch((err) => {
-                              onGenerationError?.(err.message || copy.errors.deleteItemFailed);
-                            });
+                            handleDeleteEntry(idx);
                           }
                         },
                       },
@@ -2587,18 +2395,16 @@ export default function VideoStudio({
             <EmptyStateCards />
 
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-center px-4 flex flex-col items-center">
-              {!selectedTool && !selectedVeoTool && <span className="text-white font-black uppercase text-xl sm:text-3xl tracking-wide mb-1 opacity-90">{copy.empty.heading}</span>}
+              <span className="text-white font-black uppercase text-xl sm:text-3xl tracking-wide mb-1 opacity-90">{copy.empty.heading}</span>
               <span className="text-[#22d3ee] font-black uppercase text-2xl sm:text-4xl sm:mt-1 tracking-tight">
-                {selectedTool || selectedVeoTool || selectedPickerEntry?.groupedVideo ? selectedPickerLabel : selectedFamily.name}
+                {selectedPickerEntry?.groupedVideo ? selectedPickerLabel : selectedFamily.name}
               </span>
             </h1>
-            {!selectedTool && !selectedVeoTool && (
-              <p className="text-white/40 text-xs sm:text-sm font-medium tracking-wide text-center max-w-lg leading-relaxed px-4">
-                {groupedConfiguration
-                  ? getVideoModeDescription(selectedVariant.model, selectedWorkflowId, groupCopy)
-                  : copy.empty.subtitle}
-              </p>
-            )}
+            <p className="text-white/40 text-xs sm:text-sm font-medium tracking-wide text-center max-w-lg leading-relaxed px-4">
+              {groupedConfiguration
+                ? getVideoModeDescription(selectedVariant.model, selectedWorkflowId, groupCopy)
+                : copy.empty.subtitle}
+            </p>
           </div>
         )}
       </div>
@@ -2807,7 +2613,6 @@ export default function VideoStudio({
 
             {/* Prompt textarea */}
             <div className="flex-1 flex flex-col gap-1">
-              {!(selectedVeoTool && promptDisabled) && (
               <PromptTextarea
                 ref={textareaRef}
                 value={prompt}
@@ -2815,47 +2620,8 @@ export default function VideoStudio({
                 placeholder={promptPlaceholder}
                 disabled={promptDisabled}
               />
-              )}
             </div>
           </div>
-
-          {/* Extend banner */}
-          {selectedVeoTool ? (
-            <div className="mx-3 rounded-lg border border-primary/10 bg-primary/5 px-3 py-2">
-              {selectedVeoSource ? (
-                <label className="flex min-w-0 items-center gap-3 text-xs text-white/70">
-                  <span className="shrink-0">{copy.veo.sourceVideo}</span>
-                  <select
-                    className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#17191c] px-2 py-2 text-xs text-white"
-                    value={selectedVeoSource.requestId}
-                    onChange={(event) => setSelectedVeoSourceId(event.target.value)}
-                  >
-                    {veoSources.map((entry, index) => (
-                      <option key={entry.requestId} value={entry.requestId}>{index + 1}. {entry.prompt || "Veo 3.1"}</option>
-                    ))}
-                  </select>
-                </label>
-              ) : (
-                <p className="text-xs text-white/60">{copy.veo.sourceHelp[selectedVeoTool.key]}</p>
-              )}
-            </div>
-          ) : isExtendMode && (
-            <div className="flex items-center gap-2 px-3 py-1.5 mx-3 bg-primary/5 border border-primary/10 rounded-lg text-[10px] text-primary/80 font-medium tracking-tight">
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-              <span>{hasContinuationSource
-                ? copy.extend.continuingGeneration.replace('{family}', selectedFamily.name)
-                : copy.errors.noContinuationSource.replace("{family}", selectedFamily.name)}</span>
-            </div>
-          )}
 
           {groupedConfiguration && selectedVariant.model.aspectRatioMode === "inherited" && (
             <p className="px-2 text-[10px] text-white/40">{groupCopy.inheritedFormat}</p>
@@ -3132,59 +2898,6 @@ export default function VideoStudio({
                 </div>
               )}
 
-              {/* Effect btn */}
-              {showEffect && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={toggleDropdown("effect")}
-                    className={promptControlClassName({
-                      active: openDropdown === "effect",
-                    })}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="opacity-40 text-white"
-                    >
-                      <path d="M5 3l14 9-14 9V3z" />
-                    </svg>
-                    <span className={`${PROMPT_CONTROL_LABEL_CLASS} max-w-[140px] truncate`}>
-                      {selectedEffect || copy.dropdowns.effect}
-                    </span>
-                  </button>
-                  {openDropdown === "effect" && (
-                    <PromptPopover
-                      onClick={(e) => e.stopPropagation()}
-                      className="min-w-[200px]"
-                    >
-                      <PromptPopoverHeader>
-                        {copy.dropdowns.effectType}
-                      </PromptPopoverHeader>
-                      <PromptMenuList>
-                        {getEffectsForI2VModel(selectedModel).map((eff) => (
-                          <PromptMenuItem
-                            key={eff}
-                            selected={selectedEffect === eff}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedEffect(eff);
-                              setOpenDropdown(null);
-                            }}
-                          >
-                            {eff}
-                          </PromptMenuItem>
-                        ))}
-                      </PromptMenuList>
-                    </PromptPopover>
-                  )}
-                </div>
-              )}
-
               {/* Duration btn */}
               {groupedConfiguration && (
                 <VideoOptionControl
@@ -3322,7 +3035,7 @@ export default function VideoStudio({
             {/* Generate button */}
             <PromptAction
               onClick={handleGenerate}
-              disabled={generating || mediaUploading || (selectedTool?.group === "continueGenerated" && !hasContinuationSource) || (selectedVeoTool && !selectedVeoSource)}
+              disabled={generating || mediaUploading}
             >
               {generating ? (
                 <>
@@ -3373,7 +3086,6 @@ export default function VideoStudio({
       <DrawModal
         isOpen={isDrawModalOpen}
         onClose={() => setIsDrawModalOpen(false)}
-        apiKey={apiKey}
         batchSize={1}
         onAddHistoryItem={handleDrawReference}
       />

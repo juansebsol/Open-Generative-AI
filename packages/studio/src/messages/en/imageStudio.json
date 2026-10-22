@@ -31,7 +31,6 @@
     "download": "Download",
     "delete": "Delete",
     "deleteConfirm": "Are you sure you want to delete this generated item?",
-    "deleteFailed": "Failed to delete item",
     "noPrompt": "No prompt provided",
     "modelFallback": "Image Studio"
   },
@@ -44,7 +43,6 @@
     "placeholderI2I": "Describe how to transform this image (optional)",
     "placeholderT2I": "Describe the image you want to create",
     "swapFaceLabel": "Swap Face",
-    "effectFallback": "Effect",
     "drawButton": "Draw",
     "generating": "Generating...",
     "generateButton": "Generate"
@@ -52,8 +50,7 @@
   "popovers": {
     "model": "Model",
     "aspectRatio": "Aspect Ratio",
-    "resolution": "Resolution",
-    "effectType": "Effect Type"
+    "resolution": "Resolution"
   },
   "errors": {
     "noImageReferenceSupport": "{name} does not support image references.",

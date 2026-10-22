@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { processRecast, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
-import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
 } from "./MobileGenerationActions.jsx";
@@ -479,24 +478,18 @@ const ImageIcon = ({
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
+const PERSIST_KEY = "hg_recast_studio_persistent";
+
 export default function RecastStudio({
-  apiKey,
   onGenerationStart,
   onGenerationEnd,
   onGenerationComplete,
   onGenerationError,
-  historyItems,
   droppedFiles,
   onFilesHandled,
   locale = "en",
 }) {
   const copy = resolveCopy(en, zh, locale);
-  const LEGACY_PERSIST_KEY = "hg_recast_studio_persistent";
-  const PERSIST_KEY = scopedPersistKey(LEGACY_PERSIST_KEY, apiKey);
-  useEffect(() => {
-    migrateLegacyPersistKey(LEGACY_PERSIST_KEY, PERSIST_KEY);
-  }, [PERSIST_KEY]);
-
   // ── Model state ───────────────────────────────────────────────────────────
   const firstModel = recastModels[0];
   const [selectedModelId, setSelectedModelId] = useState(firstModel?.id ?? "");
@@ -568,7 +561,7 @@ export default function RecastStudio({
 
   // ── History ───────────────────────────────────────────────────────────────
   const [internalHistory, setInternalHistory] = useState([]);
-  const history = historyItems ?? internalHistory;
+  const history = internalHistory;
 
   // ── Dropdown state ────────────────────────────────────────────────────────
   const [openDropdown, setOpenDropdown] = useState(null); // 'model' | 'aspect' | 'orientation' | 'assets' | null
@@ -685,7 +678,7 @@ export default function RecastStudio({
       setVideoState(UPLOAD_STATE.UPLOADING);
       setVideoProgress(0);
       try {
-        const url = await uploadFile(apiKey, file, (pct) => setVideoProgress(pct));
+        const url = await uploadFile(file, (pct) => setVideoProgress(pct));
         setVideoUrl(url);
         setVideoName(file.name);
         setVideoState(UPLOAD_STATE.READY);
@@ -703,7 +696,7 @@ export default function RecastStudio({
         setVideoProgress(0);
       }
     },
-    [apiKey],
+    [],
   );
 
   const handlePromptInput = (e) => {
@@ -719,7 +712,7 @@ export default function RecastStudio({
       setImageState(UPLOAD_STATE.UPLOADING);
       setImageProgress(0);
       try {
-        const url = await uploadFile(apiKey, file, (pct) => setImageProgress(pct));
+        const url = await uploadFile(file, (pct) => setImageProgress(pct));
         setImageUrl(url);
         setImageName(file.name);
         setImageState(UPLOAD_STATE.READY);
@@ -737,7 +730,7 @@ export default function RecastStudio({
         setImageProgress(0);
       }
     },
-    [apiKey],
+    [],
   );
 
   // ── Handle Dropped Files ────────────────────────────────────────────────────
@@ -809,7 +802,7 @@ export default function RecastStudio({
         params.character_orientation = characterOrientation;
       }
 
-      const res = await processRecast(apiKey, params);
+      const res = await processRecast(params);
 
       if (!res?.url) throw new Error("No video URL returned by API");
 
@@ -822,7 +815,7 @@ export default function RecastStudio({
         timestamp: new Date().toISOString(),
       };
 
-      if (!historyItems) addToInternalHistory(entry);
+      addToInternalHistory(entry);
 
       // Add to assets
       setAssetResults((prev) => {

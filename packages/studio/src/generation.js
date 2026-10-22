@@ -1,4 +1,4 @@
-import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getRecastModelById, getLipSyncModelById, getAudioModelById, getMotionControlModelById } from './models.js';
+import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getRecastModelById, getLipSyncModelById, getAudioModelById } from './models.js';
 import {
     buildVideoToolPayload,
     serializeVideoToolOptions,
@@ -13,9 +13,6 @@ import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
 // Studio entry points. Each builds a payload in the shared studio vocabulary
 // and hands it to the provider runner, which picks fal / WaveSpeed / a direct
 // provider / a local engine based on the visitor's configured keys.
-//
-// The first `apiKey` argument is kept for call-site compatibility only; keys
-// are read per provider from Settings -> Providers.
 
 function assertRequiredPrompt(model, params) {
     if (model?.promptRequired && !String(params.prompt || '').trim()) {
@@ -38,7 +35,7 @@ function submitAndPoll(endpoint, payload, onRequestId, maxAttempts = 60) {
     return runEndpoint(endpoint, payload, { onRequestId, maxAttempts, interval: POLL_INTERVAL_MS });
 }
 
-export async function generateImage(apiKey, params) {
+export async function generateImage(params) {
     const modelInfo = getModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const payload = {
@@ -59,7 +56,7 @@ export async function generateImage(apiKey, params) {
     return submitAndPoll(endpoint, payload, params.onRequestId, 150);
 }
 
-export async function generateI2I(apiKey, params) {
+export async function generateI2I(params) {
     const modelInfo = getI2IModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const imageField = modelInfo?.imageField || 'image_url';
@@ -83,13 +80,10 @@ export async function generateI2I(apiKey, params) {
     else if (params.aspect_ratio) payload.aspect_ratio = params.aspect_ratio;
     if (params.resolution) payload.resolution = params.resolution;
     if (params.quality) payload.quality = params.quality;
-    if (modelInfo?.inputs?.name) {
-        payload.name = params.name || modelInfo.inputs.name.default;
-    }
     return submitAndPoll(endpoint, payload, params.onRequestId, 150);
 }
 
-export async function decomposeLayers(apiKey, params) {
+export async function decomposeLayers(params) {
     const endpoint = 'bytedance-seedream-5.0-pro-layer';
     const payload = {
         image_url: params.image_url,
@@ -103,7 +97,7 @@ export async function decomposeLayers(apiKey, params) {
     return { ...result, images };
 }
 
-export async function generateVideo(apiKey, params) {
+export async function generateVideo(params) {
     const modelInfo = getVideoModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const mediaCapabilities = getModelMediaCapabilities(modelInfo);
@@ -113,7 +107,6 @@ export async function generateVideo(apiKey, params) {
         ...buildSupplementalInputPayload(modelInfo, params)
     };
     if (params.prompt) payload.prompt = params.prompt;
-    if (params.request_id) payload.request_id = params.request_id;
     if (params.aspect_ratio) payload.aspect_ratio = params.aspect_ratio;
     if (params.duration) payload.duration = params.duration;
     if (params.resolution) payload.resolution = params.resolution;
@@ -129,7 +122,7 @@ export async function generateVideo(apiKey, params) {
     return submitAndPoll(endpoint, payload, params.onRequestId, 900);
 }
 
-export async function generateI2V(apiKey, params) {
+export async function generateI2V(params) {
     const modelInfo = getI2VModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     assertRequiredPrompt(modelInfo, params);
@@ -144,14 +137,11 @@ export async function generateI2V(apiKey, params) {
     if (typeof params.generate_audio === 'boolean') payload.generate_audio = params.generate_audio;
     if (params.quality) payload.quality = params.quality;
     if (params.mode) payload.mode = params.mode;
-    if (modelInfo?.inputs?.name) {
-        payload.name = params.name || modelInfo.inputs.name.default;
-    }
     payload = includeRequiredArrayDefaults(modelInfo, payload);
     return submitAndPoll(endpoint, payload, params.onRequestId, 900);
 }
 
-export async function generateMarketingStudioAd(apiKey, params) {
+export async function generateMarketingStudioAd(params) {
     const endpoint = params.resolution === '1080p' ? 'sd-2-vip-omni-reference-1080p' : 'seedance-2-vip-omni-reference';
     const payload = {
         prompt: params.prompt,
@@ -163,7 +153,7 @@ export async function generateMarketingStudioAd(apiKey, params) {
     return submitAndPoll(endpoint, payload, params.onRequestId, 900);
 }
 
-export async function processV2V(apiKey, params) {
+export async function processV2V(params) {
     const modelInfo = getV2VModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const toolPayload = buildVideoToolPayload(modelInfo, params);
@@ -186,7 +176,7 @@ export async function processV2V(apiKey, params) {
     return submitAndPoll(endpoint, payload, params.onRequestId, 900);
 }
 
-export async function processRecast(apiKey, params) {
+export async function processRecast(params) {
     const modelInfo = getRecastModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const videoField = modelInfo?.videoField || 'video_url';
@@ -206,7 +196,7 @@ export async function processRecast(apiKey, params) {
     return submitAndPoll(endpoint, payload, params.onRequestId, 900);
 }
 
-export async function processMotionControl(apiKey, params) {
+export async function processMotionControl(params) {
     const model = params.model || 'seedance-2.5-motion-control';
     const mode = params.mode || 'motion_transfer';
     const internalPrompt = mode === 'objects_swap'
@@ -236,24 +226,16 @@ export async function processMotionControl(apiKey, params) {
         prompt: finalPrompt
     };
 
-    if (model === 'seedance-2-motion-control') {
-        if (payload.duration > 15) payload.duration = 15;
-        if (payload.duration < 4) payload.duration = 4;
-        if (payload.images_list.length > 9) payload.images_list = payload.images_list.slice(0, 9);
-        payload.quality = params.quality === 'basic' ? 'basic' : 'high';
-        if (params.seed !== undefined && params.seed !== -1) payload.seed = Number(params.seed);
-    } else {
-        if (payload.duration > 30) payload.duration = 30;
-        if (payload.duration < 4) payload.duration = 4;
-        if (payload.images_list.length > 30) payload.images_list = payload.images_list.slice(0, 30);
-        payload.high_bitrate = !!params.high_bitrate;
-        if (params.seed !== undefined && params.seed !== -1) payload.seed = Number(params.seed);
-    }
+    if (payload.duration > 30) payload.duration = 30;
+    if (payload.duration < 4) payload.duration = 4;
+    if (payload.images_list.length > 30) payload.images_list = payload.images_list.slice(0, 30);
+    payload.high_bitrate = !!params.high_bitrate;
+    if (params.seed !== undefined && params.seed !== -1) payload.seed = Number(params.seed);
 
     return submitAndPoll(model, payload, params.onRequestId, 900);
 }
 
-export async function processLipSync(apiKey, params) {
+export async function processLipSync(params) {
     const modelInfo = getLipSyncModelById(params.model);
     const endpoint = modelInfo?.endpoint || params.model;
     const payload = {};
@@ -266,7 +248,7 @@ export async function processLipSync(apiKey, params) {
     return submitAndPoll(endpoint, payload, params.onRequestId, 900);
 }
 
-export async function generateAudio(apiKey, params) {
+export async function generateAudio(params) {
     const modelId = params._modelId || params.model;
     const modelInfo = getAudioModelById(modelId);
     const endpoint = modelInfo?.endpoint || modelId;
@@ -280,11 +262,11 @@ export async function generateAudio(apiKey, params) {
     return submitAndPoll(endpoint, payload, params.onRequestId, 900);
 }
 
-export function uploadFile(apiKey, file, onProgress) {
+export function uploadFile(file, onProgress) {
     return uploadMedia(file, onProgress);
 }
 
-export async function upscaleImage(apiKey, { model, image_url, resolution, upscale_factor, onRequestId }) {
+export async function upscaleImage({ model, image_url, resolution, upscale_factor, onRequestId }) {
     let endpoint = model;
     let payload = { image_url };
     if (model === "seedvr2-image-upscale") {
@@ -297,13 +279,13 @@ export async function upscaleImage(apiKey, { model, image_url, resolution, upsca
     return submitAndPoll(endpoint, payload, onRequestId, 90);
 }
 
-export async function removeBackground(apiKey, { image_url, onRequestId }) {
+export async function removeBackground({ image_url, onRequestId }) {
     const endpoint = "ai-background-remover";
     const payload = { image_url };
     return submitAndPoll(endpoint, payload, onRequestId, 90);
 }
 
-export async function expandImage(apiKey, { image_url, onRequestId }) {
+export async function expandImage({ image_url, onRequestId }) {
     const endpoint = "ai-image-extension";
     const payload = { image_url };
     return submitAndPoll(endpoint, payload, onRequestId, 90);

@@ -31,7 +31,6 @@
     "download": "下载",
     "delete": "删除",
     "deleteConfirm": "确定要删除这个生成的项目吗？",
-    "deleteFailed": "删除项目失败",
     "noPrompt": "未提供提示词",
     "modelFallback": "图像工作室"
   },
@@ -44,7 +43,6 @@
     "placeholderI2I": "描述如何转换这张图片（可选）",
     "placeholderT2I": "描述你想要创建的图像",
     "swapFaceLabel": "换脸",
-    "effectFallback": "效果",
     "drawButton": "绘制",
     "generating": "生成中...",
     "generateButton": "生成"
@@ -52,8 +50,7 @@
   "popovers": {
     "model": "模型",
     "aspectRatio": "宽高比",
-    "resolution": "分辨率",
-    "effectType": "效果类型"
+    "resolution": "分辨率"
   },
   "errors": {
     "noImageReferenceSupport": "{name} 不支持图像参考。",

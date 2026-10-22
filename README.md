@@ -145,7 +145,7 @@ node scripts/build-catalog-index.mjs        # regenerate the bundled catalog mod
 
 ## Models that are not included
 
-Some families are deliberately left out: Sora (OpenAI shut the API down), Midjourney and Suno (no official API), and provider-specific "unrestricted" variants. Models whose only source was a single aggregator's private pipeline are hidden until a provider offers them.
+The catalog only contains models that at least one supported provider serves. Not included: Sora (OpenAI shut the API down), Midjourney and Suno (no official API). To add a model, add its catalog entry and a route (see above), then run the validator.
 
 ## License
 

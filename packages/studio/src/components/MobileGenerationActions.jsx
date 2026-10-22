@@ -230,33 +230,6 @@ function ActionIcon({ kind }) {
     );
   }
 
-  if (kind === "extend") {
-    return (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M5 12h14M12 5l7 7-7 7" />
-      </svg>
-    );
-  }
-
-  if (kind === "remix") {
-    return (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M17 2l4 4-4 4" />
-        <path d="M3 11V9a3 3 0 013-3h15M7 22l-4-4 4-4" />
-        <path d="M21 13v2a3 3 0 01-3 3H3" />
-      </svg>
-    );
-  }
-
-  if (kind === "copy") {
-    return (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="9" y="9" width="11" height="11" rx="2" />
-        <path d="M15 9V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7a2 2 0 002 2h3" />
-      </svg>
-    );
-  }
-
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="9" />

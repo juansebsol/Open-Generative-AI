@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { generateAudio, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
-import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import { audioModels, getAudioModelById } from "../models.js";
 import en from "../messages/en/audioStudio.json";
 import zh from "../messages/zh/audioStudio.json";
@@ -70,7 +69,7 @@ const TrashIcon = () => (
 // ---------------------------------------------------------------------------
 // Single File Uploader Component
 // ---------------------------------------------------------------------------
-function AudioFileUploader({ label, value, onChange, apiKey, copy = en }) {
+function AudioFileUploader({ label, value, onChange, copy = en }) {
   const [uploadState, setUploadState] = useState(value ? UPLOAD_STATE.READY : UPLOAD_STATE.IDLE);
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState(value ? value.split('/').pop().slice(-30) : "");
@@ -102,7 +101,7 @@ function AudioFileUploader({ label, value, onChange, apiKey, copy = en }) {
     setProgress(0);
 
     try {
-      const url = await uploadFile(apiKey, file, (pct) => {
+      const url = await uploadFile(file, (pct) => {
         setProgress(pct);
       });
       setFileName(file.name);
@@ -241,41 +240,6 @@ function AudioFileUploader({ label, value, onChange, apiKey, copy = en }) {
             </div>
           </>
         )}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Multiple File Uploader Component (for array fields like audios_list)
-// ---------------------------------------------------------------------------
-function AudioListUploader({ label, value = [], onChange, apiKey, maxItems = 2, copy = en }) {
-  const handleItemChange = (index, url) => {
-    const newItems = [...value];
-    if (url) {
-      newItems[index] = url;
-    } else {
-      newItems.splice(index, 1);
-    }
-    onChange(newItems.filter(Boolean));
-  };
-
-  return (
-    <div className="space-y-4">
-      <label className="block text-xs font-bold text-zinc-200 uppercase tracking-wider">
-        {label} {copy.uploader.maxSuffix.replace('{max}', maxItems)}
-      </label>
-      <div className="space-y-3">
-        {Array.from({ length: maxItems }).map((_, i) => (
-          <AudioFileUploader
-            key={i}
-            label={copy.uploader.trackLabel.replace('{index}', i + 1)}
-            value={value[i] || null}
-            onChange={(url) => handleItemChange(i, url)}
-            apiKey={apiKey}
-            copy={copy}
-          />
-        ))}
       </div>
     </div>
   );
@@ -529,24 +493,18 @@ function PremiumAudioPlayer({ url, title, copy = en }) {
 // ---------------------------------------------------------------------------
 // Main Audio Studio Component
 // ---------------------------------------------------------------------------
+const PERSIST_KEY = "hg_audio_studio_persistent";
+
 export default function AudioStudio({
-  apiKey,
   onGenerationStart,
   onGenerationEnd,
   onGenerationComplete,
   onGenerationError,
-  historyItems,
   droppedFiles,
   onFilesHandled,
   locale = "en",
 }) {
   const copy = resolveCopy(en, zh, locale);
-  const LEGACY_PERSIST_KEY = "hg_audio_studio_persistent";
-  const PERSIST_KEY = scopedPersistKey(LEGACY_PERSIST_KEY, apiKey);
-  useEffect(() => {
-    migrateLegacyPersistKey(LEGACY_PERSIST_KEY, PERSIST_KEY);
-  }, [PERSIST_KEY]);
-
   // ── Mode & model state ──────────────────────────────────────────────────
   const [selectedModelId, setSelectedModelId] = useState(audioModels[0]?.id ?? "");
   const [params, setParams] = useState({});
@@ -576,7 +534,7 @@ export default function AudioStudio({
 
   // ── History state ────────────────────────────────────────────────────
   const [internalHistory, setInternalHistory] = useState([]);
-  const history = historyItems ?? internalHistory;
+  const history = internalHistory;
   const [activeHistoryIdx, setActiveHistoryIdx] = useState(0);
 
   const selectedModel = getAudioModelById(selectedModelId);
@@ -643,34 +601,20 @@ export default function AudioStudio({
         const firstAudioField = Object.entries(selectedModel.inputs || {}).find(
           ([_, schema]) => schema.field === 'audio'
         );
-        const firstAudioListField = Object.entries(selectedModel.inputs || {}).find(
-          ([_, schema]) => schema.field === 'audios_list'
-        );
 
         if (firstAudioField) {
           const [key] = firstAudioField;
           // Trigger file upload helper
-          uploadFile(apiKey, audioFiles[0], () => {})
+          uploadFile(audioFiles[0], () => {})
             .then(url => {
               setParams(prev => ({ ...prev, [key]: url }));
-            })
-            .catch(err => alert(copy.generate.droppedFileUploadError.replace('{message}', err.message)));
-        } else if (firstAudioListField) {
-          const [key] = firstAudioListField;
-          uploadFile(apiKey, audioFiles[0], () => {})
-            .then(url => {
-              setParams(prev => {
-                const currentList = Array.isArray(prev[key]) ? [...prev[key]] : [];
-                if (currentList.length < 2) currentList.push(url);
-                return { ...prev, [key]: currentList };
-              });
             })
             .catch(err => alert(copy.generate.droppedFileUploadError.replace('{message}', err.message)));
         }
       }
       onFilesHandled?.();
     }
-  }, [droppedFiles, onFilesHandled, selectedModel, apiKey]);
+  }, [droppedFiles, onFilesHandled, selectedModel]);
 
   // ── History helpers ─────────────────────────────────────────────────────
   const addToInternalHistory = useCallback((entry) => {
@@ -708,7 +652,7 @@ export default function AudioStudio({
       };
 
       // Call generateAudio
-      const res = await generateAudio(apiKey, audioParams);
+      const res = await generateAudio(audioParams);
 
       if (!res?.url) {
         throw new Error(copy.generate.noUrlError);
@@ -724,7 +668,7 @@ export default function AudioStudio({
         timestamp: new Date().toISOString(),
       };
 
-      if (!historyItems) addToInternalHistory(entry);
+      addToInternalHistory(entry);
 
       setActiveResultUrl(res.url);
       setActiveResultTitle(title);
@@ -828,21 +772,6 @@ export default function AudioStudio({
                     label={schema.title || key}
                     value={params[key] || ""}
                     onChange={(url) => setParams(prev => ({ ...prev, [key]: url }))}
-                    apiKey={apiKey}
-                    copy={copy}
-                  />
-                );
-              }
-              // Audio URLs list file upload (multiple)
-              if (schema.type === "array" && schema.field === "audios_list") {
-                return (
-                  <AudioListUploader
-                    key={key}
-                    label={schema.title || key}
-                    value={params[key] || []}
-                    onChange={(urls) => setParams(prev => ({ ...prev, [key]: urls }))}
-                    apiKey={apiKey}
-                    maxItems={schema.maxItems || 2}
                     copy={copy}
                   />
                 );

@@ -5,8 +5,6 @@
     "uploadHint": "MP3, WAV, M4A up to 20MB",
     "uploading": "Uploading...",
     "ready": "Ready to generate",
-    "maxSuffix": "(Max {max})",
-    "trackLabel": "Track #{index}",
     "sizeLimitError": "Audio file exceeds 20MB limit.",
     "uploadFailedError": "Upload failed: {message}"
   },

@@ -68,7 +68,7 @@ const DEFAULT_COLOR_GRADING = {
 };
 
 export default function LayersStudio({
-  apiKey,
+  hasProvider,
   droppedFiles,
   onFilesHandled,
   onGenerationStart,
@@ -263,14 +263,14 @@ export default function LayersStudio({
 
   // Upload File Helper
   const handleUploadFile = async (file) => {
-    if (!apiKey) {
-      toast.error(copy.toasts.enterApiKeyUpload);
+    if (!hasProvider) {
+      toast.error(copy.toasts.noProvider);
       return;
     }
     setUploading(true);
     setUploadProgress(0);
     try {
-      const uploadedUrl = await uploadFile(apiKey, file, (pct) =>
+      const uploadedUrl = await uploadFile(file, (pct) =>
         setUploadProgress(pct),
       );
       setCurrentImageUrl(uploadedUrl);
@@ -702,8 +702,8 @@ export default function LayersStudio({
 
   // --- REGIONAL & LASSO EDIT AI SUBMIT WITH <bbox> BBOX TAGS ---
   const handleRunRegionalEdit = async () => {
-    if (!apiKey) {
-      toast.error(copy.toasts.enterApiKey);
+    if (!hasProvider) {
+      toast.error(copy.toasts.noProvider);
       return;
     }
     if (!regionalPrompt) {
@@ -737,7 +737,7 @@ export default function LayersStudio({
         ? `Modify ${bboxTag}: ${regionalPrompt}`
         : regionalPrompt;
 
-      const result = await decomposeLayers(apiKey, {
+      const result = await decomposeLayers({
         image_url: currentImageUrl,
         prompt: formattedPrompt,
         resolution: resolution,
@@ -811,8 +811,8 @@ export default function LayersStudio({
     const rawPrompt = overridePrompt !== undefined ? overridePrompt : prompt;
     const finalSeedreamPrompt = buildSeedreamLayerPrompt(rawPrompt);
 
-    if (!apiKey) {
-      toast.error(copy.toasts.apiKeyMissingSet);
+    if (!hasProvider) {
+      toast.error(copy.toasts.noProvider);
       return;
     }
     if (!currentImageUrl) {
@@ -829,7 +829,7 @@ export default function LayersStudio({
         setProgress((prev) => (prev < 90 ? prev + 5 : prev));
       }, 800);
 
-      const result = await decomposeLayers(apiKey, {
+      const result = await decomposeLayers({
         image_url: currentImageUrl,
         prompt: finalSeedreamPrompt,
         resolution: resolution,
@@ -869,8 +869,8 @@ export default function LayersStudio({
 
   // --- API CALL: UPSCALE IMAGE (seedvr2-image-upscale, topaz-image-upscale, ai-image-upscaler) ---
   const handleRunUpscale = async () => {
-    if (!apiKey) {
-      toast.error(copy.toasts.enterApiKey);
+    if (!hasProvider) {
+      toast.error(copy.toasts.noProvider);
       return;
     }
     if (!currentImageUrl) {
@@ -887,7 +887,7 @@ export default function LayersStudio({
         setProgress((prev) => (prev < 90 ? prev + 5 : prev));
       }, 700);
 
-      const result = await upscaleImage(apiKey, {
+      const result = await upscaleImage({
         model: upscaleModel,
         image_url: currentImageUrl,
         resolution: seedvrResolution,
@@ -928,8 +928,8 @@ export default function LayersStudio({
 
   // --- API CALL: REMOVE BACKGROUND (ai-background-remover) ---
   const handleRunRemoveBg = async () => {
-    if (!apiKey) {
-      toast.error(copy.toasts.enterApiKey);
+    if (!hasProvider) {
+      toast.error(copy.toasts.noProvider);
       return;
     }
     if (!currentImageUrl) {
@@ -946,7 +946,7 @@ export default function LayersStudio({
         setProgress((prev) => (prev < 90 ? prev + 5 : prev));
       }, 700);
 
-      const result = await removeBackground(apiKey, {
+      const result = await removeBackground({
         image_url: currentImageUrl,
       });
 
@@ -984,8 +984,8 @@ export default function LayersStudio({
 
   // --- API CALL: EXPAND / OUTPAINT IMAGE (ai-image-extension) ---
   const handleRunExpand = async () => {
-    if (!apiKey) {
-      toast.error(copy.toasts.enterApiKey);
+    if (!hasProvider) {
+      toast.error(copy.toasts.noProvider);
       return;
     }
     if (!currentImageUrl) {
@@ -1002,7 +1002,7 @@ export default function LayersStudio({
         setProgress((prev) => (prev < 90 ? prev + 5 : prev));
       }, 700);
 
-      const result = await expandImage(apiKey, {
+      const result = await expandImage({
         image_url: currentImageUrl,
       });
 
@@ -1140,8 +1140,8 @@ export default function LayersStudio({
 
   // Explicit Side Tool Execution Handler
   const handleExecuteSideTool = async (toolId) => {
-    if (!apiKey) {
-      toast.error(copy.toasts.apiKeyMissing);
+    if (!hasProvider) {
+      toast.error(copy.toasts.noProvider);
       return;
     }
     if (!currentImageUrl) {
@@ -1163,7 +1163,7 @@ export default function LayersStudio({
     try {
       let result;
       if (toolId === "enhancer") {
-        result = await generateI2I(apiKey, {
+        result = await generateI2I({
           model: "nano-banana-pro-edit",
           prompt:
             "Enhance image contrast, color balance, exposure, and sharpness.",
@@ -1174,13 +1174,13 @@ export default function LayersStudio({
           textEditPrompt ||
           prompt ||
           "Edit and sharpen text overlay on the image cleanly.";
-        result = await generateI2I(apiKey, {
+        result = await generateI2I({
           model: "nano-banana-pro-edit",
           prompt: textPrompt,
           image_url: currentImageUrl,
         });
       } else {
-        result = await generateI2I(apiKey, {
+        result = await generateI2I({
           model: "nano-banana-pro-edit",
           prompt: prompt || `Apply ${toolId} image transformation.`,
           image_url: currentImageUrl,

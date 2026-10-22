@@ -230,10 +230,7 @@ export default function StandaloneShell({ locale = 'en' }) {
     return DEFAULT_TAB;
   };
   
-  // Studios still take an `apiKey` prop: it is now a non-secret marker that is
-  // set once at least one provider is configured (keys live per provider in
-  // Settings -> Providers and never pass through this component).
-  const [apiKey, setApiKey] = useState(null);
+  const [hasProvider, setHasProvider] = useState(false);
   const [activeTab, setActiveTab] = useState(getInitialTab());
 
   const [showSettings, setShowSettings] = useState(false);
@@ -428,7 +425,7 @@ export default function StandaloneShell({ locale = 'en' }) {
 
   useEffect(() => {
     setHasMounted(true);
-    const sync = () => setApiKey(hasAnyProvider() ? 'byok' : null);
+    const sync = () => setHasProvider(hasAnyProvider());
     sync();
     if (!hasAnyProvider()) setShowSettings(true);
     const unsubscribe = subscribeProviderSettings(sync);
@@ -509,7 +506,7 @@ export default function StandaloneShell({ locale = 'en' }) {
         </div>
       )}
 
-      {!apiKey && (
+      {!hasProvider && (
         <div className="flex-shrink-0 w-full bg-[#22d3ee]/10 border-b border-[#22d3ee]/20 flex items-center justify-center px-4 py-2 gap-3 relative z-50">
           <button
             type="button"
@@ -730,53 +727,52 @@ export default function StandaloneShell({ locale = 'en' }) {
         <div className="flex-1 min-h-0 h-full relative overflow-hidden bg-[#030303]">
         {AVAILABLE_TAB_IDS.has('image') && (
           <div className={activeTab === 'image' ? "h-full w-full" : "hidden"}>
-            <ImageStudio apiKey={apiKey} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('image')} onGenerationEnd={makeGenerationEndCallback('image')} onGenerationComplete={makeSuccessCallback('image')} onGenerationError={makeErrorCallback('image')} />
+            <ImageStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('image')} onGenerationEnd={makeGenerationEndCallback('image')} onGenerationComplete={makeSuccessCallback('image')} onGenerationError={makeErrorCallback('image')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('layers') && (
           <div className={activeTab === 'layers' ? "h-full w-full" : "hidden"}>
-            <LayersStudio apiKey={apiKey} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('layers')} onGenerationEnd={makeGenerationEndCallback('layers')} onGenerationComplete={makeSuccessCallback('layers')} onGenerationError={makeErrorCallback('layers')} />
+            <LayersStudio hasProvider={hasProvider} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('layers')} onGenerationEnd={makeGenerationEndCallback('layers')} onGenerationComplete={makeSuccessCallback('layers')} onGenerationError={makeErrorCallback('layers')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('video') && (
           <div className={activeTab === 'video' ? "h-full w-full" : "hidden"}>
-            <VideoStudio apiKey={apiKey} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('video')} onGenerationEnd={makeGenerationEndCallback('video')} onGenerationComplete={makeSuccessCallback('video')} onGenerationError={makeErrorCallback('video')} />
+            <VideoStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('video')} onGenerationEnd={makeGenerationEndCallback('video')} onGenerationComplete={makeSuccessCallback('video')} onGenerationError={makeErrorCallback('video')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('motion-control') && (
           <div className={activeTab === 'motion-control' ? "h-full w-full" : "hidden"}>
-            <MotionControlStudio apiKey={apiKey} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('motion-control')} onGenerationEnd={makeGenerationEndCallback('motion-control')} onGenerationComplete={makeSuccessCallback('motion-control')} onGenerationError={makeErrorCallback('motion-control')} />
+            <MotionControlStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('motion-control')} onGenerationEnd={makeGenerationEndCallback('motion-control')} onGenerationComplete={makeSuccessCallback('motion-control')} onGenerationError={makeErrorCallback('motion-control')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('lipsync') && (
           <div className={activeTab === 'lipsync' ? "h-full w-full" : "hidden"}>
-            <LipSyncStudio apiKey={apiKey} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('lipsync')} onGenerationEnd={makeGenerationEndCallback('lipsync')} onGenerationComplete={makeSuccessCallback('lipsync')} onGenerationError={makeErrorCallback('lipsync')} />
+            <LipSyncStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('lipsync')} onGenerationEnd={makeGenerationEndCallback('lipsync')} onGenerationComplete={makeSuccessCallback('lipsync')} onGenerationError={makeErrorCallback('lipsync')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('body-swap') && (
           <div className={activeTab === 'body-swap' ? "h-full w-full" : "hidden"}>
-            <RecastStudio apiKey={apiKey} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('body-swap')} onGenerationEnd={makeGenerationEndCallback('body-swap')} onGenerationComplete={makeSuccessCallback('body-swap')} onGenerationError={makeErrorCallback('body-swap')} />
+            <RecastStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('body-swap')} onGenerationEnd={makeGenerationEndCallback('body-swap')} onGenerationComplete={makeSuccessCallback('body-swap')} onGenerationError={makeErrorCallback('body-swap')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('cinema') && (
           <div className={activeTab === 'cinema' ? "h-full w-full" : "hidden"}>
-            <CinemaStudio apiKey={apiKey} locale={locale} onGenerationStart={makeGenerationStartCallback('cinema')} onGenerationEnd={makeGenerationEndCallback('cinema')} onGenerationComplete={makeSuccessCallback('cinema')} onGenerationError={makeErrorCallback('cinema')} />
+            <CinemaStudio locale={locale} onGenerationStart={makeGenerationStartCallback('cinema')} onGenerationEnd={makeGenerationEndCallback('cinema')} onGenerationComplete={makeSuccessCallback('cinema')} onGenerationError={makeErrorCallback('cinema')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('audio') && (
           <div className={activeTab === 'audio' ? "h-full w-full" : "hidden"}>
-            <AudioStudio apiKey={apiKey} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('audio')} onGenerationEnd={makeGenerationEndCallback('audio')} onGenerationComplete={makeSuccessCallback('audio')} onGenerationError={makeErrorCallback('audio')} />
+            <AudioStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('audio')} onGenerationEnd={makeGenerationEndCallback('audio')} onGenerationComplete={makeSuccessCallback('audio')} onGenerationError={makeErrorCallback('audio')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('marketing') && (
           <div className={activeTab === 'marketing' ? "h-full w-full" : "hidden"}>
-            <MarketingStudio apiKey={apiKey} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('marketing')} onGenerationEnd={makeGenerationEndCallback('marketing')} onGenerationComplete={makeSuccessCallback('marketing')} onGenerationError={makeErrorCallback('marketing')} />
+            <MarketingStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('marketing')} onGenerationEnd={makeGenerationEndCallback('marketing')} onGenerationComplete={makeSuccessCallback('marketing')} onGenerationError={makeErrorCallback('marketing')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('ai-influencer') && (
           <div className={activeTab === 'ai-influencer' ? "h-full w-full" : "hidden"}>
             <AiInfluencerStudio
-              apiKey={apiKey}
               locale={locale}
               onGenerationStart={makeGenerationStartCallback('ai-influencer')}
               onGenerationEnd={makeGenerationEndCallback('ai-influencer')}

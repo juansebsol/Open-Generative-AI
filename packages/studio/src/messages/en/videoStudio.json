@@ -32,7 +32,6 @@
     "videoReadyRemoveWatermark": "Video ready — click Generate to remove watermark",
     "motionOrEffect": "Describe the motion or effect",
     "motionOrEffectOptional": "Describe the motion or effect (optional)",
-    "optionalContinueVideo": "Optional: describe how to continue the video...",
     "describeVideo": "Describe the video you want to create"
   },
   "dropdowns": {
@@ -40,8 +39,6 @@
     "source": "Video mode",
     "baseGeneration": "Base generation",
     "aspectRatio": "Aspect Ratio",
-    "effect": "Effect",
-    "effectType": "Effect Type",
     "duration": "Duration",
     "resolution": "Resolution"
   },
@@ -50,13 +47,8 @@
     "generate": "Generate",
     "generating": "Generating..."
   },
-  "extend": {
-    "continuingGeneration": "Continuing the previous {family} generation"
-  },
   "gallery": {
     "download": "Download",
-    "extend": "Extend",
-    "extendSeedance": "Extend this video using Seedance 2.0 Extend",
     "delete": "Delete",
     "confirmDelete": "Are you sure you want to delete this generated item?",
     "noPromptProvided": "No prompt provided",
@@ -80,9 +72,7 @@
     "uploadAtLeastOneReferenceImage": "Please upload at least one reference image first.",
     "enterPromptToGenerate": "Please enter a prompt to generate a video.",
     "noVideoUrlReturned": "No video URL returned by API",
-    "videoGenerationFailed": "Video generation failed",
-    "deleteItemFailed": "Failed to delete item",
-    "noContinuationSource": "Choose a compatible {family} result to continue."
+    "videoGenerationFailed": "Video generation failed"
   },
   "modelControls": {
     "modes": {
@@ -162,15 +152,10 @@
       "standard": "Standard speed",
       "fast": "Fast"
     },
-    "tools": "Seedance video tools",
     "profiles": {
       "standard": {
         "label": "Standard",
         "description": ""
-      },
-      "intl": {
-        "label": "International",
-        "description": "International deployment."
       },
       "vip": {
         "label": "VIP",
@@ -180,33 +165,10 @@
         "label": "Mini",
         "description": "Lighter model."
       },
-      "spicy": {
-        "label": "Spicy",
-        "description": "Bolder contrast and motion."
-      },
-      "mini_spicy": {
-        "label": "Mini Spicy",
-        "description": ""
-      },
       "legacy": {
         "label": "Seedance 2.0 API",
         "description": ""
-      },
-      "legacy_new": {
-        "label": "Seedance 2.0 New API",
-        "description": ""
       }
-    },
-    "continueGenerated": "Continue a Seedance 2.0 result",
-    "removeWatermark": "Remove watermark",
-    "toolNames": {
-      "continueGenerated": "Continue Seedance 2.0",
-      "removeWatermark": "Remove watermark"
-    },
-    "toolVariants": {
-      "standard": "Standard",
-      "vip": "VIP",
-      "pro": "Pro"
     },
     "editAudio": {
       "title": "New audio",
@@ -241,17 +203,6 @@
       "fast": "Faster generation.",
       "lite": "Lower cost."
     },
-    "tools": "Veo video tools",
-    "toolNames": {
-      "continueGenerated": "Continue Veo 3.1",
-      "upscale": "Create a 4K copy"
-    },
-    "toolsHelp": "Use a completed Veo 3.1 video.",
-    "sourceVideo": "Source video",
-    "sourceHelp": {
-      "continueGenerated": "Create a 720p video with Veo 3.1 Standard or Fast first.",
-      "upscale": "Create a video with Veo 3.1 Standard or Fast first."
-    },
     "adjustments": {
       "speed": "Generation: {value}"
     }
@@ -267,7 +218,7 @@
       "fast": "Faster generation."
     },
     "provider": "Customization",
-    "providerHelp": "Use a LoRA or the Spicy model.",
+    "providerHelp": "Use a LoRA.",
     "profiles": {
       "standard": {
         "label": "Standard",
@@ -276,10 +227,6 @@
       "lora": {
         "label": "LoRA",
         "description": "Apply custom styles or characters."
-      },
-      "spicy": {
-        "label": "Spicy",
-        "description": "Alternative model for image animation."
       }
     },
     "adjustments": {
@@ -315,10 +262,6 @@
       },
       "prime": {
         "label": "Prime",
-        "description": ""
-      },
-      "spicy": {
-        "label": "Spicy",
         "description": ""
       }
     },
@@ -467,23 +410,6 @@
           "spicy": "Spicy"
         }
       }
-    }
-  },
-  "sora": {
-    "provider": "Generation",
-    "providerHelp": "",
-    "profiles": {
-      "standard": {
-        "label": "Standard",
-        "description": "For everyday videos."
-      },
-      "pro": {
-        "label": "Pro",
-        "description": "More detail, up to 1080p."
-      }
-    },
-    "adjustments": {
-      "profile": "Generation: {value}"
     }
   },
   "ltx": {

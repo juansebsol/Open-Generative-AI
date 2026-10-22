@@ -11,7 +11,7 @@ Context for contributors and coding agents. User-facing docs are in [README.md](
 ## Provider layer (`packages/studio/src/providers/`)
 
 - `directProviders.js`: registry of providers (id, label, kind cloud/local, key URL).
-- `keys.js`: per-visitor settings in `localStorage` key `oga_providers_v1` (`keys`, `urls`, `options`, `order`). Also clears the legacy `muapi_*` storage keys and cookie once.
+- `keys.js`: per-visitor settings in `localStorage` key `oga_providers_v1` (`keys`, `urls`, `options`, `order`).
 - `catalog/routes/*.json`: catalog endpoint slug → ordered provider routes. Edited by hand, one file per model family group. `catalog/routes.generated.js` and `catalog/schemas.generated.js` are build artifacts of `scripts/build-catalog-index.mjs` (committed so the app builds without running scripts).
 - `mapper.js`: pure function `mapInput(payload, route, schema)`; shared by the server and `scripts/validate-routes.mjs`.
 - `client.js` (browser): `runEndpoint(endpoint, payload)` picks a route, calls `/api/generate`, polls `/api/jobs`; `uploadMedia(file)` gets a signed URL from `/api/uploads` and PUTs the file to provider storage.
@@ -20,6 +20,6 @@ Context for contributors and coding agents. User-facing docs are in [README.md](
 
 ## Conventions
 
-- Catalog models without any route are filtered out in `models.js` (`withRoutes`). `ALL_MODEL_LISTS` keeps the unfiltered lists for the validator.
-- Studio components still receive an `apiKey` prop. It is a non-secret marker (`'byok'` once any provider is configured), used for gating buttons and scoping `localStorage` keys. Real keys are read per provider inside `client.js`.
+- Every catalog entry in `models.js` must have at least one route; `scripts/validate-routes.mjs` reports any that don't (as "unrouted"), and `withRoutes` in `models.js` keeps such entries out of the studios as a safety net.
+- Keys are never passed to studio components; `client.js` reads them per provider when a request is made. The shell tracks a `hasProvider` boolean (shows the setup banner; Layers Studio uses it to gate its tool buttons).
 - After editing route files: `node scripts/sync-provider-schemas.mjs` then `node scripts/validate-routes.mjs --verbose` (0 errors expected).

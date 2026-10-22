@@ -7,9 +7,6 @@ const COMMON_INPUT_KEYS = new Set([
   "quality",
   "mode",
   "duration",
-  "name",
-  "api_key",
-  "request_id",
   "num_images",
   "batch_size",
 ]);

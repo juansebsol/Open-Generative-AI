@@ -1,6 +1,5 @@
 {
   "labels": {
-    "referenceVideo": "参考视频",
     "characterImages": "角色/主体图片",
     "addImage": "添加图片",
     "library": "素材库",
@@ -8,8 +7,6 @@
     "motionTransfer": "动作迁移",
     "objectsSwap": "主体替换",
     "duration": "时长",
-    "durationSeconds": "{count}秒",
-    "quality": "画质",
     "highBitrate": "高码率",
     "generateAudio": "生成音频",
     "seed": "随机种子",
@@ -44,11 +41,7 @@
   "dropdowns": {
     "model": "模型",
     "selectModel": "选择模型",
-    "aspectRatio": "画面比例",
-    "qualityBasic": "基础",
-    "qualityHigh": "高画质",
-    "qualityBasicDesc": "生成速度快，标准分辨率",
-    "qualityHighDesc": "电影级细节与最高动作连贯性"
+    "aspectRatio": "画面比例"
   },
   "modes": {
     "motionTransfer": "动作迁移",
@@ -65,7 +58,6 @@
     "prompt": "可选 — 描述补充场景细节、光影或动作特点..."
   },
   "badges": {
-    "motionControl": "动作控制",
     "motionTransfer": "动作迁移",
     "objectsSwap": "主体替换"
   },

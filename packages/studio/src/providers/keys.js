@@ -6,7 +6,6 @@ import { PROVIDER_IDS, getProvider } from './directProviders.js';
 
 const STORAGE_KEY = 'oga_providers_v1';
 const CHANGE_EVENT = 'oga:providers-changed';
-const LEGACY_KEYS = ['muapi_key', 'muapi_history', 'muapi_pending_jobs', 'muapi_uploads', 'wl_workflow_token'];
 
 const EMPTY = Object.freeze({ keys: {}, urls: {}, options: {}, order: PROVIDER_IDS });
 
@@ -17,16 +16,6 @@ function hasStorage() {
     return typeof window !== 'undefined' && !!window.localStorage;
   } catch {
     return false;
-  }
-}
-
-// One-time cleanup of the old single-provider key and its cookie.
-function removeLegacyState() {
-  try {
-    for (const key of LEGACY_KEYS) window.localStorage.removeItem(key);
-    document.cookie = 'muapi_key=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-  } catch {
-    // storage blocked: nothing to clean
   }
 }
 
@@ -49,7 +38,6 @@ export function loadProviderSettings() {
   } catch {
     cache = normalise(null);
   }
-  removeLegacyState();
   return cache;
 }
 

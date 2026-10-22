@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { generateImage, uploadFile } from "../generation.js";
-import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import MobileGenerationActions, {
   CopyContentIcon,
 } from "./MobileGenerationActions.jsx";
@@ -530,22 +529,16 @@ function CameraControlsOverlay({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+const PERSIST_KEY = "hg_cinema_studio_persistent";
+
 export default function CinemaStudio({
-  apiKey,
   onGenerationStart,
   onGenerationEnd,
   onGenerationComplete,
   onGenerationError,
-  historyItems,
   locale = "en",
 }) {
   const copy = resolveCopy(en, zh, locale);
-  const LEGACY_PERSIST_KEY = "hg_cinema_studio_persistent";
-  const PERSIST_KEY = scopedPersistKey(LEGACY_PERSIST_KEY, apiKey);
-  useEffect(() => {
-    migrateLegacyPersistKey(LEGACY_PERSIST_KEY, PERSIST_KEY);
-  }, [PERSIST_KEY]);
-
   // ── Settings state ──
   const [settings, setSettings] = useState({
     prompt: "",
@@ -570,7 +563,7 @@ export default function CinemaStudio({
   const [copiedPromptIndex, setCopiedPromptIndex] = useState(null);
   const [copiedImageIndex, setCopiedImageIndex] = useState(null);
 
-  // ── Internal history state (used when historyItems prop is not provided) ──
+  // ── History state ──
   const [internalHistory, setInternalHistory] = useState([]);
 
   // ── Dropdown state ──
@@ -590,7 +583,7 @@ export default function CinemaStudio({
     setImageUploadProgress(0);
 
     try {
-      const url = await uploadFile(apiKey, file, (progress) => {
+      const url = await uploadFile(file, (progress) => {
         setImageUploadProgress(progress);
       });
       if (url) setUploadedImage(url);
@@ -686,13 +679,7 @@ export default function CinemaStudio({
     return () => clearTimeout(timer);
   }, [settings, resolution, internalHistory, uploadedImage]);
 
-  // Derive effective history (prop wins over internal)
-  const history = historyItems != null ? historyItems : internalHistory;
-
-  useEffect(() => {
-    setCanvasUrl(history[0]?.url || null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyItems]);
+  const history = internalHistory;
 
   const formatSummaryValue = () =>
     `${settings.lens}, ${settings.focal}mm, ${settings.aperture}`;
@@ -715,7 +702,7 @@ export default function CinemaStudio({
     );
 
     try {
-      const res = await generateImage(apiKey, {
+      const res = await generateImage({
         model: uploadedImage ? "nano-banana-pro-edit" : "nano-banana-pro",
         prompt: finalPrompt,
         aspect_ratio: settings.aspect_ratio,
@@ -739,10 +726,7 @@ export default function CinemaStudio({
           },
         };
 
-        // Only update internal history if not using prop-driven history
-        if (historyItems == null) {
-          setInternalHistory((prev) => [entry, ...prev].slice(0, 50));
-        }
+        setInternalHistory((prev) => [entry, ...prev].slice(0, 50));
 
         setCanvasUrl(res.url);
 
@@ -767,13 +751,11 @@ export default function CinemaStudio({
   }, [
     settings,
     resolution,
-    apiKey,
     isGenerating,
     onGenerationComplete,
     onGenerationEnd,
     onGenerationError,
     onGenerationStart,
-    historyItems,
   ]);
 
   // ── Regenerate ──

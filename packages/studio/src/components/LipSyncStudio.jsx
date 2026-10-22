@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { processLipSync, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
-import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
 } from "./MobileGenerationActions.jsx";
@@ -80,7 +79,6 @@ function MediaPickerButton({
   previewUrl,
   isVideo,
   isAudio,
-  apiKey,
   mediaCopy = en.media,
 }) {
   const inputRef = useRef(null);
@@ -482,24 +480,18 @@ const VideoIcon = ({
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
+const PERSIST_KEY = "hg_lipsync_studio_persistent";
+
 export default function LipSyncStudio({
-  apiKey,
   onGenerationStart,
   onGenerationEnd,
   onGenerationComplete,
   onGenerationError,
-  historyItems,
   droppedFiles,
   onFilesHandled,
   locale = "en",
 }) {
   const copy = resolveCopy(en, zh, locale);
-  const LEGACY_PERSIST_KEY = "hg_lipsync_studio_persistent";
-  const PERSIST_KEY = scopedPersistKey(LEGACY_PERSIST_KEY, apiKey);
-  useEffect(() => {
-    migrateLegacyPersistKey(LEGACY_PERSIST_KEY, PERSIST_KEY);
-  }, [PERSIST_KEY]);
-
   // ── Mode & model state ──────────────────────────────────────────────────
   const [inputMode, setInputMode] = useState("image"); // 'image' | 'video'
 
@@ -541,9 +533,8 @@ export default function LipSyncStudio({
   const [activeResultUrl, setActiveResultUrl] = useState(null);
 
   // ── History ─────────────────────────────────────────────────────────────
-  // If historyItems prop is provided, use it; otherwise use internal state.
   const [internalHistory, setInternalHistory] = useState([]);
-  const history = historyItems ?? internalHistory;
+  const history = internalHistory;
   const [activeHistoryIdx, setActiveHistoryIdx] = useState(0);
 
   // ── Dropdown state ──────────────────────────────────────────────────────
@@ -589,7 +580,7 @@ export default function LipSyncStudio({
     } finally {
       hasRestored.current = true;
     }
-  }, [PERSIST_KEY]);
+  }, []);
 
   // ── Persistence: Save ────────────────────────────────────────────────────
   useEffect(() => {
@@ -616,7 +607,6 @@ export default function LipSyncStudio({
     }, 500); // 500ms debounce
     return () => clearTimeout(timer);
   }, [
-    PERSIST_KEY,
     inputMode,
     selectedModelId,
     selectedResolution,
@@ -659,7 +649,7 @@ export default function LipSyncStudio({
       setImageState(UPLOAD_STATE.UPLOADING);
       setImageProgress(0);
       try {
-        const url = await uploadFile(apiKey, file, (pct) => {
+        const url = await uploadFile(file, (pct) => {
           setImageProgress(pct);
         });
         setImageUrl(url);
@@ -672,7 +662,7 @@ export default function LipSyncStudio({
         setImageProgress(0);
       }
     },
-    [apiKey, copy],
+    [copy],
   );
 
   const handleVideoPick = useCallback(
@@ -686,7 +676,7 @@ export default function LipSyncStudio({
       setVideoState(UPLOAD_STATE.UPLOADING);
       setVideoProgress(0);
       try {
-        const url = await uploadFile(apiKey, file, (pct) => {
+        const url = await uploadFile(file, (pct) => {
           setVideoProgress(pct);
         });
         setVideoUrl(url);
@@ -699,7 +689,7 @@ export default function LipSyncStudio({
         setVideoProgress(0);
       }
     },
-    [apiKey, copy],
+    [copy],
   );
 
   const handlePromptInput = (e) => {
@@ -717,7 +707,7 @@ export default function LipSyncStudio({
       setAudioState(UPLOAD_STATE.UPLOADING);
       setAudioProgress(0);
       try {
-        const url = await uploadFile(apiKey, file, (pct) => {
+        const url = await uploadFile(file, (pct) => {
           setAudioProgress(pct);
         });
         setAudioUrl(url);
@@ -730,7 +720,7 @@ export default function LipSyncStudio({
         setAudioProgress(0);
       }
     },
-    [apiKey, copy],
+    [copy],
   );
 
   // ── Handle Dropped Files ────────────────────────────────────────────────
@@ -844,7 +834,7 @@ export default function LipSyncStudio({
       if (showResolution) lipsyncParams.resolution = selectedResolution;
       if (selectedModel?.hasSeed) lipsyncParams.seed = -1;
 
-      const res = await processLipSync(apiKey, lipsyncParams);
+      const res = await processLipSync(lipsyncParams);
 
       if (!res?.url) throw new Error("No video URL returned by API");
 
@@ -857,7 +847,7 @@ export default function LipSyncStudio({
         timestamp: new Date().toISOString(),
       };
 
-      if (!historyItems) addToInternalHistory(entry);
+      addToInternalHistory(entry);
 
       setActiveResultUrl(res.url);
       setActiveHistoryIdx(0);
@@ -1119,7 +1109,6 @@ export default function LipSyncStudio({
                   fileName={imageName}
                   previewUrl={imageUrl}
                   isVideo={false}
-                  apiKey={apiKey}
                 />
               )}
 
@@ -1143,7 +1132,6 @@ export default function LipSyncStudio({
                   fileName={videoName}
                   previewUrl={videoUrl}
                   isVideo={true}
-                  apiKey={apiKey}
                 />
               )}
 
@@ -1167,7 +1155,6 @@ export default function LipSyncStudio({
                 previewUrl={audioUrl}
                 isAudio={true}
                 isVideo={false}
-                apiKey={apiKey}
               />
             </div>
 

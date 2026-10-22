@@ -10,7 +10,7 @@ import {
   resolveGroupedVideoVariant,
 } from "./groupedVideoModels.js";
 
-export const VIDEO_WORKFLOW_IDS = Object.freeze([
+const VIDEO_WORKFLOW_IDS = Object.freeze([
   "animate_image",
   "keyframes",
   "references",
@@ -52,7 +52,7 @@ const WORKFLOW_REQUIRED_MEDIA = Object.freeze({
 });
 
 // Opt-in only: models outside this registry retain their existing behavior.
-export const VIDEO_WORKFLOW_VARIANTS = Object.freeze({
+const VIDEO_WORKFLOW_VARIANTS = Object.freeze({
   "gemini-omni": {
     animate_image: ["gemini-omni-image-to-video"],
     references: ["gemini-omni-image-to-video"],
@@ -114,9 +114,7 @@ function createWorkflowCatalog() {
 
     const base = createVariantGroup(
       family.variants.t2v.filter(
-        (variant) =>
-          !workflowVariantIds.has(variant.model.id) &&
-          !variant.model.requiresRequestId,
+        (variant) => !workflowVariantIds.has(variant.model.id),
       ),
     );
 
@@ -127,8 +125,7 @@ function createWorkflowCatalog() {
         family.variants[mode].filter(
           (variant) =>
             !base.variantIds.has(variant.model.id) &&
-            !workflowVariantIds.has(variant.model.id) &&
-            !variant.model.requiresRequestId,
+            !workflowVariantIds.has(variant.model.id),
         ),
       );
       if (unmanaged.variants.length > 0) {
@@ -155,7 +152,7 @@ function createWorkflowCatalog() {
   return { familyById };
 }
 
-export const videoWorkflowCatalog = createWorkflowCatalog();
+const videoWorkflowCatalog = createWorkflowCatalog();
 
 export function getVideoWorkflowFamily(familyId) {
   return videoWorkflowCatalog.familyById.get(familyId) || null;
@@ -167,10 +164,7 @@ export function getVideoWorkflowControlState(workflowFamilyOrId, variantId = nul
     : workflowFamilyOrId;
   if (!workflowFamily) return { kind: "hidden", workflow: null };
 
-  if (variantId && (
-    videoModelCatalog.variantById.get(variantId)?.model.requiresRequestId ||
-    workflowFamily.unmanagedVariantIds?.has(variantId)
-  )) {
+  if (variantId && workflowFamily.unmanagedVariantIds?.has(variantId)) {
     return { kind: "hidden", workflow: null };
   }
 
@@ -190,7 +184,7 @@ export function getVideoWorkflowControlLabel(workflow) {
   return workflow?.label || "+ Source";
 }
 
-export function getVideoWorkflowGroup(familyId, workflowId = null) {
+function getVideoWorkflowGroup(familyId, workflowId = null) {
   const workflowFamily = getVideoWorkflowFamily(familyId);
   if (!workflowFamily) return null;
   return workflowId === null
@@ -226,7 +220,6 @@ const COMPATIBILITY_TOKENS = Object.freeze([
   "open",
   "vip",
   "mini",
-  "spicy",
 ]);
 
 function variantCompatibilityTokens(variantId) {
@@ -367,7 +360,7 @@ export function resolvePersistedVideoWorkflowSelection(
   const family = videoModelCatalog.familyByVariantId.get(variantId) || null;
   const variant = videoModelCatalog.variantById.get(variantId) || null;
   const workflowFamily = family ? getVideoWorkflowFamily(family.id) : null;
-  if (!family || !variant || !workflowFamily || variant.model.requiresRequestId) {
+  if (!family || !variant || !workflowFamily) {
     return { family, variant, workflowId: null };
   }
 

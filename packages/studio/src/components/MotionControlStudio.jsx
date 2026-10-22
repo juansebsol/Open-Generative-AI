@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { processMotionControl, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
-import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
 } from "./MobileGenerationActions.jsx";
@@ -546,8 +545,9 @@ function MenuDropdown({
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
+const PERSIST_KEY = "hg_motion_control_studio_persistent";
+
 export default function MotionControlStudio({
-  apiKey,
   onGenerationStart,
   onGenerationEnd,
   onGenerationComplete,
@@ -557,13 +557,6 @@ export default function MotionControlStudio({
   locale = "en",
 }) {
   const copy = resolveCopy(en, zh, locale);
-  const LEGACY_PERSIST_KEY = "hg_motion_control_studio_persistent";
-  const PERSIST_KEY = scopedPersistKey(LEGACY_PERSIST_KEY, apiKey);
-
-  useEffect(() => {
-    migrateLegacyPersistKey(LEGACY_PERSIST_KEY, PERSIST_KEY);
-  }, [PERSIST_KEY]);
-
   // ── Mode: 'motion_transfer' | 'objects_swap' ────────────────────────────────
   const [mode, setMode] = useState("motion_transfer");
 
@@ -579,8 +572,7 @@ export default function MotionControlStudio({
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [duration, setDuration] = useState(5);
-  const [quality, setQuality] = useState("high"); // for seedance-2.0
-  const [highBitrate, setHighBitrate] = useState(false); // for seedance-2.5
+  const [highBitrate, setHighBitrate] = useState(false);
   const [generateAudio, setGenerateAudio] = useState(false);
   const [seed, setSeed] = useState(-1);
 
@@ -718,7 +710,7 @@ export default function MotionControlStudio({
       const saved = JSON.parse(localStorage.getItem(PERSIST_KEY) || "[]");
       if (Array.isArray(saved)) setHistory(saved);
     } catch {}
-  }, [PERSIST_KEY]);
+  }, []);
 
   const saveHistory = (items) => {
     setHistory(items);
@@ -738,7 +730,7 @@ export default function MotionControlStudio({
     setVideoProgress(0);
 
     try {
-      const url = await uploadFile(apiKey, file, setVideoProgress);
+      const url = await uploadFile(file, setVideoProgress);
       setVideoUrl(url);
       setVideoState(UPLOAD_STATE.READY);
       handleAddVideoAsset(url, file.name);
@@ -771,7 +763,7 @@ export default function MotionControlStudio({
     setImageProgress(0);
 
     try {
-      const url = await uploadFile(apiKey, file, setImageProgress);
+      const url = await uploadFile(file, setImageProgress);
       setCharacterImages((prev) => [...prev, { url, name: file.name }]);
       handleAddImageAsset(url, file.name);
     } catch (err) {
@@ -824,7 +816,6 @@ export default function MotionControlStudio({
         prompt: prompt.trim(),
         aspect_ratio: aspectRatio,
         duration: duration,
-        quality: quality,
         high_bitrate: highBitrate,
         generate_audio: generateAudio,
         seed: seed,
@@ -833,7 +824,7 @@ export default function MotionControlStudio({
         },
       };
 
-      const result = await processMotionControl(apiKey, params);
+      const result = await processMotionControl(params);
       const outputUrl =
         result.url ||
         result.outputs?.[0] ||
@@ -844,7 +835,7 @@ export default function MotionControlStudio({
       }
 
       const newEntry = {
-        id: result.request_id || pendingRequestId.current || `mc-${Date.now()}`,
+        id: result.id || pendingRequestId.current || `mc-${Date.now()}`,
         url: outputUrl,
         prompt: prompt.trim() || (mode === "objects_swap" ? "Objects Swap" : "Motion Transfer"),
         mode: mode,
@@ -870,7 +861,7 @@ export default function MotionControlStudio({
   };
 
   // Model compact display label for button
-  const modelShortName = selectedModel.shortName || (selectedModelId === "seedance-2.5-motion-control" ? "Seedance 2.5" : "Seedance 2.0");
+  const modelShortName = selectedModel.name.replace(/\s*Motion Control$/i, "");
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -1239,7 +1230,7 @@ export default function MotionControlStudio({
                   setOpenDropdown(openDropdown === "options" ? null : "options");
                 }}
                 className={promptControlClassName({
-                  active: openDropdown === "options" || highBitrate || (selectedModelId === "seedance-2-motion-control" && quality === "basic"),
+                  active: openDropdown === "options" || highBitrate,
                 })}
               >
                 <SlidersIcon />
@@ -1255,7 +1246,7 @@ export default function MotionControlStudio({
                     {copy.labels.mode} & {copy.dropdowns.model} Options
                   </PromptPopoverHeader>
 
-                  {/* Seedance 2.5: High Bitrate Toggle */}
+                  {/* High Bitrate Toggle */}
                   {selectedModel.supportsBitrate && (
                     <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/[0.05]">
                       <div className="flex flex-col">
@@ -1275,29 +1266,6 @@ export default function MotionControlStudio({
                           }`}
                         />
                       </button>
-                    </div>
-                  )}
-
-                  {/* Seedance 2.0: Quality Mode */}
-                  {selectedModelId === "seedance-2-motion-control" && (
-                    <div className="flex flex-col gap-1.5 p-2 rounded-xl bg-white/[0.03] border border-white/[0.05]">
-                      <span className="text-xs font-semibold text-white">{copy.labels.quality}</span>
-                      <div className="flex gap-1">
-                        {["high", "basic"].map((q) => (
-                          <button
-                            key={q}
-                            type="button"
-                            onClick={() => setQuality(q)}
-                            className={`flex-1 py-1 text-xs font-bold rounded-lg capitalize transition-all ${
-                              quality === q
-                                ? "bg-[#22d3ee] text-black shadow-sm"
-                                : "text-white/50 hover:text-white bg-white/[0.04]"
-                            }`}
-                          >
-                            {q === "high" ? copy.dropdowns.qualityHigh : copy.dropdowns.qualityBasic}
-                          </button>
-                        ))}
-                      </div>
                     </div>
                   )}
 

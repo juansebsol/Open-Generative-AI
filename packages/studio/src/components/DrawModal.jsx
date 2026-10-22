@@ -4,7 +4,6 @@ import { uploadFile, generateI2I } from "../generation.js";
 export default function DrawModal({
   isOpen,
   onClose,
-  apiKey,
   batchSize = 1,
   onAddHistoryItem,
 }) {
@@ -1015,7 +1014,7 @@ export default function DrawModal({
       );
       if (!blob) throw new Error("Canvas serialization failed");
 
-      const uploadedUrl = await uploadFile(apiKey, blob);
+      const uploadedUrl = await uploadFile(blob);
 
       const results = await Promise.all(
         Array.from({ length: batchSize }).map(async () => {
@@ -1025,7 +1024,7 @@ export default function DrawModal({
             images_list: [uploadedUrl],
             aspect_ratio: aspectRatio === "Auto" ? "1:1" : aspectRatio,
           };
-          return await generateI2I(apiKey, genParams);
+          return await generateI2I(genParams);
         }),
       );
 

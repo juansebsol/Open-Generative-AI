@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { uploadFile, generateMarketingStudioAd } from "../generation.js";
-import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
 } from "./MobileGenerationActions.jsx";
@@ -254,23 +253,18 @@ function SimpleDropdown({ isOpen, title, options, selected, onSelect, onClose })
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
+const PERSIST_KEY = "hg_marketing_studio_persistent";
+
 export default function MarketingStudio({
-  apiKey,
   droppedFiles,
   onFilesHandled,
   onGenerationStart,
   onGenerationEnd,
   onGenerationComplete,
   onGenerationError,
-  historyItems,
   locale = "en",
 }) {
   const copy = resolveCopy(en, zh, locale);
-  const LEGACY_PERSIST_KEY = "hg_marketing_studio_persistent";
-  const PERSIST_KEY = scopedPersistKey(LEGACY_PERSIST_KEY, apiKey);
-  useEffect(() => {
-    migrateLegacyPersistKey(LEGACY_PERSIST_KEY, PERSIST_KEY);
-  }, [PERSIST_KEY]);
   
   const [prompt, setPrompt] = useState("");
   const [productImage, setProductImage] = useState(null);
@@ -280,7 +274,7 @@ export default function MarketingStudio({
   const [params, setParams] = useState(DEFAULT_PARAMS);
 
   const [localHistory, setLocalHistory] = useState([]);
-  const history = historyItems ?? localHistory;
+  const history = localHistory;
   const [isGenerating, setIsGenerating] = useState(false);
   const [dropdown, setDropdown] = useState(null); // 'format' | 'ratio' | 'res' | 'duration'
   const [uploadProgress, setUploadProgress] = useState({ product: 0, avatar: 0, additional: 0 });
@@ -341,14 +335,14 @@ export default function MarketingStudio({
       const toUpload = files.slice(0, remaining);
       for (const file of toUpload) {
         try {
-          const url = await uploadFile(apiKey, file, (pct) => setUploadProgress(p => ({ ...p, additional: pct })));
+          const url = await uploadFile(file, (pct) => setUploadProgress(p => ({ ...p, additional: pct })));
           setAdditionalImages(prev => [...prev, url].slice(0, 6));
         } catch (err) { alert(err.message); }
       }
     } else {
       const file = files[0];
       try {
-        const url = await uploadFile(apiKey, file, (pct) => setUploadProgress(p => ({ ...p, [target]: pct })));
+        const url = await uploadFile(file, (pct) => setUploadProgress(p => ({ ...p, [target]: pct })));
         if (target === 'product') setProductImage(url);
         else setAvatarImage(url);
       } catch (err) { alert(err.message); }
@@ -364,7 +358,7 @@ export default function MarketingStudio({
     setIsGenerating(true);
     try {
       const formatHint = FORMATS.find((f) => f.name === params.format)?.hint;
-      const result = await generateMarketingStudioAd(apiKey, {
+      const result = await generateMarketingStudioAd({
         prompt: formatHint ? `${prompt.trim()}\n\nFormat: ${formatHint}` : prompt,
         aspect_ratio: params.ratio,
         duration: params.duration,
@@ -380,9 +374,7 @@ export default function MarketingStudio({
           format: params.format,
           timestamp: new Date().toISOString()
         };
-        if (!historyItems) {
-          setLocalHistory(prev => [entry, ...prev]);
-        }
+        setLocalHistory(prev => [entry, ...prev]);
         setFullscreenUrl(result.url);
         onGenerationComplete?.({ url: result.url, type: "video" });
       }
@@ -437,9 +429,7 @@ export default function MarketingStudio({
                     onClick={(e) => {
                       e.stopPropagation();
                       if (confirm(copy.confirm.deleteItem)) {
-                        if (!historyItems) {
-                          setLocalHistory(prev => prev.filter(h => h.id !== entry.id));
-                        }
+                        setLocalHistory(prev => prev.filter(h => h.id !== entry.id));
                       }
                     }}
                     className="p-2 bg-black/60 backdrop-blur-md rounded-full text-red-400 hover:bg-red-500 hover:text-white transition-all border border-white/10"
@@ -468,11 +458,9 @@ export default function MarketingStudio({
                       danger: true,
                       onSelect: () => {
                         if (confirm(copy.confirm.deleteItem)) {
-                          if (!historyItems) {
-                            setLocalHistory((prev) =>
-                              prev.filter((item) => item.id !== entry.id),
-                            );
-                          }
+                          setLocalHistory((prev) =>
+                            prev.filter((item) => item.id !== entry.id),
+                          );
                         }
                       },
                     },

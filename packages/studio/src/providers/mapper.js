@@ -54,7 +54,7 @@ export const FIELD_ALIASES = {
 // Our own bookkeeping that must never reach a provider. (`model` and `name`
 // are real inputs for some models, e.g. a Topaz model choice; unknown keys
 // are dropped against the schema anyway.)
-const INTERNAL_FIELDS = new Set(['onRequestId', '_modelId', 'request_id', 'api_key']);
+const INTERNAL_FIELDS = new Set(['onRequestId', '_modelId']);
 
 const FAL_IMAGE_SIZES = {
   '1:1': 'square_hd',

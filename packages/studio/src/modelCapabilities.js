@@ -217,10 +217,3 @@ export function mapReferenceParams(model, params = {}) {
 
   return payload;
 }
-
-export function recordGenerationSource(sources, familyId, requestId, modelId) {
-  return {
-    ...sources,
-    [familyId]: { requestId, modelId },
-  };
-}

@@ -13,7 +13,6 @@ import {
 } from "./groupedVideoModels.js";
 
 const IMAGE_FAMILY_ALIASES = {
-  "bytedance-seededit-v3": "bytedance-seedream-v3",
   "bytedance-seedream-edit-v4": "bytedance-seedream-v4",
   "bytedance-seedream-v4-edit": "bytedance-seedream-v4",
   "bytedance-seedream-v5.0": "seedream-5.0",
@@ -25,21 +24,14 @@ const IMAGE_FAMILY_ALIASES = {
   "seedream-5.0-flash": "seedream-5.0",
   "seedream-5.0-flash-edit": "seedream-5.0",
   "seedream-5.0-flash-layerize": "seedream-5.0",
-  "google-imagen4-fast": "google-imagen4",
-  "google-imagen4-ultra": "google-imagen4",
   "flux-2-klein-4b": "flux-2-klein",
   "flux-2-klein-9b": "flux-2-klein",
-  "flux-2-klein-4b-turbo": "flux-2-klein",
-  "flux-2-klein-9b-turbo": "flux-2-klein",
   "flux-2-klein-4b-text-to-image-lora": "flux-2-klein",
   "flux-2-klein-9b-text-to-image-lora": "flux-2-klein",
   "flux-2-klein-4b-edit": "flux-2-klein",
   "flux-2-klein-9b-edit": "flux-2-klein",
-  "flux-2-klein-4b-turbo-edit": "flux-2-klein",
-  "flux-2-klein-9b-turbo-edit": "flux-2-klein",
   "flux-2-klein-4b-edit-lora": "flux-2-klein",
   "flux-2-klein-9b-edit-lora": "flux-2-klein",
-  "flux-dev-lora": "flux-dev",
   "flux-2-dev-edit": "flux-2-dev",
   "flux-2-flex-edit": "flux-2-flex",
   "flux-2-pro-edit": "flux-2-pro",
@@ -49,15 +41,9 @@ const IMAGE_FAMILY_ALIASES = {
   "gpt-image-2.5-sunburst-text-to-image": "gpt-image-2.5",
   "gpt-image-2.5-flare-image-to-image": "gpt-image-2.5",
   "gpt-image-2.5-sunburst-image-to-image": "gpt-image-2.5",
-  "gemini-omni-character": "gemini-omni",
-  "grok-imagine-image-2-edit": "grok-imagine",
-  "qwen2-1-text-to-image": "qwen2-1",
-  "qwen2-1-image-to-image": "qwen2-1",
   "topaz-upscale-image-creative": "topaz-upscale-image",
   "topaz-upscale-image-generative": "topaz-upscale-image",
   "topaz-upscale-image-precision": "topaz-upscale-image",
-  "gpt4o-image-to-image": "gpt4o",
-  "gpt4o-text-to-image": "gpt4o",
   "grok-imagine-image-to-image": "grok-imagine",
   "grok-imagine-text-to-image": "grok-imagine",
   "grok-imagine-text-to-image-quality": "grok-imagine",
@@ -67,15 +53,10 @@ const IMAGE_FAMILY_ALIASES = {
   "kling-o1-text-to-image": "kling-o1",
   "kling-o3-image": "kling-o3",
   "kling-o3-image-edit": "kling-o3",
-  "midjourney-v7-image-to-image": "midjourney-v7-text-to-image",
-  "midjourney-v7-omni-reference": "midjourney-v7",
-  "midjourney-v7-style-reference": "midjourney-v7",
-  "midjourney-v7-text-to-image": "midjourney-v7-text-to-image",
   "minimax-image-01-subject-reference": "minimax-image-01",
   "nano-banana-edit": "nano-banana",
   "nano-banana-2-edit": "nano-banana-2",
   "nano-banana-2-lite-edit": "nano-banana-2-lite",
-  "nano-banana-effects": "nano-banana",
   "nano-banana-pro-edit": "nano-banana-pro",
   "qwen-image-edit": "qwen-image",
   "qwen-image-2.0-pro": "qwen-image-2.0",
@@ -85,8 +66,6 @@ const IMAGE_FAMILY_ALIASES = {
   "qwen-image-edit-plus-lora": "qwen-plus",
   "qwen3-pro-text-to-image": "qwen3",
   "qwen3-pro-image-to-image": "qwen3",
-  "reve-image-edit": "reve",
-  "reve-text-to-image": "reve",
   "bytedance-seedream-v4.5-edit": "bytedance-seedream-v4.5",
   "vidu-q2-reference-to-image": "vidu-q2",
   "vidu-q2-text-to-image": "vidu-q2",
@@ -97,15 +76,11 @@ const IMAGE_FAMILY_ALIASES = {
 const IMAGE_FAMILY_NAMES = {
   "flux-2-klein": "Flux 2 Klein",
   "flux-dev": "Flux Dev",
-  "gemini-omni": "Gemini Omni",
-  gpt4o: "GPT-4o",
   "grok-imagine": "Grok Imagine",
-  "google-imagen4": "Google Imagen 4",
   "kling-o3": "Kling O3",
   "seedream-5.0": "Seedream 5.0",
   "gpt-image-2": "GPT Image 2",
   "gpt-image-2.5": "GPT Image 2.5",
-  "qwen2-1": "Qwen 2.1",
   "topaz-upscale-image": "Topaz Image Upscale",
   "qwen-image-2.0": "Qwen Image 2.0",
   "qwen-plus": "Qwen Image Edit Plus",
@@ -115,10 +90,8 @@ const IMAGE_FAMILY_NAMES = {
 
 const VIDEO_FAMILY_ALIASES = {
   "ai-video-upscaler-pro": "ai-video-upscaler",
-  "hunyuan-fast-text-to-video": "hunyuan",
   "hunyuan-image-to-video": "hunyuan",
   "hunyuan-text-to-video": "hunyuan",
-  "video-effects": "ai-video-effects",
   "topaz-upscale-video-creative": "topaz-upscale-video",
   "topaz-upscale-video-generative": "topaz-upscale-video",
   "topaz-upscale-video-precision": "topaz-upscale-video",
@@ -130,14 +103,6 @@ const VIDEO_FAMILY_NAMES = {
   "minimax-h3-max": "MiniMax H3 Max",
   "topaz-upscale-video": "Topaz Video Upscale",
 };
-
-function videoVariantKey(model) {
-  const endpoint = model.endpoint || model.id;
-  const effectOptions = model.inputs?.name?.enum;
-  return effectOptions?.length
-    ? `${endpoint}\u0000${effectOptions.join("\u0000")}`
-    : endpoint;
-}
 
 const PREFERRED_IMAGE_VARIANTS = {
   "gpt-image-2": {
@@ -153,17 +118,10 @@ const PREFERRED_IMAGE_VARIANTS = {
     i2i: "flux-2-klein-4b-edit",
   },
   "flux-dev": { t2i: "flux-dev" },
-  "google-imagen4": { t2i: "google-imagen4" },
-  gpt4o: { i2i: "gpt4o-image-to-image" },
-  "midjourney-v7": { i2i: "midjourney-v7-image-to-image" },
   "nano-banana": { i2i: "nano-banana-edit" },
   "qwen-image-2.0": {
     t2i: "qwen-image-2.0",
     i2i: "qwen-image-2.0-edit",
-  },
-  "qwen2-1": {
-    t2i: "qwen2-1-text-to-image",
-    i2i: "qwen2-1-image-to-image",
   },
   "qwen-plus": { i2i: "qwen-image-edit-plus" },
   qwen3: {
@@ -237,7 +195,7 @@ function videoFamilyId(model) {
   let match = id.match(/^kling-(v?\d+(?:\.\d+)?|o1)(?:-|$)/);
   if (match) return `kling-${match[1].toLowerCase() === "o1" ? "o1" : `v${normalizeVersion(match[1])}`}`;
 
-  match = id.match(/^seedance-(v?\d+(?:\.\d+)?|lite|pro)(?:-|$)/);
+  match = id.match(/^seedance-(v?\d+(?:\.\d+)?|pro)(?:-|$)/);
   if (match) return `seedance-${normalizeVersion(match[1])}`;
 
   match = id.match(/^wan(\d+(?:\.\d+)?)(?:-|$)/);
@@ -263,7 +221,6 @@ function videoFamilyId(model) {
 
   if (id.startsWith("minimax-h3-max")) return "minimax-h3-max";
   if (id.startsWith("minimax-h3")) return "minimax-h3";
-  if (id.startsWith("openai-sora-2")) return "sora-2";
   if (id.startsWith("grok-imagine")) return "grok-imagine-video";
   if (id.startsWith("gemini-omni")) return "gemini-omni";
 
@@ -304,7 +261,6 @@ function videoFamilyName(familyId, fallbackName) {
     "grok-imagine-video": "Grok Imagine",
     "kling-o1": "Kling O1",
     "minimax-h3": "MiniMax H3",
-    "sora-2": "Sora 2",
   };
   return VIDEO_FAMILY_NAMES[familyId] || names[familyId] || fallbackName;
 }
@@ -320,7 +276,6 @@ function imageSeriesVersion(family) {
   const patterns = [
     [/^gpt-image-(\d+(?:\.\d+)?)/, "gpt-image"],
     [/^hunyuan-image-(\d+(?:\.\d+)?)/, "hunyuan-image"],
-    [/^midjourney-v(\d+(?:\.\d+)?)/, "midjourney"],
     [/^qwen-image-(\d+(?:\.\d+)?)/, "qwen-image"],
     [/^wan(\d+(?:\.\d+)?)/, "wan-image"],
     [/^(?:bytedance-)?seedream-v?(\d+(?:\.\d+)?)/, "seedream-image"],
@@ -336,7 +291,6 @@ function stripFamilyPrefix(name, family) {
   const patterns = {
     "grok-imagine-video": /^Grok Imagine\s*/i,
     "minimax-h3": /^MiniMax H3\s*/i,
-    "sora-2": /^(?:Openai\s+)?Sora 2\s*/i,
   };
   if (patterns[family.id]) return name.replace(patterns[family.id], "");
 
@@ -435,7 +389,7 @@ function buildCatalog(modeLists, config) {
         .filter(({ model }) => {
           if (seenIds.has(model.id)) return false;
           seenIds.add(model.id);
-          const endpoint = config.variantKey?.(model) || model.endpoint || model.id;
+          const endpoint = model.endpoint || model.id;
           if (seenEndpoints.has(endpoint)) return false;
           seenEndpoints.add(endpoint);
           return true;
@@ -589,7 +543,6 @@ export const videoModelCatalog = buildCatalog(
     namingModes: ["t2v", "i2v", "v2v"],
     preferredVariants: PREFERRED_VIDEO_VARIANTS,
     seriesVersion: videoSeriesVersion,
-    variantKey: videoVariantKey,
   },
 );
 

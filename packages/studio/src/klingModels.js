@@ -1,6 +1,6 @@
 import { createGroupedVideoRegistry } from "./groupedVideoRegistry.js";
 
-export const KLING_FAMILY_NAMES = Object.freeze({
+const KLING_FAMILY_NAMES = Object.freeze({
   "kling-v3": "Kling 3.0",
   "kling-v3-omni": "Kling 3.0 Omni",
   "kling-o1": "Kling O1",
