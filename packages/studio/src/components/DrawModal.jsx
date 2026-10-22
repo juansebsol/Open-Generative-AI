@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { uploadFile, generateI2I } from "../muapi.js";
+import { uploadFile, generateI2I } from "../generation.js";
 
 export default function DrawModal({
   isOpen,
@@ -1135,12 +1135,20 @@ export default function DrawModal({
                   : "border-white/10"
               }`}
             >
-              <div className="w-56 h-36 rounded-xl border border-white/5 overflow-hidden shadow-lg select-none relative bg-black/40">
-                <img
-                  src="https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/neta-lumina.avif"
-                  alt="Draw visual representation"
-                  className="w-full h-full object-cover opacity-60"
-                />
+              <div className="w-56 h-36 rounded-xl border border-white/5 overflow-hidden shadow-lg select-none relative bg-black/40 bg-gradient-to-br from-[#b5f500]/15 via-white/[0.02] to-transparent">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 w-12 h-12 text-[#b5f500]/50"
+                >
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
                 <div className="absolute bottom-2 left-2 right-2 bg-black/80 backdrop-blur-md rounded-md p-1 px-2 border border-white/5 flex items-center gap-1">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#b5f500] animate-pulse"></div>
                   <span className="text-[9px] text-white/50 tracking-wider uppercase font-bold">

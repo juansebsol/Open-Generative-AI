@@ -14,29 +14,19 @@
     "placeholder": "Describe your ad script... Use @image1 for product, @image2 for avatar."
   },
   "dropdowns": {
-    "videoFormatPresets": "Video Format Presets",
-    "avatarPresets": "Avatar Presets",
+    "videoFormatPresets": "Video Format",
     "aspectRatio": "Aspect Ratio",
     "resolution": "Resolution",
-    "duration": "Duration",
-    "selectAvatarFallback": "Select Avatar"
+    "duration": "Duration"
   },
   "buttons": {
     "generating": "Generating...",
     "launch": "Launch",
-    "enlargePreview": "Enlarge preview",
-    "enlargeSelectedAvatar": "Enlarge selected avatar",
-    "selectAvatar": "Select Avatar",
     "download": "Download",
     "delete": "Delete"
   },
   "history": {
     "badge": "Marketing Studio"
-  },
-  "alt": {
-    "creativeAsset": "Creative asset {index}",
-    "previousAvatar": "Previous Avatar",
-    "nextAvatar": "Next Avatar"
   },
   "errors": {
     "missingScript": "Please enter an ad script.",

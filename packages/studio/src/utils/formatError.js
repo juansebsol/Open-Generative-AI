@@ -25,12 +25,12 @@ export function formatErrorMessage(err, fallback = "Generation failed") {
     }
   }
 
-  // Handle common HTTP error codes
-  if (message.includes('402') || message.includes('INSUFFICIENT_CREDITS') || message.toLowerCase().includes('insufficient credits')) {
-    return "Insufficient credits. Please top up your wallet.";
+  // Handle common provider HTTP errors
+  if (/\b402\b|insufficient (credits|balance|funds)|exhausted balance/i.test(message)) {
+    return "The provider says your account is out of credits. Top up with that provider, or switch providers in Settings → Providers.";
   }
-  if (message.includes('401') || message.includes('403')) {
-    return "Authentication failed. Please check your account session or API key.";
+  if (/\b(401|403)\b|unauthori[sz]ed|invalid api key|authentication/i.test(message)) {
+    return "The provider rejected your API key. Check it in Settings → Providers.";
   }
   if (message.includes('429')) {
     return "Too many requests. Please wait a moment and try again.";

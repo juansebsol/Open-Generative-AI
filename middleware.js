@@ -1,59 +1,44 @@
 import { NextResponse } from 'next/server';
 import { getLocaleFromPathname } from './lib/locales';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
+// connect-src allows https: because the browser PUTs uploads straight to the
+// provider's signed storage URL (fal, WaveSpeed) and downloads results from
+// provider CDNs, and allows plain http only to this machine for local
+// engines (ComfyUI, sd-server) that the visitor runs themselves.
+const CONTENT_SECURITY_POLICY = [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https: http://localhost:* http://127.0.0.1:*",
+    "media-src 'self' data: blob: https: http://localhost:* http://127.0.0.1:*",
+    `connect-src 'self' https: http://localhost:* http://127.0.0.1:*${isDev ? ' ws:' : ''}`,
+    "font-src 'self' data:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+].join('; ');
+
 function addSecurityHeaders(response) {
-    // Prevent MIME type sniffing (CWE-693)
     response.headers.set('X-Content-Type-Options', 'nosniff');
-    // Prevent clickjacking (CWE-1021)
     response.headers.set('X-Frame-Options', 'DENY');
-    // Enable XSS filter in legacy browsers
-    response.headers.set('X-XSS-Protection', '1; mode=block');
-    // Referrer policy
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    // Content Security Policy - restricts script sources to prevent XSS (CWE-79).
-    // connect-src covers *.muapi.ai (not just api.muapi.ai) because generated
-    // media, model thumbnails, and other assets are served from cdn.muapi.ai
-    // and other muapi subdomains that the renderer fetches directly.
-    response.headers.set(
-        'Content-Security-Policy',
-        "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https://muapi.ai https://*.muapi.ai; font-src 'self' data:;"
-    );
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    response.headers.set('Content-Security-Policy', CONTENT_SECURITY_POLICY);
     return response;
 }
 
 export function middleware(request) {
-    const url = request.nextUrl;
-
-    // Catch requests to /api/workflow, /api/app, and /api/v1
-    const isMuApi = url.pathname.startsWith('/api/workflow') ||
-                    url.pathname.startsWith('/api/app') ||
-                    url.pathname.startsWith('/api/v1');
-
-    if (isMuApi) {
-        // Exclude paths that have their own dedicated route handlers with custom logic
-        const isHandledByRoute = url.pathname.startsWith('/api/v1/creative-agent') ||
-                                url.pathname.startsWith('/api/v1/get_upload_url') ||
-                                url.pathname.startsWith('/api/v1/upload-binary');
-
-        if (url.pathname.startsWith('/api/v1') && !isHandledByRoute) {
-            const targetUrl = new URL(url.pathname + url.search, 'https://api.muapi.ai');
-            const rewriteResponse = NextResponse.rewrite(targetUrl);
-            return addSecurityHeaders(rewriteResponse);
-        }
-    }
-
-    // Plain response header carrying the locale derived from the URL path
-    // (same "set in middleware, read via headers() in the root layout"
-    // trick the main muapi client uses — see docs/localization.md).
+    // The root layout reads the locale from this header (see lib/locales.js).
     const response = NextResponse.next();
-    response.headers.set('x-locale', getLocaleFromPathname(url.pathname));
+    response.headers.set('x-locale', getLocaleFromPathname(request.nextUrl.pathname));
     return addSecurityHeaders(response);
 }
 
-// Match all paths for security headers. Exclude Next.js internal paths.
 export const config = {
     matcher: [
-        '/api/:path*',
         '/((?!_next/static|_next/image|favicon.ico|__nextjs_original-stack-frame).*)',
     ],
 };

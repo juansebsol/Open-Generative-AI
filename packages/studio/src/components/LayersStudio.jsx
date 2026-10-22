@@ -9,7 +9,7 @@ import {
   upscaleImage,
   removeBackground,
   expandImage,
-} from "../muapi.js";
+} from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import en from "../messages/en/layersStudio.json";
 import zh from "../messages/zh/layersStudio.json";
@@ -32,18 +32,6 @@ const UPSCALE_MODELS = [
     name: "AI Upscaler",
     subtitle: "Fast 1-click automatic super-resolution",
   },
-];
-
-// Sample initial image & decomposed layers for demonstration (Seedream Wild Beauty via CDN)
-const DEFAULT_SAMPLE_IMAGE =
-  "https://cdn.muapi.ai/assets/1786019968051_cKRYLHHu.png";
-
-const DEFAULT_SAMPLE_LAYERS = [
-  "https://cdn.muapi.ai/assets/1786021161819_iOe80bNR.webp",
-  "https://cdn.muapi.ai/assets/1786020452731_mB4m6NFR.webp",
-  "https://cdn.muapi.ai/assets/1786021169234_iyVccSAA.webp",
-  "https://cdn.muapi.ai/assets/1786021154170_Dx9snemT.webp",
-  "https://cdn.muapi.ai/assets/1786021150882_p9lgz4lY.webp",
 ];
 
 // Preset colors for Marker & Shapes tool
@@ -92,7 +80,7 @@ export default function LayersStudio({
   const copy = resolveCopy(en, zh, locale);
 
   // Main canvas & image state
-  const [currentImageUrl, setCurrentImageUrl] = useState(DEFAULT_SAMPLE_IMAGE);
+  const [currentImageUrl, setCurrentImageUrl] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -1150,23 +1138,6 @@ export default function LayersStudio({
     }
   };
 
-  // Load Seedream Wild Beauty 5-Layer Decomposition Example via CDN
-  const handleLoadSampleLayers = () => {
-    setCurrentImageUrl(
-      "https://cdn.muapi.ai/assets/1786019968051_cKRYLHHu.png",
-    );
-    setDecomposedLayers(DEFAULT_SAMPLE_LAYERS);
-    setCarouselIndex(0);
-    const initialVis = {};
-    DEFAULT_SAMPLE_LAYERS.forEach((_, idx) => {
-      initialVis[idx] = true;
-    });
-    setVisibleLayers(initialVis);
-    clearDrawingCanvas();
-    setMarkedRegions([]);
-    toast.success(copy.toasts.loadedSample);
-  };
-
   // Explicit Side Tool Execution Handler
   const handleExecuteSideTool = async (toolId) => {
     if (!apiKey) {
@@ -2218,65 +2189,6 @@ export default function LayersStudio({
             {/* --- VIEW 1: LAYER DECOMPOSITION VIEW --- */}
             {activeSideTab === "layer-decomposition" && (
               <div className="space-y-4">
-                {/* Hero Feature Card with 5 CDN Layers */}
-                <div
-                  onClick={handleLoadSampleLayers}
-                  className="group w-full bg-[#f4f4f7] hover:bg-white rounded-3xl p-3 shadow-lg overflow-hidden border border-white/20 cursor-pointer transition-all duration-200 hover:scale-[1.01]"
-                  title={copy.sample.clickToLoad}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="relative w-28 h-36 rounded-2xl overflow-hidden bg-zinc-900 flex-shrink-0 shadow-md">
-                      <img
-                        src="https://cdn.muapi.ai/assets/1786019968051_cKRYLHHu.png"
-                        alt="Seedream original demo"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-y-0 left-1/2 w-5 -translate-x-1/2 bg-gradient-to-r from-transparent via-[#d8ff00]/90 to-transparent blur-[3px] animate-pulse" />
-                      <div className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-md bg-black/75 text-[8px] font-black text-white backdrop-blur-sm">
-                        {copy.sample.original}
-                      </div>
-                    </div>
-
-                    <div className="flex-1 bg-[#13151d] rounded-2xl p-2.5 flex flex-col justify-between h-36 shadow-inner overflow-hidden">
-                      <div className="flex items-center justify-between px-1">
-                        <span className="text-[10px] font-black text-[#a3e635] uppercase tracking-wider">
-                          {copy.sample.layersCount}
-                        </span>
-                        <span className="text-[9px] font-bold text-white/50 group-hover:text-white transition-colors">
-                          {copy.sample.try}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
-                        {DEFAULT_SAMPLE_LAYERS.map((layerUrl, idx) => (
-                          <div
-                            key={idx}
-                            className="flex-shrink-0 w-11 h-16 rounded-xl overflow-hidden border border-white/10 relative flex items-center justify-center p-1 bg-[#1a1d26] shadow-sm hover:border-[#84cc16]/50 transition-all"
-                            style={{
-                              backgroundImage: `linear-gradient(45deg, #242733 25%, transparent 25%), linear-gradient(-45deg, #242733 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #242733 75%), linear-gradient(-45deg, transparent 75%, #242733 75%)`,
-                              backgroundSize: "6px 6px",
-                            }}
-                            title={`Layer ${idx + 1}`}
-                          >
-                            <img
-                              src={layerUrl}
-                              alt={`Layer ${idx + 1}`}
-                              className="max-h-full max-w-full object-contain drop-shadow-sm transition-transform duration-200 group-hover:scale-105"
-                            />
-                            <span className="absolute bottom-0.5 right-0.5 text-[8px] font-black text-white/90 bg-black/70 px-1 rounded">
-                              {idx + 1}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="text-[9px] text-center text-white/40 font-semibold group-hover:text-[#84cc16] transition-colors">
-                        {copy.sample.clickToExplore}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Settings Section */}
                 <div className="bg-[#2d313d] rounded-3xl p-5 border border-white/5 space-y-4 shadow-sm">
                   <h4 className="text-sm font-bold text-white tracking-tight">
@@ -4003,12 +3915,7 @@ export default function LayersStudio({
                     >
                       <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
                     </svg>
-                    <span>
-                      {copy.footer.upscaleCost.replace(
-                        '{cost}',
-                        upscaleModel === "seedvr2-image-upscale" ? "0.02" : "1.0",
-                      )}
-                    </span>
+                    <span>{copy.footer.upscale}</span>
                   </>
                 )}
               </button>
@@ -4069,7 +3976,7 @@ export default function LayersStudio({
                     >
                       <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
                     </svg>
-                    <span>{copy.footer.removeBackgroundCost}</span>
+                    <span>{copy.footer.removeBackground}</span>
                   </>
                 )}
               </button>
@@ -4091,7 +3998,7 @@ export default function LayersStudio({
                     >
                       <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
                     </svg>
-                    <span>{copy.footer.expandImageCost}</span>
+                    <span>{copy.footer.expandImage}</span>
                   </>
                 )}
               </button>

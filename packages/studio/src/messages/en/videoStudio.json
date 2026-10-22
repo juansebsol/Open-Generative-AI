@@ -66,12 +66,6 @@
     "heading": "START CREATING WITH",
     "subtitle": "Animate images into stunning AI videos with motion effects"
   },
-  "creativeAssets": {
-    "asset1": "Creative asset 1",
-    "asset2": "Creative asset 2",
-    "asset3": "Creative asset 3",
-    "asset4": "Creative asset 4"
-  },
   "errors": {
     "modelChangedDuringUpload": "The model changed during upload. Please add the file again.",
     "modelDoesNotSupportReference": "{family} does not support {mediaType} references.",

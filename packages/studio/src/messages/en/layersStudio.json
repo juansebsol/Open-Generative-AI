@@ -49,13 +49,6 @@
     "closePanel": "Close Panel",
     "regionalPromptPlaceholder": "Type your prompt here..."
   },
-  "sample": {
-    "clickToLoad": "Click to load this layer decomposition example",
-    "original": "Original",
-    "layersCount": "5 Layers",
-    "try": "Try →",
-    "clickToExplore": "Click to explore sample"
-  },
   "settings": {
     "heading": "Settings",
     "resolution": "Resolution",
@@ -130,23 +123,23 @@
     "decomposing": "Decomposing ({progress}%)...",
     "separateLayers": "Separate layers {count}",
     "upscaling": "Upscaling ({progress}%)...",
-    "upscaleCost": "Upscale {cost}",
+    "upscale": "Upscale",
     "removingBackground": "Removing background ({progress}%)...",
-    "removeBackgroundCost": "Remove Background 1.0",
+    "removeBackground": "Remove Background",
     "expandingBorders": "Expanding borders ({progress}%)...",
-    "expandImageCost": "Expand Image 0.03"
+    "expandImage": "Expand Image"
   },
   "toasts": {
-    "enterApiKeyUpload": "Please enter your API Key to upload images.",
+    "enterApiKeyUpload": "Add a provider key in Settings → Providers.",
     "imageUploaded": "Image uploaded successfully!",
     "uploadFailed": "Upload failed: {error}",
     "uploadImageFileOnly": "Please upload an image file.",
     "fileTooLarge": "File too large (max 20MB): {name}",
     "viewReset": "View reset",
-    "enterApiKey": "Please enter your API key.",
+    "enterApiKey": "Add a provider key in Settings → Providers.",
     "enterRegionPrompt": "Please enter a prompt for the selected region.",
     "editFailed": "Edit failed: {error}",
-    "apiKeyMissingSet": "API key is missing. Please set your API key.",
+    "apiKeyMissingSet": "Add a provider key in Settings → Providers.",
     "uploadOrSelectDecompose": "Please upload or select an image to decompose into layers.",
     "decomposedInto": "Decomposed into {count} layer(s)!",
     "decompositionFailed": "Decomposition failed: {error}",
@@ -166,8 +159,7 @@
     "resetCategory": "Reset {category}",
     "colorGradingReset": "Color grading reset to default",
     "downloadedGraded": "Downloaded color graded image!",
-    "loadedSample": "Loaded Seedream 5-layer sample!",
-    "apiKeyMissing": "API key is missing.",
+    "apiKeyMissing": "Add a provider key in Settings → Providers.",
     "uploadImageFirst": "Please upload an image first.",
     "toolCompleted": "{tool} completed successfully!",
     "operationFailed": "Operation failed: {error}",

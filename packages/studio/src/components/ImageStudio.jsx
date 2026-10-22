@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { generateImage, generateI2I, uploadFile } from "../muapi.js";
+import { generateImage, generateI2I, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import DrawModal from "./DrawModal.jsx";
@@ -60,6 +60,7 @@ import {
 import en from "../messages/en/imageStudio.json";
 import zh from "../messages/zh/imageStudio.json";
 import { resolveCopy } from "../i18nUtils";
+import EmptyStateCards from "./EmptyStateCards.jsx";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -626,35 +627,42 @@ function UploadButton({ apiKey, maxImages, onSelect, onClear, initialUrls = [], 
 
 // ─── ModelDropdown ────────────────────────────────────────────────────────────
 
-const PROVIDER_LOGOS = {
-  openai: "https://cdn.muapi.ai/models/openai.png",
-  google: "https://cdn.muapi.ai/models/gemini.png",
-  kling: "https://cdn.muapi.ai/models/kling.png",
-  alibaba: "https://cdn.muapi.ai/models/alibaba.png",
-  bytedance: "https://cdn.muapi.ai/models/bytedance.png",
-  blackforest: "https://cdn.muapi.ai/models/bfl.png",
-  minimax: "https://cdn.muapi.ai/models/minimax.png",
-  suno: "https://cdn.muapi.ai/models/suno.png",
-  anthropic: "https://cdn.muapi.ai/models/claude.png",
-  meshy: "https://cdn.muapi.ai/models/meshy-3.png",
-  tripo3d: "https://cdn.muapi.ai/models/tripo3d.png",
-  grok: "https://cdn.muapi.ai/models/xai.png",
-  muapi: "https://cdn.muapi.ai/models/muapi.png",
-  midjourney: "https://cdn.muapi.ai/models/midjourney.png",
-  vidu: "https://cdn.muapi.ai/models/vidu.png",
-  runway: "https://cdn.muapi.ai/models/runway.png",
-  luma: "https://cdn.muapi.ai/models/luma.png",
-  ideogram: "https://cdn.muapi.ai/models/ideogram.png",
-  leonardoai: "https://cdn.muapi.ai/models/leonardoai.png",
-  hunyuan: "https://cdn.muapi.ai/models/hunyuan.png",
-  hidream: "https://cdn.muapi.ai/models/hidream.png",
-  lightricks: "https://cdn.muapi.ai/models/lightricks.png",
-  pixverse: "https://cdn.muapi.ai/models/pixverse.png",
-  reve: "https://cdn.muapi.ai/models/reve.png",
-  stability: "https://cdn.muapi.ai/models/stability.png"
-};
-
-const invertLogos = ['openai', 'blackforest', 'runway', 'ideogram', 'lightricks', 'grok'];
+// Text badges for model providers (no hosted logo images).
+function getProviderStyle(provider) {
+  switch (provider) {
+    case "grok":
+      return { text: "xI", bg: "bg-orange-500/10 text-orange-400 border-orange-500/25" };
+    case "openai":
+      return { text: "O", bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/25" };
+    case "google":
+      return { text: "G", bg: "bg-blue-500/10 text-blue-400 border-blue-500/25" };
+    case "blackforest":
+      return { text: "BF", bg: "bg-amber-500/10 text-amber-400 border-amber-500/25" };
+    case "bytedance":
+      return { text: "BD", bg: "bg-purple-500/10 text-purple-400 border-purple-500/25" };
+    case "midjourney":
+      return { text: "MJ", bg: "bg-indigo-500/10 text-indigo-400 border-indigo-500/25" };
+    case "kling":
+      return { text: "KL", bg: "bg-rose-500/10 text-rose-400 border-rose-500/25" };
+    case "vidu":
+      return { text: "VD", bg: "bg-cyan-500/10 text-cyan-400 border-cyan-500/25" };
+    case "minimax":
+      return { text: "MX", bg: "bg-pink-500/10 text-pink-400 border-pink-500/25" };
+    case "ideogram":
+      return { text: "ID", bg: "bg-yellow-500/10 text-yellow-400 border-yellow-500/25" };
+    case "luma":
+      return { text: "LM", bg: "bg-teal-500/10 text-teal-400 border-teal-500/25" };
+    case "alibaba":
+      return { text: "AL", bg: "bg-sky-500/10 text-sky-400 border-sky-500/25" };
+    case "leonardoai":
+      return { text: "LE", bg: "bg-violet-500/10 text-violet-400 border-violet-500/25" };
+    case "stability":
+      return { text: "SD", bg: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/25" };
+    default:
+      const name = provider ? provider.toUpperCase() : "AI";
+      return { text: name.substring(0, 2), bg: "bg-primary/10 text-primary border-primary/25" };
+  }
+}
 
 function ModelDropdown({ selectedModel, onSelect, onClose, copy }) {
   const t = copy.modelDropdown;
@@ -691,49 +699,13 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy }) {
     }
   }, []);
 
-  const getProviderStyle = (provider) => {
-    switch (provider) {
-      case "grok":
-        return { text: "xI", bg: "bg-orange-500/10 text-orange-400 border-orange-500/25" };
-      case "openai":
-        return { text: "O", bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/25" };
-      case "google":
-        return { text: "G", bg: "bg-blue-500/10 text-blue-400 border-blue-500/25" };
-      case "blackforest":
-        return { text: "BF", bg: "bg-amber-500/10 text-amber-400 border-amber-500/25" };
-      case "bytedance":
-        return { text: "BD", bg: "bg-purple-500/10 text-purple-400 border-purple-500/25" };
-      case "midjourney":
-        return { text: "MJ", bg: "bg-indigo-500/10 text-indigo-400 border-indigo-500/25" };
-      case "kling":
-        return { text: "KL", bg: "bg-rose-500/10 text-rose-400 border-rose-500/25" };
-      case "vidu":
-        return { text: "VD", bg: "bg-cyan-500/10 text-cyan-400 border-cyan-500/25" };
-      case "minimax":
-        return { text: "MX", bg: "bg-pink-500/10 text-pink-400 border-pink-500/25" };
-      case "ideogram":
-        return { text: "ID", bg: "bg-yellow-500/10 text-yellow-400 border-yellow-500/25" };
-      case "luma":
-        return { text: "LM", bg: "bg-teal-500/10 text-teal-400 border-teal-500/25" };
-      case "alibaba":
-        return { text: "AL", bg: "bg-sky-500/10 text-sky-400 border-sky-500/25" };
-      case "leonardoai":
-        return { text: "LE", bg: "bg-violet-500/10 text-violet-400 border-violet-500/25" };
-      case "stability":
-        return { text: "SD", bg: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/25" };
-      default:
-        const name = provider ? provider.toUpperCase() : "AI";
-        return { text: name.substring(0, 2), bg: "bg-primary/10 text-primary border-primary/25" };
-    }
-  };
-
   // Dynamically compute list of providers from the input models list
   const availableProviders = [];
   const seenProviders = new Set();
   
   modelEntries.forEach(({ family }) => {
-    const pId = family.provider || 'muapi';
-    const pName = family.provider_name || 'Muapi';
+    const pId = family.provider || 'other';
+    const pName = family.provider_name || 'Other';
     if (!seenProviders.has(pId)) {
       seenProviders.add(pId);
       availableProviders.push({ id: pId, name: pName });
@@ -744,7 +716,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy }) {
     const { family } = entry;
     // 1. Filter by provider tab
     if (selectedProvider !== "all") {
-      const pId = family.provider || 'muapi';
+      const pId = family.provider || 'other';
       if (pId !== selectedProvider) return false;
     }
     // 2. Filter by search query
@@ -787,15 +759,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy }) {
               }`}
               title={p.name}
             >
-              {PROVIDER_LOGOS[p.id] ? (
-                <img
-                  src={PROVIDER_LOGOS[p.id]}
-                  alt={p.name}
-                  className={`w-full h-full rounded-full object-contain ${invertLogos.includes(p.id) ? "invert" : ""}`}
-                />
-              ) : (
-                style.text
-              )}
+              {style.text}
             </button>
           );
         })}
@@ -883,27 +847,17 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy }) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  {PROVIDER_LOGOS[family.provider] ? (
-                    <div className="w-8 h-8 rounded-full border border-white/5 overflow-hidden shrink-0 flex items-center justify-center bg-white/[0.02]">
-                      <img
-                        src={PROVIDER_LOGOS[family.provider]}
-                        alt={family.provider_name}
-                        className={`w-full h-full object-contain p-1 ${invertLogos.includes(family.provider) ? "invert" : ""}`}
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      className={`w-8 h-8 ${
-                        family.id.includes("kontext")
-                          ? "bg-blue-500/10 text-blue-400 border-blue-500/10"
-                          : family.id.includes("effects")
-                            ? "bg-purple-500/10 text-purple-400 border-purple-500/10"
-                            : "bg-primary/10 text-primary border-primary/10"
-                      } border rounded-full flex items-center justify-center font-bold text-xs shadow-inner uppercase`}
-                    >
-                      {entry.name.charAt(0)}
-                    </div>
-                  )}
+                  <div
+                    className={`w-8 h-8 shrink-0 ${
+                      family.id.includes("kontext")
+                        ? "bg-blue-500/10 text-blue-400 border-blue-500/10"
+                        : family.id.includes("effects")
+                          ? "bg-purple-500/10 text-purple-400 border-purple-500/10"
+                          : "bg-primary/10 text-primary border-primary/10"
+                    } border rounded-full flex items-center justify-center font-bold text-xs shadow-inner uppercase`}
+                  >
+                    {entry.name.charAt(0)}
+                  </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="text-xs font-bold text-white tracking-tight truncate">
                       {entry.name}
@@ -1024,9 +978,9 @@ export default function ImageStudio({
   // Use prop history if provided, otherwise local
   const history = historyItems ?? localHistory;
 
-  // When historyItems is server-backed (White Label / backfilled sessions),
+  // When historyItems is supplied by the host app (persisted history),
   // localHistory isn't what's rendered — removal has to go through the
-  // parent so it deletes server-side (UsageLog + S3) and updates the same
+  // parent so it deletes from the persisted store and updates the same
   // state `history` reads from. Falls back to the old local-only removal
   // when there's no server-backed list (e.g. standalone/embedded studio).
   const handleDeleteEntry = useCallback(async (entry, idx) => {
@@ -1495,7 +1449,7 @@ export default function ImageStudio({
                     title={copy.gallery.download}
                     onClick={(e) => {
                       e.stopPropagation();
-                      downloadImage(entry.url, `muapi-${entry.id || idx}.jpg`);
+                      downloadImage(entry.url, `open-generative-ai-${entry.id || idx}.jpg`);
                     }}
                     className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
                   >
@@ -1533,7 +1487,7 @@ export default function ImageStudio({
                       kind: "download",
                       label: copy.gallery.download,
                       onSelect: () =>
-                        downloadImage(entry.url, `muapi-${entry.id || idx}.jpg`),
+                        downloadImage(entry.url, `open-generative-ai-${entry.id || idx}.jpg`),
                     },
                     {
                       kind: "delete",
@@ -1569,37 +1523,7 @@ export default function ImageStudio({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full animate-fade-in-up transition-all duration-700 min-h-[50vh]">
-            {/* Overlapping floating cards */}
-            <div className="flex items-center justify-center gap-1.5 md:gap-3 mb-10 select-none scale-90 sm:scale-100">
-              <div className="w-18 h-22 sm:w-24 sm:h-28 rounded-2xl border border-white/10 shadow-2xl -rotate-[12deg] transform hover:rotate-0 hover:scale-110 hover:z-20 transition-all duration-300 overflow-hidden bg-white/[0.01] flex-shrink-0">
-                <img
-                  src="https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/sdxl-image.avif"
-                  alt="Creative asset 1"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-18 h-22 sm:w-24 sm:h-28 rounded-2xl border border-white/10 shadow-2xl -rotate-[4deg] transform hover:rotate-0 hover:scale-110 hover:z-20 transition-all duration-300 overflow-hidden bg-white/[0.01] -ml-3 sm:-ml-4 flex-shrink-0">
-                <img
-                  src="https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/chroma-image.avif"
-                  alt="Creative asset 2"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-18 h-18 sm:w-24 sm:h-24 rounded-full border border-white/10 shadow-2xl rotate-[6deg] transform hover:rotate-0 hover:scale-110 hover:z-20 transition-all duration-300 overflow-hidden bg-white/[0.01] -ml-3 sm:-ml-4 flex-shrink-0">
-                <img
-                  src="https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/neta-lumina.avif"
-                  alt="Creative asset 3"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-18 h-22 sm:w-24 sm:h-28 rounded-2xl border border-white/10 shadow-2xl rotate-[12deg] transform hover:rotate-0 hover:scale-110 hover:z-20 transition-all duration-300 overflow-hidden bg-white/[0.01] -ml-3 sm:-ml-4 flex-shrink-0">
-                <img
-                  src="https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/perfect-pony-xl.avif"
-                  alt="Creative asset 4"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
+            <EmptyStateCards />
 
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-center px-4 flex flex-col items-center">
               <span className="text-white font-black uppercase text-xl sm:text-3xl tracking-wide mb-1 opacity-90">{copy.emptyState.heading}</span>
@@ -1690,20 +1614,17 @@ export default function ImageStudio({
                     active: dropdownOpen === "model",
                   })}
                 >
-                  <div className="w-4 h-4 rounded overflow-hidden shrink-0 flex items-center justify-center bg-white/5">
-                    {(() => {
-                      const selectedModelProvider = selectedFamily.provider || 'muapi';
-                      return PROVIDER_LOGOS[selectedModelProvider] ? (
-                        <img 
-                          src={PROVIDER_LOGOS[selectedModelProvider]} 
-                          alt="" 
-                          className={`w-full h-full object-contain ${invertLogos.includes(selectedModelProvider) ? "invert" : ""}`} 
-                        />
-                      ) : (
-                        <span className="text-[9px] font-bold text-black uppercase">G</span>
-                      );
-                    })()}
-                  </div>
+                  {(() => {
+                    const providerStyle = getProviderStyle(selectedFamily.provider);
+                    return (
+                      <div
+                        aria-hidden="true"
+                        className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border text-[7px] font-black leading-none ${providerStyle.bg}`}
+                      >
+                        {providerStyle.text}
+                      </div>
+                    );
+                  })()}
                   <span className={PROMPT_CONTROL_LABEL_CLASS}>
                     {selectedModelDisplayName}
                   </span>

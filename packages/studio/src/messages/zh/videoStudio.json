@@ -66,12 +66,6 @@
     "heading": "开始使用",
     "subtitle": "通过动态效果将图片转化为精美的 AI 视频"
   },
-  "creativeAssets": {
-    "asset1": "创意素材 1",
-    "asset2": "创意素材 2",
-    "asset3": "创意素材 3",
-    "asset4": "创意素材 4"
-  },
   "errors": {
     "modelChangedDuringUpload": "上传过程中模型已更改，请重新添加文件。",
     "modelDoesNotSupportReference": "{family} 不支持{mediaType}参考素材。",

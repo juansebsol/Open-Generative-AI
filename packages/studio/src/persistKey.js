@@ -1,12 +1,9 @@
-// Scopes a studio's localStorage persistence key to the calling identity
-// (white-label session token or BYOK API key). Without this, every identity
-// sharing one browser (different white-label end users, or BYOK vs white-label
-// mode) read/wrote the same fixed key — history and draft state leaked between
-// unrelated accounts on a shared device.
+// Scopes a studio's localStorage persistence key to an identity string so
+// separate identities sharing one browser don't read each other's history
+// and drafts. The shell currently passes one stable workspace marker.
 export function scopedPersistKey(baseKey, apiKey) {
   if (!apiKey) return baseKey;
-  // Short, stable hash — avoids putting a raw session token/API key verbatim
-  // into a localStorage key name.
+  // Short, stable hash, so nothing secret ever ends up in a storage key name.
   let hash = 0;
   for (let i = 0; i < apiKey.length; i++) {
     hash = (hash * 31 + apiKey.charCodeAt(i)) | 0;

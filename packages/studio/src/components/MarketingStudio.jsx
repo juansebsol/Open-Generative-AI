@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { uploadFile, generateMarketingStudioAd } from "../muapi.js";
+import { uploadFile, generateMarketingStudioAd } from "../generation.js";
 import { scopedPersistKey, migrateLegacyPersistKey } from "../persistKey.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
@@ -27,6 +27,7 @@ import {
 import en from "../messages/en/marketingStudio.json";
 import zh from "../messages/zh/marketingStudio.json";
 import { resolveCopy } from "../i18nUtils";
+import EmptyStateCards from "./EmptyStateCards.jsx";
 
 const SCROLLBAR_STYLE = `
   .custom-scrollbar-thin::-webkit-scrollbar {
@@ -45,12 +46,6 @@ const SCROLLBAR_STYLE = `
 `;
 
 // ── Icons ────────────────────────────────────────────────────────────────────
-
-const CheckSvg = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" strokeWidth="4">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
 
 const PlusSvg = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -89,34 +84,46 @@ const RefIcon = () => (
   </svg>
 );
 
-// ── Assets ───────────────────────────────────────────────────────────────────
+// ── Video formats ────────────────────────────────────────────────────────────
+// Text-only templates: each adds a short style direction to the prompt.
+// Avatars are provided by uploading an image (no hosted presets).
 
-const ASSETS = {
-  avatar: [
-    { id: "aa252283-8591-4d14-91a8-41ce54187992", name: "Priya", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/Priya.webp" },
-    { id: "ba6c9b18-f79c-4dab-9649-88a181d0a038", name: "Elena", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/Elena.webp" },
-    { id: "30e2cadd-987c-4a7a-81c3-094d4fb3a65e", name: "Kai", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/Kai.webp" },
-    { id: "fbed59e1-4b8d-4625-9140-ef2044e0be72", name: "Sora", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/Sora.webp" },
-    { id: "bcd9e6ee-c000-48e6-9f4b-a20fc2a674f7", name: "Minji", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/Minji.webp" },
-    { id: "1da384ed-3856-45e4-bf4c-a496c7aa95ff", name: "Margot", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/Margot.webp" },
-    { id: "b799c8f5-fb6e-4905-b33b-cdefac153ec3", name: "Niko", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/Niko.webp" },
-    { id: "b6971dd4-55fa-4e64-b318-392b16504284", name: "Jin", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/Jin.webp" }
-  ],
-  ugc: [
-    { id: 1, name: "UGC", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/ugc.mp4" },
-    { id: 2, name: "Tutorial", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/ugc_how_to.mp4" },
-    { id: 3, name: "Unboxing", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/ugc_unboxing.mp4" },
-    { id: 4, name: "Hyper Motion", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/hyper-motion-mini.mp4" },
-    { id: 5, name: "Product Review", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/product_review.mp4" },
-    { id: 6, name: "TV Spot", url: "https://d3adwkbyhxyrtq.cloudfront.net/web-app/tv-spot-mini.mp4" }
-  ]
-};
+const FORMATS = [
+  { id: "ugc", name: "UGC", hint: "Authentic user-generated content: handheld smartphone footage, a creator talking to camera, natural lighting." },
+  { id: "tutorial", name: "Tutorial", hint: "How-to tutorial: step-by-step demonstration of the product in use with clear close-ups." },
+  { id: "unboxing", name: "Unboxing", hint: "Unboxing video: hands opening the package and revealing the product, close-up first impressions." },
+  { id: "hyper_motion", name: "Hyper Motion", hint: "Hyper-motion ad: fast dynamic camera moves, energetic transitions and bold product reveals." },
+  { id: "product_review", name: "Product Review", hint: "Product review: a creator holding the product and walking through its features and benefits." },
+  { id: "tv_spot", name: "TV Spot", hint: "Polished TV commercial: cinematic lighting, smooth camera work and a premium brand feel." },
+];
 
 const OPTIONS = {
   ratio: ["9:16", "3:4", "4:3", "16:9", "1:1"],
   res: ["720p", "1080p"],
   duration: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 };
+
+const DEFAULT_PARAMS = {
+  ratio: "9:16",
+  format: FORMATS[0].name,
+  res: "1080p",
+  duration: 5,
+};
+
+// Restores persisted params, keeping only known fields and valid values.
+function restoreParams(saved) {
+  if (!saved || typeof saved !== "object") return DEFAULT_PARAMS;
+  return {
+    ratio: OPTIONS.ratio.includes(saved.ratio) ? saved.ratio : DEFAULT_PARAMS.ratio,
+    format: FORMATS.some((f) => f.name === saved.format) ? saved.format : DEFAULT_PARAMS.format,
+    res: OPTIONS.res.includes(saved.res) ? saved.res : DEFAULT_PARAMS.res,
+    duration: OPTIONS.duration.includes(saved.duration) ? saved.duration : DEFAULT_PARAMS.duration,
+  };
+}
+
+// Earlier versions offered hosted avatar presets; drop those if persisted.
+const isLegacyPresetAvatar = (url) =>
+  typeof url === "string" && /\/web-app\/[A-Za-z]+\.webp$/.test(url);
 
 // ── Components ───────────────────────────────────────────────────────────────
 
@@ -211,74 +218,6 @@ function UploadSlot({ icon, url, progress, label, title, onUpload, onClear, mult
   );
 }
 
-function Dropdown({ isOpen, title, items, selectedId, onSelect, onClose, isVideo = false, onPreview = null, copy = en }) {
-  const ref = useRef(null);
-  
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
-    };
-    window.addEventListener("click", handler);
-    return () => window.removeEventListener("click", handler);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return (
-    <PromptPopover
-      ref={ref}
-      className="w-[420px] max-w-[calc(100vw-2rem)]"
-    >
-      <PromptPopoverHeader className="mb-3">{title}</PromptPopoverHeader>
-      <div className="grid grid-cols-3 gap-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
-        {items.map(item => (
-          <div 
-            key={item.id}
-            onClick={() => onSelect(item)}
-            className={`relative rounded overflow-hidden border-2 transition-all group cursor-pointer ${
-              selectedId === item.id || selectedId === item.url ? 'border-primary shadow-glow' : 'border-white/5 hover:border-white/20'
-            }`}
-          >
-            {onPreview && !isVideo && (
-              <button
-                type="button"
-                title={copy.buttons.enlargePreview}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPreview(item);
-                }}
-                className="absolute top-1.5 left-1.5 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-[#22d3ee] hover:text-black transition-all border border-white/10 z-20 text-white"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  <line x1="11" y1="8" x2="11" y2="14" />
-                  <line x1="8" y1="11" x2="14" y2="11" />
-                </svg>
-              </button>
-            )}
-
-            {isVideo ? (
-              <video src={item.url} autoPlay loop muted className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-all duration-500" />
-            ) : (
-              <img src={item.url} className="w-full aspect-square object-cover group-hover:scale-105 transition-all duration-500" alt={item.name} />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-[9px] font-black text-white uppercase tracking-tight">{item.name}</span>
-            </div>
-            {(selectedId === item.id || selectedId === item.url) && (
-              <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                <CheckSvg />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </PromptPopover>
-  );
-}
-
 function SimpleDropdown({ isOpen, title, options, selected, onSelect, onClose }) {
   const ref = useRef(null);
   
@@ -338,22 +277,14 @@ export default function MarketingStudio({
   const [avatarImage, setAvatarImage] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]);
   
-  const [params, setParams] = useState({
-    ratio: "9:16",
-    format: ASSETS.ugc[0].name,
-    videoUrl: ASSETS.ugc[0].url,
-    res: "1080p",
-    duration: 5
-  });
+  const [params, setParams] = useState(DEFAULT_PARAMS);
 
   const [localHistory, setLocalHistory] = useState([]);
   const history = historyItems ?? localHistory;
   const [isGenerating, setIsGenerating] = useState(false);
-  const [dropdown, setDropdown] = useState(null); // 'format' | 'avatar' | 'ratio' | 'res' | 'duration'
+  const [dropdown, setDropdown] = useState(null); // 'format' | 'ratio' | 'res' | 'duration'
   const [uploadProgress, setUploadProgress] = useState({ product: 0, avatar: 0, additional: 0 });
   const [fullscreenUrl, setFullscreenUrl] = useState(null);
-  const [previewAvatar, setPreviewAvatar] = useState(null);
-  const [slideDirection, setSlideDirection] = useState("next"); // 'next' | 'prev'
 
   const textareaRef = useRef(null);
 
@@ -365,9 +296,9 @@ export default function MarketingStudio({
       if (stored) {
         const data = JSON.parse(stored);
         if (data.prompt) setPrompt(data.prompt);
-        if (data.params) setParams(data.params);
+        if (data.params) setParams(restoreParams(data.params));
         if (data.productImage) setProductImage(data.productImage);
-        if (data.avatarImage) setAvatarImage(data.avatarImage);
+        if (data.avatarImage && !isLegacyPresetAvatar(data.avatarImage)) setAvatarImage(data.avatarImage);
         if (data.additionalImages) setAdditionalImages(data.additionalImages);
         if (data.localHistory) setLocalHistory(data.localHistory);
         else if (data.history) setLocalHistory(data.history);
@@ -432,13 +363,13 @@ export default function MarketingStudio({
     onGenerationStart?.();
     setIsGenerating(true);
     try {
+      const formatHint = FORMATS.find((f) => f.name === params.format)?.hint;
       const result = await generateMarketingStudioAd(apiKey, {
-        prompt,
+        prompt: formatHint ? `${prompt.trim()}\n\nFormat: ${formatHint}` : prompt,
         aspect_ratio: params.ratio,
         duration: params.duration,
         resolution: params.res,
         images_list: [productImage, avatarImage, ...additionalImages].filter(Boolean),
-        video_files: params.videoUrl ? [params.videoUrl] : []
       });
 
       if (result?.url) {
@@ -563,37 +494,7 @@ export default function MarketingStudio({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full animate-fade-in-up transition-all duration-700 min-h-[50vh]">
-            {/* Overlapping floating cards */}
-            <div className="flex items-center justify-center gap-1.5 md:gap-3 mb-10 select-none scale-90 sm:scale-100">
-              <div className="w-18 h-22 sm:w-24 sm:h-28 rounded-2xl border border-white/10 shadow-2xl -rotate-[12deg] transform hover:rotate-0 hover:scale-110 hover:z-20 transition-all duration-300 overflow-hidden bg-white/[0.01] flex-shrink-0">
-                <img
-                  src="https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/sdxl-image.avif"
-                  alt={copy.alt.creativeAsset.replace("{index}", "1")}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-18 h-22 sm:w-24 sm:h-28 rounded-2xl border border-white/10 shadow-2xl -rotate-[4deg] transform hover:rotate-0 hover:scale-110 hover:z-20 transition-all duration-300 overflow-hidden bg-white/[0.01] -ml-3 sm:-ml-4 flex-shrink-0">
-                <img
-                  src="https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/chroma-image.avif"
-                  alt={copy.alt.creativeAsset.replace("{index}", "2")}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-18 h-18 sm:w-24 sm:h-24 rounded-full border border-white/10 shadow-2xl rotate-[6deg] transform hover:rotate-0 hover:scale-110 hover:z-20 transition-all duration-300 overflow-hidden bg-white/[0.01] -ml-3 sm:-ml-4 flex-shrink-0">
-                <img
-                  src="https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/neta-lumina.avif"
-                  alt={copy.alt.creativeAsset.replace("{index}", "3")}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-18 h-22 sm:w-24 sm:h-28 rounded-2xl border border-white/10 shadow-2xl rotate-[12deg] transform hover:rotate-0 hover:scale-110 hover:z-20 transition-all duration-300 overflow-hidden bg-white/[0.01] -ml-3 sm:-ml-4 flex-shrink-0">
-                <img
-                  src="https://d3adwkbyhxyrtq.cloudfront.net/webassets/videomodels/perfect-pony-xl.avif"
-                  alt={copy.alt.creativeAsset.replace("{index}", "4")}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
+            <EmptyStateCards />
 
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-center px-4 flex flex-col items-center">
               <span className="text-white font-black uppercase text-xl sm:text-3xl tracking-wide mb-1 opacity-90">{copy.empty.titleLine1}</span>
@@ -687,76 +588,18 @@ export default function MarketingStudio({
                   })}
                 >
                   <div className="w-4 h-4 bg-primary/10 rounded flex items-center justify-center border border-primary/20">
-                    <span className="text-[8px] font-black text-primary uppercase">U</span>
+                    <span className="text-[8px] font-black text-primary uppercase">{params.format.charAt(0)}</span>
                   </div>
                   <span className={PROMPT_CONTROL_LABEL_CLASS}>{params.format}</span>
                   <PromptChevronIcon />
                 </button>
-                <Dropdown 
-                  isOpen={dropdown === 'format'} 
+                <SimpleDropdown
+                  isOpen={dropdown === 'format'}
                   title={copy.dropdowns.videoFormatPresets}
-                  items={ASSETS.ugc} 
-                  selectedId={params.format}
-                  onSelect={(item) => setParams({ ...params, format: item.name, videoUrl: item.url })}
+                  options={FORMATS.map((f) => f.name)}
+                  selected={params.format}
+                  onSelect={(name) => setParams({ ...params, format: name })}
                   onClose={() => setDropdown(null)}
-                  isVideo
-                  copy={copy}
-                />
-              </div>
-
-              {/* Avatar Preset Button */}
-              <div className="relative flex items-center gap-1.5">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setDropdown(dropdown === 'avatar' ? null : 'avatar'); }}
-                  className={promptControlClassName({
-                    active: dropdown === "avatar",
-                  })}
-                >
-                  <div className="w-4 h-4 rounded-full overflow-hidden border border-white/20 shadow-inner">
-                    <img src={avatarImage || ASSETS.avatar[0].url} className="w-full h-full object-cover" />
-                  </div>
-                  <span className={PROMPT_CONTROL_LABEL_CLASS}>
-                    {ASSETS.avatar.find(a => a.url === avatarImage)?.name || copy.dropdowns.selectAvatarFallback}
-                  </span>
-                  <PromptChevronIcon />
-                </button>
-
-                {avatarImage && (
-                  <button
-                    type="button"
-                    title={copy.buttons.enlargeSelectedAvatar}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const currentAvatar = ASSETS.avatar.find(a => a.url === avatarImage);
-                      if (currentAvatar) {
-                        setPreviewAvatar(currentAvatar);
-                      } else {
-                        setPreviewAvatar({ id: "custom", name: "Custom Uploaded Avatar", url: avatarImage });
-                      }
-                    }}
-                    className={promptControlClassName({
-                      iconOnly: true,
-                      className: "text-white/40 hover:text-[#22d3ee]",
-                    })}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                      <line x1="11" y1="8" x2="11" y2="14" />
-                      <line x1="8" y1="11" x2="14" y2="11" />
-                    </svg>
-                  </button>
-                )}
-
-                <Dropdown 
-                  isOpen={dropdown === 'avatar'} 
-                  title={copy.dropdowns.avatarPresets}
-                  items={ASSETS.avatar} 
-                  selectedId={avatarImage}
-                  onSelect={(item) => setAvatarImage(item.url)}
-                  onPreview={(item) => setPreviewAvatar(item)}
-                  onClose={() => setDropdown(null)}
-                  copy={copy}
                 />
               </div>
 
@@ -823,187 +666,6 @@ export default function MarketingStudio({
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fade-in" onClick={() => setFullscreenUrl(null)}>
           <button className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white border border-white/10 transition-colors shadow-2xl"><CloseSvg /></button>
           <video src={fullscreenUrl} controls autoPlay className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-4xl animate-scale-up" onClick={e => e.stopPropagation()} />
-        </div>
-      )}
-
-      {/* ── AVATAR FULLSCREEN PREVIEW MODAL ── */}
-      {previewAvatar && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-md animate-fade-in select-none"
-          onClick={() => setPreviewAvatar(null)}
-        >
-          {/* Close button (cross) in the right corner */}
-          <button
-            type="button"
-            className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors border border-white/10 z-50 animate-fade-in"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPreviewAvatar(null);
-            }}
-          >
-            <CloseSvg />
-          </button>
-
-          {/* Inject dynamic CSS animation keyframes */}
-          <style>{`
-            @keyframes slide-in-next {
-              0% {
-                transform: translateX(80px) scale(0.95);
-                filter: blur(4px);
-                opacity: 0.5;
-              }
-              100% {
-                transform: translateX(0) scale(1);
-                filter: blur(0);
-                opacity: 1;
-              }
-            }
-            @keyframes slide-in-prev {
-              0% {
-                transform: translateX(-80px) scale(0.95);
-                filter: blur(4px);
-                opacity: 0.5;
-              }
-              100% {
-                transform: translateX(0) scale(1);
-                filter: blur(0);
-                opacity: 1;
-              }
-            }
-            .animate-slide-next {
-              animation: slide-in-next 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            }
-            .animate-slide-prev {
-              animation: slide-in-prev 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            }
-          `}</style>
-
-          {/* Left Arrow Button */}
-          {previewAvatar.id !== "custom" && (
-            <button
-              type="button"
-              className="absolute left-6 p-4 bg-white/5 hover:bg-white/10 hover:text-primary rounded-full text-white transition-all border border-white/10 z-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                const currentIndex = ASSETS.avatar.findIndex(a => a.id === previewAvatar.id);
-                if (currentIndex !== -1) {
-                  const prevAvatar = ASSETS.avatar[(currentIndex - 1 + ASSETS.avatar.length) % ASSETS.avatar.length];
-                  setSlideDirection("prev");
-                  setPreviewAvatar(prevAvatar);
-                }
-              }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-          )}
-
-          {/* Right Arrow Button */}
-          {previewAvatar.id !== "custom" && (
-            <button
-              type="button"
-              className="absolute right-6 p-4 bg-white/5 hover:bg-white/10 hover:text-primary rounded-full text-white transition-all border border-white/10 z-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                const currentIndex = ASSETS.avatar.findIndex(a => a.id === previewAvatar.id);
-                if (currentIndex !== -1) {
-                  const nextAvatar = ASSETS.avatar[(currentIndex + 1) % ASSETS.avatar.length];
-                  setSlideDirection("next");
-                  setPreviewAvatar(nextAvatar);
-                }
-              }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-          )}
-
-          {/* Enlarged Image Card and side displays */}
-          <div className="flex items-center gap-6 md:gap-12 max-w-[95vw] justify-center relative">
-            {/* Previous Avatar Card (Left side) */}
-            {previewAvatar.id !== "custom" && (
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const currentIndex = ASSETS.avatar.findIndex(a => a.id === previewAvatar.id);
-                  if (currentIndex !== -1) {
-                    const prevAvatar = ASSETS.avatar[(currentIndex - 1 + ASSETS.avatar.length) % ASSETS.avatar.length];
-                    setSlideDirection("prev");
-                    setPreviewAvatar(prevAvatar);
-                  }
-                }}
-                className="hidden md:flex flex-col items-center opacity-50 hover:opacity-60 scale-75 hover:scale-80 transition-all duration-300 cursor-pointer select-none max-w-[15vw] max-h-[50vh] rounded-xl overflow-hidden border border-white/5 bg-[#0d0d0f]/50"
-              >
-                <img
-                  src={ASSETS.avatar[(ASSETS.avatar.findIndex(a => a.id === previewAvatar.id) - 1 + ASSETS.avatar.length) % ASSETS.avatar.length].url}
-                  alt={copy.alt.previousAvatar}
-                  className="w-full h-full object-cover aspect-[3/4]"
-                />
-              </div>
-            )}
-
-            {/* Main Active Avatar Card */}
-            <div
-              key={previewAvatar.id}
-              className={`relative flex flex-col items-center max-w-[90vw] md:max-w-[45vw] max-h-[85vh] z-10 ${
-                slideDirection === "next" ? "animate-slide-next" : "animate-slide-prev"
-              }`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-[#0d0d0f] shadow-2xl">
-                <img
-                  src={previewAvatar.url}
-                  alt={previewAvatar.name}
-                  className="max-w-[80vw] md:max-w-[40vw] max-h-[70vh] md:max-h-[65vh] object-contain"
-                />
-                
-                {/* Overlay with Name of the Avatar */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 pt-10 flex flex-col items-center justify-end gap-3">
-                  <h2 className="text-xl font-black text-white tracking-wide uppercase">
-                    {previewAvatar.name}
-                  </h2>
-                  
-                  {/* Select button on the enlarged image */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAvatarImage(previewAvatar.url);
-                      setPreviewAvatar(null);
-                      setDropdown(null);
-                    }}
-                    className="bg-[#22d3ee] text-black px-6 py-2.5 rounded-full font-bold text-sm hover:opacity-95 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-[#22d3ee]/20"
-                  >
-                    <CheckSvg />
-                    {copy.buttons.selectAvatar}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Next Avatar Card (Right side) */}
-            {previewAvatar.id !== "custom" && (
-              <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const currentIndex = ASSETS.avatar.findIndex(a => a.id === previewAvatar.id);
-                  if (currentIndex !== -1) {
-                    const nextAvatar = ASSETS.avatar[(currentIndex + 1) % ASSETS.avatar.length];
-                    setSlideDirection("next");
-                    setPreviewAvatar(nextAvatar);
-                  }
-                }}
-                className="hidden md:flex flex-col items-center opacity-50 hover:opacity-60 scale-75 hover:scale-80 transition-all duration-300 cursor-pointer select-none max-w-[15vw] max-h-[50vh] rounded-xl overflow-hidden border border-white/5 bg-[#0d0d0f]/50"
-              >
-                <img
-                  src={ASSETS.avatar[(ASSETS.avatar.findIndex(a => a.id === previewAvatar.id) + 1) % ASSETS.avatar.length].url}
-                  alt={copy.alt.nextAvatar}
-                  className="w-full h-full object-cover aspect-[3/4]"
-                />
-              </div>
-            )}
-          </div>
         </div>
       )}
     </div>
