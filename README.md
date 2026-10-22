@@ -97,6 +97,9 @@ Import the repository; the defaults work (framework Next.js, `npm run build`). T
 - The server only calls provider endpoints from the route table, never URLs the browser supplies. Media URLs it has to download for Gemini/OpenAI must be public `https` URLs that don't resolve to private addresses.
 - API routes reject cross-site requests, and a Content-Security-Policy is applied to every page.
 - Anyone who opens your deployment can use it **with their own keys**. Nothing is billed to you.
+- Keys in `localStorage` are readable by any script running on the page, so the app loads no third-party scripts, renders no raw HTML, and the CSP only allows scripts from its own origin. Browser extensions with access to the site can still read them, so use keys with spending limits.
+- Serve the app over HTTPS (Caddy/nginx in front of pm2, or Vercel) so keys are encrypted in transit, and don't enable request-header logging in your reverse proxy.
+- Next.js collects anonymous build telemetry by default. `ecosystem.config.js` turns it off for the server; run `npx next telemetry disable` once to turn it off for builds on your machine.
 
 ## How it works
 

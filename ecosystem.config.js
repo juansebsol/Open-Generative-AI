@@ -22,6 +22,7 @@ module.exports = {
       kill_timeout: 10000,
       env: {
         NODE_ENV: 'production',
+        NEXT_TELEMETRY_DISABLED: '1',
       },
       out_file: 'logs/out.log',
       error_file: 'logs/error.log',
