@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, PROVIDERS, listCheckpoints, loadProviderSettings, saveProviderSettings } from 'studio';
 import { getCommonCopy } from '@/lib/locales';
 import LocalEngineSetup from './LocalEngineSetup';
@@ -170,8 +170,14 @@ export default function ProvidersModal({ onClose, locale = 'en' }) {
   const copy = getCommonCopy(locale).providersModal;
   const [settings, setSettings] = useState(() => loadProviderSettings());
   const [savedKeys] = useState(() => settings.keys);
+  const settingsRef = useRef(settings);
+
+  // Saving notifies every studio, so it must not run inside a state updater
+  // (React would see other components update while this one renders).
   const update = useCallback((updater) => {
-    setSettings((current) => saveProviderSettings(updater(current)));
+    const next = saveProviderSettings(updater(settingsRef.current));
+    settingsRef.current = next;
+    setSettings(next);
   }, []);
 
   const setKey = (id, value) => update((current) => ({ ...current, keys: { ...current.keys, [id]: value.trim() } }));
