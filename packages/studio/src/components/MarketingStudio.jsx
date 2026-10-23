@@ -27,6 +27,7 @@ import en from "../messages/en/marketingStudio.json";
 import zh from "../messages/zh/marketingStudio.json";
 import { resolveCopy } from "../i18nUtils";
 import EmptyStateCards from "./EmptyStateCards.jsx";
+import CharactersMenu from "./CharactersMenu.jsx";
 
 const SCROLLBAR_STYLE = `
   .custom-scrollbar-thin::-webkit-scrollbar {
@@ -547,6 +548,14 @@ export default function MarketingStudio({
                   progress={uploadProgress.avatar}
                   onUpload={(files) => handleUpload(files, 'avatar')}
                   onClear={() => setAvatarImage(null)}
+                />
+                <CharactersMenu
+                  locale={locale}
+                  kind="avatar"
+                  initialImages={avatarImage ? [avatarImage] : []}
+                  onUse={(avatar) => setAvatarImage(avatar.images[0])}
+                  buttonClassName={promptControlClassName()}
+                  labelClassName={PROMPT_CONTROL_LABEL_CLASS}
                 />
                 <UploadSlot
                   label={copy.uploadSlots.references}

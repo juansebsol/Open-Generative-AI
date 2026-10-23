@@ -20,5 +20,17 @@
   "needsPhotos": "Add at least one photo",
   "uploadFailed": "Upload failed: {message}",
   "noImageSupport": "This model can't take reference images. Pick an image-to-image or image-to-video model first.",
-  "hint": "Mention it in the prompt as {handle}"
+  "hint": "Mention it in the prompt as {handle}",
+  "avatar": {
+    "button": "Avatars",
+    "buttonTitle": "Use a saved avatar",
+    "title": "Your avatars",
+    "empty": "Save the people you use in ads (1-3 photos each) and reuse them in one click.",
+    "newCharacter": "New avatar",
+    "namePlaceholder": "e.g. Jordan, spokesperson",
+    "descriptionPlaceholder": "e.g. friendly, casual style",
+    "save": "Save avatar",
+    "needsName": "Give the avatar a name",
+    "hint": "Saved as {handle}"
+  }
 }

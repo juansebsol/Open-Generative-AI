@@ -20,5 +20,17 @@
   "needsPhotos": "请至少添加一张照片",
   "uploadFailed": "上传失败：{message}",
   "noImageSupport": "此模型不支持参考图像。请先选择图生图或图生视频模型。",
-  "hint": "在提示词中用 {handle} 引用"
+  "hint": "在提示词中用 {handle} 引用",
+  "avatar": {
+    "button": "头像",
+    "buttonTitle": "使用已保存的头像",
+    "title": "你的头像",
+    "empty": "保存你在广告中使用的人物（每个 1-3 张照片），一键复用。",
+    "newCharacter": "新建头像",
+    "namePlaceholder": "例如 Jordan，代言人",
+    "descriptionPlaceholder": "例如 友好、休闲风格",
+    "save": "保存头像",
+    "needsName": "请为头像命名",
+    "hint": "保存为 {handle}"
+  }
 }

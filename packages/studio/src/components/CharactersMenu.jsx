@@ -18,8 +18,9 @@ import { resolveCopy } from "../i18nUtils";
  * Prompt-bar button that lists saved characters (or avatars) and creates new
  * ones. onUse(character) is called when the visitor picks one.
  */
-export default function CharactersMenu({ locale = "en", kind = "character", onUse, align = "left", copyOverrides = null, buttonClassName = null, labelClassName = "" }) {
-  const copy = { ...resolveCopy(en, zh, locale), ...(copyOverrides || {}) };
+export default function CharactersMenu({ locale = "en", kind = "character", onUse, align = "left", initialImages = [], buttonClassName = null, labelClassName = "" }) {
+  const base = resolveCopy(en, zh, locale);
+  const copy = kind === "avatar" ? { ...base, ...base.avatar } : base;
   const [open, setOpen] = useState(false);
   const [characters, setCharacters] = useState([]);
   const [creating, setCreating] = useState(false);
@@ -127,7 +128,13 @@ export default function CharactersMenu({ locale = "en", kind = "character", onUs
                   </div>
                 ))}
               </div>
-              <button type="button" onClick={() => setCreating(true)} className="w-full h-8 rounded-md border border-dashed border-white/15 text-[12px] font-semibold text-white/60 hover:text-white hover:border-white/30">
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft((current) => ({ ...current, images: initialImages.filter(Boolean).slice(0, MAX_CHARACTER_IMAGES) }));
+                  setCreating(true);
+                }}
+                className="w-full h-8 rounded-md border border-dashed border-white/15 text-[12px] font-semibold text-white/60 hover:text-white hover:border-white/30">
                 + {copy.newCharacter}
               </button>
             </>
