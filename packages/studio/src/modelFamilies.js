@@ -98,6 +98,9 @@ const VIDEO_FAMILY_ALIASES = {
   "wavespeed-video-outpainter": "video-reframe",
   "wavespeed-ai-video-editor-auto-clip": "ai-clipping",
   "wavespeed-ai-video-editor-talking-head": "ai-clipping",
+  "pixverse-v5.5-effects": "video-effects",
+  "kling-effects": "video-effects",
+  "vidu-template-to-video": "video-effects",
   "topaz-upscale-video-creative": "topaz-upscale-video",
   "topaz-upscale-video-generative": "topaz-upscale-video",
   "topaz-upscale-video-precision": "topaz-upscale-video",
@@ -110,6 +113,7 @@ const VIDEO_FAMILY_NAMES = {
   "topaz-upscale-video": "Topaz Video Upscale",
   "video-reframe": "Video Reframe",
   "ai-clipping": "AI Clipping",
+  "video-effects": "Video Effects",
 };
 
 const PREFERRED_IMAGE_VARIANTS = {
@@ -181,6 +185,7 @@ const PREFERRED_VIDEO_VARIANTS = {
   },
   "video-reframe": { v2v: "luma-ray-3.2-reframe" },
   "ai-clipping": { v2v: "wavespeed-ai-video-editor-auto-clip" },
+  "video-effects": { i2v: "pixverse-v5.5-effects" },
 };
 
 function normalizeVersion(value) {

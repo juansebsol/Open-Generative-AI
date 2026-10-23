@@ -3213,6 +3213,40 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "video-effects": {
+  "pixverse-v5.5-effects": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/pixverse/v5.5/effects"
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "pixverse/pixverse-v5.5-effects"
+   }
+  ],
+  "kling-effects": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/kling-video/v1.6/pro/effects",
+    "rename": {
+     "image_url": "input_image_urls"
+    }
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "kwaivgi/kling-effects"
+   }
+  ],
+  "vidu-template-to-video": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/vidu/template-to-video",
+    "rename": {
+     "image_url": "input_image_urls"
+    }
+   }
+  ]
+ },
  "video-vendors": {
   "minimax-voice-clone": [
    {
