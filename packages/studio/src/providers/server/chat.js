@@ -15,6 +15,15 @@ const MAX_MESSAGES = 200;
 
 export const CHAT_PROVIDER_IDS = Object.keys(CHAT_ENDPOINTS);
 
+// OpenAI reasoning models (gpt-5, o-series) reject non-default sampling
+// settings and take max_completion_tokens instead of max_tokens.
+export function adaptChatRequest(provider, request) {
+  if (provider !== 'openai' || !/^(gpt-5|o\d)/.test(request.model)) return request;
+  const { temperature, top_p: topP, max_tokens: maxTokens, ...rest } = request;
+  if (maxTokens !== undefined && rest.max_completion_tokens === undefined) rest.max_completion_tokens = maxTokens;
+  return rest;
+}
+
 export async function chatCompletion({ provider, key, body, origin }) {
   const url = CHAT_ENDPOINTS[provider];
   if (!url) throw new ProviderError(`${provider} does not support chat`, { status: 400 });
@@ -25,7 +34,7 @@ export async function chatCompletion({ provider, key, body, origin }) {
     throw new ProviderError('A model and 1-200 messages are required', { status: 400 });
   }
 
-  const request = Object.fromEntries(ALLOWED_FIELDS.filter((field) => body[field] !== undefined).map((field) => [field, body[field]]));
+  const request = adaptChatRequest(provider, Object.fromEntries(ALLOWED_FIELDS.filter((field) => body[field] !== undefined).map((field) => [field, body[field]])));
   const data = await requestJson(provider, url, {
     method: 'POST',
     headers: {
