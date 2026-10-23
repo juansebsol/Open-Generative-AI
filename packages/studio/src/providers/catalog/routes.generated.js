@@ -1939,6 +1939,41 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "gemini-tts": {
+  "gemini-3-1-flash-tts": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/gemini-3.1-flash-tts",
+    "transform": "gemini-tts"
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "google/gemini-3.1-flash/text-to-speech",
+    "transform": "gemini-tts",
+    "defaults": {
+     "language": "English (United States)"
+    }
+   }
+  ],
+  "gemini-2-5-pro-tts": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/gemini-tts",
+    "transform": "gemini-tts",
+    "fixed": {
+     "model": "gemini-2.5-pro-tts"
+    }
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "google/gemini-2.5-pro/text-to-speech",
+    "transform": "gemini-tts",
+    "defaults": {
+     "language": "English (United States)"
+    }
+   }
+  ]
+ },
  "image": {
   "ai-image-upscale": [
    {

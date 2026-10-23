@@ -24703,6 +24703,422 @@ const ALL_audioModels = [
         ]
       }
     }
+  },
+  {
+    "id": "gemini-3-1-flash-tts",
+    "name": "Gemini 3.1 Flash TTS",
+    "endpoint": "gemini-3-1-flash-tts",
+    "family": "gemini-tts",
+    "description": "Gemini 3.1 Flash TTS turns written dialogue into expressive, natural multi-speaker speech with fine-grained control over voice, accent, emotional style, and pace.",
+    "required": [
+      "speakers",
+      "dialogue_turns"
+    ],
+    "inputs": {
+      "speakers": {
+        "type": "array",
+        "title": "Speakers",
+        "name": "speakers",
+        "description": "List of speaker voice configurations. Each dialogue turn references a speaker by its ID.",
+        "examples": [
+          [
+            {
+              "speaker_id": "Speaker 1",
+              "voice_name": "Fenrir",
+              "audio_profile": "A stern and weary gatekeeper",
+              "accent": "British (RP)",
+              "style": "Deadpan",
+              "pace": "Natural"
+            },
+            {
+              "speaker_id": "Speaker 2",
+              "voice_name": "Puck",
+              "audio_profile": "A determined and courageous traveler seeking answers.",
+              "accent": "American (Gen)",
+              "style": "Empathetic",
+              "pace": "Staccato"
+            }
+          ]
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "speaker_id": {
+              "type": "string",
+              "title": "Speaker ID",
+              "description": "Speaker identifier. Must be in \"Speaker N\" format (e.g. \"Speaker 1\")."
+            },
+            "voice_name": {
+              "type": "string",
+              "title": "Voice",
+              "description": "Prebuilt Gemini voice name.",
+              "enum": [
+                "Achernar",
+                "Achird",
+                "Algenib",
+                "Algieba",
+                "Alnilam",
+                "Aoede",
+                "Autonoe",
+                "Callirrhoe",
+                "Charon",
+                "Despina",
+                "Enceladus",
+                "Erinome",
+                "Fenrir",
+                "Gacrux",
+                "Iapetus",
+                "Kore",
+                "Laomedeia",
+                "Leda",
+                "Orus",
+                "Puck",
+                "Pulcherrima",
+                "Rasalgethi",
+                "Sadachbia",
+                "Sadaltager",
+                "Schedar",
+                "Sulafat",
+                "Umbriel",
+                "Vindemiatrix",
+                "Zephyr",
+                "Zubenelgenubi"
+              ]
+            },
+            "audio_profile": {
+              "type": "string",
+              "title": "Audio Profile",
+              "description": "Optional natural-language description of the persona, e.g. \"A warm and soothing narrator\"."
+            },
+            "accent": {
+              "type": "string",
+              "title": "Accent",
+              "description": "Speaking accent.",
+              "enum": [
+                "Neutral",
+                "American (Gen)",
+                "American (Valley)",
+                "American (South)",
+                "British (RP)",
+                "British (Brixton)",
+                "Transatlantic",
+                "Australian"
+              ],
+              "default": "Neutral"
+            },
+            "style": {
+              "type": "string",
+              "title": "Style",
+              "description": "Emotional delivery style.",
+              "enum": [
+                "Vocal Smile",
+                "Newscaster",
+                "Whisper",
+                "Empathetic",
+                "Promo/Hype",
+                "Deadpan"
+              ],
+              "default": "Empathetic"
+            },
+            "pace": {
+              "type": "string",
+              "title": "Pace",
+              "description": "Speaking pace.",
+              "enum": [
+                "Natural",
+                "Rapid Fire",
+                "The Drift",
+                "Staccato"
+              ],
+              "default": "Natural"
+            }
+          },
+          "required": [
+            "speaker_id",
+            "voice_name",
+            "accent",
+            "style",
+            "pace"
+          ]
+        }
+      },
+      "dialogue_turns": {
+        "type": "array",
+        "title": "Dialogue Turns",
+        "name": "dialogue_turns",
+        "description": "Ordered list of dialogue lines. Each turn's speaker_id must match a speaker defined above. Text may include tone tags like [shouting] or [whispers].",
+        "examples": [
+          [
+            {
+              "speaker_id": "Speaker 1",
+              "text": "[shouting] Halt, traveler! The northern pass is sealed by order of the council."
+            },
+            {
+              "speaker_id": "Speaker 2",
+              "text": "[determination] I carry a message for the elder. Step aside, or I will force my way through."
+            },
+            {
+              "speaker_id": "Speaker 1",
+              "text": "[caution] No one passes. [pensive] The elder is... he's no longer receiving visitors."
+            },
+            {
+              "speaker_id": "Speaker 2",
+              "text": "It's too late. [whispers] The shadow... it reached him first. [urgency] You need to leave. [shouting] Now."
+            }
+          ]
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "speaker_id": {
+              "type": "string",
+              "title": "Speaker ID",
+              "description": "ID of the speaker delivering this line (e.g. \"Speaker 1\")."
+            },
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The line to speak. Supports inline tone tags. Max 10000 characters."
+            }
+          },
+          "required": [
+            "speaker_id",
+            "text"
+          ]
+        }
+      },
+      "scene": {
+        "type": "string",
+        "title": "Scene",
+        "name": "scene",
+        "description": "Optional scene description that sets the acoustic setting, e.g. \"A quiet, warm room with a fireplace crackling softly.\"",
+        "default": ""
+      },
+      "sample_context": {
+        "type": "string",
+        "title": "Sample Context",
+        "name": "sample_context",
+        "description": "Optional overall tone/style, e.g. \"Audiobook style narration. Tone is gentle and inviting.\"",
+        "default": ""
+      },
+      "temperature": {
+        "type": "number",
+        "title": "Temperature",
+        "name": "temperature",
+        "description": "Sampling temperature (0-2). Higher values produce more varied delivery.",
+        "default": 1,
+        "minimum": 0,
+        "maximum": 2
+      }
+    }
+  },
+  {
+    "id": "gemini-2-5-pro-tts",
+    "name": "Gemini 2.5 Pro TTS",
+    "endpoint": "gemini-2-5-pro-tts",
+    "family": "gemini-tts",
+    "description": "Gemini 2.5 Pro TTS is Google's premium text-to-speech model for studio-quality, high-fidelity multi-speaker audio with expressive control over voice, accent, emotional style, and pace.",
+    "required": [
+      "speakers",
+      "dialogue_turns"
+    ],
+    "inputs": {
+      "speakers": {
+        "type": "array",
+        "title": "Speakers",
+        "name": "speakers",
+        "description": "List of speaker voice configurations. Each dialogue turn references a speaker by its ID.",
+        "examples": [
+          [
+            {
+              "speaker_id": "Speaker 1",
+              "voice_name": "Fenrir",
+              "audio_profile": "A stern and weary gatekeeper",
+              "accent": "British (RP)",
+              "style": "Deadpan",
+              "pace": "Natural"
+            },
+            {
+              "speaker_id": "Speaker 2",
+              "voice_name": "Puck",
+              "audio_profile": "A determined and courageous traveler seeking answers.",
+              "accent": "American (Gen)",
+              "style": "Empathetic",
+              "pace": "Staccato"
+            }
+          ]
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "speaker_id": {
+              "type": "string",
+              "title": "Speaker ID",
+              "description": "Speaker identifier. Must be in \"Speaker N\" format (e.g. \"Speaker 1\")."
+            },
+            "voice_name": {
+              "type": "string",
+              "title": "Voice",
+              "description": "Prebuilt Gemini voice name.",
+              "enum": [
+                "Achernar",
+                "Achird",
+                "Algenib",
+                "Algieba",
+                "Alnilam",
+                "Aoede",
+                "Autonoe",
+                "Callirrhoe",
+                "Charon",
+                "Despina",
+                "Enceladus",
+                "Erinome",
+                "Fenrir",
+                "Gacrux",
+                "Iapetus",
+                "Kore",
+                "Laomedeia",
+                "Leda",
+                "Orus",
+                "Puck",
+                "Pulcherrima",
+                "Rasalgethi",
+                "Sadachbia",
+                "Sadaltager",
+                "Schedar",
+                "Sulafat",
+                "Umbriel",
+                "Vindemiatrix",
+                "Zephyr",
+                "Zubenelgenubi"
+              ]
+            },
+            "audio_profile": {
+              "type": "string",
+              "title": "Audio Profile",
+              "description": "Optional natural-language description of the persona, e.g. \"A warm and soothing narrator\"."
+            },
+            "accent": {
+              "type": "string",
+              "title": "Accent",
+              "description": "Speaking accent.",
+              "enum": [
+                "Neutral",
+                "American (Gen)",
+                "American (Valley)",
+                "American (South)",
+                "British (RP)",
+                "British (Brixton)",
+                "Transatlantic",
+                "Australian"
+              ],
+              "default": "Neutral"
+            },
+            "style": {
+              "type": "string",
+              "title": "Style",
+              "description": "Emotional delivery style.",
+              "enum": [
+                "Vocal Smile",
+                "Newscaster",
+                "Whisper",
+                "Empathetic",
+                "Promo/Hype",
+                "Deadpan"
+              ],
+              "default": "Empathetic"
+            },
+            "pace": {
+              "type": "string",
+              "title": "Pace",
+              "description": "Speaking pace.",
+              "enum": [
+                "Natural",
+                "Rapid Fire",
+                "The Drift",
+                "Staccato"
+              ],
+              "default": "Natural"
+            }
+          },
+          "required": [
+            "speaker_id",
+            "voice_name",
+            "accent",
+            "style",
+            "pace"
+          ]
+        }
+      },
+      "dialogue_turns": {
+        "type": "array",
+        "title": "Dialogue Turns",
+        "name": "dialogue_turns",
+        "description": "Ordered list of dialogue lines. Each turn's speaker_id must match a speaker defined above. Text may include tone tags like [shouting] or [whispers].",
+        "examples": [
+          [
+            {
+              "speaker_id": "Speaker 1",
+              "text": "[shouting] Halt, traveler! The northern pass is sealed by order of the council."
+            },
+            {
+              "speaker_id": "Speaker 2",
+              "text": "[determination] I carry a message for the elder. Step aside, or I will force my way through."
+            },
+            {
+              "speaker_id": "Speaker 1",
+              "text": "[caution] No one passes. [pensive] The elder is... he's no longer receiving visitors."
+            },
+            {
+              "speaker_id": "Speaker 2",
+              "text": "It's too late. [whispers] The shadow... it reached him first. [urgency] You need to leave. [shouting] Now."
+            }
+          ]
+        ],
+        "items": {
+          "type": "object",
+          "properties": {
+            "speaker_id": {
+              "type": "string",
+              "title": "Speaker ID",
+              "description": "ID of the speaker delivering this line (e.g. \"Speaker 1\")."
+            },
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "The line to speak. Supports inline tone tags. Max 10000 characters."
+            }
+          },
+          "required": [
+            "speaker_id",
+            "text"
+          ]
+        }
+      },
+      "scene": {
+        "type": "string",
+        "title": "Scene",
+        "name": "scene",
+        "description": "Optional scene description that sets the acoustic setting, e.g. \"A quiet, warm room with a fireplace crackling softly.\"",
+        "default": ""
+      },
+      "sample_context": {
+        "type": "string",
+        "title": "Sample Context",
+        "name": "sample_context",
+        "description": "Optional overall tone/style, e.g. \"Audiobook style narration. Tone is gentle and inviting.\"",
+        "default": ""
+      },
+      "temperature": {
+        "type": "number",
+        "title": "Temperature",
+        "name": "temperature",
+        "description": "Sampling temperature (0-2). Higher values produce more varied delivery.",
+        "default": 1,
+        "minimum": 0,
+        "maximum": 2
+      }
+    }
   }
 ];
 export const audioModels = [...withRoutes(ALL_audioModels)];
