@@ -1,10 +1,15 @@
 import './globals.css';
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from 'next/headers';
 import { getLocaleConfig } from '@/lib/locales';
 
-const inter = Inter({
-  variable: "--font-inter",
+const geist = Geist({
+  variable: "--font-geist",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -22,7 +27,7 @@ export default async function RootLayout({ children }) {
 
   return (
     <html lang={htmlLang}>
-      <body className={inter.variable}>{children}</body>
+      <body className={`${geist.variable} ${geistMono.variable}`}>{children}</body>
     </html>
   );
 }

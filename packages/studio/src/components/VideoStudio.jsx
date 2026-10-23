@@ -96,7 +96,7 @@ import usePromptMenu from "./prompt/usePromptMenu.js";
 import en from "../messages/en/videoStudio.json";
 import zh from "../messages/zh/videoStudio.json";
 import { resolveCopy } from "../i18nUtils";
-import EmptyStateCards from "./EmptyStateCards.jsx";
+import StudioEmptyState from "./StudioEmptyState.jsx";
 
 async function downloadFile(url, filename) {
   try {
@@ -2592,20 +2592,8 @@ export default function VideoStudio({
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full animate-fade-in-up transition-all duration-700 min-h-[50vh]">
-            <EmptyStateCards />
-
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-center px-4 flex flex-col items-center">
-              <span className="text-white font-black uppercase text-xl sm:text-3xl tracking-wide mb-1 opacity-90">{copy.empty.heading}</span>
-              <span className="text-[#22d3ee] font-black uppercase text-2xl sm:text-4xl sm:mt-1 tracking-tight">
-                {selectedPickerEntry?.groupedVideo ? selectedPickerLabel : selectedFamily.name}
-              </span>
-            </h1>
-            <p className="text-white/40 text-xs sm:text-sm font-medium tracking-wide text-center max-w-lg leading-relaxed px-4">
-              {groupedConfiguration
-                ? getVideoModeDescription(selectedVariant.model, selectedWorkflowId, groupCopy)
-                : copy.empty.subtitle}
-            </p>
+          <div className="h-full w-full animate-fade-in-up">
+            <StudioEmptyState heading={copy.empty.heading} accent={selectedPickerEntry?.groupedVideo ? selectedPickerLabel : selectedFamily.name} subtitle={groupedConfiguration ? getVideoModeDescription(selectedVariant.model, selectedWorkflowId, groupCopy) : copy.empty.subtitle} starters={copy.empty.starters} onStarter={setPrompt} showcase="video" copy={copy.empty} />
           </div>
         )}
       </div>

@@ -33,7 +33,7 @@ import {
 import en from "../messages/en/motionControlStudio.json";
 import zh from "../messages/zh/motionControlStudio.json";
 import { resolveCopy } from "../i18nUtils";
-import EmptyStateCards from "./EmptyStateCards.jsx";
+import StudioEmptyState from "./StudioEmptyState.jsx";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 async function downloadFile(url, filename) {
@@ -991,23 +991,8 @@ export default function MotionControlStudio({
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full animate-fade-in-up transition-all duration-700 min-h-[50vh] relative">
-            {/* Ambient background glow */}
-            <div className="absolute w-96 h-96 bg-[#22d3ee]/5 rounded-full blur-3xl pointer-events-none -z-10" />
-
-            <EmptyStateCards size="large" className="mb-8" />
-
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight mb-3 text-center px-4 flex flex-col items-center">
-              <span className="text-white/60 uppercase text-xs sm:text-sm font-bold tracking-widest mb-1.5">
-                {copy.empty.titleLine1}
-              </span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#22d3ee] to-white font-black uppercase tracking-tight">
-                {copy.empty.titleLine2}
-              </span>
-            </h1>
-            <p className="text-xs sm:text-sm text-white/50 text-center max-w-lg px-4 leading-relaxed font-normal">
-              {copy.empty.description}
-            </p>
+          <div className="h-full w-full animate-fade-in-up">
+            <StudioEmptyState heading={copy.empty.titleLine1} accent={copy.empty.titleLine2} subtitle={copy.empty.description} showcase="video" />
           </div>
         )}
       </div>

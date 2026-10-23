@@ -37,7 +37,22 @@
   },
   "emptyState": {
     "heading": "开始使用",
-    "subtitle": "描述一个场景、角色、情绪或风格 — 让它跃然眼前"
+    "subtitle": "描述一个场景、角色、情绪或风格 — 让它跃然眼前",
+    "starters": [
+      {
+        "label": "黄金时刻的灯塔，35mm 胶片质感",
+        "prompt": "黄金时刻岩石峭壁上的灯塔，35mm 胶片颗粒"
+      },
+      {
+        "label": "洞石上的哑光陶瓷杯，柔和光线",
+        "prompt": "哑光陶瓷杯放在洞石上的棚拍，柔和窗光"
+      },
+      {
+        "label": "烟雾酒吧里的爵士鼓手",
+        "prompt": "爵士鼓手演出中的肖像，烟雾弥漫的酒吧，Portra 400 色调"
+      }
+    ],
+    "usePrompt": "使用此提示词"
   },
   "promptBar": {
     "placeholderMultiImage": "已选择 {count} 张图片 — 描述转换效果（可选）",

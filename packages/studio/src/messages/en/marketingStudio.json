@@ -1,8 +1,23 @@
 {
   "empty": {
-    "titleLine1": "START CREATING WITH",
-    "titleLine2": "MARKETING STUDIO",
-    "subtitle": "Describe your scene, upload your product, and watch high-converting AI video ads come to life."
+    "titleLine1": "Start creating with",
+    "titleLine2": "Marketing Studio",
+    "subtitle": "Describe your scene, upload your product, and watch high-converting AI video ads come to life.",
+    "starters": [
+      {
+        "label": "Sneaker spinning on a pedestal, studio light",
+        "prompt": "A sneaker spinning slowly on a white pedestal, soft studio light, premium product ad"
+      },
+      {
+        "label": "Skincare bottle with water splash",
+        "prompt": "A skincare bottle on wet stone with a slow-motion water splash, clean and bright"
+      },
+      {
+        "label": "Headphones with a beat-synced light sweep",
+        "prompt": "Wireless headphones on a dark surface with a light sweep synced to a beat"
+      }
+    ],
+    "usePrompt": "Use this prompt"
   },
   "uploadSlots": {
     "product": "Product",

@@ -5,15 +5,19 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background: #050505;
+  background: #09090b;
   color: white;
-  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-geist), 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+code, kbd, pre, .font-mono {
+  font-family: var(--font-geist-mono), 'Geist Mono', ui-monospace, Menlo, monospace;
 }
 
 :root {
   --color-primary: #22d3ee;
-  --bg-app: #030303;
+  --bg-app: #09090b;
   --bg-panel: #0a0a0a;
   --bg-card: #111111;
   --border-color: rgba(255,255,255,0.05);
@@ -49,6 +53,17 @@ body {
 .scrollbar-none {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+/* Showcase wall in the studio empty states */
+@keyframes oga-drift-up { to { transform: translateY(-50%); } }
+@keyframes oga-drift-down { from { transform: translateY(-50%); } to { transform: translateY(0); } }
+.oga-wall-up { animation: oga-drift-up 80s linear infinite; }
+.oga-wall-down { animation: oga-drift-down 80s linear infinite; }
+.oga-wall-slow { animation-duration: 96s; }
+.oga-wall:hover .oga-wall-up, .oga-wall:hover .oga-wall-down { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .oga-wall-up, .oga-wall-down { animation: none; }
 }
 
 @keyframes fade-in-up {

@@ -35,7 +35,7 @@ import {
 import en from "../messages/en/lipSyncStudio.json";
 import zh from "../messages/zh/lipSyncStudio.json";
 import { resolveCopy } from "../i18nUtils";
-import EmptyStateCards from "./EmptyStateCards.jsx";
+import StudioEmptyState from "./StudioEmptyState.jsx";
 
 // ---------------------------------------------------------------------------
 // Upload button states
@@ -1027,18 +1027,8 @@ export default function LipSyncStudio({
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full animate-fade-in-up transition-all duration-700 min-h-[50vh]">
-            <EmptyStateCards />
-
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-center px-4 flex flex-col items-center">
-              <span className="text-white font-black uppercase text-xl sm:text-3xl tracking-wide mb-1 opacity-90">{copy.hero.titleLine1}</span>
-              <span className="text-[#22d3ee] font-black uppercase text-2xl sm:text-4xl sm:mt-1 tracking-tight">
-                {copy.hero.titleLine2}
-              </span>
-            </h1>
-            <p className="text-white/40 text-xs sm:text-sm font-medium tracking-wide text-center max-w-lg leading-relaxed px-4">
-              {copy.hero.subtitle}
-            </p>
+          <div className="h-full w-full animate-fade-in-up">
+            <StudioEmptyState heading={copy.hero.titleLine1} accent={copy.hero.titleLine2} subtitle={copy.hero.subtitle} showcase="video" />
           </div>
         )}
       </div>

@@ -50,8 +50,8 @@
     "objectsSwapDesc": "Keep video scene unchanged, swap outfits, characters, or products"
   },
   "empty": {
-    "titleLine1": "START CREATING WITH",
-    "titleLine2": "MOTION CONTROL STUDIO",
+    "titleLine1": "Start creating with",
+    "titleLine2": "Motion Control",
     "description": "Drive character images with reference video motion, choreography, and camera movements using Seedance Motion Control."
   },
   "placeholders": {

@@ -22,7 +22,7 @@ import {
   extractTitle,
   prepareDocument,
 } from "../vibeMotion.js";
-import EmptyStateCards from "./EmptyStateCards.jsx";
+import StudioEmptyState from "./StudioEmptyState.jsx";
 import MobileGenerationActions, { GenerationCopyButtons } from "./MobileGenerationActions.jsx";
 import {
   PROMPT_CONTROL_LABEL_CLASS,
@@ -777,38 +777,8 @@ export default function VibeMotionStudio({
             )}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center animate-fade-in-up min-h-[55vh] pt-6">
-            <EmptyStateCards />
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-center px-4 flex flex-col items-center">
-              <span className="text-white font-black uppercase text-xl sm:text-3xl tracking-wide mb-1 opacity-90">{copy.hero.titleLine1}</span>
-              <span className="text-[#22d3ee] font-black uppercase text-2xl sm:text-4xl sm:mt-1 tracking-tight">{copy.hero.titleLine2}</span>
-            </h1>
-            <p className="text-white/40 text-xs sm:text-sm font-medium tracking-wide text-center max-w-lg leading-relaxed px-4">
-              {copy.hero.subtitle}
-            </p>
-            {examples.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-2xl px-4">
-                {examples.map((example) => (
-                  <button
-                    key={example}
-                    type="button"
-                    onClick={() => setPrompt(example)}
-                    className="text-[11px] px-3 py-1.5 bg-white/[0.04] border border-white/10 hover:bg-[#22d3ee]/10 hover:border-[#22d3ee]/40 hover:text-white rounded-full transition-all font-semibold text-white/60"
-                  >
-                    {example}
-                  </button>
-                ))}
-              </div>
-            )}
-            {versions.length > 0 && (
-              <button
-                type="button"
-                onClick={() => selectVersion(versions[0])}
-                className="mt-5 text-xs font-bold text-[#22d3ee] hover:text-white transition-colors"
-              >
-                {copy.versions.reopen.replace("{count}", versions.length)}
-              </button>
-            )}
+          <div className="h-full w-full animate-fade-in-up">
+            <StudioEmptyState heading={copy.hero.titleLine1} accent={copy.hero.titleLine2} subtitle={copy.hero.subtitle} starters={examples.map((example) => ({ label: example, prompt: example }))} onStarter={setPrompt} showcase={null} />
           </div>
         )}
 

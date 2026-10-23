@@ -31,9 +31,24 @@
     "historyItemAlt": "History item {index}"
   },
   "empty": {
-    "kicker": "START CREATING WITH",
-    "title": "CINEMA STUDIO",
-    "description": "What would you shoot with infinite budget? Control cameras, lighting, lenses, and prompt high-end cinematic scenes."
+    "kicker": "Start creating with",
+    "title": "Cinema Studio",
+    "description": "What would you shoot with infinite budget? Control cameras, lighting, lenses, and prompt high-end cinematic scenes.",
+    "starters": [
+      {
+        "label": "Noir detective under a streetlamp, 35mm",
+        "prompt": "A detective in a rain-soaked trench coat under a single streetlamp, film noir, 35mm anamorphic"
+      },
+      {
+        "label": "Desert highway at magic hour, 70mm",
+        "prompt": "An empty desert highway at magic hour, heat shimmer, 70mm large format"
+      },
+      {
+        "label": "Rooftop portrait, shallow depth of field",
+        "prompt": "Portrait on a city rooftop at blue hour, 85mm at f/1.4, neon rim light"
+      }
+    ],
+    "usePrompt": "Use this prompt"
   },
   "prompt": {
     "placeholder": "Describe your cinema scene...",

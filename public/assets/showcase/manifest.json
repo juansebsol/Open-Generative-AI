@@ -1,0 +1,76 @@
+{
+  "items": [
+    {
+      "src": "/assets/showcase/sample-01.jpg",
+      "prompt": "A lighthouse on a rocky cliff at golden hour, 35mm film grain",
+      "ratio": "3:4",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-02.jpg",
+      "prompt": "Studio shot of a matte ceramic mug on travertine, soft window light",
+      "ratio": "1:1",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-03.jpg",
+      "prompt": "Portrait of a jazz drummer mid-set, smoky club, Portra 400 palette",
+      "ratio": "4:5",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-04.jpg",
+      "prompt": "Isometric cutaway of a tiny bakery at night, warm interior light",
+      "ratio": "4:3",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-05.jpg",
+      "prompt": "Macro of frost crystals on a cobalt car hood at dawn",
+      "ratio": "1:1",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-06.jpg",
+      "prompt": "Brutalist concrete library, low fog, one figure for scale",
+      "ratio": "4:5",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-07.jpg",
+      "prompt": "Editorial fashion portrait, chrome trench coat, flat grey backdrop",
+      "ratio": "4:3",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-08.jpg",
+      "prompt": "A red kayak on a glassy alpine lake, drone view, early morning",
+      "ratio": "3:4",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-09.jpg",
+      "prompt": "Neon ramen stand in heavy rain, reflections on wet asphalt",
+      "ratio": "4:5",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-10.jpg",
+      "prompt": "Clay-render style living room, pastel palette, no people",
+      "ratio": "4:3",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-11.jpg",
+      "prompt": "Street dog asleep in a patch of sun, Lisbon alley, midday",
+      "ratio": "3:4",
+      "kind": "image"
+    },
+    {
+      "src": "/assets/showcase/sample-12.jpg",
+      "prompt": "Oil painting of a storm over wheat fields, loose brushwork",
+      "ratio": "1:1",
+      "kind": "image"
+    }
+  ]
+}

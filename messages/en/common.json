@@ -20,10 +20,10 @@
     "images": "Images",
     "video": "Video",
     "audio": "Audio",
-    "agents-automation": "Agents & Automation"
+    "agents-automation": "Automation"
   },
   "shell": {
-    "brand": "OpenGenerativeAI",
+    "brand": "Open Generative AI",
     "studioFallback": "Studio",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
@@ -35,7 +35,11 @@
     "dropHereHint": "Images, videos, or audio files",
     "dismiss": "Dismiss",
     "providers": "Providers",
-    "noProviderBanner": "Add a provider key to start generating"
+    "noProviderBanner": "Add a provider key to start generating",
+    "search": "Search studios",
+    "keysCount": "{count} keys",
+    "oneKey": "1 key",
+    "addKey": "Add a key"
   },
   "notifications": {
     "generating": "is generating",
@@ -110,5 +114,30 @@
         "sdDownload": "Releases"
       }
     }
+  },
+  "palette": {
+    "placeholder": "Jump to a studio or action",
+    "noResults": "Nothing matches",
+    "open": "Open",
+    "actions": "Actions",
+    "openProviders": "Open providers",
+    "addKey": "Add a provider key"
+  },
+  "tabDescriptions": {
+    "image": "Text to image and editing, up to 14 references",
+    "layers": "Separate layers, upscale, remove backgrounds",
+    "cinema": "Photoreal shots with lens and camera control",
+    "ai-influencer": "Consistent portraits from structured traits",
+    "design-agent": "An agent that plans and lays out a board",
+    "video": "Text, image and reference to video, extend, reframe",
+    "clipping": "Long footage to short highlight clips",
+    "motion-control": "Transfer motion from a reference video",
+    "lipsync": "Talking portraits and re-synced video",
+    "body-swap": "Recast the subject of a video",
+    "marketing": "Product ads from product and avatar images",
+    "vibe-motion": "Motion graphics written by AI, rendered here",
+    "audio": "Speech, dialogue, sound effects and music",
+    "agents": "Chat with agents that use every tool here",
+    "workflows": "Chain models into pipelines on a canvas"
   }
 }

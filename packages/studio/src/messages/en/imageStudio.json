@@ -36,8 +36,23 @@
     "watermark": "Watermark"
   },
   "emptyState": {
-    "heading": "START CREATING WITH",
-    "subtitle": "Describe a scene, character, mood, or style — and watch it come to life"
+    "heading": "Start creating with",
+    "subtitle": "Describe a scene, character, mood or style and watch it come to life.",
+    "starters": [
+      {
+        "label": "Golden hour lighthouse, 35mm film look",
+        "prompt": "A lighthouse on a rocky cliff at golden hour, 35mm film grain"
+      },
+      {
+        "label": "Matte ceramic mug on travertine, soft light",
+        "prompt": "Studio shot of a matte ceramic mug on travertine, soft window light"
+      },
+      {
+        "label": "Jazz drummer mid-set in a smoky club",
+        "prompt": "Portrait of a jazz drummer mid-set, smoky club, Portra 400 palette"
+      }
+    ],
+    "usePrompt": "Use this prompt"
   },
   "promptBar": {
     "placeholderMultiImage": "{count} images selected — describe the transformation (optional)",

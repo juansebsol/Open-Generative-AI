@@ -35,7 +35,11 @@
     "dropHereHint": "图片、视频或音频文件",
     "dismiss": "关闭",
     "providers": "服务提供商",
-    "noProviderBanner": "添加服务商密钥即可开始生成"
+    "noProviderBanner": "添加服务商密钥即可开始生成",
+    "search": "搜索工作室",
+    "keysCount": "{count} 个密钥",
+    "oneKey": "1 个密钥",
+    "addKey": "添加密钥"
   },
   "notifications": {
     "generating": "正在生成",
@@ -110,5 +114,30 @@
         "sdDownload": "发布页"
       }
     }
+  },
+  "palette": {
+    "placeholder": "跳转到工作室或操作",
+    "noResults": "没有匹配项",
+    "open": "打开",
+    "actions": "操作",
+    "openProviders": "打开服务提供商",
+    "addKey": "添加服务商密钥"
+  },
+  "tabDescriptions": {
+    "image": "文生图与图像编辑，最多 14 张参考图",
+    "layers": "分离图层、放大、去除背景",
+    "cinema": "带镜头与相机控制的写实画面",
+    "ai-influencer": "基于结构化特征的一致人像",
+    "design-agent": "规划并排版设计板的智能体",
+    "video": "文本、图像与参考生成视频，延长、重构画幅",
+    "clipping": "长视频剪成短高光片段",
+    "motion-control": "从参考视频迁移动作",
+    "lipsync": "会说话的肖像与重新对口型的视频",
+    "body-swap": "替换视频中的主体",
+    "marketing": "由产品与头像图片生成产品广告",
+    "vibe-motion": "由 AI 编写、在本地渲染的动态图形",
+    "audio": "语音、对话、音效与音乐",
+    "agents": "与可调用全部工具的智能体对话",
+    "workflows": "在画布上把模型串成流水线"
   }
 }

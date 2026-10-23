@@ -60,8 +60,23 @@
     "watermark": "Watermark"
   },
   "empty": {
-    "heading": "START CREATING WITH",
-    "subtitle": "Animate images into stunning AI videos with motion effects"
+    "heading": "Start creating with",
+    "subtitle": "Animate images into stunning AI videos with motion effects",
+    "starters": [
+      {
+        "label": "Slow dolly-in on a rainy neon street",
+        "prompt": "Slow dolly-in toward a ramen stand on a rainy neon street, reflections on wet asphalt"
+      },
+      {
+        "label": "Drone over an alpine lake at dawn",
+        "prompt": "Drone shot gliding over a glassy alpine lake at dawn, a red kayak below"
+      },
+      {
+        "label": "Steam rising from a coffee cup, macro",
+        "prompt": "Macro shot of steam curling from a ceramic coffee cup in morning light"
+      }
+    ],
+    "usePrompt": "Use this prompt"
   },
   "errors": {
     "modelChangedDuringUpload": "The model changed during upload. Please add the file again.",
