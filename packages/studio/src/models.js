@@ -24459,6 +24459,250 @@ const ALL_audioModels = [
         "maxLength": 2000
       }
     }
+  },
+  {
+    "id": "elevenlabs-text-to-dialogue-v3",
+    "name": "ElevenLabs Dialogue (v3)",
+    "endpoint": "elevenlabs-text-to-dialogue-v3",
+    "family": "audio-generation",
+    "description": "Generate expressive, multilingual text-to-dialogue content using the ElevenLabs Text To Dialogue V3 model.",
+    "required": [
+      "dialogue"
+    ],
+    "inputs": {
+      "dialogue": {
+        "type": "array",
+        "title": "Dialogue Script",
+        "description": "List of speaker turns.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text",
+              "description": "Speech text for the character."
+            },
+            "voice_id": {
+              "type": "string",
+              "title": "Voice ID",
+              "description": "ElevenLabs voice ID. Select a popular voice or paste your own custom voice ID.",
+              "typing": true,
+              "enum": [
+                {
+                  "label": "James - Husky, Engaging and Bold",
+                  "value": "ZQe5CZNOzWyzPSCn5a3c"
+                },
+                {
+                  "label": "Arabella - Mysterious and Emotive",
+                  "value": "Z3R5wn05IrDiVCyEkUrK"
+                },
+                {
+                  "label": "Bradford - Expressive and Articulate",
+                  "value": "NNl6r8mD7vthiJatiJt1"
+                },
+                {
+                  "label": "Xavier - Dominating, Metallic Announcer",
+                  "value": "YOq2y2Up4RgXP2HyXjE5"
+                },
+                {
+                  "label": "Taksh - Calm, Serious and Smooth",
+                  "value": "qDuRKMlYmrm8trt5QyBn"
+                },
+                {
+                  "label": "Monika Sogam - Deep and Natural",
+                  "value": "iP95p4xoKVk53GoZ742B"
+                },
+                {
+                  "label": "Mark - Casual, Relaxed and Light",
+                  "value": "UgBBYS2sOqTuMpoF3BR0"
+                },
+                {
+                  "label": "Adeline - Feminine and Conversational",
+                  "value": "5l5f8iK3YPeGga21rQIX"
+                },
+                {
+                  "label": "Sam - Support Agent",
+                  "value": "yoZ06aMxZJJ28mfd3POQ"
+                },
+                {
+                  "label": "Spuds Oxley - Wise and Approachable",
+                  "value": "NOpBlnGInO9m6vDvFkFC"
+                },
+                {
+                  "label": "Eve - Authentic, Energetic and Happy",
+                  "value": "scOwDtmlLZohaFMFCHFe"
+                },
+                {
+                  "label": "Callum - Husky Trickster",
+                  "value": "N2lVS1w4EtoT3dr4eOWO"
+                },
+                {
+                  "label": "Laura - Enthusiast, Quirky Attitude",
+                  "value": "FGY2WhTYpPnrIDTdsKH5"
+                },
+                {
+                  "label": "Brian - Deep, Resonant and Comforting",
+                  "value": "zPhCVfO2NBER7bRLIdbq"
+                },
+                {
+                  "label": "Nathan - Virtual Radio Host",
+                  "value": "nPczCjzI2devNBz1zQrb"
+                },
+                {
+                  "label": "Charlie - Natural",
+                  "value": "IKne3meq5aSn9XLyUdCD"
+                },
+                {
+                  "label": "George - Warm",
+                  "value": "JBFqnCBsd6RMkjVDRZzb"
+                },
+                {
+                  "label": "Sarah - Soft",
+                  "value": "EXAVITQu4vr4xnSDxMaL"
+                },
+                {
+                  "label": "Charlotte - Clear",
+                  "value": "XB0fDUnXU5powFXDhCwa"
+                },
+                {
+                  "label": "Hope - Bubbly, Gossipy and Girly",
+                  "value": "tnSpp4vdxKPjI9w0GnoV"
+                },
+                {
+                  "label": "Finn - Youthful, Eager and Energetic",
+                  "value": "DYkrAHD8iwork3YSUBbs"
+                },
+                {
+                  "label": "Tom - Conversations and Books",
+                  "value": "56AoDkrOh6qfVPDXZ7Pt"
+                },
+                {
+                  "label": "Lucy - Fresh and Casual",
+                  "value": "lcMyyd2HUfFzxdCaC4Ta"
+                },
+                {
+                  "label": "Tiffany - Natural and Welcoming",
+                  "value": "6aDn1KB0hjpdcocrUkmq"
+                },
+                {
+                  "label": "Brock - Commanding and Loud Sergeant",
+                  "value": "7ftFdxRlmR6Z9V3nTdUh"
+                },
+                {
+                  "label": "Viraj - Rich and Soft",
+                  "value": "bajNon13EdhNMndG3z05"
+                }
+              ]
+            }
+          },
+          "required": [
+            "text",
+            "voice_id"
+          ]
+        },
+        "name": "dialogue",
+        "examples": [
+          [
+            {
+              "text": "[excited] We actually did it. The whole thing works!",
+              "voice_id": "ZQe5CZNOzWyzPSCn5a3c"
+            },
+            {
+              "text": "[laughs] I told you it would. Now let's ship it.",
+              "voice_id": "Z3R5wn05IrDiVCyEkUrK"
+            }
+          ]
+        ]
+      },
+      "stability": {
+        "type": "number",
+        "title": "Stability",
+        "description": "Determines voice stability and randomness (0 to 1, default 0.5).",
+        "default": 0.5
+      },
+      "language_code": {
+        "type": "string",
+        "title": "Language Code",
+        "description": "Target language for dialogue. Leave empty for automatic language detection.",
+        "default": null,
+        "enum": [
+          "af",
+          "ar",
+          "hy",
+          "as",
+          "az",
+          "be",
+          "bn",
+          "bs",
+          "bg",
+          "ca",
+          "ceb",
+          "ny",
+          "hr",
+          "cs",
+          "da",
+          "nl",
+          "en",
+          "et",
+          "fil",
+          "fi",
+          "fr",
+          "gl",
+          "ka",
+          "de",
+          "el",
+          "gu",
+          "ha",
+          "he",
+          "hi",
+          "hu",
+          "is",
+          "id",
+          "ga",
+          "it",
+          "ja",
+          "jv",
+          "kn",
+          "kk",
+          "ky",
+          "ko",
+          "lv",
+          "ln",
+          "lt",
+          "lb",
+          "mk",
+          "ms",
+          "ml",
+          "zh",
+          "mr",
+          "ne",
+          "no",
+          "ps",
+          "fa",
+          "pl",
+          "pt",
+          "pa",
+          "ro",
+          "ru",
+          "sr",
+          "sd",
+          "sk",
+          "sl",
+          "so",
+          "es",
+          "sw",
+          "sv",
+          "ta",
+          "te",
+          "th",
+          "tr",
+          "uk",
+          "ur",
+          "vi",
+          "cy"
+        ]
+      }
+    }
   }
 ];
 export const audioModels = [...withRoutes(ALL_audioModels)];

@@ -1,0 +1,1 @@
+{"fal-ai/elevenlabs/text-to-dialogue/eleven-v3":{"required":["inputs"],"props":{"seed":{"type":"integer"},"inputs":{"type":"array","items":"object"},"language_code":{"type":"string"},"pronunciation_dictionary_locators":{"type":"array","default":[],"items":"object"},"stability":{"type":"number","minimum":0,"maximum":1},"use_speaker_boost":{"type":"boolean"}}}}

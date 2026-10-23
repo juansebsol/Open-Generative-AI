@@ -78,6 +78,7 @@ function mediaKind(name) {
 }
 
 function sampleValue(name, def = {}) {
+  if (def.type === 'array' && def.items?.properties) return Array.isArray(def.examples?.[0]) ? def.examples[0] : def.default;
   const kind = mediaKind(name);
   const wantsArray = def.type === 'array' || /_list$|_urls$|_files$|s_list$/.test(name);
   if (kind && (def.type === 'string' || def.type === 'array' || /url|list|files|image|video|audio/.test(name))) {

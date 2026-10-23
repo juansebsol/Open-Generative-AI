@@ -25,7 +25,9 @@
     "promptPlaceholder": "Enter what you want generated...",
     "lyricsPromptLabel": "Lyrics / Prompt",
     "fieldPlaceholder": "Enter {field}...",
-    "requiredFieldError": "Please complete the required field: {field}"
+    "requiredFieldError": "Please complete the required field: {field}",
+    "addRow": "Add line",
+    "removeRow": "Remove line"
   },
   "generate": {
     "generating": "Generating Audio...",

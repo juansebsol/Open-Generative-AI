@@ -25,7 +25,9 @@
     "promptPlaceholder": "输入您想要生成的内容...",
     "lyricsPromptLabel": "歌词 / 提示词",
     "fieldPlaceholder": "输入{field}...",
-    "requiredFieldError": "请填写必填字段：{field}"
+    "requiredFieldError": "请填写必填字段：{field}",
+    "addRow": "添加一行",
+    "removeRow": "删除此行"
   },
   "generate": {
     "generating": "正在生成音频...",

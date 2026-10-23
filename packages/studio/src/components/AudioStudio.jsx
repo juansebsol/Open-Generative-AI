@@ -248,6 +248,83 @@ function AudioFileUploader({ label, value, onChange, copy = en }) {
 // ---------------------------------------------------------------------------
 // Premium Custom Audio Player with Waveform Animation
 // ---------------------------------------------------------------------------
+// Editor for list inputs whose items are objects (dialogue turns, speakers):
+// one row per item with a field per property.
+function ObjectListField({ label, description, schema, value, onChange, copy = en }) {
+  const rows = Array.isArray(value) ? value : [];
+  const properties = Object.entries(schema.items?.properties || {});
+  const emptyRow = () => Object.fromEntries(properties.map(([name, prop]) => [
+    name,
+    prop.default ?? (prop.enum ? (typeof prop.enum[0] === "object" ? prop.enum[0].value : prop.enum[0]) : ""),
+  ]));
+  const updateRow = (index, name, next) => onChange(rows.map((row, i) => (i === index ? { ...row, [name]: next } : row)));
+  const fieldClass = "w-full bg-zinc-950 border border-zinc-700 focus:border-primary/85 rounded px-2.5 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none";
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">{label}</label>
+      {description && <span className="block text-[11px] text-zinc-400 leading-normal">{description}</span>}
+      <div className="space-y-2">
+        {rows.map((row, index) => (
+          <div key={index} className="relative bg-zinc-900 border border-zinc-700/80 rounded p-3 pr-9 space-y-2">
+            {properties.map(([name, prop]) => {
+              const current = row?.[name] ?? "";
+              const title = prop.title || name;
+              if (prop.enum) {
+                return (
+                  <select
+                    key={name}
+                    aria-label={title}
+                    value={current}
+                    onChange={(e) => updateRow(index, name, e.target.value)}
+                    className={fieldClass}
+                  >
+                    {!prop.enum.some((opt) => (typeof opt === "object" ? opt.value : opt) === current) && current !== "" && (
+                      <option value={current}>{current}</option>
+                    )}
+                    {prop.enum.map((opt) => {
+                      const optionValue = typeof opt === "object" ? opt.value : opt;
+                      return <option key={optionValue} value={optionValue}>{typeof opt === "object" ? (opt.label || opt.value) : opt}</option>;
+                    })}
+                  </select>
+                );
+              }
+              const multiline = name === "text";
+              const Field = multiline ? "textarea" : "input";
+              return (
+                <Field
+                  key={name}
+                  aria-label={title}
+                  value={current}
+                  placeholder={title}
+                  onChange={(e) => updateRow(index, name, e.target.value)}
+                  className={`${fieldClass} ${multiline ? "min-h-[56px] resize-y" : ""}`}
+                />
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => onChange(rows.filter((_, i) => i !== index))}
+              aria-label={copy.sidebar.removeRow}
+              title={copy.sidebar.removeRow}
+              className="absolute top-2 right-2 p-1 rounded text-zinc-400 hover:text-red-400 hover:bg-red-500/10"
+            >
+              <TrashIcon />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange([...rows, emptyRow()])}
+        className="w-full py-2 rounded border border-dashed border-zinc-700 text-xs font-bold text-zinc-300 hover:text-white hover:border-primary/60 transition-all"
+      >
+        + {copy.sidebar.addRow}
+      </button>
+    </div>
+  );
+}
+
 function PremiumAudioPlayer({ url, title, copy = en }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -547,6 +624,9 @@ export default function AudioStudio({
       // Don't overwrite parameters like vocal upload, list etc. if they are already in state
       if (params[key] !== undefined) {
         initial[key] = params[key];
+      } else if (schema.type === "array" && schema.items?.properties) {
+        // Start list editors with the model's example rows so they're usable at once.
+        initial[key] = schema.default ?? (Array.isArray(schema.examples?.[0]) ? schema.examples[0] : []);
       } else {
         initial[key] = schema.default !== undefined ? schema.default : "";
       }
@@ -772,6 +852,20 @@ export default function AudioStudio({
                     label={schema.title || key}
                     value={params[key] || ""}
                     onChange={(url) => setParams(prev => ({ ...prev, [key]: url }))}
+                    copy={copy}
+                  />
+                );
+              }
+              // Lists of objects (dialogue turns, speakers)
+              if (schema.type === "array" && schema.items?.properties) {
+                return (
+                  <ObjectListField
+                    key={key}
+                    label={schema.title || key}
+                    description={schema.description}
+                    schema={schema}
+                    value={params[key]}
+                    onChange={(rows) => setParams(prev => ({ ...prev, [key]: rows }))}
                     copy={copy}
                   />
                 );

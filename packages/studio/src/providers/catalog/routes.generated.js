@@ -1826,6 +1826,15 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "dialogue": {
+  "elevenlabs-text-to-dialogue-v3": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/elevenlabs/text-to-dialogue/eleven-v3",
+    "transform": "elevenlabs-dialogue"
+   }
+  ]
+ },
  "extend": {
   "veo3.1-video-extend": [
    {
