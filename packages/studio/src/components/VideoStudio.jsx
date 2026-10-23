@@ -138,6 +138,14 @@ const REFRAME_MODEL_IDS = Object.freeze([
   "wavespeed-video-outpainter",
 ]);
 
+// Video upscalers in preference order (all take a single video).
+const UPSCALE_MODEL_IDS = Object.freeze([
+  "topaz-video-upscale",
+  "ai-video-upscaler-pro",
+  "flux-3-video-upscaler",
+  "ai-video-upscaler",
+]);
+
 // First catalog model the visitor's providers can run, else the first listed.
 function pickRunnableModelId(modelIds) {
   const candidates = [...new Set(modelIds)].filter((id) => videoModelCatalog.variantById.has(id));
@@ -157,6 +165,10 @@ function findExtendModelId(sourceModelId) {
 
 function findReframeModelId() {
   return pickRunnableModelId(REFRAME_MODEL_IDS);
+}
+
+function findUpscaleModelId() {
+  return pickRunnableModelId(UPSCALE_MODEL_IDS);
 }
 
 function workflowContextKey(familyId, workflowId) {
@@ -2269,6 +2281,10 @@ export default function VideoStudio({
     loadVideoIntoModel(findReframeModelId(), entry.url);
   }, [loadVideoIntoModel]);
 
+  const handleUpscale = useCallback((entry) => {
+    loadVideoIntoModel(findUpscaleModelId(), entry.url);
+  }, [loadVideoIntoModel]);
+
   // ── derived UI values ────────────────────────────────────────────────────
   const currentModelObj = selectedVariant?.model;
   const isMotionControlModel = isMotionControlSelection(selectedModel, v2vMode);
@@ -2422,6 +2438,22 @@ export default function VideoStudio({
                         </svg>
                       </button>
                     )}
+                    {findUpscaleModelId() && (
+                      <button
+                        type="button"
+                        title={copy.gallery.upscale}
+                        aria-label={copy.gallery.upscale}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpscale(entry);
+                        }}
+                        className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                        </svg>
+                      </button>
+                    )}
                     <button
                       type="button"
                       title={copy.gallery.download}
@@ -2467,6 +2499,11 @@ export default function VideoStudio({
                         kind: "reframe",
                         label: copy.gallery.reframe,
                         onSelect: () => handleReframe(entry),
+                      },
+                      findUpscaleModelId() && {
+                        kind: "upscale",
+                        label: copy.gallery.upscale,
+                        onSelect: () => handleUpscale(entry),
                       },
                       {
                         kind: "download",

@@ -51,6 +51,7 @@
   "gallery": {
     "extend": "Extend",
     "reframe": "Reframe",
+    "upscale": "Upscale",
     "download": "Download",
     "delete": "Delete",
     "confirmDelete": "Are you sure you want to delete this generated item?",

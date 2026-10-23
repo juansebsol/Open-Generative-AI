@@ -51,6 +51,7 @@
   "gallery": {
     "extend": "延长",
     "reframe": "调整画幅",
+    "upscale": "超分辨率",
     "download": "下载",
     "delete": "删除",
     "confirmDelete": "确定要删除此生成项吗？",
