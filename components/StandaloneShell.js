@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, AgentsStudio, VibeMotionStudio, hasAnyProvider, isStudioAvailable, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings } from 'studio';
+import { ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio, hasAnyProvider, isStudioAvailable, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings } from 'studio';
 import ProvidersModal from './ProvidersModal';
 import { getCommonCopy, getLocaleConfig, localizeStudioPath } from '@/lib/locales';
 
@@ -174,6 +174,19 @@ const TABS = [
         <circle cx="11" cy="11" r="2"/>
       </svg>
     )
+  },
+  {
+    id: 'workflows',
+    label: 'Workflows',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="6" height="6" rx="1"/>
+        <rect x="15" y="3" width="6" height="6" rx="1"/>
+        <rect x="9" y="15" width="6" height="6" rx="1"/>
+        <path d="M6 9v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9"/>
+        <path d="M12 13v2"/>
+      </svg>
+    )
   }
 ];
 
@@ -217,7 +230,7 @@ const NAVIGATION_CATEGORIES = [
   {
     id: 'agents-automation',
     label: 'Agents & Automation',
-    tabIds: ['agents'],
+    tabIds: ['agents', 'workflows'],
     icon: (
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/>
@@ -868,6 +881,11 @@ export default function StandaloneShell({ locale = 'en' }) {
         {AVAILABLE_TAB_IDS.has('design-agent') && (
           <div className={activeTab === 'design-agent' ? "h-full w-full" : "hidden"}>
             <DesignAgentStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('design-agent')} onGenerationEnd={makeGenerationEndCallback('design-agent')} onGenerationComplete={makeSuccessCallback('design-agent')} onGenerationError={makeErrorCallback('design-agent')} />
+          </div>
+        )}
+        {AVAILABLE_TAB_IDS.has('workflows') && (
+          <div className={activeTab === 'workflows' ? "h-full w-full" : "hidden"}>
+            <WorkflowStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('workflows')} onGenerationEnd={makeGenerationEndCallback('workflows')} onGenerationComplete={makeSuccessCallback('workflows')} onGenerationError={makeErrorCallback('workflows')} />
           </div>
         )}
       </div>

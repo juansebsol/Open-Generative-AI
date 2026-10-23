@@ -24,13 +24,15 @@
     "./ClippingStudio": "./src/components/ClippingStudio.jsx",
     "./VibeMotionStudio": "./src/components/VibeMotionStudio.jsx",
     "./AgentsStudio": "./src/components/AgentsStudio.jsx",
-    "./DesignAgentStudio": "./src/components/DesignAgentStudio.jsx"
+    "./DesignAgentStudio": "./src/components/DesignAgentStudio.jsx",
+    "./WorkflowStudio": "./src/components/WorkflowStudio.jsx"
   },
   "files": [
     "src"
   ],
   "license": "MIT",
   "dependencies": {
+    "@xyflow/react": "^12.12.0",
     "react-hot-toast": "^2.4.1"
   },
   "peerDependencies": {

@@ -45,6 +45,7 @@ const STUDIO_REQUIREMENTS = {
   agents: () => true,
   // The board works offline; the chat prompts for a key when none is set.
   'design-agent': () => true,
+  workflows: () => [t2iModels, i2iModels, t2vModels, i2vModels, v2vModels, audioModels, lipsyncModels].some((models) => models.length > 0),
 };
 
 export function isStudioAvailable(tabId) {
