@@ -1,0 +1,3 @@
+{
+  "runway-aleph-2": [{ "provider": "wavespeed", "endpoint": "runwayml/aleph-2" }]
+}

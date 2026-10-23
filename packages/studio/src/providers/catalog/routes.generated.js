@@ -2,6 +2,14 @@
 // Source: catalog/routes/*.json
 
 export const ROUTE_GROUPS = {
+ "aleph": {
+  "runway-aleph-2": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "runwayml/aleph-2"
+   }
+  ]
+ },
  "audio-lipsync-tools": {
   "mmaudio-v2/text-to-audio": [
    {

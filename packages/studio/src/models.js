@@ -22419,6 +22419,41 @@ const ALL_v2vModels = [
     "description": "Expand a video beyond its original edges to a new aspect ratio while keeping motion and identity.",
     "provider": "wavespeed",
     "provider_name": "WaveSpeed"
+  },
+  {
+    "id": "runway-aleph-2",
+    "name": "Runway Aleph 2",
+    "endpoint": "runway-aleph-2",
+    "family": "runway-aleph",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "Describe the edit: change the weather, swap an object, relight the scene, restyle it, add or remove elements."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to edit",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to edit."
+      },
+      "seed": {
+        "type": "int",
+        "title": "Seed",
+        "name": "seed",
+        "description": "Random seed for reproducible results. Use -1 for random.",
+        "minValue": -1,
+        "maxValue": 2147483647
+      }
+    },
+    "description": "Edit an existing video with a text instruction: restyle, relight, change the weather, add or remove objects, while keeping the original motion.",
+    "provider": "runway",
+    "provider_name": "Runway"
   }
 ];
 export const v2vModels = [...withRoutes(ALL_v2vModels)];

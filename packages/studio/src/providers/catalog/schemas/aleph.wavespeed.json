@@ -1,0 +1,1 @@
+{"runwayml/aleph-2":{"required":["video","prompt"],"props":{"keyframe_images":{"type":"array","default":[],"items":"string","maxItems":5},"keyframe_positions":{"type":"array","default":[],"items":"string","maxItems":5},"prompt":{"type":"string"},"seed":{"type":"integer"},"video":{"type":"string"}}}}
