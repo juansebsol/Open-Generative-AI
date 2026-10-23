@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, PROVIDERS, listCheckpoints, loadProviderSettings, saveProviderSettings } from 'studio';
 import { getCommonCopy } from '@/lib/locales';
 
@@ -33,6 +33,78 @@ function KeyField({ provider, value, onChange, copy }) {
           {copy.clear}
         </button>
       )}
+    </div>
+  );
+}
+
+// Providers whose balance /api/balance can read.
+const BALANCE_PROVIDERS = new Set(['fal', 'wavespeed', 'openrouter']);
+
+function BalanceLine({ providerId, apiKey, autoCheck, locale, copy }) {
+  const [state, setState] = useState({ status: 'idle' });
+
+  const check = useCallback(async () => {
+    setState({ status: 'loading' });
+    try {
+      const response = await fetch('/api/balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-provider-key': apiKey },
+        body: JSON.stringify({ provider: providerId }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || copy.balanceError);
+      setState({ status: 'done', ...data });
+    } catch (error) {
+      setState({ status: 'error', message: error.message || copy.balanceError });
+    }
+  }, [apiKey, providerId, copy.balanceError]);
+
+  useEffect(() => {
+    if (autoCheck) check();
+    // Only on mount: typing a new key waits for the button.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const money = (amount, currency = 'USD') => {
+    try {
+      return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount ?? 0);
+    } catch {
+      return `${Number(amount ?? 0).toFixed(2)} ${currency}`;
+    }
+  };
+
+  let text = null;
+  let tone = 'text-white/50';
+  if (state.status === 'loading') text = copy.balanceLoading;
+  if (state.status === 'error') {
+    text = state.message;
+    tone = 'text-red-300';
+  }
+  if (state.status === 'done') {
+    if (state.kind === 'needsAdminKey') text = copy.balanceNeedsAdmin;
+    else {
+      const template = { balance: copy.balance, keyLimit: copy.balanceKeyLimit, usage: copy.balanceUsage }[state.kind] || copy.balance;
+      text = template.replace('{amount}', money(state.amount, state.currency));
+      if (state.kind !== 'usage') tone = 'text-emerald-300';
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 min-w-0">
+      {text && <span className={`text-[11px] font-semibold truncate ${tone}`}>{text}</span>}
+      {state.kind === 'needsAdminKey' && (
+        <a href="https://fal.ai/dashboard/billing" target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold text-[#22d3ee] hover:underline flex-shrink-0">
+          {copy.balanceOpenDashboard} ↗
+        </a>
+      )}
+      <button
+        type="button"
+        onClick={check}
+        disabled={state.status === 'loading'}
+        className="text-[11px] font-semibold text-white/45 hover:text-white disabled:opacity-40 flex-shrink-0"
+      >
+        {state.status === 'idle' ? copy.balanceCheck : copy.balanceRefresh}
+      </button>
     </div>
   );
 }
@@ -96,6 +168,7 @@ function ComfyOptions({ url, options, onChange, copy }) {
 export default function ProvidersModal({ onClose, locale = 'en' }) {
   const copy = getCommonCopy(locale).providersModal;
   const [settings, setSettings] = useState(() => loadProviderSettings());
+  const [savedKeys] = useState(() => settings.keys);
 
   const update = useCallback((updater) => {
     setSettings((current) => saveProviderSettings(updater(current)));
@@ -139,9 +212,21 @@ export default function ProvidersModal({ onClose, locale = 'en' }) {
         {provider.kind === 'cloud' ? (
           <>
             <KeyField provider={provider} value={settings.keys[provider.id] || ''} onChange={(value) => setKey(provider.id, value)} copy={copy} />
-            <a href={provider.keyUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[11px] font-semibold text-[#22d3ee] hover:underline">
-              {copy.getKey} ↗
-            </a>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <a href={provider.keyUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold text-[#22d3ee] hover:underline flex-shrink-0">
+                {copy.getKey} ↗
+              </a>
+              {BALANCE_PROVIDERS.has(provider.id) && settings.keys[provider.id] && (
+                <BalanceLine
+                  key={settings.keys[provider.id]}
+                  providerId={provider.id}
+                  apiKey={settings.keys[provider.id]}
+                  autoCheck={settings.keys[provider.id] === savedKeys[provider.id]}
+                  locale={locale}
+                  copy={copy}
+                />
+              )}
+            </div>
             {CHAT_PROVIDER_IDS.includes(provider.id) && (
               <div className="mt-3">
                 <label className="block text-[11px] font-semibold text-white/40 mb-1">{copy.chatModel}</label>
