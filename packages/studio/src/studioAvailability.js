@@ -39,6 +39,8 @@ const STUDIO_REQUIREMENTS = {
   marketing: () => hasRoute('seedance-2-vip-omni-reference') || hasRoute('sd-2-vip-omni-reference-1080p'),
   'ai-influencer': () => modelAvailable('nano-banana-pro'),
   clipping: () => v2vModels.some((model) => model.family === 'ai-clipping'),
+  // Runs in the browser with a chat model; shows a key prompt when none is set.
+  'vibe-motion': () => true,
 };
 
 export function isStudioAvailable(tabId) {

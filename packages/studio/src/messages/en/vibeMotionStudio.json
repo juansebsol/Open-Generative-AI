@@ -1,0 +1,114 @@
+{
+  "hero": {
+    "titleLine1": "Start creating with",
+    "titleLine2": "Vibe Motion",
+    "subtitle": "Describe a motion graphic and an AI model writes it as code: kinetic typography, logo reveals, animated charts and more. It plays right here and exports to video in your browser."
+  },
+  "examples": [
+    "Kinetic typography intro for 'SUMMER SALE' with bouncing letters",
+    "Animated bar chart showing revenue growing from 2021 to 2025",
+    "Logo reveal with particles converging into a glowing ring",
+    "Countdown from 5 to 1 with bold flashing numbers",
+    "Lower third for 'Alex Rivera, Product Designer'"
+  ],
+  "setup": {
+    "title": "Add a chat model key to use Vibe Motion",
+    "body": "Vibe Motion writes animations with a chat model. Add an OpenRouter, OpenAI or Google Gemini key in Settings → Providers. Your key stays in this browser.",
+    "cta": "Open Providers"
+  },
+  "composer": {
+    "placeholder": "Describe your motion graphic, e.g. kinetic typography intro for 'SUMMER SALE' with bouncing letters",
+    "editPlaceholder": "Describe a change, e.g. make it blue, slower, add a glow to the title",
+    "editing": "Editing {version}",
+    "startNew": "Start a new one"
+  },
+  "controls": {
+    "aspectRatio": "Aspect ratio",
+    "duration": "Duration",
+    "style": "Style"
+  },
+  "aspects": {
+    "16:9": "Landscape · 1920×1080",
+    "9:16": "Vertical · 1080×1920",
+    "1:1": "Square · 1080×1080"
+  },
+  "styles": {
+    "minimal": "Minimal",
+    "bold": "Bold",
+    "neon": "Neon",
+    "corporate": "Corporate",
+    "playful": "Playful"
+  },
+  "styleHints": {
+    "minimal": "Whitespace, one accent colour, precise motion",
+    "bold": "Heavy type, strong colour, punchy timing",
+    "neon": "Dark background, glowing lines and text",
+    "corporate": "Clean, professional, calm transitions",
+    "playful": "Bright colours, bouncy springy motion"
+  },
+  "image": {
+    "attach": "Attach an image (logo or product shot) to use in the animation",
+    "attached": "Attached image",
+    "remove": "Remove image",
+    "tooLarge": "Images up to 20 MB are supported.",
+    "readFailed": "Could not read the image: {message}"
+  },
+  "loading": {
+    "generating": "Writing your animation",
+    "editing": "Revising your animation",
+    "hint": "The model is writing the code. This usually takes 20 to 60 seconds."
+  },
+  "preview": {
+    "frameTitle": "Motion graphic preview",
+    "play": "Play",
+    "pause": "Pause",
+    "restart": "Restart",
+    "timeline": "Timeline",
+    "showCode": "Code",
+    "hideCode": "Hide code",
+    "downloadHtml": "HTML"
+  },
+  "export": {
+    "cta": "Export video",
+    "exporting": "Exporting…",
+    "recording": "Recording",
+    "keepVisible": "Recording in real time. Keep this tab visible until it finishes."
+  },
+  "fix": {
+    "title": "The animation hit an error",
+    "cta": "Ask AI to fix",
+    "instruction": "The animation throws this error in the browser: \"{error}\". Fix the bug so that window.__render(t) draws correctly for every t from 0 to the full duration."
+  },
+  "versions": {
+    "heading": "Versions",
+    "new": "New",
+    "untitled": "Untitled motion",
+    "reopen": "Open your latest version ({count} saved)"
+  },
+  "gallery": {
+    "heading": "Exported videos ({count})",
+    "tag": "Vibe Motion"
+  },
+  "actions": {
+    "generate": "Generate",
+    "generating": "Generating…",
+    "revise": "Revise",
+    "revising": "Revising…",
+    "download": "Download",
+    "delete": "Delete",
+    "close": "Close"
+  },
+  "confirm": {
+    "deleteVersion": "Delete this version?",
+    "deleteExport": "Delete this exported video?"
+  },
+  "toasts": {
+    "exported": "Video exported"
+  },
+  "errors": {
+    "generationFailed": "Vibe Motion could not write the animation",
+    "exportFailed": "Video export failed",
+    "exportEmpty": "The recording came back empty. Keep the tab visible while exporting and try again.",
+    "exportTimeout": "The export took too long. Keep the tab visible while exporting and try again."
+  }
+}

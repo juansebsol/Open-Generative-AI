@@ -11,6 +11,7 @@ export { default as AiInfluencerStudio } from './components/AiInfluencerStudio';
 export { default as LayersStudio } from './components/LayersStudio';
 export { default as MotionControlStudio } from './components/MotionControlStudio';
 export { default as ClippingStudio } from './components/ClippingStudio';
+export { default as VibeMotionStudio } from './components/VibeMotionStudio';
 export * from './generation.js';
 export * from './providers/index.js';
 export { isStudioAvailable } from './studioAvailability.js';

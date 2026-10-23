@@ -1,0 +1,113 @@
+{
+  "hero": {
+    "titleLine1": "开始创作",
+    "titleLine2": "Vibe Motion 动态图形",
+    "subtitle": "描述你想要的动态图形，AI 模型会把它写成代码：动态文字、Logo 展示、动画图表等。可直接在此预览，并在浏览器中导出为视频。"
+  },
+  "examples": [
+    "为“SUMMER SALE”制作字母弹跳的动态文字片头",
+    "展示 2021 到 2025 年营收增长的动画柱状图",
+    "粒子汇聚成发光圆环的 Logo 展示",
+    "从 5 到 1 的醒目闪烁倒计时",
+    "人名条：“Alex Rivera，产品设计师”"
+  ],
+  "setup": {
+    "title": "添加对话模型密钥以使用 Vibe Motion",
+    "body": "Vibe Motion 使用对话模型编写动画。请在 设置 → 服务商 中添加 OpenRouter、OpenAI 或 Google Gemini 密钥。密钥只保存在此浏览器中。",
+    "cta": "打开服务商设置"
+  },
+  "composer": {
+    "placeholder": "描述你的动态图形，例如：为“SUMMER SALE”制作字母弹跳的动态文字片头",
+    "editPlaceholder": "描述要修改的地方，例如：改成蓝色、放慢速度、给标题加发光",
+    "editing": "正在编辑 {version}",
+    "startNew": "新建一个"
+  },
+  "controls": {
+    "aspectRatio": "画面比例",
+    "duration": "时长",
+    "style": "风格"
+  },
+  "aspects": {
+    "16:9": "横屏 · 1920×1080",
+    "9:16": "竖屏 · 1080×1920",
+    "1:1": "方形 · 1080×1080"
+  },
+  "styles": {
+    "minimal": "极简",
+    "bold": "醒目",
+    "neon": "霓虹",
+    "corporate": "商务",
+    "playful": "活泼"
+  },
+  "styleHints": {
+    "minimal": "留白、单一强调色、精准动效",
+    "bold": "粗体文字、强烈色彩、利落节奏",
+    "neon": "深色背景、发光线条与文字",
+    "corporate": "简洁专业、平稳过渡",
+    "playful": "明亮色彩、弹跳动效"
+  },
+  "image": {
+    "attach": "附加一张图片（Logo 或产品图）用于动画",
+    "attached": "已附加图片",
+    "remove": "移除图片",
+    "tooLarge": "图片大小不能超过 20 MB。",
+    "readFailed": "无法读取图片：{message}"
+  },
+  "loading": {
+    "generating": "正在编写动画",
+    "editing": "正在修改动画",
+    "hint": "模型正在编写代码，通常需要 20 到 60 秒。"
+  },
+  "preview": {
+    "frameTitle": "动态图形预览",
+    "play": "播放",
+    "pause": "暂停",
+    "restart": "重新播放",
+    "timeline": "时间轴",
+    "showCode": "代码",
+    "hideCode": "隐藏代码",
+    "downloadHtml": "HTML"
+  },
+  "export": {
+    "cta": "导出视频",
+    "exporting": "导出中…",
+    "recording": "录制中",
+    "keepVisible": "正在实时录制，请保持此标签页可见直到完成。"
+  },
+  "fix": {
+    "title": "动画运行出错",
+    "cta": "让 AI 修复"
+  },
+  "versions": {
+    "heading": "版本",
+    "new": "新建",
+    "untitled": "未命名动画",
+    "reopen": "打开最新版本（已保存 {count} 个）"
+  },
+  "gallery": {
+    "heading": "已导出视频（{count}）",
+    "tag": "Vibe Motion"
+  },
+  "actions": {
+    "generate": "生成",
+    "generating": "生成中…",
+    "revise": "修改",
+    "revising": "修改中…",
+    "download": "下载",
+    "delete": "删除",
+    "close": "关闭"
+  },
+  "confirm": {
+    "deleteVersion": "删除此版本？",
+    "deleteExport": "删除此导出视频？"
+  },
+  "toasts": {
+    "exported": "视频已导出"
+  },
+  "errors": {
+    "generationFailed": "Vibe Motion 未能生成动画",
+    "exportFailed": "视频导出失败",
+    "exportEmpty": "录制结果为空。导出时请保持标签页可见后重试。",
+    "exportTimeout": "导出耗时过长。导出时请保持标签页可见后重试。"
+  }
+}

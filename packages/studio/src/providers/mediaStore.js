@@ -160,6 +160,21 @@ export async function storeUpload(file, remoteUrl) {
 }
 
 /**
+ * Keeps a file made in the browser (e.g. a recorded video) and returns its
+ * local URL, or a blob: URL for this session when local storage is unavailable.
+ */
+export async function saveLocalBlob(blob, { name = null } = {}) {
+  if (isLocalMediaReady()) {
+    try {
+      return await saveBlob(blob, { name });
+    } catch (error) {
+      console.warn('[media] could not keep a local copy', error.message);
+    }
+  }
+  return URL.createObjectURL(blob);
+}
+
+/**
  * Replaces local media URLs in a request payload with URLs a provider can
  * read: the saved provider link while it is fresh, otherwise a new upload.
  * @param {object} payload
