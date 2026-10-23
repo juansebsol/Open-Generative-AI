@@ -9,6 +9,8 @@ import DrawModal from "./DrawModal.jsx";
 import ModelParameterControls from "./ModelParameterControls.jsx";
 import { VideoOptionControl, VideoSettingsControl } from "./VideoModelControls.jsx";
 import WatermarkDialog from "./WatermarkDialog.jsx";
+import CharactersMenu from "./CharactersMenu.jsx";
+import { characterHandle } from "../characters.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
 } from "./MobileGenerationActions.jsx";
@@ -1435,6 +1437,13 @@ export default function VideoStudio({
     },
     [applySelectedVariant, reconcileReferencesForModel, resolveMediaTarget],
   );
+
+  // Attaches a saved character's photos as references and mentions it.
+  const handleUseCharacter = useCallback((character) => {
+    applyReferenceUrls("image", character.images);
+    const mention = `@${characterHandle(character.name)}`;
+    setPrompt((current) => (current.includes(mention) ? current : `${current.trim()} ${mention} `.trimStart()));
+  }, [applyReferenceUrls]);
 
   const handleDrawReference = useCallback(
     (entry) => {
@@ -3221,6 +3230,14 @@ export default function VideoStudio({
                   </svg>
                   <span className={PROMPT_CONTROL_LABEL_CLASS}>{copy.controls.draw}</span>
                 </button>
+              )}
+              {!selectedWorkflowId && (
+                <CharactersMenu
+                  locale={locale}
+                  onUse={handleUseCharacter}
+                  buttonClassName={promptControlClassName()}
+                  labelClassName={PROMPT_CONTROL_LABEL_CLASS}
+                />
               )}
             </PromptControls>
 

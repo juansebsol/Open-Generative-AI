@@ -7,6 +7,8 @@ import { formatErrorMessage } from "../utils/formatError.js";
 import DrawModal from "./DrawModal.jsx";
 import ModelParameterControls from "./ModelParameterControls.jsx";
 import WatermarkDialog from "./WatermarkDialog.jsx";
+import CharactersMenu from "./CharactersMenu.jsx";
+import { characterHandle } from "../characters.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
 } from "./MobileGenerationActions.jsx";
@@ -1207,6 +1209,13 @@ export default function ImageStudio({
     [applySelectedVariant],
   );
 
+  // Attaches a saved character's photos as references and mentions it.
+  const handleUseCharacter = useCallback((character) => {
+    handleUploadSelect({ urls: [...new Set([...character.images, ...uploadedImageUrls])] });
+    const mention = `@${characterHandle(character.name)}`;
+    setPrompt((current) => (current.includes(mention) ? current : `${current.trim()} ${mention} `.trimStart()));
+  }, [handleUploadSelect, uploadedImageUrls]);
+
   const handleUploadClear = useCallback(() => {
     setUploadedImageUrls([]);
     const selection = selectionRef.current;
@@ -1743,6 +1752,13 @@ export default function ImageStudio({
                   {copy.promptBar.drawButton}
                 </span>
               </button>
+
+              <CharactersMenu
+                locale={locale}
+                onUse={handleUseCharacter}
+                buttonClassName={promptControlClassName()}
+                labelClassName={PROMPT_CONTROL_LABEL_CLASS}
+              />
             </PromptControls>
 
             {/* Generate button */}

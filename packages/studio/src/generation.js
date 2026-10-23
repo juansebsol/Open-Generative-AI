@@ -10,6 +10,7 @@ import { getModelMediaCapabilities, mapReferenceParams } from './modelCapabiliti
 import { buildSupplementalInputPayload } from './modelParameters.js';
 import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
 import { applyPromptPresets } from './imageEffects.js';
+import { applyCharacterMentions } from './characters.js';
 
 // Studio entry points. Each builds a payload in the shared studio vocabulary
 // and hands it to the provider runner, which picks fal / WaveSpeed / a direct
@@ -33,7 +34,7 @@ function includeRequiredArrayDefaults(model, payload) {
 const POLL_INTERVAL_MS = 2000;
 
 function submitAndPoll(endpoint, payload, onRequestId, maxAttempts = 60) {
-    return runEndpoint(endpoint, applyPromptPresets(endpoint, payload), { onRequestId, maxAttempts, interval: POLL_INTERVAL_MS });
+    return runEndpoint(endpoint, applyCharacterMentions(applyPromptPresets(endpoint, payload)), { onRequestId, maxAttempts, interval: POLL_INTERVAL_MS });
 }
 
 export async function generateImage(params) {
