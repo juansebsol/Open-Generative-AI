@@ -11,6 +11,7 @@ import {
 } from '@tabler/icons-react';
 import ProvidersModal from './ProvidersModal';
 import CommandPalette from './CommandPalette';
+import Logo from './Logo';
 import { getCommonCopy, getLocaleConfig, localizeStudioPath } from '@/lib/locales';
 
 // Tab/category ids and English `label` fallbacks are stable identifiers, not
@@ -376,7 +377,7 @@ export default function StandaloneShell({ locale = 'en' }) {
 
   if (!hasMounted) return (
     <div className="min-h-screen bg-app-bg flex items-center justify-center">
-      <div className="animate-spin text-primary text-3xl">◌</div>
+      <Logo size={36} className="animate-pulse text-primary" />
     </div>
   );
 
@@ -446,8 +447,8 @@ export default function StandaloneShell({ locale = 'en' }) {
             {isMobileOpen ? <IconX size={18} stroke={1.75} aria-hidden="true" /> : <IconMenu2 size={18} stroke={1.75} aria-hidden="true" />}
           </button>
           <a href={studioPath(DEFAULT_TAB)} onClick={(event) => handleNavigationItemClick(event, DEFAULT_TAB)} className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary text-[#04202a]">
-              <IconStack2 size={14} stroke={2.2} aria-hidden="true" />
+            <span className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-primary text-[#090A0F]">
+              <Logo size={15} />
             </span>
             <span className="text-[14px] font-semibold tracking-[-0.01em] text-white">{copy.shell.brand}</span>
           </a>
