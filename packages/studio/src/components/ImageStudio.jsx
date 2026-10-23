@@ -1437,7 +1437,7 @@ export default function ImageStudio({
                     title={copy.gallery.download}
                     onClick={(e) => {
                       e.stopPropagation();
-                      downloadImage(entry.url, `open-generative-ai-${entry.id || idx}.jpg`);
+                      downloadImage(entry.url, `openstudio-${entry.id || idx}.jpg`);
                     }}
                     className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
                   >
@@ -1478,7 +1478,7 @@ export default function ImageStudio({
                       kind: "download",
                       label: copy.gallery.download,
                       onSelect: () =>
-                        downloadImage(entry.url, `open-generative-ai-${entry.id || idx}.jpg`),
+                        downloadImage(entry.url, `openstudio-${entry.id || idx}.jpg`),
                     },
                     {
                       kind: "delete",

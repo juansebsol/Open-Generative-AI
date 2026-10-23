@@ -23,7 +23,7 @@
     "agents-automation": "Automation"
   },
   "shell": {
-    "brand": "Open Generative AI",
+    "brand": "Openstudio",
     "studioFallback": "Studio",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",

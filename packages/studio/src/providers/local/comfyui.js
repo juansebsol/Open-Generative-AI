@@ -29,7 +29,7 @@ function defaultWorkflow({ checkpoint, prompt, negativePrompt, seed, width, heig
       },
     },
     8: { class_type: 'VAEDecode', inputs: { samples: ['3', 0], vae: ['4', 2] } },
-    9: { class_type: 'SaveImage', inputs: { filename_prefix: 'open-generative-ai', images: ['8', 0] } },
+    9: { class_type: 'SaveImage', inputs: { filename_prefix: 'openstudio', images: ['8', 0] } },
   };
 }
 

@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: 'Open Generative AI — Free AI Image & Video Studio',
-  description: 'Generate AI images and videos using 200+ models — Flux, Midjourney, Kling, Veo, Seedance and more.',
+  title: 'Openstudio | AI image, video and audio studio',
+  description: 'Generate AI images, video and audio with 400+ models using your own provider keys. Open source, self-hosted, no account.',
 };
 
 export default async function RootLayout({ children }) {

@@ -42,7 +42,7 @@ const COLORS = {
 };
 const EMOJI_CHOICES = ["🤖", "🎨", "🎬", "📸", "🎞️", "📱", "🎙️", "✨", "🧠", "🛍️", "🏷️", "🌈", "🦄", "🚀", "🎧", "🖌️"];
 
-const BASE_PROMPT = `You are a creative agent inside Open Generative AI, a studio that makes images, video and audio with the user's own provider keys.
+const BASE_PROMPT = `You are a creative agent inside Openstudio, a studio that makes images, video and audio with the user's own provider keys.
 
 How to work:
 - When the user wants visual or audio content, call the tools to actually create it. Don't just describe what you would make.

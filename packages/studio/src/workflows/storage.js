@@ -96,5 +96,5 @@ export function saveWorkflowState({ workflows, activeId }) {
 /** Portable JSON for export (no ids or timestamps needed on import). */
 export function exportWorkflowJson(workflow) {
   const { name, nodes, edges } = serializeWorkflow(workflow);
-  return JSON.stringify({ format: 'open-generative-ai-workflow', version: 1, name, nodes, edges }, null, 2);
+  return JSON.stringify({ format: 'openstudio-workflow', version: 1, name, nodes, edges }, null, 2);
 }

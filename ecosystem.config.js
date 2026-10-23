@@ -11,7 +11,7 @@
 module.exports = {
   apps: [
     {
-      name: 'open-generative-ai',
+      name: 'openstudio',
       script: 'node_modules/next/dist/bin/next',
       args: `start --hostname ${process.env.HOST || '127.0.0.1'} --port ${process.env.PORT || 3000}`,
       cwd: __dirname,

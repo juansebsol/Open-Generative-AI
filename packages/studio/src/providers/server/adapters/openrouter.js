@@ -13,7 +13,7 @@ async function generateOnce({ endpoint, key, prompt, images, payload, referer })
     headers: {
       Authorization: `Bearer ${key}`,
       'Content-Type': 'application/json',
-      'X-Title': 'Open Generative AI',
+      'X-Title': 'Openstudio',
       ...(referer ? { 'HTTP-Referer': referer } : {}),
     },
     body: JSON.stringify({

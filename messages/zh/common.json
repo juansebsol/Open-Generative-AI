@@ -23,7 +23,7 @@
     "agents-automation": "智能体与自动化"
   },
   "shell": {
-    "brand": "OpenGenerativeAI",
+    "brand": "Openstudio",
     "studioFallback": "工作室",
     "expandSidebar": "展开侧边栏",
     "collapseSidebar": "收起侧边栏",

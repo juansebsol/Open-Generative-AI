@@ -1,7 +1,7 @@
 {
-  "name": "open-generative-ai",
+  "name": "openstudio",
   "description": "Open-source, bring-your-own-key AI image, video, audio and lip sync studio. Works with fal.ai, WaveSpeed, OpenRouter, Google Gemini, OpenAI and local ComfyUI.",
-  "homepage": "https://github.com/Anil-matcha/Open-Generative-AI",
+  "homepage": "https://github.com/juansebsol/Open-Generative-AI",
   "private": true,
   "version": "2.0.0",
   "license": "MIT",

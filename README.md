@@ -1,4 +1,4 @@
-# Open Generative AI
+# Openstudio
 
 An open-source, **bring-your-own-key** studio for AI images, video, audio and lip sync. You plug in keys from the providers you already use (fal.ai, WaveSpeed, OpenRouter, Google Gemini, OpenAI) or point it at your own ComfyUI, and every model those providers serve shows up in the studios.
 
@@ -156,4 +156,4 @@ The catalog only contains models that at least one supported provider serves. No
 
 ## Credits
 
-Based on [Open Generative AI](https://github.com/Anil-matcha/Open-Generative-AI) by Anil Matcha and contributors.
+Openstudio started as a fork of [Open Generative AI](https://github.com/Anil-matcha/Open-Generative-AI) by Anil Matcha and contributors (MIT). The provider layer, studios and UI have since been rebuilt; the original copyright notice is kept in `LICENSE`.

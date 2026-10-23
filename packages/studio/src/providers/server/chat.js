@@ -40,7 +40,7 @@ export async function chatCompletion({ provider, key, body, origin }) {
     headers: {
       Authorization: `Bearer ${key.trim()}`,
       'Content-Type': 'application/json',
-      ...(provider === 'openrouter' ? { 'X-Title': 'Open Generative AI', ...(origin ? { 'HTTP-Referer': origin } : {}) } : {}),
+      ...(provider === 'openrouter' ? { 'X-Title': 'Openstudio', ...(origin ? { 'HTTP-Referer': origin } : {}) } : {}),
     },
     body: JSON.stringify(request),
     timeoutMs: 180_000,

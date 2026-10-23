@@ -28,7 +28,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchWithRetry(url, { attempts = 5, accept = 'application/json' } = {}) {
   for (let attempt = 1; attempt <= attempts; attempt++) {
-    const response = await fetch(url, { headers: { accept, 'user-agent': 'open-generative-ai-schema-sync' } });
+    const response = await fetch(url, { headers: { accept, 'user-agent': 'openstudio-schema-sync' } });
     if (response.ok) return response;
     if (response.status === 404) return null;
     if (attempt === attempts) throw new Error(`${response.status} for ${url}`);

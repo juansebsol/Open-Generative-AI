@@ -2,7 +2,7 @@
   "name": "studio",
   "version": "1.0.0",
   "type": "module",
-  "description": "Open Generative AI studio components (provider-agnostic, bring your own key)",
+  "description": "Openstudio studio components (provider-agnostic, bring your own key)",
   "main": "src/index.js",
   "module": "src/index.js",
   "exports": {
