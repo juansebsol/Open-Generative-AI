@@ -83,6 +83,32 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "orderHint": "When several providers serve the same model, the highest one with a key is used.",
-    "done": "Done"
+    "done": "Done",
+    "localSetup": {
+      "useDefault": "Use {url}",
+      "testConnection": "Test connection",
+      "testing": "Connecting…",
+      "testOk": "Connected",
+      "testNoModel": "Connected, but no model is loaded yet (state: {state}). Load one in the server's web UI.",
+      "testFailedComfy": "Couldn't reach ComfyUI. Check it is running, started with --enable-cors-header {origin}, and that the browser may access your local network.",
+      "testFailedSd": "Couldn't reach the server. Check it is running on this address and that the browser may access your local network.",
+      "showGuide": "Setup guide",
+      "hideGuide": "Hide guide",
+      "copy": "Copy",
+      "copied": "Copied",
+      "steps": {
+        "comfyInstall": "Install ComfyUI: the desktop app is easiest, or install it with Python:",
+        "comfyModel": "Put at least one checkpoint (.safetensors), for example SDXL or SD 1.5, in ComfyUI/models/checkpoints.",
+        "comfyStart": "Start it so this page may call it. In the desktop app, set the same CORS origin ({origin}) in its server settings.",
+        "sdDownload": "Download sd-server for your computer (Metal for Apple Silicon, CUDA for NVIDIA, Vulkan otherwise):",
+        "sdModel": "Download a model into a models folder, for example Stable Diffusion 1.5:",
+        "sdStart": "Start the server, then pick the model in its web UI at {url}. It allows browser requests by default.",
+        "connect": "Use the address above ({url} by default) and press Test connection."
+      },
+      "stepLinks": {
+        "comfyInstall": "ComfyUI Desktop",
+        "sdDownload": "Releases"
+      }
+    }
   }
 }

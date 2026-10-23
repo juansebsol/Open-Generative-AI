@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, PROVIDERS, listCheckpoints, loadProviderSettings, saveProviderSettings } from 'studio';
 import { getCommonCopy } from '@/lib/locales';
+import LocalEngineSetup from './LocalEngineSetup';
 
 function KeyField({ provider, value, onChange, copy }) {
   const [visible, setVisible] = useState(false);
@@ -169,7 +170,6 @@ export default function ProvidersModal({ onClose, locale = 'en' }) {
   const copy = getCommonCopy(locale).providersModal;
   const [settings, setSettings] = useState(() => loadProviderSettings());
   const [savedKeys] = useState(() => settings.keys);
-
   const update = useCallback((updater) => {
     setSettings((current) => saveProviderSettings(updater(current)));
   }, []);
@@ -253,6 +253,7 @@ export default function ProvidersModal({ onClose, locale = 'en' }) {
               spellCheck={false}
               className="w-full h-9 rounded-md bg-black/40 border border-white/10 px-3 text-[13px] font-mono text-white placeholder:text-white/25 focus:outline-none focus:border-[#22d3ee]/50"
             />
+            <LocalEngineSetup providerId={provider.id} url={settings.urls[provider.id] || ''} onUseDefault={(value) => setUrl(provider.id, value)} copy={copy.localSetup} />
             {provider.id === 'comfyui' && settings.urls.comfyui && (
               <ComfyOptions url={settings.urls.comfyui} options={settings.options.comfyui || {}} onChange={(value) => setOptions('comfyui', value)} copy={copy} />
             )}

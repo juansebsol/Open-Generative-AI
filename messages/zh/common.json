@@ -83,6 +83,32 @@
     "moveUp": "上移",
     "moveDown": "下移",
     "orderHint": "当多个服务商提供同一模型时，使用排在最前且已配置密钥的服务商。",
-    "done": "完成"
+    "done": "完成",
+    "localSetup": {
+      "useDefault": "使用 {url}",
+      "testConnection": "测试连接",
+      "testing": "正在连接…",
+      "testOk": "已连接",
+      "testNoModel": "已连接，但尚未加载模型（状态：{state}）。请在服务器的网页界面中加载模型。",
+      "testFailedComfy": "无法连接 ComfyUI。请确认它正在运行、使用 --enable-cors-header {origin} 启动，并允许浏览器访问本地网络。",
+      "testFailedSd": "无法连接服务器。请确认它在此地址运行，并允许浏览器访问本地网络。",
+      "showGuide": "安装指南",
+      "hideGuide": "收起指南",
+      "copy": "复制",
+      "copied": "已复制",
+      "steps": {
+        "comfyInstall": "安装 ComfyUI：桌面版最简单，也可以用 Python 安装：",
+        "comfyModel": "至少放入一个模型文件（.safetensors），例如 SDXL 或 SD 1.5，到 ComfyUI/models/checkpoints。",
+        "comfyStart": "启动它以便本页面调用。使用桌面版时，请在其服务器设置中设置相同的 CORS 来源（{origin}）。",
+        "sdDownload": "下载适合你电脑的 sd-server（Apple 芯片选 Metal，NVIDIA 选 CUDA，其他选 Vulkan）：",
+        "sdModel": "将模型下载到 models 文件夹，例如 Stable Diffusion 1.5：",
+        "sdStart": "启动服务器，然后在 {url} 的网页界面中选择模型。它默认允许浏览器请求。",
+        "connect": "在上方填写地址（默认 {url}），然后点击测试连接。"
+      },
+      "stepLinks": {
+        "comfyInstall": "ComfyUI 桌面版",
+        "sdDownload": "发布页"
+      }
+    }
   }
 }
