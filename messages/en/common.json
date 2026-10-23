@@ -11,12 +11,14 @@
     "marketing": "Marketing Studio",
     "ai-influencer": "AI Influencer Studio",
     "clipping": "AI Clipping",
-    "vibe-motion": "Vibe Motion"
+    "vibe-motion": "Vibe Motion",
+    "agents": "Agents"
   },
   "categories": {
     "images": "Images",
     "video": "Video",
-    "audio": "Audio"
+    "audio": "Audio",
+    "agents-automation": "Agents & Automation"
   },
   "shell": {
     "brand": "OpenGenerativeAI",

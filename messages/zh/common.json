@@ -11,12 +11,14 @@
     "marketing": "营销工作室",
     "ai-influencer": "AI 网红工作室",
     "clipping": "AI 剪辑",
-    "vibe-motion": "Vibe Motion 动态图形"
+    "vibe-motion": "Vibe Motion 动态图形",
+    "agents": "智能体"
   },
   "categories": {
     "images": "图像",
     "video": "视频",
-    "audio": "音频"
+    "audio": "音频",
+    "agents-automation": "智能体与自动化"
   },
   "shell": {
     "brand": "OpenGenerativeAI",

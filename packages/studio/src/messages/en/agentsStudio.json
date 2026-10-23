@@ -1,0 +1,148 @@
+{
+  "sidebar": {
+    "agents": "Agents",
+    "builtIn": "Built-in",
+    "yourAgents": "Your agents",
+    "newAgent": "New agent",
+    "chats": "Chats",
+    "newChat": "New chat",
+    "noChats": "No chats with this agent yet.",
+    "deleteChat": "Delete chat",
+    "deleteChatConfirm": "Delete this chat? This can't be undone.",
+    "editAgent": "Edit agent",
+    "customizeAgent": "Customize a copy",
+    "deleteAgent": "Delete agent",
+    "deleteAgentConfirm": "Delete \"{name}\" and its chats?",
+    "models": "Models",
+    "modelsHint": "Auto picks a model you have a key for, preferring Nano Banana for images.",
+    "auto": "Auto",
+    "autoWith": "Auto ({name})",
+    "noKey": "no key",
+    "openMenu": "Agents and chats",
+    "closeMenu": "Close"
+  },
+  "slots": {
+    "image": "Image",
+    "edit": "Image edit",
+    "video": "Text to video",
+    "animate": "Image to video",
+    "speech": "Voiceover",
+    "music": "Music",
+    "upscale": "Upscale"
+  },
+  "chat": {
+    "newChatTitle": "New chat",
+    "placeholder": "Message {name}…",
+    "placeholderDisabled": "Add a chat key to start…",
+    "send": "Send",
+    "stop": "Stop",
+    "attach": "Attach images",
+    "uploading": "Uploading…",
+    "removeAttachment": "Remove",
+    "enterHint": "Enter to send, Shift+Enter for a new line",
+    "thinking": "Thinking…",
+    "working": "Working…",
+    "stopped": "Stopped.",
+    "interrupted": "This reply was interrupted.",
+    "tryStarter": "Try one of these",
+    "you": "You",
+    "copyText": "Copy text",
+    "copied": "Copied",
+    "retry": "Retry",
+    "toolLimit": "Reached the step limit for this message. Send another message to continue.",
+    "uploadFailed": "Upload failed: {message}",
+    "onlyImages": "Only images can be attached.",
+    "genericError": "Something went wrong."
+  },
+  "steps": {
+    "generate_image": "Generating image",
+    "edit_image": "Editing image",
+    "generate_video": "Generating video",
+    "text_to_speech": "Recording voiceover",
+    "generate_audio": "Composing audio",
+    "upscale_image": "Upscaling image",
+    "remove_background": "Removing background",
+    "unknown": "Running {name}",
+    "with": "with {model}",
+    "done": "Done",
+    "failed": "Failed"
+  },
+  "media": {
+    "download": "Download",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "useAsReference": "Use as reference",
+    "open": "Open",
+    "close": "Close"
+  },
+  "setup": {
+    "title": "Add a chat key to talk to agents",
+    "body": "Agents plan with a chat model and create with your image, video and audio providers. Add an OpenRouter, OpenAI or Google Gemini key in Settings to get started. Keys stay in this browser.",
+    "button": "Open Settings"
+  },
+  "editor": {
+    "createTitle": "New agent",
+    "editTitle": "Edit agent",
+    "name": "Name",
+    "namePlaceholder": "e.g. Brand Illustrator",
+    "description": "Description",
+    "descriptionPlaceholder": "What this agent is good at",
+    "avatar": "Avatar",
+    "color": "Color",
+    "instructions": "Instructions",
+    "instructionsPlaceholder": "Describe the agent's role, style, what it should make and how it should work with you.",
+    "starters": "Conversation starters",
+    "startersHint": "One per line (optional)",
+    "cancel": "Cancel",
+    "save": "Save agent",
+    "nameRequired": "Give the agent a name.",
+    "copySuffix": "(copy)"
+  },
+  "builtinAgents": {
+    "creative-director": {
+      "name": "Creative Director",
+      "description": "Turns a brief into concepts, key visuals and short spots.",
+      "starters": [
+        "Pitch three visual concepts for a summer campaign for an iced coffee brand",
+        "Create a moody key visual for a sci-fi podcast called Signal Lost",
+        "Turn this idea into a 5-second teaser video: a paper boat sailing through a neon city"
+      ]
+    },
+    "product-photographer": {
+      "name": "Product Photographer",
+      "description": "Studio and lifestyle product shots from your photos.",
+      "starters": [
+        "Shoot my product on a marble countertop with soft morning light",
+        "Give me a clean white e-commerce shot and a lifestyle shot",
+        "Remove the background from my photo and upscale it"
+      ]
+    },
+    "storyboard-artist": {
+      "name": "Storyboard Artist",
+      "description": "Breaks a story into consistent frames and animates them.",
+      "starters": [
+        "Storyboard a 4-shot opening for a short film about a lighthouse keeper",
+        "Make a 3-frame storyboard for a sneaker ad, then animate the first frame",
+        "Design a consistent main character and show her in two scenes"
+      ]
+    },
+    "social-media-designer": {
+      "name": "Social Media Designer",
+      "description": "Platform-ready posts, stories and reels with captions.",
+      "starters": [
+        "Make an Instagram post and a 9:16 story announcing our café's new menu",
+        "Design a carousel of three slides about morning routines",
+        "Create a short vertical reel clip for a fitness app launch"
+      ]
+    },
+    "audio-producer": {
+      "name": "Voice & Sound Producer",
+      "description": "Voiceovers, jingles and background music.",
+      "starters": [
+        "Write and record a 20-second voiceover for a meditation app",
+        "Compose an upbeat lo-fi track for a study vlog",
+        "Make a short cheerful jingle for a bakery"
+      ]
+    }
+  }
+}

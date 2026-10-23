@@ -1,0 +1,148 @@
+{
+  "sidebar": {
+    "agents": "智能体",
+    "builtIn": "内置",
+    "yourAgents": "我的智能体",
+    "newAgent": "新建智能体",
+    "chats": "对话",
+    "newChat": "新对话",
+    "noChats": "还没有与该智能体的对话。",
+    "deleteChat": "删除对话",
+    "deleteChatConfirm": "删除此对话？此操作无法撤销。",
+    "editAgent": "编辑智能体",
+    "customizeAgent": "复制并自定义",
+    "deleteAgent": "删除智能体",
+    "deleteAgentConfirm": "删除“{name}”及其所有对话？",
+    "models": "模型",
+    "modelsHint": "自动模式会选择你已配置密钥的模型，图像优先使用 Nano Banana。",
+    "auto": "自动",
+    "autoWith": "自动（{name}）",
+    "noKey": "无密钥",
+    "openMenu": "智能体与对话",
+    "closeMenu": "关闭"
+  },
+  "slots": {
+    "image": "图像",
+    "edit": "图像编辑",
+    "video": "文生视频",
+    "animate": "图生视频",
+    "speech": "配音",
+    "music": "音乐",
+    "upscale": "超分辨率"
+  },
+  "chat": {
+    "newChatTitle": "新对话",
+    "placeholder": "给 {name} 发消息…",
+    "placeholderDisabled": "请先添加对话密钥…",
+    "send": "发送",
+    "stop": "停止",
+    "attach": "添加图片",
+    "uploading": "上传中…",
+    "removeAttachment": "移除",
+    "enterHint": "Enter 发送，Shift+Enter 换行",
+    "thinking": "思考中…",
+    "working": "处理中…",
+    "stopped": "已停止。",
+    "interrupted": "此回复已中断。",
+    "tryStarter": "试试这些",
+    "you": "你",
+    "copyText": "复制文本",
+    "copied": "已复制",
+    "retry": "重试",
+    "toolLimit": "本条消息已达到步骤上限。发送新消息以继续。",
+    "uploadFailed": "上传失败：{message}",
+    "onlyImages": "只能添加图片。",
+    "genericError": "出了点问题。"
+  },
+  "steps": {
+    "generate_image": "正在生成图像",
+    "edit_image": "正在编辑图像",
+    "generate_video": "正在生成视频",
+    "text_to_speech": "正在录制配音",
+    "generate_audio": "正在创作音频",
+    "upscale_image": "正在提升分辨率",
+    "remove_background": "正在移除背景",
+    "unknown": "正在运行 {name}",
+    "with": "使用 {model}",
+    "done": "完成",
+    "failed": "失败"
+  },
+  "media": {
+    "download": "下载",
+    "copyLink": "复制链接",
+    "linkCopied": "链接已复制",
+    "useAsReference": "用作参考",
+    "open": "打开",
+    "close": "关闭"
+  },
+  "setup": {
+    "title": "添加对话密钥以使用智能体",
+    "body": "智能体使用对话模型进行规划，并通过你的图像、视频和音频服务商进行创作。请在设置中添加 OpenRouter、OpenAI 或 Google Gemini 密钥。密钥只保存在此浏览器中。",
+    "button": "打开设置"
+  },
+  "editor": {
+    "createTitle": "新建智能体",
+    "editTitle": "编辑智能体",
+    "name": "名称",
+    "namePlaceholder": "例如：品牌插画师",
+    "description": "简介",
+    "descriptionPlaceholder": "这个智能体擅长什么",
+    "avatar": "头像",
+    "color": "颜色",
+    "instructions": "指令",
+    "instructionsPlaceholder": "描述智能体的角色、风格、要创作的内容以及与你协作的方式。",
+    "starters": "开场提示",
+    "startersHint": "每行一个（可选）",
+    "cancel": "取消",
+    "save": "保存智能体",
+    "nameRequired": "请为智能体命名。",
+    "copySuffix": "（副本）"
+  },
+  "builtinAgents": {
+    "creative-director": {
+      "name": "创意总监",
+      "description": "把创意简报变成概念、主视觉和短片。",
+      "starters": [
+        "为一个冰咖啡品牌的夏季活动提出三个视觉概念",
+        "为一档名为《信号丢失》的科幻播客制作一张氛围感主视觉",
+        "把这个想法做成 5 秒预告片：一只纸船驶过霓虹城市"
+      ]
+    },
+    "product-photographer": {
+      "name": "产品摄影师",
+      "description": "用你的照片拍出棚拍和生活方式产品图。",
+      "starters": [
+        "把我的产品放在大理石台面上，搭配柔和的晨光",
+        "给我一张干净的白底电商图和一张生活方式场景图",
+        "去掉我照片的背景并提升分辨率"
+      ]
+    },
+    "storyboard-artist": {
+      "name": "分镜师",
+      "description": "把故事拆成风格一致的分镜并让它们动起来。",
+      "starters": [
+        "为一部关于灯塔看守人的短片画 4 个开场镜头",
+        "为一支运动鞋广告做 3 格分镜，然后把第一格做成视频",
+        "设计一个统一的女主角形象，并展示她在两个场景中"
+      ]
+    },
+    "social-media-designer": {
+      "name": "社交媒体设计师",
+      "description": "适配各平台的帖子、快拍和短视频，附带文案。",
+      "starters": [
+        "为咖啡馆新菜单制作一张 Instagram 帖子和一张 9:16 快拍",
+        "设计一组关于晨间习惯的三页轮播图",
+        "为健身 App 上线制作一段竖屏短视频"
+      ]
+    },
+    "audio-producer": {
+      "name": "配音与音效制作人",
+      "description": "配音、广告歌和背景音乐。",
+      "starters": [
+        "为冥想 App 写一段 20 秒的配音并录制出来",
+        "为学习 Vlog 创作一首轻快的 lo-fi 曲子",
+        "为一家面包店做一段欢快的短广告歌"
+      ]
+    }
+  }
+}

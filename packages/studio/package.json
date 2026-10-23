@@ -22,7 +22,8 @@
     "./LayersStudio": "./src/components/LayersStudio.jsx",
     "./MotionControlStudio": "./src/components/MotionControlStudio.jsx",
     "./ClippingStudio": "./src/components/ClippingStudio.jsx",
-    "./VibeMotionStudio": "./src/components/VibeMotionStudio.jsx"
+    "./VibeMotionStudio": "./src/components/VibeMotionStudio.jsx",
+    "./AgentsStudio": "./src/components/AgentsStudio.jsx"
   },
   "files": [
     "src"

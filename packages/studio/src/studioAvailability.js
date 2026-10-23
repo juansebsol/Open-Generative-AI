@@ -41,6 +41,8 @@ const STUDIO_REQUIREMENTS = {
   clipping: () => v2vModels.some((model) => model.family === 'ai-clipping'),
   // Runs in the browser with a chat model; shows a key prompt when none is set.
   'vibe-motion': () => true,
+  // Always shown: without a chat key the studio explains how to add one.
+  agents: () => true,
 };
 
 export function isStudioAvailable(tabId) {

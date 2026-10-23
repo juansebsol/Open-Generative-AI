@@ -12,6 +12,7 @@ export { default as LayersStudio } from './components/LayersStudio';
 export { default as MotionControlStudio } from './components/MotionControlStudio';
 export { default as ClippingStudio } from './components/ClippingStudio';
 export { default as VibeMotionStudio } from './components/VibeMotionStudio';
+export { default as AgentsStudio } from './components/AgentsStudio';
 export * from './generation.js';
 export * from './providers/index.js';
 export { isStudioAvailable } from './studioAvailability.js';

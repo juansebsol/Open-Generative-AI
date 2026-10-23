@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, VibeMotionStudio, hasAnyProvider, isStudioAvailable, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings } from 'studio';
+import { ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, AgentsStudio, VibeMotionStudio, hasAnyProvider, isStudioAvailable, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings } from 'studio';
 import ProvidersModal from './ProvidersModal';
 import { getCommonCopy, getLocaleConfig, localizeStudioPath } from '@/lib/locales';
 
@@ -148,6 +148,20 @@ const TABS = [
         <path d="M12 3l1 2.5L15.5 6 13 7l-1 2.5L11 7 8.5 6 11 5z"/>
       </svg>
     )
+  },
+  {
+    id: 'agents',
+    label: 'Agents',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="8" width="16" height="12" rx="3"/>
+        <path d="M12 8V4"/>
+        <circle cx="12" cy="3" r="1"/>
+        <circle cx="9" cy="14" r="1.2"/>
+        <circle cx="15" cy="14" r="1.2"/>
+        <path d="M2 13v3M22 13v3"/>
+      </svg>
+    )
   }
 ];
 
@@ -185,6 +199,17 @@ const NAVIGATION_CATEGORIES = [
         <path d="M9 18V5l12-2v13"/>
         <circle cx="6" cy="18" r="3"/>
         <circle cx="18" cy="16" r="3"/>
+      </svg>
+    )
+  },
+  {
+    id: 'agents-automation',
+    label: 'Agents & Automation',
+    tabIds: ['agents'],
+    icon: (
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/>
+        <path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/>
       </svg>
     )
   }
@@ -821,6 +846,11 @@ export default function StandaloneShell({ locale = 'en' }) {
         {AVAILABLE_TAB_IDS.has('vibe-motion') && (
           <div className={activeTab === 'vibe-motion' ? "h-full w-full" : "hidden"}>
             <VibeMotionStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('vibe-motion')} onGenerationEnd={makeGenerationEndCallback('vibe-motion')} onGenerationComplete={makeSuccessCallback('vibe-motion')} onGenerationError={makeErrorCallback('vibe-motion')} />
+          </div>
+        )}
+        {AVAILABLE_TAB_IDS.has('agents') && (
+          <div className={activeTab === 'agents' ? "h-full w-full" : "hidden"}>
+            <AgentsStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('agents')} onGenerationEnd={makeGenerationEndCallback('agents')} onGenerationComplete={makeSuccessCallback('agents')} onGenerationError={makeErrorCallback('agents')} />
           </div>
         )}
       </div>
