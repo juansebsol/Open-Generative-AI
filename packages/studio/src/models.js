@@ -11105,6 +11105,30 @@ const ALL_i2iModels = [
     "provider": "bytedance",
     "provider_name": "KIE_AI",
     "description": "Decompose a composite image into a base image plus clean, separate layer assets with Seedream 5.0 Flash Layer Decomposition. Optionally target elements with prompts or <bbox> regions."
+  },
+  {
+    "id": "image-watermark-remover",
+    "name": "AI Image Watermark Remover",
+    "endpoint": "image-watermark-remover",
+    "family": "tools",
+    "imageField": "image_url",
+    "hasPrompt": false,
+    "inputs": {
+      "output_format": {
+        "type": "string",
+        "title": "Output Format",
+        "name": "output_format",
+        "enum": [
+          "png",
+          "jpeg",
+          "webp"
+        ],
+        "default": "png"
+      }
+    },
+    "description": "Remove watermarks, logos, captions and stamped text from an image.",
+    "provider": "wavespeed",
+    "provider_name": "WaveSpeed"
   }
 ];
 export const i2iModels = [...withRoutes(ALL_i2iModels)];

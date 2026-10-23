@@ -1,0 +1,3 @@
+{
+  "image-watermark-remover": [{ "provider": "wavespeed", "endpoint": "wavespeed-ai/image-watermark-remover" }]
+}

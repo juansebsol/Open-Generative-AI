@@ -1,0 +1,1 @@
+{"wavespeed-ai/image-watermark-remover":{"required":["image"],"props":{"enable_base64_output":{"type":"boolean","default":false},"enable_sync_mode":{"type":"boolean","default":false},"image":{"type":"string"},"output_format":{"type":"string","enum":["jpeg","png","webp"],"default":"jpeg"}}}}

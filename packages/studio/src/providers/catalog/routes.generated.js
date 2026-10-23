@@ -5784,5 +5784,13 @@ export const ROUTE_GROUPS = {
     "endpoint": "topaz/upscale/video/precision"
    }
   ]
+ },
+ "watermark": {
+  "image-watermark-remover": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "wavespeed-ai/image-watermark-remover"
+   }
+  ]
  }
 };
