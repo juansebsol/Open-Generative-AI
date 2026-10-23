@@ -3140,6 +3140,50 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "music": {
+  "mureka-song": [
+   {
+    "provider": "fal",
+    "endpoint": "mureka/api/generate/song"
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "mureka-ai/mureka-v9.5/generate-song"
+   }
+  ],
+  "mureka-instrumental": [
+   {
+    "provider": "fal",
+    "endpoint": "mureka/api/generate/instrumental"
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "mureka-ai/mureka-v9.5/generate-bgm"
+   }
+  ],
+  "mureka-extend-song": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "mureka-ai/mureka-v8/extend-song"
+   }
+  ],
+  "elevenlabs-music-v2-5": [
+   {
+    "provider": "fal",
+    "endpoint": "elevenlabs/music/v2.5"
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "elevenlabs/music-v2.5"
+   }
+  ],
+  "stable-audio-3-music-remix": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/stable-audio-3/small/music/audio-to-audio"
+   }
+  ]
+ },
  "reframe": {
   "luma-ray-3.2-reframe": [
    {

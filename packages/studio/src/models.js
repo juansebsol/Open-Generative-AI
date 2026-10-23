@@ -25298,6 +25298,207 @@ const ALL_audioModels = [
         "maximum": 2
       }
     }
+  },
+  {
+    "id": "mureka-song",
+    "name": "Mureka Song",
+    "endpoint": "mureka-song",
+    "family": "mureka",
+    "description": "Mureka 9.5 writes a complete song with vocals from your lyrics, in the style you describe.",
+    "required": [
+      "lyrics"
+    ],
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Style",
+        "name": "prompt",
+        "description": "Genre, mood, tempo and instruments.",
+        "examples": [
+          "Indie pop, bright guitars, upbeat, warm female vocals"
+        ]
+      },
+      "lyrics": {
+        "type": "string",
+        "title": "Lyrics",
+        "name": "lyrics",
+        "description": "Song lyrics. Section tags like [Verse] and [Chorus] help structure the song.",
+        "examples": [
+          "[Verse]\nMorning light across the bay\nEvery worry fades away\n\n[Chorus]\nWe keep on running, running free"
+        ]
+      },
+      "gender": {
+        "type": "string",
+        "title": "Vocal",
+        "name": "gender",
+        "description": "Singer's voice.",
+        "enum": [
+          "female",
+          "male"
+        ]
+      }
+    }
+  },
+  {
+    "id": "mureka-instrumental",
+    "name": "Mureka Instrumental",
+    "endpoint": "mureka-instrumental",
+    "family": "mureka",
+    "description": "Mureka 9.5 composes an instrumental track or background music from a text description.",
+    "required": [
+      "prompt"
+    ],
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "Genre, mood, tempo and instruments.",
+        "examples": [
+          "Cinematic orchestral build with soft piano, strings and a hopeful finish"
+        ]
+      }
+    }
+  },
+  {
+    "id": "mureka-extend-song",
+    "name": "Mureka Extend Song",
+    "endpoint": "mureka-extend-song",
+    "family": "mureka",
+    "description": "Continue an existing song with new lyrics, from the end or into a new intro, keeping its voice and style.",
+    "required": [
+      "audio_url",
+      "lyrics",
+      "extend_at"
+    ],
+    "inputs": {
+      "audio_url": {
+        "type": "string",
+        "title": "Song to extend",
+        "name": "audio_url",
+        "field": "audio",
+        "description": "The song to continue."
+      },
+      "lyrics": {
+        "type": "string",
+        "title": "Lyrics for the new part",
+        "name": "lyrics",
+        "description": "Lyrics sung in the added section.",
+        "examples": [
+          "[Bridge]\nOne more mile beneath the stars\n\n[Chorus]\nWe keep on running, running free"
+        ]
+      },
+      "extend_at": {
+        "type": "integer",
+        "title": "Extend from (ms)",
+        "name": "extend_at",
+        "description": "Where the new part starts, in milliseconds from the start of the song.",
+        "default": 30000,
+        "minValue": 0
+      },
+      "extend_type": {
+        "type": "string",
+        "title": "Direction",
+        "name": "extend_type",
+        "description": "Add to the end (tail) or the beginning (head).",
+        "enum": [
+          "tail",
+          "head"
+        ],
+        "default": "tail"
+      }
+    }
+  },
+  {
+    "id": "elevenlabs-music-v2-5",
+    "name": "ElevenLabs Music v2.5",
+    "endpoint": "elevenlabs-music-v2-5",
+    "family": "elevenlabs-music",
+    "description": "ElevenLabs Music writes studio-quality songs with vocals or instrumentals from a prompt, up to 10 minutes long.",
+    "required": [
+      "prompt"
+    ],
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "Describe the song: genre, mood, instruments, and any lyrics or vocal style.",
+        "examples": [
+          "An energetic funk track with slap bass, horns and a catchy chorus about summer nights"
+        ]
+      },
+      "music_length_ms": {
+        "type": "integer",
+        "title": "Length (ms)",
+        "name": "music_length_ms",
+        "description": "Track length in milliseconds (3,000 to 600,000).",
+        "default": 30000,
+        "minValue": 3000,
+        "maxValue": 600000
+      },
+      "force_instrumental": {
+        "type": "boolean",
+        "title": "Instrumental Only",
+        "name": "force_instrumental",
+        "description": "Leave out vocals.",
+        "default": false
+      }
+    }
+  },
+  {
+    "id": "stable-audio-3-music-remix",
+    "name": "Stable Audio 3 Remix",
+    "endpoint": "stable-audio-3-music-remix",
+    "family": "stable-audio",
+    "description": "Remix a track into a new style with Stable Audio 3: keep its structure and reshape the sound from a prompt.",
+    "required": [
+      "audio_url",
+      "prompt"
+    ],
+    "inputs": {
+      "audio_url": {
+        "type": "string",
+        "title": "Track to remix",
+        "name": "audio_url",
+        "field": "audio",
+        "description": "The source track."
+      },
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "The new style or sound.",
+        "examples": [
+          "Lo-fi jazz cover with brushed drums and upright bass"
+        ]
+      },
+      "init_noise_level": {
+        "type": "number",
+        "title": "Change Amount",
+        "name": "init_noise_level",
+        "description": "How far to move from the original (0 keeps it, 1 ignores it).",
+        "default": 0.9,
+        "minValue": 0,
+        "maxValue": 1,
+        "step": 0.05
+      },
+      "duration": {
+        "type": "number",
+        "title": "Duration (s)",
+        "name": "duration",
+        "description": "Output length in seconds (1-120).",
+        "default": 30,
+        "minValue": 1,
+        "maxValue": 120
+      },
+      "negative_prompt": {
+        "type": "string",
+        "title": "Negative Prompt",
+        "name": "negative_prompt",
+        "description": "Sounds to avoid."
+      }
+    }
   }
 ];
 export const audioModels = [...withRoutes(ALL_audioModels)];
