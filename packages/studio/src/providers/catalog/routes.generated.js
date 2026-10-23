@@ -3060,6 +3060,35 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "reframe": {
+  "luma-ray-3.2-reframe": [
+   {
+    "provider": "fal",
+    "endpoint": "luma/agent/ray/v3.2/reframe",
+    "defaults": {
+     "prompt": "Extend the scene naturally to fill the new frame, matching the original style and lighting."
+    }
+   }
+  ],
+  "ltx-2.3-reframe": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/ltx-2.3/reframe"
+   }
+  ],
+  "minimax-h3-max-reframe": [
+   {
+    "provider": "fal",
+    "endpoint": "minimax/h3-max/reframe-video"
+   }
+  ],
+  "wavespeed-video-outpainter": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "wavespeed-ai/video-outpainter"
+   }
+  ]
+ },
  "video-vendors": {
   "minimax-voice-clone": [
    {

@@ -29,7 +29,8 @@
     "continueVideo": "Describe how to continue the video",
     "motion": "Describe the motion",
     "motionOptional": "Describe the motion (optional)",
-    "videoReadyRemoveWatermark": "Video ready — click Generate to remove watermark",
+    "videoReady": "Video ready — click Generate",
+    "describeResultOptional": "Describe what you want (optional)",
     "motionOrEffect": "Describe the motion or effect",
     "motionOrEffectOptional": "Describe the motion or effect (optional)",
     "describeVideo": "Describe the video you want to create"
@@ -49,6 +50,7 @@
   },
   "gallery": {
     "extend": "Extend",
+    "reframe": "Reframe",
     "download": "Download",
     "delete": "Delete",
     "confirmDelete": "Are you sure you want to delete this generated item?",

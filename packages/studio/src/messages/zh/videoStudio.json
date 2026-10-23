@@ -29,7 +29,8 @@
     "continueVideo": "描述如何继续此视频",
     "motion": "描述运动效果",
     "motionOptional": "描述运动效果（可选）",
-    "videoReadyRemoveWatermark": "视频已就绪 — 点击生成以去除水印",
+    "videoReady": "视频已就绪 — 点击生成",
+    "describeResultOptional": "描述你想要的效果（可选）",
     "motionOrEffect": "描述运动或特效",
     "motionOrEffectOptional": "描述运动或特效（可选）",
     "describeVideo": "描述你想要创建的视频"
@@ -49,6 +50,7 @@
   },
   "gallery": {
     "extend": "延长",
+    "reframe": "调整画幅",
     "download": "下载",
     "delete": "删除",
     "confirmDelete": "确定要删除此生成项吗？",

@@ -130,17 +130,33 @@ const GENERAL_EXTEND_MODEL_IDS = Object.freeze([
   "grok-imagine-video-extend",
 ]);
 
+// Reframe models in preference order (all accept any video).
+const REFRAME_MODEL_IDS = Object.freeze([
+  "luma-ray-3.2-reframe",
+  "minimax-h3-max-reframe",
+  "ltx-2.3-reframe",
+  "wavespeed-video-outpainter",
+]);
+
+// First catalog model the visitor's providers can run, else the first listed.
+function pickRunnableModelId(modelIds) {
+  const candidates = [...new Set(modelIds)].filter((id) => videoModelCatalog.variantById.has(id));
+  return candidates.find((id) => isEndpointAvailable(videoModelCatalog.variantById.get(id).model.endpoint || id))
+    || candidates[0]
+    || null;
+}
+
 // Picks the extend model for a finished video: same family first, then a
 // general extender, preferring models the visitor's providers can run.
 function findExtendModelId(sourceModelId) {
   const familyId = videoModelCatalog.familyByVariantId.get(sourceModelId)?.id;
   const familyExtenders = getVideoWorkflowFamily(familyId)
     ?.workflowById.get(EXTEND_WORKFLOW_ID)?.variants.map((variant) => variant.model.id) || [];
-  const candidates = [...new Set([...familyExtenders, ...GENERAL_EXTEND_MODEL_IDS])]
-    .filter((id) => videoModelCatalog.variantById.has(id));
-  return candidates.find((id) => isEndpointAvailable(videoModelCatalog.variantById.get(id).model.endpoint || id))
-    || candidates[0]
-    || null;
+  return pickRunnableModelId([...familyExtenders, ...GENERAL_EXTEND_MODEL_IDS]);
+}
+
+function findReframeModelId() {
+  return pickRunnableModelId(REFRAME_MODEL_IDS);
 }
 
 function workflowContextKey(familyId, workflowId) {
@@ -2222,14 +2238,14 @@ export default function VideoStudio({
     setTimeout(() => textareaRef.current?.focus(), 50);
   }, [applyUserSelectedVariant, resetToPromptBar]);
 
-  // One-click extend: load a finished video into an extend model and wait
-  // for the user to describe what happens next.
-  const handleExtend = useCallback((entry) => {
-    const targetId = findExtendModelId(entry.model);
-    if (!targetId || !entry.url) return;
+  // One-click follow-ups (Extend, Reframe): load a finished video into a
+  // video-to-video model and let the user adjust settings before generating.
+  const loadVideoIntoModel = useCallback((targetId, videoUrl) => {
+    if (!targetId || !videoUrl) return;
     const variant = videoModelCatalog.variantById.get(targetId);
     const family = videoModelCatalog.familyByVariantId.get(targetId);
     const workflowId = getVideoWorkflowFamily(family.id)?.workflowById.get(EXTEND_WORKFLOW_ID)
+      ?.variantIds.has(targetId)
       ? EXTEND_WORKFLOW_ID
       : null;
 
@@ -2238,12 +2254,20 @@ export default function VideoStudio({
     applyUserSelectedVariant(variant, "v2v", family, workflowId);
     if (workflowId) {
       const draftKey = getVideoWorkflowDraftKey(family.id, workflowId);
-      setWorkflowMediaDrafts((drafts) => ({ ...drafts, [draftKey]: { sourceVideo: [entry.url] } }));
+      setWorkflowMediaDrafts((drafts) => ({ ...drafts, [draftKey]: { sourceVideo: [videoUrl] } }));
     } else {
-      setUploadedVideoUrls([entry.url]);
+      setUploadedVideoUrls([videoUrl]);
     }
     setTimeout(() => textareaRef.current?.focus(), 50);
   }, [applyUserSelectedVariant, resetToPromptBar]);
+
+  const handleExtend = useCallback((entry) => {
+    loadVideoIntoModel(findExtendModelId(entry.model), entry.url);
+  }, [loadVideoIntoModel]);
+
+  const handleReframe = useCallback((entry) => {
+    loadVideoIntoModel(findReframeModelId(), entry.url);
+  }, [loadVideoIntoModel]);
 
   // ── derived UI values ────────────────────────────────────────────────────
   const currentModelObj = selectedVariant?.model;
@@ -2296,7 +2320,13 @@ export default function VideoStudio({
             ? currentModelObj?.promptRequired
               ? copy.placeholders.motion
               : copy.placeholders.motionOptional
-            : copy.placeholders.videoReadyRemoveWatermark
+            : /extend/.test(currentModelObj?.id || "")
+              ? copy.placeholders.continueVideo
+              : currentModelObj?.hasPrompt
+                ? currentModelObj.promptRequired
+                  ? copy.placeholders.editVideo
+                  : copy.placeholders.describeResultOptional
+                : copy.placeholders.videoReady
           : imageMode
             ? currentModelObj?.promptRequired
               ? copy.placeholders.motionOrEffect
@@ -2375,6 +2405,23 @@ export default function VideoStudio({
                         </svg>
                       </button>
                     )}
+                    {findReframeModelId() && (
+                      <button
+                        type="button"
+                        title={copy.gallery.reframe}
+                        aria-label={copy.gallery.reframe}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReframe(entry);
+                        }}
+                        className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="7" y="4" width="10" height="16" rx="1.5" />
+                          <path d="M3 9v6M21 9v6" />
+                        </svg>
+                      </button>
+                    )}
                     <button
                       type="button"
                       title={copy.gallery.download}
@@ -2415,6 +2462,11 @@ export default function VideoStudio({
                         kind: "extend",
                         label: copy.gallery.extend,
                         onSelect: () => handleExtend(entry),
+                      },
+                      findReframeModelId() && {
+                        kind: "reframe",
+                        label: copy.gallery.reframe,
+                        onSelect: () => handleReframe(entry),
                       },
                       {
                         kind: "download",

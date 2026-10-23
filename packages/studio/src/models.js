@@ -21741,6 +21741,7 @@ const ALL_v2vModels = [
         "description": "The video to continue."
       },
       "resolution": {
+        "configurable": true,
         "type": "string",
         "title": "Resolution",
         "name": "resolution",
@@ -21751,6 +21752,7 @@ const ALL_v2vModels = [
         "default": "720p"
       },
       "duration": {
+        "configurable": true,
         "type": "int",
         "title": "Duration",
         "name": "duration",
@@ -22201,6 +22203,222 @@ const ALL_v2vModels = [
     "description": "Continue any video with HappyHorse 1.0.",
     "provider": "alibaba",
     "provider_name": "Alibaba"
+  },
+  {
+    "id": "luma-ray-3.2-reframe",
+    "name": "Luma Ray 3.2 Reframe",
+    "endpoint": "luma-ray-3.2-reframe",
+    "family": "reframe",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": false,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "Optional: describe what should fill the new space around the original shot."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to reframe",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to convert to a new aspect ratio."
+      },
+      "aspect_ratio": {
+        "configurable": true,
+        "type": "string",
+        "title": "Aspect Ratio",
+        "name": "aspect_ratio",
+        "enum": [
+          "9:16",
+          "16:9",
+          "1:1",
+          "4:3",
+          "3:4",
+          "21:9"
+        ],
+        "default": "9:16",
+        "description": "Target aspect ratio."
+      },
+      "resolution": {
+        "configurable": true,
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "540p",
+          "720p",
+          "1080p"
+        ],
+        "default": "720p"
+      },
+      "duration": {
+        "configurable": true,
+        "type": "int",
+        "title": "Duration",
+        "name": "duration",
+        "enum": [
+          5,
+          10
+        ],
+        "default": 5,
+        "description": "Length of the reframed video in seconds."
+      }
+    },
+    "description": "Change a video's aspect ratio, keeping the original footage frame for frame and generating the new edges.",
+    "provider": "luma",
+    "provider_name": "Luma"
+  },
+  {
+    "id": "minimax-h3-max-reframe",
+    "name": "MiniMax H3 Max Reframe",
+    "endpoint": "minimax-h3-max-reframe",
+    "family": "reframe",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": false,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "Optional: describe what should fill the new space around the original shot."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to reframe",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to convert to a new aspect ratio."
+      },
+      "aspect_ratio": {
+        "configurable": true,
+        "type": "string",
+        "title": "Aspect Ratio",
+        "name": "aspect_ratio",
+        "enum": [
+          "9:16",
+          "16:9",
+          "1:1",
+          "4:3",
+          "3:4",
+          "21:9",
+          "9:21"
+        ],
+        "default": "9:16",
+        "description": "Target aspect ratio."
+      },
+      "resolution": {
+        "configurable": true,
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "480p",
+          "768p",
+          "1080p"
+        ],
+        "default": "768p"
+      }
+    },
+    "description": "Expand a video to a new aspect ratio with generative outpainting, keeping the original audio and timing.",
+    "provider": "minimax",
+    "provider_name": "MiniMax"
+  },
+  {
+    "id": "ltx-2.3-reframe",
+    "name": "LTX 2.3 Reframe",
+    "endpoint": "ltx-2.3-reframe",
+    "family": "reframe",
+    "videoField": "video_url",
+    "hasPrompt": false,
+    "promptRequired": false,
+    "inputs": {
+      "video_url": {
+        "type": "string",
+        "title": "Video to reframe",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to convert to a new aspect ratio."
+      },
+      "aspect_ratio": {
+        "configurable": true,
+        "type": "string",
+        "title": "Aspect Ratio",
+        "name": "aspect_ratio",
+        "enum": [
+          "9:16",
+          "16:9",
+          "1:1",
+          "4:5",
+          "5:4"
+        ],
+        "default": "9:16",
+        "description": "Target aspect ratio."
+      },
+      "resolution": {
+        "configurable": true,
+        "type": "string",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          "720p",
+          "1080p"
+        ],
+        "default": "1080p"
+      }
+    },
+    "description": "Convert a video to a new aspect ratio without cropping: recenters the footage and fills the new space.",
+    "provider": "lightricks",
+    "provider_name": "Lightricks"
+  },
+  {
+    "id": "wavespeed-video-outpainter",
+    "name": "WaveSpeed Video Outpainter",
+    "endpoint": "wavespeed-video-outpainter",
+    "family": "reframe",
+    "videoField": "video_url",
+    "hasPrompt": true,
+    "promptRequired": false,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "Optional: describe what should fill the new space around the original shot."
+      },
+      "video_url": {
+        "type": "string",
+        "title": "Video to reframe",
+        "name": "video_url",
+        "field": "video",
+        "description": "The video to convert to a new aspect ratio."
+      },
+      "aspect_ratio": {
+        "configurable": true,
+        "type": "string",
+        "title": "Aspect Ratio",
+        "name": "aspect_ratio",
+        "enum": [
+          "9:16",
+          "16:9",
+          "1:1",
+          "4:3",
+          "3:4",
+          "3:2",
+          "2:3",
+          "21:9",
+          "9:21"
+        ],
+        "default": "9:16",
+        "description": "Target aspect ratio."
+      }
+    },
+    "description": "Expand a video beyond its original edges to a new aspect ratio while keeping motion and identity.",
+    "provider": "wavespeed",
+    "provider_name": "WaveSpeed"
   }
 ];
 export const v2vModels = [...withRoutes(ALL_v2vModels)];

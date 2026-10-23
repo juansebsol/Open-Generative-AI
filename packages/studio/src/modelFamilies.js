@@ -92,6 +92,10 @@ const VIDEO_FAMILY_ALIASES = {
   "ai-video-upscaler-pro": "ai-video-upscaler",
   "hunyuan-image-to-video": "hunyuan",
   "hunyuan-text-to-video": "hunyuan",
+  "luma-ray-3.2-reframe": "video-reframe",
+  "minimax-h3-max-reframe": "video-reframe",
+  "ltx-2.3-reframe": "video-reframe",
+  "wavespeed-video-outpainter": "video-reframe",
   "topaz-upscale-video-creative": "topaz-upscale-video",
   "topaz-upscale-video-generative": "topaz-upscale-video",
   "topaz-upscale-video-precision": "topaz-upscale-video",
@@ -102,6 +106,7 @@ const VIDEO_FAMILY_NAMES = {
   hunyuan: "Hunyuan",
   "minimax-h3-max": "MiniMax H3 Max",
   "topaz-upscale-video": "Topaz Video Upscale",
+  "video-reframe": "Video Reframe",
 };
 
 const PREFERRED_IMAGE_VARIANTS = {
@@ -171,6 +176,7 @@ const PREFERRED_VIDEO_VARIANTS = {
     t2v: "minimax-h3-text-to-video",
     i2v: "minimax-h3-image-to-video",
   },
+  "video-reframe": { v2v: "luma-ray-3.2-reframe" },
 };
 
 function normalizeVersion(value) {
@@ -613,10 +619,17 @@ function aliasProfile(modelId, alias) {
 }
 
 function formatAliasProfile(profile) {
-  const special = { lora: "LoRA" };
+  const special = { lora: "LoRA", ltx: "LTX", minimax: "MiniMax", wavespeed: "WaveSpeed" };
   return profile
     .split("-")
     .filter(Boolean)
+    // Re-join version numbers the tokenizer split apart ("3-2" -> "3.2").
+    .reduce((tokens, token) => {
+      const previous = tokens[tokens.length - 1];
+      if (/^\d+$/.test(token) && /^\d+(\.\d+)*$/.test(previous || "")) tokens[tokens.length - 1] = `${previous}.${token}`;
+      else tokens.push(token);
+      return tokens;
+    }, [])
     .map((token) => special[token] || (/^\d+b$/.test(token)
       ? token.toUpperCase()
       : token[0].toUpperCase() + token.slice(1)))

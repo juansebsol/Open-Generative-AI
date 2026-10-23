@@ -220,6 +220,15 @@ function ActionIcon({ kind }) {
     );
   }
 
+  if (kind === "reframe") {
+    return (
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="7" y="4" width="10" height="16" rx="1.5" />
+        <path d="M3 9v6M21 9v6" />
+      </svg>
+    );
+  }
+
   if (kind === "download") {
     return (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
