@@ -71,3 +71,41 @@ test('extractOutputs finds media in common provider result shapes', () => {
   assert.deepEqual(extractOutputs({ outputs: ['https://cdn/s.mp3'] }), [{ url: 'https://cdn/s.mp3', type: 'audio' }]);
   assert.deepEqual(extractOutputs({ prompt: 'https://not-media', seed: 1 }), []);
 });
+
+test('flux-lora transform builds a loras list', () => {
+  const { input } = mapInput(
+    { prompt: 'p', lora_url: 'https://x/style.safetensors', lora_weight: 0.7 },
+    { provider: 'fal', endpoint: 'demo', transform: 'flux-lora' },
+    schema({ prompt: { type: 'string' }, loras: { type: 'array', items: 'object' } }),
+  );
+  assert.deepEqual(input.loras, [{ path: 'https://x/style.safetensors', scale: 0.7 }]);
+});
+
+test('elevenlabs-dialogue transform renames voice_id per turn', () => {
+  const { input } = mapInput(
+    { dialogue: [{ text: 'Hi', voice_id: 'abc' }, { text: '', voice_id: 'x' }] },
+    { provider: 'fal', endpoint: 'demo', transform: 'elevenlabs-dialogue' },
+    schema({ inputs: { type: 'array', items: 'object' } }, ['inputs']),
+  );
+  assert.deepEqual(input.inputs, [{ text: 'Hi', voice: 'abc' }]);
+});
+
+test('gemini-tts transform builds a speaker script per provider', () => {
+  const payload = {
+    speakers: [
+      { speaker_id: 'Speaker 1', voice_name: 'Puck', style: 'Deadpan' },
+      { speaker_id: 'Speaker 2', voice_name: 'Kore' },
+    ],
+    dialogue_turns: [{ speaker_id: 'Speaker 1', text: 'Hello' }, { speaker_id: 'Speaker 2', text: 'Hi' }],
+  };
+  const fal = mapInput(payload, { provider: 'fal', endpoint: 'demo', transform: 'gemini-tts' },
+    schema({ prompt: { type: 'string' }, speakers: { type: 'array', items: 'object' }, style_instructions: { type: 'string' } }, ['prompt'])).input;
+  assert.equal(fal.prompt, 'Speaker 1: Hello\nSpeaker 2: Hi');
+  assert.deepEqual(fal.speakers, [{ speaker_id: 'Speaker 1', voice: 'Puck' }, { speaker_id: 'Speaker 2', voice: 'Kore' }]);
+  assert.match(fal.style_instructions, /Speaker 1: Deadpan delivery/);
+
+  const single = mapInput({ speakers: [payload.speakers[0]], dialogue_turns: [payload.dialogue_turns[0]] },
+    { provider: 'wavespeed', endpoint: 'demo', transform: 'gemini-tts' },
+    schema({ text: { type: 'string' }, voice: { type: 'string' } }, ['text'])).input;
+  assert.deepEqual(single, { text: 'Hello', voice: 'Puck' });
+});

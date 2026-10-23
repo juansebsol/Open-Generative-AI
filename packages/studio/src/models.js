@@ -3480,6 +3480,58 @@ const ALL_t2iModels = [
     },
     "provider": "ideogram",
     "provider_name": "Ideogram"
+  },
+  {
+    "id": "flux-1-dev-style-lora-inference",
+    "name": "FLUX.1 Dev + LoRA",
+    "endpoint": "flux-1-dev-style-lora-inference",
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "Text prompt describing the image.",
+        "examples": [
+          "A portrait in the trained style, studio lighting."
+        ]
+      },
+      "lora_url": {
+        "type": "string",
+        "title": "LoRA URL",
+        "name": "lora_url",
+        "description": "Public URL of a FLUX.1 Dev LoRA file (.safetensors), for example from Hugging Face or Civitai.",
+        "configurable": true
+      },
+      "lora_weight": {
+        "type": "float",
+        "title": "LoRA Weight",
+        "name": "lora_weight",
+        "description": "LoRA weight multiplier.",
+        "default": 1,
+        "minValue": 0,
+        "maxValue": 4,
+        "step": 0.01
+      },
+      "aspect_ratio": {
+        "enum": [
+          "16:9",
+          "9:16",
+          "1:1",
+          "3:4",
+          "4:3",
+          "21:9",
+          "9:21"
+        ],
+        "title": "Aspect Ratio",
+        "name": "aspect_ratio",
+        "type": "string",
+        "description": "The aspect ratio of the generated image.",
+        "default": "1:1"
+      }
+    },
+    "provider": "blackforest",
+    "provider_name": "Black Forest Labs",
+    "description": "Generate with FLUX.1 Dev plus your own style or character LoRA (a .safetensors URL, for example from Hugging Face or Civitai)."
   }
 ];
 export const t2iModels = [...withRoutes(ALL_t2iModels), ...LOCAL_IMAGE_MODELS];

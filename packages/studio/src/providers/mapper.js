@@ -56,6 +56,61 @@ export const FIELD_ALIASES = {
 // are dropped against the schema anyway.)
 const INTERNAL_FIELDS = new Set(['onRequestId', '_modelId']);
 
+// Named payload transforms for inputs that need restructuring before the
+// field-by-field mapping (route.transform). Each returns a new payload.
+export const TRANSFORMS = {
+  // lora_url + lora_weight -> loras: [{ path, scale }]
+  'flux-lora': ({ lora_url: path, lora_weight: weight, ...rest }) => (
+    path ? { ...rest, loras: [{ path, scale: Number(weight ?? 1) }] } : rest
+  ),
+  // dialogue: [{ text, voice_id }] -> inputs: [{ text, voice }]
+  'elevenlabs-dialogue': ({ dialogue, ...rest }) => ({
+    ...rest,
+    inputs: (Array.isArray(dialogue) ? dialogue : [])
+      .filter((turn) => String(turn?.text || '').trim())
+      .map((turn) => ({ text: turn.text, voice: turn.voice_id || turn.voice })),
+  }),
+  // speakers + dialogue_turns -> a "Speaker 1: line" script. fal also takes
+  // free-text style instructions; WaveSpeed only takes the script.
+  'gemini-tts': ({ speakers = [], dialogue_turns: turns = [], scene, sample_context: context, ...rest }, route) => {
+    const cast = (Array.isArray(speakers) ? speakers : []).filter((speaker) => speaker?.speaker_id);
+    const lines = (Array.isArray(turns) ? turns : []).filter((turn) => String(turn?.text || '').trim());
+    const multi = cast.length > 1;
+    const script = lines.map((turn) => (multi ? `${turn.speaker_id}: ${turn.text}` : turn.text)).join('\n');
+    const directions = [
+      scene && `Scene: ${scene}`,
+      context && `Context: ${context}`,
+      ...cast.map((speaker) => {
+        const notes = [
+          speaker.audio_profile,
+          speaker.accent && speaker.accent !== 'Neutral' ? `${speaker.accent} accent` : null,
+          speaker.style ? `${speaker.style} delivery` : null,
+          speaker.pace && speaker.pace !== 'Natural' ? `${speaker.pace} pace` : null,
+        ].filter(Boolean).join(', ');
+        return notes ? `${speaker.speaker_id}: ${notes}` : null;
+      }),
+    ].filter(Boolean).join('\n');
+
+    if (route.provider === 'wavespeed') {
+      return {
+        ...rest,
+        text: script,
+        ...(multi
+          ? { speakers: cast.map((speaker) => ({ speaker: speaker.speaker_id, voice: speaker.voice_name })) }
+          : { voice: cast[0]?.voice_name }),
+      };
+    }
+    return {
+      ...rest,
+      prompt: script,
+      ...(multi
+        ? { speakers: cast.map((speaker) => ({ speaker_id: speaker.speaker_id, voice: speaker.voice_name })) }
+        : { voice: cast[0]?.voice_name }),
+      ...(directions ? { style_instructions: directions } : {}),
+    };
+  },
+};
+
 const FAL_IMAGE_SIZES = {
   '1:1': 'square_hd',
   '4:3': 'landscape_4_3',
@@ -203,7 +258,7 @@ function mergeInto(output, key, value, prop) {
 
 /**
  * @param {object} payload  studio payload (shared vocabulary)
- * @param {object} route    { provider, endpoint, rename?, split?, fixed?, defaults?, drop?, values?, imageArea? }
+ * @param {object} route    { provider, endpoint, transform?, rename?, split?, fixed?, defaults?, drop?, values?, imageArea? }
  * @param {object|null} schema  snapshot { required: [], props: { name: prop } }
  * @returns {{ input: object, warnings: string[] }}
  */
@@ -211,7 +266,12 @@ export function mapInput(payload, route, schema) {
   const warnings = [];
   const output = {};
   const drop = new Set(route.drop || []);
-  const source = { ...(payload || {}) };
+  let source = { ...(payload || {}) };
+  if (route.transform) {
+    const transform = TRANSFORMS[route.transform];
+    if (!transform) throw new MappingError(`Unknown transform "${route.transform}"`);
+    source = transform(source, route);
+  }
 
   // width/height pairs become fal-style `image_size` objects when the
   // endpoint has no separate width/height inputs.

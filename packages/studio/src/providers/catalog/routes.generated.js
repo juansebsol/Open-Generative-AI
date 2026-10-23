@@ -1916,6 +1916,20 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "flux-lora": {
+  "flux-1-dev-style-lora-inference": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/flux-lora",
+    "transform": "flux-lora"
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "wavespeed-ai/flux-dev-lora",
+    "transform": "flux-lora"
+   }
+  ]
+ },
  "image": {
   "ai-image-upscale": [
    {
