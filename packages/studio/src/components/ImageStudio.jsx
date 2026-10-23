@@ -6,6 +6,7 @@ import { generateImage, generateI2I, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import DrawModal from "./DrawModal.jsx";
 import ModelParameterControls from "./ModelParameterControls.jsx";
+import WatermarkDialog from "./WatermarkDialog.jsx";
 import MobileGenerationActions, {
   GenerationCopyButtons,
 } from "./MobileGenerationActions.jsx";
@@ -955,6 +956,7 @@ export default function ImageStudio({
   const [activeHistoryIdx, setActiveHistoryIdx] = useState(0);
   const [batchSize, setBatchSize] = useState(1);
   const [localHistory, setLocalHistory] = useState([]); // [{id,url,prompt,model,aspect_ratio,timestamp}]
+  const [watermarkEntry, setWatermarkEntry] = useState(null);
 
   const history = localHistory;
 
@@ -1371,6 +1373,18 @@ export default function ImageStudio({
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-hidden">
+      {watermarkEntry && (
+        <WatermarkDialog
+          mediaUrl={watermarkEntry.url}
+          kind="image"
+          copy={copy.watermark}
+          onClose={() => setWatermarkEntry(null)}
+          onDone={(url) => {
+            addToHistory({ ...watermarkEntry, id: Math.random().toString(36).substring(7), url, timestamp: new Date().toISOString() });
+            setWatermarkEntry(null);
+          }}
+        />
+      )}
       
       {/* ── CENTRAL GALLERY AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
@@ -1395,6 +1409,20 @@ export default function ImageStudio({
                     imageUrl={entry.url}
                     onCopyError={onGenerationError}
                   />
+                  <button
+                    type="button"
+                    title={copy.gallery.watermark}
+                    aria-label={copy.gallery.watermark}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setWatermarkEntry(entry);
+                    }}
+                    className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 20h16" /><path d="M7 16l3.5-9h3L17 16" /><path d="M8.5 12.5h7" />
+                    </svg>
+                  </button>
                   <button
                     type="button"
                     title={copy.gallery.download}
@@ -1432,6 +1460,11 @@ export default function ImageStudio({
                   imageUrl={entry.url}
                   onCopyError={onGenerationError}
                   actions={[
+                    {
+                      kind: "watermark",
+                      label: copy.gallery.watermark,
+                      onSelect: () => setWatermarkEntry(entry),
+                    },
                     {
                       kind: "download",
                       label: copy.gallery.download,

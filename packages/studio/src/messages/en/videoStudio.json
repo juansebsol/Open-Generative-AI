@@ -56,7 +56,8 @@
     "delete": "Delete",
     "confirmDelete": "Are you sure you want to delete this generated item?",
     "noPromptProvided": "No prompt provided",
-    "fallbackTitle": "Video Studio"
+    "fallbackTitle": "Video Studio",
+    "watermark": "Watermark"
   },
   "empty": {
     "heading": "START CREATING WITH",
@@ -487,5 +488,34 @@
         "description": "Describe what to leave out."
       }
     }
+  },
+  "watermark": {
+    "title": "Add watermark",
+    "text": "Text",
+    "textPlaceholder": "© Your name",
+    "logo": "Logo",
+    "uploadLogo": "Upload logo",
+    "replaceLogo": "Replace logo",
+    "removeLogo": "Remove",
+    "position": "Position",
+    "positions": {
+      "bottom-right": "Bottom right",
+      "bottom-left": "Bottom left",
+      "top-right": "Top right",
+      "top-left": "Top left",
+      "center": "Center",
+      "tile": "Tiled across"
+    },
+    "size": "Size",
+    "opacity": "Opacity",
+    "color": "Text color",
+    "apply": "Apply watermark",
+    "applying": "Adding watermark…",
+    "recording": "Recording {percent}%: keep this tab open",
+    "cancel": "Cancel",
+    "failed": "Couldn't add the watermark",
+    "previewFailed": "Couldn't load this file for editing",
+    "loadingPreview": "Loading preview…",
+    "needsContent": "Add text or a logo"
   }
 }

@@ -8,6 +8,7 @@ import { formatErrorMessage } from "../utils/formatError.js";
 import DrawModal from "./DrawModal.jsx";
 import ModelParameterControls from "./ModelParameterControls.jsx";
 import { VideoOptionControl, VideoSettingsControl } from "./VideoModelControls.jsx";
+import WatermarkDialog from "./WatermarkDialog.jsx";
 import MobileGenerationActions, {
   GenerationCopyButtons,
 } from "./MobileGenerationActions.jsx";
@@ -789,6 +790,7 @@ export default function VideoStudio({
 
   // ── history ──
   const [localHistory, setLocalHistory] = useState([]);
+  const [watermarkEntry, setWatermarkEntry] = useState(null);
   const [activeHistoryIdx, setActiveHistoryIdx] = useState(0);
 
   // ── dropdown ──
@@ -2374,6 +2376,18 @@ export default function VideoStudio({
       ref={containerRef}
       className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative overflow-hidden"
     >
+      {watermarkEntry && (
+        <WatermarkDialog
+          mediaUrl={watermarkEntry.url}
+          kind="video"
+          copy={copy.watermark}
+          onClose={() => setWatermarkEntry(null)}
+          onDone={(url) => {
+            addToLocalHistory({ ...watermarkEntry, id: `wm-${Date.now()}`, url, timestamp: new Date().toISOString() });
+            setWatermarkEntry(null);
+          }}
+        />
+      )}
       {/* ── CENTRAL GALLERY AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
         {history.length > 0 ? (
@@ -2456,6 +2470,20 @@ export default function VideoStudio({
                     )}
                     <button
                       type="button"
+                      title={copy.gallery.watermark}
+                      aria-label={copy.gallery.watermark}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setWatermarkEntry(entry);
+                      }}
+                      className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 20h16" /><path d="M7 16l3.5-9h3L17 16" /><path d="M8.5 12.5h7" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
                       title={copy.gallery.download}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -2504,6 +2532,11 @@ export default function VideoStudio({
                         kind: "upscale",
                         label: copy.gallery.upscale,
                         onSelect: () => handleUpscale(entry),
+                      },
+                      {
+                        kind: "watermark",
+                        label: copy.gallery.watermark,
+                        onSelect: () => setWatermarkEntry(entry),
                       },
                       {
                         kind: "download",

@@ -32,7 +32,8 @@
     "delete": "删除",
     "deleteConfirm": "确定要删除这个生成的项目吗？",
     "noPrompt": "未提供提示词",
-    "modelFallback": "图像工作室"
+    "modelFallback": "图像工作室",
+    "watermark": "水印"
   },
   "emptyState": {
     "heading": "开始使用",
@@ -61,5 +62,34 @@
   },
   "fullscreen": {
     "previewAlt": "全屏预览"
+  },
+  "watermark": {
+    "title": "添加水印",
+    "text": "文字",
+    "textPlaceholder": "© 你的名字",
+    "logo": "标志",
+    "uploadLogo": "上传标志",
+    "replaceLogo": "更换标志",
+    "removeLogo": "移除",
+    "position": "位置",
+    "positions": {
+      "bottom-right": "右下",
+      "bottom-left": "左下",
+      "top-right": "右上",
+      "top-left": "左上",
+      "center": "居中",
+      "tile": "平铺"
+    },
+    "size": "大小",
+    "opacity": "不透明度",
+    "color": "文字颜色",
+    "apply": "应用水印",
+    "applying": "正在添加水印…",
+    "recording": "正在录制 {percent}%：请保持此标签页打开",
+    "cancel": "取消",
+    "failed": "无法添加水印",
+    "previewFailed": "无法加载此文件进行编辑",
+    "loadingPreview": "正在加载预览…",
+    "needsContent": "请添加文字或标志"
   }
 }

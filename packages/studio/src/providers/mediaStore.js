@@ -128,6 +128,15 @@ async function downloadRemote(url) {
   return proxied.blob();
 }
 
+/** Reads any studio media URL (local, blob:, data: or provider link) as a Blob. */
+export async function fetchMediaBlob(url) {
+  if (String(url).startsWith('data:')) return dataUrlToBlob(url);
+  if (/^https?:\/\//i.test(url) && !url.startsWith(globalThis.location?.origin || '\0')) return downloadRemote(url);
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Could not read media (${response.status})`);
+  return response.blob();
+}
+
 /**
  * Saves finished outputs locally and returns them with local URLs. Any output
  * that can't be saved keeps its original URL, so nothing is lost.

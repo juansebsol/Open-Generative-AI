@@ -32,7 +32,8 @@
     "delete": "Delete",
     "deleteConfirm": "Are you sure you want to delete this generated item?",
     "noPrompt": "No prompt provided",
-    "modelFallback": "Image Studio"
+    "modelFallback": "Image Studio",
+    "watermark": "Watermark"
   },
   "emptyState": {
     "heading": "START CREATING WITH",
@@ -61,5 +62,34 @@
   },
   "fullscreen": {
     "previewAlt": "Fullscreen Preview"
+  },
+  "watermark": {
+    "title": "Add watermark",
+    "text": "Text",
+    "textPlaceholder": "© Your name",
+    "logo": "Logo",
+    "uploadLogo": "Upload logo",
+    "replaceLogo": "Replace logo",
+    "removeLogo": "Remove",
+    "position": "Position",
+    "positions": {
+      "bottom-right": "Bottom right",
+      "bottom-left": "Bottom left",
+      "top-right": "Top right",
+      "top-left": "Top left",
+      "center": "Center",
+      "tile": "Tiled across"
+    },
+    "size": "Size",
+    "opacity": "Opacity",
+    "color": "Text color",
+    "apply": "Apply watermark",
+    "applying": "Adding watermark…",
+    "recording": "Recording {percent}%: keep this tab open",
+    "cancel": "Cancel",
+    "failed": "Couldn't add the watermark",
+    "previewFailed": "Couldn't load this file for editing",
+    "loadingPreview": "Loading preview…",
+    "needsContent": "Add text or a logo"
   }
 }
