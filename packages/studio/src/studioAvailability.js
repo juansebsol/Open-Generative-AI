@@ -43,6 +43,8 @@ const STUDIO_REQUIREMENTS = {
   'vibe-motion': () => true,
   // Always shown: without a chat key the studio explains how to add one.
   agents: () => true,
+  // The board works offline; the chat prompts for a key when none is set.
+  'design-agent': () => true,
 };
 
 export function isStudioAvailable(tabId) {

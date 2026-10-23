@@ -1,0 +1,117 @@
+{
+  "title": "Design Agent",
+  "subtitle": "Posters, social posts, mockups and brand assets on one board",
+  "sessions": {
+    "label": "Sessions",
+    "new": "New session",
+    "untitled": "Untitled board",
+    "delete": "Delete session",
+    "confirmDelete": "Delete this session and its board?",
+    "lockedWhileRunning": "Wait for the agent to finish before switching sessions."
+  },
+  "settings": {
+    "title": "Agent settings",
+    "askFirst": "Ask before paid steps",
+    "askFirstHint": "The agent shows a plan you approve before it runs several image generations.",
+    "imageModel": "Image model",
+    "editModel": "Edit model",
+    "auto": "Auto",
+    "background": "Board export background",
+    "transparent": "Transparent",
+    "unavailable": "needs a key"
+  },
+  "chat": {
+    "placeholder": "Describe what to design, or ask for a change…",
+    "revisePlaceholder": "What should change in the plan?",
+    "send": "Send",
+    "stop": "Stop",
+    "thinking": "Thinking…",
+    "working": "Working: {tool}",
+    "stopped": "Stopped.",
+    "selected": "Selected",
+    "clearSelection": "Clear",
+    "emptyTitle": "What are we designing?",
+    "emptyBody": "Ask for a poster, a social post, a product mockup or a logo. The agent plans the steps, creates images on the board and lays out text. Upload images to work with your own assets.",
+    "examples": [
+      "A minimalist jazz festival poster, deep blue and gold, with the headline “Blue Notes 2026”",
+      "Instagram post for a coffee brand launch: latte art close-up with a short headline",
+      "Mockup of my logo (asset_1) on a white ceramic mug in a bright kitchen"
+    ],
+    "you": "You",
+    "agent": "Agent"
+  },
+  "plan": {
+    "title": "Plan",
+    "paid": "{count} paid image step(s)",
+    "approve": "Approve & run",
+    "revise": "Revise",
+    "approved": "Approved",
+    "autoApproved": "Auto-approved",
+    "revised": "Revision requested",
+    "waiting": "Waiting for your approval"
+  },
+  "tools": {
+    "plan": "Planning",
+    "generate_image": "Generating image",
+    "edit_image": "Editing image",
+    "upscale": "Upscaling",
+    "remove_background": "Removing background",
+    "expand_image": "Expanding image",
+    "place_asset": "Placing item",
+    "add_text": "Adding text",
+    "arrange": "Arranging",
+    "delete_item": "Removing item",
+    "export_board": "Exporting board"
+  },
+  "setup": {
+    "chatTitle": "Add a chat key to talk to the agent",
+    "chatBody": "The Design Agent needs an OpenRouter, OpenAI or Google Gemini key for its chat model. Keys stay in this browser. You can still upload images, add text and export the board without one.",
+    "imageTitle": "Image tools need an image provider",
+    "imageBody": "Add a fal.ai, WaveSpeed, OpenRouter, Google Gemini or OpenAI key to generate and edit images.",
+    "openSettings": "Open Settings"
+  },
+  "canvas": {
+    "upload": "Upload images",
+    "addText": "Add text",
+    "fit": "Fit to content",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "export": "Export PNG",
+    "exporting": "Exporting…",
+    "download": "Download",
+    "delete": "Delete",
+    "front": "Bring to front",
+    "back": "Send to back",
+    "duplicate": "Duplicate",
+    "useInChat": "Ask about it",
+    "emptyTitle": "Your board is empty",
+    "emptyBody": "Chat with the agent, drop images here, or add text. Drag the background to pan, scroll or pinch to zoom.",
+    "dropHere": "Drop images to add them to the board",
+    "generating": "Generating…",
+    "newText": "Your text",
+    "uploading": "Uploading {name}…"
+  },
+  "inspector": {
+    "text": "Text",
+    "fontSize": "Size",
+    "color": "Color",
+    "weight": "Bold",
+    "font": "Font",
+    "align": "Align",
+    "width": "Width",
+    "rotation": "Rotation",
+    "fonts": { "sans": "Sans", "serif": "Serif", "mono": "Mono", "display": "Display" }
+  },
+  "errors": {
+    "generic": "Something went wrong.",
+    "noChat": "Add an OpenRouter, OpenAI or Google Gemini key in Settings → Providers to chat with the agent.",
+    "uploadFailed": "Upload failed: {message}",
+    "notImage": "Only images can go on the board.",
+    "exportFailed": "Export failed: {message}",
+    "tooLarge": "{name} is larger than 25 MB."
+  },
+  "toasts": {
+    "exported": "Board exported ({width}×{height})",
+    "uploaded": "Added {id}"
+  }
+}

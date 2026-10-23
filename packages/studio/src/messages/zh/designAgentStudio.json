@@ -1,0 +1,117 @@
+{
+  "title": "设计助手",
+  "subtitle": "在一块画板上完成海报、社媒图、样机和品牌素材",
+  "sessions": {
+    "label": "会话",
+    "new": "新建会话",
+    "untitled": "未命名画板",
+    "delete": "删除会话",
+    "confirmDelete": "删除此会话及其画板？",
+    "lockedWhileRunning": "请等待助手完成后再切换会话。"
+  },
+  "settings": {
+    "title": "助手设置",
+    "askFirst": "付费步骤前先确认",
+    "askFirstHint": "助手在运行多次图像生成前，会先展示计划供你批准。",
+    "imageModel": "图像模型",
+    "editModel": "编辑模型",
+    "auto": "自动",
+    "background": "导出背景",
+    "transparent": "透明",
+    "unavailable": "需要密钥"
+  },
+  "chat": {
+    "placeholder": "描述要设计的内容，或提出修改…",
+    "revisePlaceholder": "计划需要怎样修改？",
+    "send": "发送",
+    "stop": "停止",
+    "thinking": "思考中…",
+    "working": "正在执行：{tool}",
+    "stopped": "已停止。",
+    "selected": "已选中",
+    "clearSelection": "清除",
+    "emptyTitle": "我们来设计什么？",
+    "emptyBody": "可以让助手做海报、社媒图、产品样机或标志。它会规划步骤、在画板上生成图像并排版文字。上传图片即可使用你自己的素材。",
+    "examples": [
+      "极简风爵士音乐节海报，深蓝配金色，标题“Blue Notes 2026”",
+      "咖啡品牌新品的 Instagram 帖子：拉花特写加一句简短标题",
+      "把我的标志（asset_1）放到明亮厨房里的白色陶瓷杯上做样机"
+    ],
+    "you": "你",
+    "agent": "助手"
+  },
+  "plan": {
+    "title": "计划",
+    "paid": "{count} 个付费图像步骤",
+    "approve": "批准并执行",
+    "revise": "修改",
+    "approved": "已批准",
+    "autoApproved": "已自动批准",
+    "revised": "已要求修改",
+    "waiting": "等待你的批准"
+  },
+  "tools": {
+    "plan": "规划中",
+    "generate_image": "生成图像",
+    "edit_image": "编辑图像",
+    "upscale": "放大",
+    "remove_background": "去除背景",
+    "expand_image": "扩展图像",
+    "place_asset": "摆放元素",
+    "add_text": "添加文字",
+    "arrange": "排列",
+    "delete_item": "移除元素",
+    "export_board": "导出画板"
+  },
+  "setup": {
+    "chatTitle": "添加对话密钥以与助手交流",
+    "chatBody": "设计助手需要 OpenRouter、OpenAI 或 Google Gemini 密钥来运行对话模型。密钥只保存在此浏览器中。没有密钥时，你仍可上传图片、添加文字并导出画板。",
+    "imageTitle": "图像工具需要图像服务商",
+    "imageBody": "添加 fal.ai、WaveSpeed、OpenRouter、Google Gemini 或 OpenAI 密钥即可生成和编辑图像。",
+    "openSettings": "打开设置"
+  },
+  "canvas": {
+    "upload": "上传图片",
+    "addText": "添加文字",
+    "fit": "适应内容",
+    "zoomIn": "放大",
+    "zoomOut": "缩小",
+    "export": "导出 PNG",
+    "exporting": "导出中…",
+    "download": "下载",
+    "delete": "删除",
+    "front": "置于顶层",
+    "back": "置于底层",
+    "duplicate": "复制",
+    "useInChat": "就此提问",
+    "emptyTitle": "画板是空的",
+    "emptyBody": "与助手对话、把图片拖到这里或添加文字。拖动背景可平移，滚动或双指缩放可缩放。",
+    "dropHere": "松开即可把图片添加到画板",
+    "generating": "生成中…",
+    "newText": "你的文字",
+    "uploading": "正在上传 {name}…"
+  },
+  "inspector": {
+    "text": "文字",
+    "fontSize": "字号",
+    "color": "颜色",
+    "weight": "粗体",
+    "font": "字体",
+    "align": "对齐",
+    "width": "宽度",
+    "rotation": "旋转",
+    "fonts": { "sans": "无衬线", "serif": "衬线", "mono": "等宽", "display": "标题体" }
+  },
+  "errors": {
+    "generic": "出现了问题。",
+    "noChat": "请在 设置 → 服务商 中添加 OpenRouter、OpenAI 或 Google Gemini 密钥后再与助手对话。",
+    "uploadFailed": "上传失败：{message}",
+    "notImage": "画板只支持图片。",
+    "exportFailed": "导出失败：{message}",
+    "tooLarge": "{name} 超过 25 MB。"
+  },
+  "toasts": {
+    "exported": "画板已导出（{width}×{height}）",
+    "uploaded": "已添加 {id}"
+  }
+}

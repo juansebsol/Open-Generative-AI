@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, AgentsStudio, VibeMotionStudio, hasAnyProvider, isStudioAvailable, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings } from 'studio';
+import { ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, AgentsStudio, VibeMotionStudio, hasAnyProvider, isStudioAvailable, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings } from 'studio';
 import ProvidersModal from './ProvidersModal';
 import { getCommonCopy, getLocaleConfig, localizeStudioPath } from '@/lib/locales';
 
@@ -162,6 +162,18 @@ const TABS = [
         <path d="M2 13v3M22 13v3"/>
       </svg>
     )
+  },
+  {
+    id: 'design-agent',
+    label: 'Design Agent',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+        <path d="M2 2l7.586 7.586"/>
+        <circle cx="11" cy="11" r="2"/>
+      </svg>
+    )
   }
 ];
 
@@ -169,7 +181,7 @@ const NAVIGATION_CATEGORIES = [
   {
     id: 'images',
     label: 'Images',
-    tabIds: ['image', 'layers', 'cinema', 'ai-influencer'],
+    tabIds: ['image', 'layers', 'cinema', 'ai-influencer', 'design-agent'],
     icon: (
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -851,6 +863,11 @@ export default function StandaloneShell({ locale = 'en' }) {
         {AVAILABLE_TAB_IDS.has('agents') && (
           <div className={activeTab === 'agents' ? "h-full w-full" : "hidden"}>
             <AgentsStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('agents')} onGenerationEnd={makeGenerationEndCallback('agents')} onGenerationComplete={makeSuccessCallback('agents')} onGenerationError={makeErrorCallback('agents')} />
+          </div>
+        )}
+        {AVAILABLE_TAB_IDS.has('design-agent') && (
+          <div className={activeTab === 'design-agent' ? "h-full w-full" : "hidden"}>
+            <DesignAgentStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('design-agent')} onGenerationEnd={makeGenerationEndCallback('design-agent')} onGenerationComplete={makeSuccessCallback('design-agent')} onGenerationError={makeErrorCallback('design-agent')} />
           </div>
         )}
       </div>
