@@ -38,6 +38,7 @@ const STUDIO_REQUIREMENTS = {
   cinema: () => modelAvailable('nano-banana-pro'),
   marketing: () => hasRoute('seedance-2-vip-omni-reference') || hasRoute('sd-2-vip-omni-reference-1080p'),
   'ai-influencer': () => modelAvailable('nano-banana-pro'),
+  clipping: () => v2vModels.some((model) => model.family === 'ai-clipping'),
 };
 
 export function isStudioAvailable(tabId) {

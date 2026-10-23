@@ -20,7 +20,8 @@
     "./MarketingStudio": "./src/components/MarketingStudio.jsx",
     "./AiInfluencerStudio": "./src/components/AiInfluencerStudio.jsx",
     "./LayersStudio": "./src/components/LayersStudio.jsx",
-    "./MotionControlStudio": "./src/components/MotionControlStudio.jsx"
+    "./MotionControlStudio": "./src/components/MotionControlStudio.jsx",
+    "./ClippingStudio": "./src/components/ClippingStudio.jsx"
   },
   "files": [
     "src"

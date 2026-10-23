@@ -22530,6 +22530,185 @@ const ALL_v2vModels = [
     "description": "Edit an existing video with a text instruction: restyle, relight, change the weather, add or remove objects, while keeping the original motion.",
     "provider": "runway",
     "provider_name": "Runway"
+  },
+  {
+    "id": "wavespeed-ai-video-editor-auto-clip",
+    "name": "AI Video Editor Auto Clip",
+    "endpoint": "wavespeed-ai-video-editor-auto-clip",
+    "family": "ai-clipping",
+    "videoField": "videos_list",
+    "maxVideos": 8,
+    "hasPrompt": true,
+    "promptRequired": false,
+    "inputs": {
+      "prompt": {
+        "type": "string",
+        "title": "Prompt",
+        "name": "prompt",
+        "description": "Optional: what the clip should be about, its style and length, e.g. \"a 30-second highlight of the finished result\"."
+      },
+      "videos_list": {
+        "type": "array",
+        "title": "Source videos",
+        "name": "videos_list",
+        "field": "video",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 8,
+        "description": "One to eight source videos. Up to 2 hours of each video is processed."
+      },
+      "aspect_ratio": {
+        "configurable": true,
+        "type": "string",
+        "title": "Aspect Ratio",
+        "name": "aspect_ratio",
+        "enum": [
+          "9:16",
+          "16:9",
+          "1:1",
+          "4:5",
+          "5:4",
+          "4:3",
+          "3:4",
+          "3:2",
+          "2:3",
+          "21:9"
+        ],
+        "description": "Output aspect ratio. Detected from the source when not set; the whole frame is kept and the rest is filled with a blurred copy."
+      },
+      "duration": {
+        "configurable": true,
+        "type": "int",
+        "title": "Target Length",
+        "name": "duration",
+        "enum": [
+          15,
+          30,
+          45,
+          60,
+          90,
+          120
+        ],
+        "description": "Approximate length of the clip in seconds. Decided by the prompt or the editor when not set."
+      },
+      "caption_style": {
+        "configurable": true,
+        "type": "string",
+        "title": "Captions",
+        "name": "caption_style",
+        "enum": [
+          "highlight",
+          "plain",
+          "none"
+        ],
+        "default": "highlight",
+        "description": "Burned-in captions: highlight each spoken word, plain caption lines, or none."
+      },
+      "language": {
+        "configurable": true,
+        "type": "string",
+        "title": "Spoken Language",
+        "name": "language",
+        "enum": [
+          "auto",
+          "en",
+          "fr",
+          "es",
+          "pt",
+          "it",
+          "ru",
+          "zh-CN",
+          "zh-TW",
+          "ja",
+          "ko"
+        ],
+        "default": "auto",
+        "description": "Language spoken in the source video. Set it when auto-detection is unreliable."
+      }
+    },
+    "description": "Cut long or raw footage down to a captioned highlight clip of roughly 15 to 60 seconds, following your prompt for topic and style.",
+    "provider": "wavespeed",
+    "provider_name": "WaveSpeed"
+  },
+  {
+    "id": "wavespeed-ai-video-editor-talking-head",
+    "name": "AI Video Editor Talking Head",
+    "endpoint": "wavespeed-ai-video-editor-talking-head",
+    "family": "ai-clipping",
+    "videoField": "videos_list",
+    "maxVideos": 1,
+    "hasPrompt": false,
+    "promptRequired": false,
+    "inputs": {
+      "videos_list": {
+        "type": "array",
+        "title": "Talking-head video",
+        "name": "videos_list",
+        "field": "video",
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 1,
+        "description": "The talking-to-camera video to tighten. Up to 2 hours is processed."
+      },
+      "aspect_ratio": {
+        "configurable": true,
+        "type": "string",
+        "title": "Aspect Ratio",
+        "name": "aspect_ratio",
+        "enum": [
+          "9:16",
+          "16:9",
+          "1:1",
+          "4:5",
+          "5:4",
+          "4:3",
+          "3:4",
+          "3:2",
+          "2:3",
+          "21:9"
+        ],
+        "description": "Output aspect ratio. Detected from the source when not set; other ratios follow the speaker's face."
+      },
+      "caption_style": {
+        "configurable": true,
+        "type": "string",
+        "title": "Captions",
+        "name": "caption_style",
+        "enum": [
+          "highlight",
+          "plain",
+          "none"
+        ],
+        "default": "highlight",
+        "description": "Burned-in captions: highlight each spoken word, plain caption lines, or none."
+      },
+      "language": {
+        "configurable": true,
+        "type": "string",
+        "title": "Spoken Language",
+        "name": "language",
+        "enum": [
+          "auto",
+          "en",
+          "fr",
+          "es",
+          "pt",
+          "it",
+          "ru",
+          "zh-CN",
+          "zh-TW",
+          "ja",
+          "ko"
+        ],
+        "default": "auto",
+        "description": "Language spoken in the source video. Set it when auto-detection is unreliable."
+      }
+    },
+    "description": "Smart cut for talking-to-camera videos: removes filler words, false starts, repeats and dead air, keeps the speaker framed and adds word-timed captions.",
+    "provider": "wavespeed",
+    "provider_name": "WaveSpeed"
   }
 ];
 export const v2vModels = [...withRoutes(ALL_v2vModels)];

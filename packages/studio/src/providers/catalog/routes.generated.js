@@ -1826,6 +1826,20 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "clipping": {
+  "wavespeed-ai-video-editor-auto-clip": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "wavespeed-ai/ai-video-editor/auto-clip"
+   }
+  ],
+  "wavespeed-ai-video-editor-talking-head": [
+   {
+    "provider": "wavespeed",
+    "endpoint": "wavespeed-ai/ai-video-editor/talking-head"
+   }
+  ]
+ },
  "dialogue": {
   "elevenlabs-text-to-dialogue-v3": [
    {

@@ -1,0 +1,79 @@
+{
+  "hero": {
+    "titleLine1": "AI Clipping",
+    "titleLine2": "Long video to highlight clip",
+    "subtitle": "Upload one or more long videos, say what the clip should be about, and get a short captioned highlight back."
+  },
+  "media": {
+    "addVideos": "Add source videos",
+    "addVideo": "Add source video",
+    "remove": "Remove video",
+    "sourceCount": "{count}/{max} videos",
+    "noSources": "No source video yet",
+    "maxReached": "This model takes up to {max} video(s)."
+  },
+  "prompt": {
+    "placeholder": "Optional: topic, style or length, e.g. \"a 30-second highlight of the best plays\"",
+    "noPromptModel": "This model needs no prompt: it removes filler words and dead air on its own."
+  },
+  "options": {
+    "model": "Model",
+    "aspectRatio": "Aspect ratio",
+    "length": "Target length",
+    "captions": "Captions",
+    "language": "Spoken language",
+    "auto": "Auto",
+    "autoAspect": "Auto (match source)",
+    "autoLength": "Auto (editor decides)",
+    "seconds": "{n}s"
+  },
+  "captionStyles": {
+    "highlight": "Word highlight",
+    "plain": "Plain captions",
+    "none": "No captions"
+  },
+  "languages": {
+    "auto": "Auto-detect",
+    "en": "English",
+    "fr": "French",
+    "es": "Spanish",
+    "pt": "Portuguese",
+    "it": "Italian",
+    "ru": "Russian",
+    "zh-CN": "Chinese (Simplified)",
+    "zh-TW": "Chinese (Traditional)",
+    "ja": "Japanese",
+    "ko": "Korean"
+  },
+  "actions": {
+    "generate": "Generate",
+    "generating": "Clipping...",
+    "play": "Play",
+    "download": "Download",
+    "delete": "Delete",
+    "subtitles": "Subtitles",
+    "close": "Close"
+  },
+  "status": {
+    "clipping": "Clipping your footage",
+    "clippingHint": "Long videos can take several minutes.",
+    "sources": "{count} source video(s)",
+    "auto": "auto"
+  },
+  "setup": {
+    "title": "Provider key needed",
+    "body": "AI Clipping runs on {providers}. Add a {providers} key in Settings → Providers to start clipping.",
+    "button": "Add {providers} key",
+    "unavailable": "No supported provider serves the clipping models in this build."
+  },
+  "confirm": {
+    "deleteItem": "Delete this clip from your history?"
+  },
+  "errors": {
+    "needVideo": "Upload at least one source video first.",
+    "notVideo": "Only video files can be clipped.",
+    "uploadFailed": "Video upload failed: {message}",
+    "generationFailed": "Clipping failed. Please try again.",
+    "noClip": "The provider finished without returning a clip."
+  }
+}

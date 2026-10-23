@@ -96,6 +96,8 @@ const VIDEO_FAMILY_ALIASES = {
   "minimax-h3-max-reframe": "video-reframe",
   "ltx-2.3-reframe": "video-reframe",
   "wavespeed-video-outpainter": "video-reframe",
+  "wavespeed-ai-video-editor-auto-clip": "ai-clipping",
+  "wavespeed-ai-video-editor-talking-head": "ai-clipping",
   "topaz-upscale-video-creative": "topaz-upscale-video",
   "topaz-upscale-video-generative": "topaz-upscale-video",
   "topaz-upscale-video-precision": "topaz-upscale-video",
@@ -107,6 +109,7 @@ const VIDEO_FAMILY_NAMES = {
   "minimax-h3-max": "MiniMax H3 Max",
   "topaz-upscale-video": "Topaz Video Upscale",
   "video-reframe": "Video Reframe",
+  "ai-clipping": "AI Clipping",
 };
 
 const PREFERRED_IMAGE_VARIANTS = {
@@ -177,6 +180,7 @@ const PREFERRED_VIDEO_VARIANTS = {
     i2v: "minimax-h3-image-to-video",
   },
   "video-reframe": { v2v: "luma-ray-3.2-reframe" },
+  "ai-clipping": { v2v: "wavespeed-ai-video-editor-auto-clip" },
 };
 
 function normalizeVersion(value) {

@@ -1,0 +1,79 @@
+{
+  "hero": {
+    "titleLine1": "AI 剪辑",
+    "titleLine2": "长视频一键剪成高光片段",
+    "subtitle": "上传一个或多个长视频，说明片段的主题，即可得到一段带字幕的精彩短片。"
+  },
+  "media": {
+    "addVideos": "添加源视频",
+    "addVideo": "添加源视频",
+    "remove": "移除视频",
+    "sourceCount": "{count}/{max} 个视频",
+    "noSources": "尚未添加源视频",
+    "maxReached": "该模型最多支持 {max} 个视频。"
+  },
+  "prompt": {
+    "placeholder": "可选：主题、风格或时长，例如“30 秒的精彩集锦”",
+    "noPromptModel": "该模型无需提示词：会自动去除口头禅和空白停顿。"
+  },
+  "options": {
+    "model": "模型",
+    "aspectRatio": "画面比例",
+    "length": "目标时长",
+    "captions": "字幕",
+    "language": "口述语言",
+    "auto": "自动",
+    "autoAspect": "自动（与源视频一致）",
+    "autoLength": "自动（由剪辑器决定）",
+    "seconds": "{n} 秒"
+  },
+  "captionStyles": {
+    "highlight": "逐词高亮",
+    "plain": "普通字幕",
+    "none": "无字幕"
+  },
+  "languages": {
+    "auto": "自动检测",
+    "en": "英语",
+    "fr": "法语",
+    "es": "西班牙语",
+    "pt": "葡萄牙语",
+    "it": "意大利语",
+    "ru": "俄语",
+    "zh-CN": "简体中文",
+    "zh-TW": "繁体中文",
+    "ja": "日语",
+    "ko": "韩语"
+  },
+  "actions": {
+    "generate": "生成",
+    "generating": "剪辑中...",
+    "play": "播放",
+    "download": "下载",
+    "delete": "删除",
+    "subtitles": "字幕文件",
+    "close": "关闭"
+  },
+  "status": {
+    "clipping": "正在剪辑你的素材",
+    "clippingHint": "长视频可能需要几分钟。",
+    "sources": "{count} 个源视频",
+    "auto": "自动"
+  },
+  "setup": {
+    "title": "需要服务商密钥",
+    "body": "AI 剪辑由 {providers} 提供。请在 设置 → 服务商 中添加 {providers} 密钥后开始剪辑。",
+    "button": "添加 {providers} 密钥",
+    "unavailable": "当前版本中没有支持的服务商提供剪辑模型。"
+  },
+  "confirm": {
+    "deleteItem": "要从历史记录中删除这个片段吗？"
+  },
+  "errors": {
+    "needVideo": "请先上传至少一个源视频。",
+    "notVideo": "只能剪辑视频文件。",
+    "uploadFailed": "视频上传失败：{message}",
+    "generationFailed": "剪辑失败，请重试。",
+    "noClip": "服务商已完成，但没有返回片段。"
+  }
+}
