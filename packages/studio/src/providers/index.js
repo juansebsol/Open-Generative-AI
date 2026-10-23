@@ -17,3 +17,4 @@ export { getRoutes, hasRoute, routeProviders } from './catalog/index.js';
 export { runEndpoint, uploadMedia, isEndpointAvailable, pickRoute, ProviderSetupError } from './client.js';
 export { listCheckpoints } from './local/comfyui.js';
 export { registerMediaServiceWorker, removeUnusedMedia } from './mediaStore.js';
+export { chatComplete, chatJson, parseJsonReply, hasChatProvider, chatProvider, chatModelFor, CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, ChatSetupError } from './chat.js';

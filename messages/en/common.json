@@ -49,6 +49,8 @@
     "localSection": "Local engines (run on your computer)",
     "localHint": "Local engines are called straight from your browser. Chrome may ask to allow local network access the first time.",
     "getKey": "Get a key",
+    "chatModel": "Chat model (optional)",
+    "chatModelHint": "Used by Agents, Vibe Motion, Workflows and Design Agent. Leave empty for the default.",
     "show": "Show",
     "hide": "Hide",
     "clear": "Clear",

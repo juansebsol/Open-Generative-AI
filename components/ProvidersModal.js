@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { PROVIDERS, listCheckpoints, loadProviderSettings, saveProviderSettings } from 'studio';
+import { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, PROVIDERS, listCheckpoints, loadProviderSettings, saveProviderSettings } from 'studio';
 import { getCommonCopy } from '@/lib/locales';
 
 function KeyField({ provider, value, onChange, copy }) {
@@ -142,6 +142,20 @@ export default function ProvidersModal({ onClose, locale = 'en' }) {
             <a href={provider.keyUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[11px] font-semibold text-[#22d3ee] hover:underline">
               {copy.getKey} ↗
             </a>
+            {CHAT_PROVIDER_IDS.includes(provider.id) && (
+              <div className="mt-3">
+                <label className="block text-[11px] font-semibold text-white/40 mb-1">{copy.chatModel}</label>
+                <input
+                  type="text"
+                  value={settings.options[provider.id]?.chatModel || ''}
+                  onChange={(event) => setOptions(provider.id, { ...(settings.options[provider.id] || {}), chatModel: event.target.value })}
+                  placeholder={DEFAULT_CHAT_MODELS[provider.id]}
+                  spellCheck={false}
+                  className="w-full h-9 rounded-md bg-black/40 border border-white/10 px-3 text-[13px] font-mono text-white placeholder:text-white/25 focus:outline-none focus:border-[#22d3ee]/50"
+                />
+                <p className="mt-1 text-[11px] text-white/30">{copy.chatModelHint}</p>
+              </div>
+            )}
           </>
         ) : (
           <>

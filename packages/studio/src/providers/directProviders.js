@@ -26,7 +26,7 @@ export const PROVIDERS = [
     kind: 'cloud',
     keyUrl: 'https://openrouter.ai/settings/keys',
     keyPlaceholder: 'sk-or-...',
-    description: 'One key for Gemini, GPT and other image models.',
+    description: 'One key for Gemini, GPT and other image models, plus the chat model behind the assistants.',
   },
   {
     id: 'google',

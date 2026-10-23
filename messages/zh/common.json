@@ -49,6 +49,8 @@
     "localSection": "本地引擎（在您的电脑上运行）",
     "localHint": "本地引擎由浏览器直接调用。Chrome 首次可能会请求允许访问本地网络。",
     "getKey": "获取密钥",
+    "chatModel": "对话模型（可选）",
+    "chatModelHint": "用于智能体、动感运镜、工作流和设计智能体。留空则使用默认模型。",
     "show": "显示",
     "hide": "隐藏",
     "clear": "清除",
