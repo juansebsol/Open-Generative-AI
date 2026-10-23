@@ -1988,6 +1988,39 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "image-effects": {
+  "image-effects": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/nano-banana-2/edit",
+    "values": {
+     "output_format": {
+      "jpg": "jpeg"
+     }
+    }
+   },
+   {
+    "provider": "wavespeed",
+    "endpoint": "google/nano-banana-2/edit",
+    "values": {
+     "output_format": {
+      "jpg": "jpeg"
+     },
+     "aspect_ratio": {
+      "auto": null
+     }
+    }
+   },
+   {
+    "provider": "google",
+    "endpoint": "gemini-3.1-flash-image"
+   },
+   {
+    "provider": "openrouter",
+    "endpoint": "google/gemini-3.1-flash-image"
+   }
+  ]
+ },
  "image": {
   "ai-image-upscale": [
    {

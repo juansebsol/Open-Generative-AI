@@ -1,6 +1,7 @@
 import { getMediaCapability } from "./modelCapabilities.js";
 import { hasRoute } from "./providers/catalog/index.js";
 import { LOCAL_IMAGE_MODELS } from "./providers/local/models.js";
+import { IMAGE_EFFECTS } from "./imageEffects.js";
 
 // Only models with at least one provider route (fal, WaveSpeed, a direct
 // provider or a local engine) are shown in the studios. The unfiltered lists
@@ -11181,6 +11182,63 @@ const ALL_i2iModels = [
     "description": "Remove watermarks, logos, captions and stamped text from an image.",
     "provider": "wavespeed",
     "provider_name": "WaveSpeed"
+  },
+  {
+    "id": "image-effects",
+    "name": "Image Effects",
+    "endpoint": "image-effects",
+    "family": "image-effects",
+    "imageField": "images_list",
+    "maxImages": 1,
+    "hasPrompt": true,
+    "promptRequired": false,
+    "description": "One-click effects for a photo: figurines and toys, art styles, decades, famous places and quick photo fixes, powered by Nano Banana 2. Add a prompt to fine-tune the result.",
+    "required": [
+      "effect"
+    ],
+    "inputs": {
+      "effect": {
+        "type": "string",
+        "title": "Effect",
+        "name": "effect",
+        "description": "The effect to apply.",
+        "enum": IMAGE_EFFECTS.map((effect) => effect.id),
+        "default": "3d-figurine",
+        "optionLabels": Object.fromEntries(IMAGE_EFFECTS.map((effect) => [effect.id, effect.label]))
+      },
+      "aspect_ratio": {
+        "enum": [
+          "1:1",
+          "2:3",
+          "3:2",
+          "3:4",
+          "4:3",
+          "4:5",
+          "5:4",
+          "9:16",
+          "16:9",
+          "21:9",
+          "auto"
+        ],
+        "title": "Aspect Ratio",
+        "name": "aspect_ratio",
+        "type": "string",
+        "description": "The aspect ratio of the generated image.",
+        "default": "auto"
+      },
+      "resolution": {
+        "enum": [
+          "1k",
+          "2k",
+          "4k"
+        ],
+        "title": "Resolution",
+        "name": "resolution",
+        "type": "string",
+        "description": "The resolution of the generated image.",
+        "default": "1k"
+      }
+    }
   }
 ];
 export const i2iModels = [...withRoutes(ALL_i2iModels)];

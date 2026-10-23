@@ -74,6 +74,7 @@ const IMAGE_FAMILY_ALIASES = {
 };
 
 const IMAGE_FAMILY_NAMES = {
+  "image-effects": "Image Effects",
   "flux-2-klein": "Flux 2 Klein",
   "flux-dev": "Flux Dev",
   "grok-imagine": "Grok Imagine",

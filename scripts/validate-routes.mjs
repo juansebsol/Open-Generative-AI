@@ -28,6 +28,7 @@ const verbose = args.includes('--verbose');
 const { mapInput } = await import(pathToFileURL(path.join(STUDIO_SRC, 'providers/mapper.js')));
 const { getAuxiliaryImageInputs } = await import(pathToFileURL(path.join(STUDIO_SRC, 'imageInputContracts.js')));
 const { DIRECT_PROVIDERS } = await import(pathToFileURL(path.join(STUDIO_SRC, 'providers/directProviders.js')));
+const { applyPromptPresets } = await import(pathToFileURL(path.join(STUDIO_SRC, 'imageEffects.js')));
 const catalog = await import(pathToFileURL(path.join(STUDIO_SRC, 'models.js')));
 
 const MODEL_LISTS = ['t2iModels', 'i2iModels', 't2vModels', 'i2vModels', 'v2vModels', 'lipsyncModels', 'audioModels', 'recastModels', 'motionControlModels'];
@@ -180,7 +181,7 @@ for (const [endpoint, { model, listName, payload: fixedPayload }] of seen) {
   }
   if (group && owners[endpoint] !== group) continue;
   routedCount++;
-  const payload = fixedPayload || samplePayload(model, listName);
+  const payload = applyPromptPresets(endpoint, fixedPayload || samplePayload(model, listName));
 
   for (const route of endpointRoutes) {
     const label = `${endpoint} -> ${route.provider}:${route.endpoint}`;
