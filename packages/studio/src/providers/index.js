@@ -16,3 +16,4 @@ export {
 export { getRoutes, hasRoute, routeProviders } from './catalog/index.js';
 export { runEndpoint, uploadMedia, isEndpointAvailable, pickRoute, ProviderSetupError } from './client.js';
 export { listCheckpoints } from './local/comfyui.js';
+export { registerMediaServiceWorker, removeUnusedMedia } from './mediaStore.js';

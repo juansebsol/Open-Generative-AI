@@ -17,6 +17,7 @@ Context for contributors and coding agents. User-facing docs are in [README.md](
 - `client.js` (browser): `runEndpoint(endpoint, payload)` picks a route, calls `/api/generate`, polls `/api/jobs`; `uploadMedia(file)` gets a signed URL from `/api/uploads` and PUTs the file to provider storage.
 - `server/` (Node only, imported by `app/api/*` as `studio/providers/server`): adapters for fal (queue), WaveSpeed (v3), Google Gemini, OpenAI Images, OpenRouter (chat completions with image output).
 - `local/`: ComfyUI and sd-server connectors that run in the browser against the visitor's own machine.
+- `mediaStore.js` + `public/oga-media-sw.js`: every output and upload is copied into IndexedDB (`oga-media`) and referenced as `/oga-media/<id>.<ext>`. `runEndpoint` resolves those back to a provider URL (stored link if < 6 days old, else a fresh upload) before calling `/api/generate`. Unreferenced files are deleted a day after creation (`removeUnusedMedia`, run by the shell).
 
 ## Conventions
 

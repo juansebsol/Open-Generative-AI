@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { ImageStudio, VideoStudio, MotionControlStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, hasAnyProvider, isStudioAvailable, subscribeProviderSettings } from 'studio';
+import { ImageStudio, VideoStudio, MotionControlStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, hasAnyProvider, isStudioAvailable, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings } from 'studio';
 import ProvidersModal from './ProvidersModal';
 import { getCommonCopy, getLocaleConfig, localizeStudioPath } from '@/lib/locales';
 
@@ -422,6 +422,15 @@ export default function StandaloneShell({ locale = 'en' }) {
       setIsMobileOpen(false);
     }
   };
+
+  // Generated media is saved in this browser and served by a service worker.
+  useEffect(() => {
+    registerMediaServiceWorker();
+    const cleanup = window.setTimeout(() => {
+      removeUnusedMedia().catch(() => {});
+    }, 15000);
+    return () => window.clearTimeout(cleanup);
+  }, []);
 
   useEffect(() => {
     setHasMounted(true);

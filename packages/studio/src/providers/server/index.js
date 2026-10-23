@@ -6,7 +6,7 @@ import { findRoute } from '../catalog/index.js';
 import { SCHEMAS } from '../catalog/schemas.generated.js';
 import { DIRECT_PROVIDERS, CLOUD_PROVIDER_IDS } from '../directProviders.js';
 import { mapInput, MappingError } from '../mapper.js';
-import { ProviderError } from './http.js';
+import { ProviderError, assertPublicHttpsUrl } from './http.js';
 import * as fal from './adapters/fal.js';
 import * as wavespeed from './adapters/wavespeed.js';
 import * as google from './adapters/google.js';
@@ -15,7 +15,7 @@ import * as openrouter from './adapters/openrouter.js';
 
 const ADAPTERS = { fal, wavespeed, google, openai, openrouter };
 
-export { ProviderError, MappingError };
+export { ProviderError, MappingError, assertPublicHttpsUrl };
 
 function adapterFor(provider) {
   if (!CLOUD_PROVIDER_IDS.includes(provider) || !ADAPTERS[provider]) {

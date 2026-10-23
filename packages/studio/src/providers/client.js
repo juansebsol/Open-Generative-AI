@@ -8,6 +8,7 @@ import { getProvider } from './directProviders.js';
 import { configuredProviders, getProviderKey, getProviderOptions, getProviderUrl } from './keys.js';
 import { runComfyUI } from './local/comfyui.js';
 import { runSdServer } from './local/sdserver.js';
+import { persistOutputs, resolveLocalMedia, storeUpload } from './mediaStore.js';
 
 const STORAGE_PROVIDERS = ['fal', 'wavespeed'];
 const INLINE_UPLOAD_LIMIT = 8 * 1024 * 1024;
@@ -76,33 +77,6 @@ async function postJson(path, body, key) {
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function dataUrlToBlob(dataUrl) {
-  const [header, base64] = dataUrl.split(',');
-  const mime = /data:([^;]+)/.exec(header)?.[1] || 'application/octet-stream';
-  const bytes = atob(base64);
-  const buffer = new Uint8Array(bytes.length);
-  for (let i = 0; i < bytes.length; i++) buffer[i] = bytes.charCodeAt(i);
-  return new Blob([buffer], { type: mime });
-}
-
-// Direct providers return base64 images. When the visitor has fal or
-// WaveSpeed storage, move them there so history keeps a small URL.
-async function rehostInlineOutputs(outputs) {
-  const storage = STORAGE_PROVIDERS.find((id) => configuredProviders().includes(id));
-  if (!storage) return outputs;
-  return Promise.all(outputs.map(async (output) => {
-    if (!output.url.startsWith('data:')) return output;
-    try {
-      const blob = dataUrlToBlob(output.url);
-      const extension = blob.type.split('/')[1] || 'png';
-      const url = await uploadToProvider(storage, new File([blob], `output-${Date.now()}.${extension}`, { type: blob.type }));
-      return { ...output, url };
-    } catch {
-      return output;
-    }
-  }));
-}
-
 function toStudioResult(handle, outputs, raw) {
   const urls = outputs.map((output) => output.url);
   return {
@@ -124,7 +98,7 @@ async function runLocal(route, payload, onRequestId) {
   const result = route.provider === 'comfyui'
     ? await runComfyUI({ baseUrl, options, payload, onRequestId })
     : await runSdServer({ baseUrl, payload, onRequestId });
-  return toStudioResult(result.handle, result.outputs);
+  return toStudioResult(result.handle, await persistOutputs(result.outputs));
 }
 
 /**
@@ -138,14 +112,16 @@ export async function runEndpoint(endpoint, payload, { onRequestId, maxAttempts 
   if (getProvider(route.provider)?.kind === 'local') return runLocal(route, payload, onRequestId);
 
   const key = getProviderKey(route.provider);
-  const submitted = await postJson('/api/generate', { endpoint, provider: route.provider, payload }, key);
+  // Files saved in this browser become provider-readable URLs again.
+  const requestPayload = await resolveLocalMedia(payload, uploadToStorage);
+  const submitted = await postJson('/api/generate', { endpoint, provider: route.provider, payload: requestPayload }, key);
   if (submitted.warnings?.length && typeof console !== 'undefined') {
     console.info(`[providers] ${endpoint} via ${route.provider}:`, submitted.warnings.join('; '));
   }
   onRequestId?.(submitted.handle?.id);
 
   if (submitted.state === 'succeeded') {
-    return toStudioResult(submitted.handle, await rehostInlineOutputs(submitted.outputs || []));
+    return toStudioResult(submitted.handle, await persistOutputs(submitted.outputs || []));
   }
 
   let transientFailures = 0;
@@ -159,7 +135,9 @@ export async function runEndpoint(endpoint, payload, { onRequestId, maxAttempts 
       if ((error.status >= 500 || !error.status) && ++transientFailures < 5) continue;
       throw error;
     }
-    if (status.state === 'succeeded') return toStudioResult(submitted.handle, status.outputs || [], status.raw);
+    if (status.state === 'succeeded') {
+      return toStudioResult(submitted.handle, await persistOutputs(status.outputs || []), status.raw);
+    }
     if (status.state === 'failed') {
       const error = new Error(`Generation failed: ${status.error || 'unknown error'}`);
       error.requestId = submitted.handle?.id;
@@ -210,12 +188,9 @@ function readAsDataUrl(file) {
   });
 }
 
-/**
- * Uploads a reference file and returns a URL models can read. Uses fal or
- * WaveSpeed storage when configured (bytes go straight from the browser to
- * the provider); otherwise falls back to an inline data URL for small files.
- */
-export async function uploadMedia(file, onProgress) {
+// Uploads to fal or WaveSpeed storage when configured (bytes go straight from
+// the browser to the provider); otherwise inlines small files as data URLs.
+async function uploadToStorage(file, onProgress) {
   const storages = STORAGE_PROVIDERS.filter((id) => configuredProviders().includes(id));
   let lastError = null;
   for (const provider of storages) {
@@ -233,4 +208,13 @@ export async function uploadMedia(file, onProgress) {
   if (lastError) throw lastError;
   notifySetupNeeded({ providers: STORAGE_PROVIDERS });
   throw new ProviderSetupError('Add a fal.ai or WaveSpeed key in Settings → Providers to upload files larger than 8 MB.', STORAGE_PROVIDERS);
+}
+
+/**
+ * Uploads a reference file and returns a URL the studios can show and send.
+ * A copy is kept in this browser, so the upload history keeps working after
+ * the provider's storage link expires.
+ */
+export async function uploadMedia(file, onProgress) {
+  return storeUpload(file, await uploadToStorage(file, onProgress));
 }

@@ -37,6 +37,8 @@ Add any combination in **Settings → Providers**. A model appears when at least
 
 Uploads: with a fal or WaveSpeed key, reference images, videos and audio go straight from your browser to that provider's storage (signed upload URL). Without one, images up to 8 MB are sent inline.
 
+Results and uploads are also saved in your browser (IndexedDB), so your history keeps working after provider links expire (WaveSpeed deletes files after 7 days). A small service worker (`public/oga-media-sw.js`) serves them at `/oga-media/…`; when you reuse one (Extend, Reframe, edits), the app re-uploads it if the provider link is more than 6 days old. Saved files stay on that device and browser only, and clearing site data removes them. Files from providers that block browser downloads (WaveSpeed) are streamed through `/api/media`, which only accepts fal and WaveSpeed hosts; add others with `MEDIA_PROXY_ALLOWED_HOSTS` (comma-separated host suffixes).
+
 ### Local engines
 
 Local engines are called **straight from your browser** to your machine, never through the server, so they work the same whether the app runs on your laptop, a VPS or Vercel.
@@ -121,7 +123,8 @@ studio component ─▶ generation.js (builds a payload in one shared vocabulary
 | `packages/studio/src/providers/mapper.js` | Translates a studio payload into a provider's input using the schema |
 | `packages/studio/src/providers/server/` | Provider adapters (fal queue, WaveSpeed, Gemini, OpenAI, OpenRouter) |
 | `packages/studio/src/providers/local/` | Browser-direct ComfyUI and sd-server connectors |
-| `app/api/` | `generate`, `jobs` and `uploads` route handlers |
+| `app/api/` | `generate`, `jobs`, `uploads` and `media` route handlers |
+| `packages/studio/src/providers/mediaStore.js`, `public/oga-media-sw.js` | Saves results and uploads in the browser and serves them at `/oga-media/…` |
 | `components/StandaloneShell.js`, `components/ProvidersModal.js` | App shell and provider settings |
 
 ### Adding or fixing a model route
