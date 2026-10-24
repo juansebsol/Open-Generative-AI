@@ -2,27 +2,47 @@
   "empty": {
     "heading": "Start creating with",
     "accent": "3D Studio",
-    "subtitle": "Describe an object, or switch to Image and upload a photo. You get a textured mesh you can orbit, download and drop into any 3D tool.",
+    "subtitle": "Describe an object, upload a photo or draw a sketch. You get a textured mesh you can orbit, download, retexture, rig and clean up.",
+    "editSubtitle": "Upload a GLB, or pick Use on any result, then retexture it, rig it, remesh it or split it into parts.",
     "starters": [
       { "label": "A worn leather armchair, studio lit", "prompt": "A worn brown leather armchair with brass studs, slightly scuffed, studio lighting, clean background" },
       { "label": "Low-poly cartoon fox, game-ready", "prompt": "A stylized low-poly fox character, orange and cream fur, big friendly eyes, game asset" },
       { "label": "Stone garden lantern with moss", "prompt": "A traditional Japanese stone garden lantern covered in moss, weathered granite, photorealistic" }
     ]
   },
-  "modes": { "text": "Text to 3D", "image": "Image to 3D" },
-  "controls": { "model": "Model" },
+  "modes": { "text": "Text", "image": "Image", "edit": "Edit model" },
+  "controls": { "model": "Model", "tool": "Tool" },
+  "tools": { "retexture": "Retexture", "rig": "Rig and animate", "remesh": "Remesh", "segment": "Split into parts", "topology": "Smart topology" },
+  "use": { "button": "Use" },
   "prompt": {
     "placeholder": "Describe the object you want as a 3D model",
-    "imageEmpty": "Add a photo of the object. One clear view on a plain background works best.",
-    "imageHint": "{count} of {max} images. Generation takes a few minutes."
+    "sketchPlaceholder": "Describe what the sketch shows, for example a wooden rocking chair",
+    "editPlaceholder": "Describe the new look, for example weathered copper with green patina",
+    "imageEmpty": "Add a photo of the object, or draw a sketch. One clear view on a plain background works best.",
+    "imageHint": "{count} of {max} images. Generation takes a few minutes.",
+    "editEmpty": "Pick a model to work on: upload a GLB or choose Use on a result.",
+    "editHint": "{tool} will run on the selected model."
   },
   "media": { "addImages": "Add up to {max} images", "maxImages": "This model takes up to {max} images", "remove": "Remove image" },
-  "buttons": { "generate": "Generate" },
+  "edit": { "uploadModel": "Upload model (GLB)", "clearModel": "Clear model", "styleImage": "Add a reference image" },
+  "sketch": {
+    "open": "Draw a sketch",
+    "title": "Sketch to 3D",
+    "hint": "Draw the object from one angle. Simple outlines work best.",
+    "pen": "Pen",
+    "eraser": "Eraser",
+    "brush": "Brush size",
+    "clear": "Clear",
+    "use": "Use sketch",
+    "cancel": "Close"
+  },
+  "buttons": { "generate": "Generate", "apply": "Apply" },
   "gallery": {
-    "pendingTitle": "Building with {model}",
+    "pendingTitle": "Working with {model}",
     "pendingHint": "Usually 1 to 5 minutes. You can keep working.",
     "noPreview": "No preview for {ext} files; download to open",
     "fromImage": "From image",
+    "edited": "edited",
     "download": "Download",
     "fullscreen": "View larger",
     "delete": "Delete",
@@ -36,9 +56,12 @@
   },
   "errors": {
     "notImage": "Only image files can be used as references.",
+    "notModel": "Upload a GLB, glTF, OBJ or FBX file.",
     "uploadFailed": "Upload failed: {message}",
-    "needPrompt": "Describe the object first.",
-    "needImage": "Add a photo first.",
+    "needPrompt": "Add a description first.",
+    "needImage": "Add a photo or a sketch first.",
+    "needReference": "This tool needs a reference image.",
+    "needModel": "Pick a model to work on first.",
     "noModel": "The provider returned no 3D file.",
     "generationFailed": "3D generation failed."
   }

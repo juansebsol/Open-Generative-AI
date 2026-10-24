@@ -40,6 +40,7 @@ export const FIELD_ALIASES = {
   audios_list: ['audio_urls', 'reference_audio_urls', 'audios', 'reference_audios', 'audio_url', 'audio'],
   audio_files: ['audio_urls', 'reference_audio_urls', 'audios', 'reference_audios', 'audio_url', 'audio'],
   mask_image_url: ['mask_url', 'mask_image_url', 'mask', 'mask_image'],
+  model_url: ['model_url', 'mesh_url', 'model', 'input_file_url', 'glb_url', 'model_file_url'],
   aspect_ratio: ['aspect_ratio', 'image_size', 'size', 'ratio'],
   duration: ['duration', 'seconds', 'video_length', 'num_seconds', 'length'],
   negative_prompt: ['negative_prompt'],

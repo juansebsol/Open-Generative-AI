@@ -2,27 +2,47 @@
   "empty": {
     "heading": "开始使用",
     "accent": "3D 工作室",
-    "subtitle": "描述一个物体，或切换到图像模式上传照片。你会得到可旋转查看、下载并导入任意 3D 软件的带贴图网格。",
+    "subtitle": "描述一个物体、上传照片或画一张草图。你会得到可旋转查看、下载、重新贴图、绑定骨骼和优化的带贴图网格。",
+    "editSubtitle": "上传 GLB，或在任意结果上点击“使用”，然后重新贴图、绑定骨骼、重建网格或拆分部件。",
     "starters": [
       { "label": "旧皮革扶手椅，棚拍光", "prompt": "一把带黄铜铆钉的旧棕色皮革扶手椅，略有磨损，棚拍光，干净背景" },
       { "label": "低多边形卡通狐狸，游戏资产", "prompt": "风格化的低多边形狐狸角色，橙色与奶白色皮毛，友好的大眼睛，游戏资产" },
       { "label": "长满青苔的石灯笼", "prompt": "传统日式石灯笼，覆盖青苔，风化花岗岩，照片级写实" }
     ]
   },
-  "modes": { "text": "文生 3D", "image": "图生 3D" },
-  "controls": { "model": "模型" },
+  "modes": { "text": "文本", "image": "图像", "edit": "编辑模型" },
+  "controls": { "model": "模型", "tool": "工具" },
+  "tools": { "retexture": "重新贴图", "rig": "绑定骨骼与动画", "remesh": "重建网格", "segment": "拆分部件", "topology": "智能拓扑" },
+  "use": { "button": "使用" },
   "prompt": {
     "placeholder": "描述你想生成的 3D 物体",
-    "imageEmpty": "添加物体的照片。单一清晰视角、纯色背景效果最好。",
-    "imageHint": "已添加 {count} / {max} 张图片。生成需要几分钟。"
+    "sketchPlaceholder": "描述草图画的是什么，例如一把木制摇椅",
+    "editPlaceholder": "描述新的外观，例如带绿色铜锈的风化铜",
+    "imageEmpty": "添加物体的照片，或画一张草图。单一清晰视角、纯色背景效果最好。",
+    "imageHint": "已添加 {count} / {max} 张图片。生成需要几分钟。",
+    "editEmpty": "选择要处理的模型：上传 GLB，或在结果上点击“使用”。",
+    "editHint": "将对所选模型执行“{tool}”。"
   },
   "media": { "addImages": "最多添加 {max} 张图片", "maxImages": "此模型最多接受 {max} 张图片", "remove": "移除图片" },
-  "buttons": { "generate": "生成" },
+  "edit": { "uploadModel": "上传模型（GLB）", "clearModel": "清除模型", "styleImage": "添加参考图片" },
+  "sketch": {
+    "open": "画草图",
+    "title": "草图生成 3D",
+    "hint": "从一个角度画出物体。简单的轮廓效果最好。",
+    "pen": "画笔",
+    "eraser": "橡皮",
+    "brush": "笔刷大小",
+    "clear": "清空",
+    "use": "使用草图",
+    "cancel": "关闭"
+  },
+  "buttons": { "generate": "生成", "apply": "应用" },
   "gallery": {
-    "pendingTitle": "正在用 {model} 构建",
+    "pendingTitle": "正在用 {model} 处理",
     "pendingHint": "通常需要 1 到 5 分钟，你可以继续其他操作。",
     "noPreview": "{ext} 文件无法预览，请下载后打开",
     "fromImage": "来自图片",
+    "edited": "已编辑",
     "download": "下载",
     "fullscreen": "放大查看",
     "delete": "删除",
@@ -36,9 +56,12 @@
   },
   "errors": {
     "notImage": "只能使用图片文件作为参考。",
+    "notModel": "请上传 GLB、glTF、OBJ 或 FBX 文件。",
     "uploadFailed": "上传失败：{message}",
-    "needPrompt": "请先描述物体。",
-    "needImage": "请先添加照片。",
+    "needPrompt": "请先添加描述。",
+    "needImage": "请先添加照片或草图。",
+    "needReference": "此工具需要一张参考图片。",
+    "needModel": "请先选择要处理的模型。",
     "noModel": "服务商没有返回 3D 文件。",
     "generationFailed": "3D 生成失败。"
   }

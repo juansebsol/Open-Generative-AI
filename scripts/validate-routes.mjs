@@ -36,6 +36,7 @@ const SAMPLE = {
   image: 'https://example.com/sample.png',
   video: 'https://example.com/sample.mp4',
   audio: 'https://example.com/sample.mp3',
+  model: 'https://example.com/sample.glb',
 };
 
 function readJson(file) {
@@ -70,6 +71,7 @@ function loadSchemas() {
 
 function mediaKind(name) {
   if (/^num_|_count$|^max_|^min_/.test(name)) return null;
+  if (/^model_url$|mesh_url|glb/.test(name)) return 'model';
   const tokens = name.toLowerCase().split('_');
   const has = (...words) => tokens.some((token) => words.includes(token.replace(/s$/, '')));
   if (has('audio', 'speech')) return 'audio';
@@ -80,6 +82,7 @@ function mediaKind(name) {
 
 function sampleValue(name, def = {}) {
   if (def.type === 'array' && def.items?.properties) return Array.isArray(def.examples?.[0]) ? def.examples[0] : def.default;
+  if (def.enum?.length) return def.default ?? def.enum[0];
   const kind = mediaKind(name);
   const wantsArray = def.type === 'array' || /_list$|_urls$|_files$|s_list$/.test(name);
   if (kind && (def.type === 'string' || def.type === 'array' || /url|list|files|image|video|audio/.test(name))) {
@@ -120,7 +123,11 @@ function samplePayload(model, listName) {
     ensure('audio_url', 'audio');
     ensure(model.category === 'video' ? 'video_url' : 'image_url', model.category === 'video' ? 'video' : 'image');
   }
-  if (listName === 'threeDModels' && model.imageField) ensure(model.imageField, 'image', model.imageField === 'images_list');
+  if (listName === 'threeDModels') {
+    if (model.imageField) ensure(model.imageField, 'image', model.imageField === 'images_list');
+    if (model.inputs?.model_url) ensure('model_url', 'model');
+    if ((model.required || []).includes('image_url')) ensure('image_url', 'image');
+  }
   if (listName === 'motionControlModels') {
     ensure('video_url', 'video');
     ensure('images_list', 'image', true);

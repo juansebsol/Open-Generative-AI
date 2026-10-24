@@ -26166,7 +26166,7 @@ const ALL_threeDModels = [
     "name": "Meshy 7.1",
     "endpoint": "meshy-7-1-text-to-3d",
     "family": "meshy-7-1",
-    "mode": "text",
+    "kind": "text",
     "description": "Meshy 7.1 turns a prompt into a textured, PBR-ready mesh with clean geometry.",
     "hasPrompt": true,
     "promptRequired": true,
@@ -26174,6 +26174,21 @@ const ALL_threeDModels = [
       "prompt"
     ],
     "inputs": {
+      "mode": {
+            "type": "string",
+            "title": "Texturing",
+            "name": "mode",
+            "enum": [
+                  "full",
+                  "preview"
+            ],
+            "default": "full",
+            "description": "Preview skips texturing (cheaper, faster); add textures later with Retexture.",
+            "optionLabels": {
+                  "full": "Textured",
+                  "preview": "Preview only"
+            }
+      },
       "model_type": {
         "type": "string",
         "title": "Mesh type",
@@ -26238,7 +26253,7 @@ const ALL_threeDModels = [
     "name": "Meshy 7.1",
     "endpoint": "meshy-7-1-image-to-3d",
     "family": "meshy-7-1",
-    "mode": "image",
+    "kind": "image",
     "description": "Meshy 7.1 rebuilds a single photo as a textured 3D model.",
     "hasPrompt": false,
     "imageField": "image_url",
@@ -26317,7 +26332,7 @@ const ALL_threeDModels = [
     "name": "Meshy 7.1 Multi-view",
     "endpoint": "meshy-7-1-multi-image-to-3d",
     "family": "meshy-7-1",
-    "mode": "multi",
+    "kind": "multi",
     "description": "Meshy 7.1 from one to four views of the same object.",
     "hasPrompt": false,
     "imageField": "images_list",
@@ -26397,7 +26412,7 @@ const ALL_threeDModels = [
     "name": "Tripo H3.1",
     "endpoint": "tripo-h3-1-text-to-3d",
     "family": "tripo-h3-1",
-    "mode": "text",
+    "kind": "text",
     "description": "Tripo H3.1 generates high-quality 3D models from a description.",
     "hasPrompt": true,
     "promptRequired": true,
@@ -26470,7 +26485,7 @@ const ALL_threeDModels = [
     "name": "Tripo H3.1",
     "endpoint": "tripo-h3-1-image-to-3d",
     "family": "tripo-h3-1",
-    "mode": "image",
+    "kind": "image",
     "description": "Tripo H3.1 reconstructs a 3D model from one image.",
     "hasPrompt": false,
     "imageField": "image_url",
@@ -26543,7 +26558,7 @@ const ALL_threeDModels = [
     "name": "Tripo P2",
     "endpoint": "tripo-p2-text-to-3d",
     "family": "tripo-p2",
-    "mode": "text",
+    "kind": "text",
     "description": "Tripo P2: production assets with PBR textures and a tight polygon budget.",
     "hasPrompt": true,
     "promptRequired": true,
@@ -26607,7 +26622,7 @@ const ALL_threeDModels = [
     "name": "Tripo P2",
     "endpoint": "tripo-p2-image-to-3d",
     "family": "tripo-p2",
-    "mode": "image",
+    "kind": "image",
     "description": "Tripo P2 from a single image, with PBR textures and a tight polygon budget.",
     "hasPrompt": false,
     "imageField": "image_url",
@@ -26671,7 +26686,7 @@ const ALL_threeDModels = [
     "name": "Hunyuan 3D 3.1 Pro",
     "endpoint": "hunyuan-3d-3-1-pro-text-to-3d",
     "family": "hunyuan-3d-3-1-pro",
-    "mode": "text",
+    "kind": "text",
     "description": "Tencent's Hunyuan 3D 3.1 Pro: film-quality detail from a prompt.",
     "hasPrompt": true,
     "promptRequired": true,
@@ -26719,7 +26734,7 @@ const ALL_threeDModels = [
     "name": "Hunyuan 3D 3.1 Pro",
     "endpoint": "hunyuan-3d-3-1-pro-image-to-3d",
     "family": "hunyuan-3d-3-1-pro",
-    "mode": "image",
+    "kind": "image",
     "description": "Tencent's Hunyuan 3D 3.1 Pro: film-quality detail from a photo.",
     "hasPrompt": false,
     "imageField": "image_url",
@@ -26767,7 +26782,7 @@ const ALL_threeDModels = [
     "name": "Hunyuan 3D 3.1 Rapid",
     "endpoint": "hunyuan-3d-3-1-rapid-text-to-3d",
     "family": "hunyuan-3d-3-1-rapid",
-    "mode": "text",
+    "kind": "text",
     "description": "Hunyuan 3D 3.1 Rapid: a fast, cheaper pass from a prompt.",
     "hasPrompt": true,
     "promptRequired": true,
@@ -26791,7 +26806,7 @@ const ALL_threeDModels = [
     "name": "Hunyuan 3D 3.1 Rapid",
     "endpoint": "hunyuan-3d-3-1-rapid-image-to-3d",
     "family": "hunyuan-3d-3-1-rapid",
-    "mode": "image",
+    "kind": "image",
     "description": "Hunyuan 3D 3.1 Rapid: a fast, cheaper pass from a photo.",
     "hasPrompt": false,
     "imageField": "image_url",
@@ -26815,7 +26830,7 @@ const ALL_threeDModels = [
     "name": "Rodin 2.5",
     "endpoint": "rodin-2-5-text-to-3d",
     "family": "rodin-2-5",
-    "mode": "text",
+    "kind": "text",
     "description": "Hyper3D's Rodin 2.5: production-ready assets from a prompt, with format and material control.",
     "hasPrompt": true,
     "promptRequired": true,
@@ -26887,7 +26902,7 @@ const ALL_threeDModels = [
     "name": "Rodin 2.5",
     "endpoint": "rodin-2-5-image-to-3d",
     "family": "rodin-2-5",
-    "mode": "multi",
+    "kind": "multi",
     "description": "Hyper3D's Rodin 2.5 from one or more reference images.",
     "hasPrompt": false,
     "imageField": "images_list",
@@ -26960,7 +26975,7 @@ const ALL_threeDModels = [
     "name": "Trellis 2",
     "endpoint": "trellis-2-image-to-3d",
     "family": "trellis-2",
-    "mode": "image",
+    "kind": "image",
     "description": "Microsoft's open TRELLIS.2: a textured GLB from a single image at the lowest price.",
     "hasPrompt": false,
     "imageField": "image_url",
@@ -27008,6 +27023,340 @@ const ALL_threeDModels = [
     },
     "provider": "microsoft",
     "provider_name": "Microsoft"
+  },
+  {
+    "id": "meshy-7-retexture",
+    "name": "Retexture",
+    "endpoint": "meshy-7-retexture",
+    "family": "tool-retexture",
+    "kind": "edit",
+    "description": "Repaint an existing model from a style prompt or a reference image with Meshy 7.",
+    "required": [
+      "model_url"
+    ],
+    "hasPrompt": true,
+    "inputs": {
+      "model_url": {
+        "type": "string",
+        "title": "Model",
+        "field": "model",
+        "description": "The 3D model to work on (GLB).",
+        "name": "model_url"
+      },
+      "image_url": {
+        "type": "string",
+        "title": "Style image",
+        "field": "image",
+        "description": "Optional reference image for the new look.",
+        "name": "image_url"
+      },
+      "texture_resolution": {
+        "type": "string",
+        "title": "Texture",
+        "enum": [
+          "2k",
+          "4k",
+          "8k"
+        ],
+        "default": "2k",
+        "description": "",
+        "name": "texture_resolution"
+      },
+      "enable_pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "default": false,
+        "description": "Metallic, roughness and normal maps.",
+        "name": "enable_pbr"
+      },
+      "enable_original_uv": {
+        "type": "boolean",
+        "title": "Keep UVs",
+        "default": true,
+        "description": "Reuse the model's existing UV layout.",
+        "name": "enable_original_uv"
+      }
+    },
+    "promptRequired": false,
+    "provider": "meshy",
+    "provider_name": "Meshy",
+    "toolLabel": "retexture"
+  },
+  {
+    "id": "trellis-2-retexture",
+    "name": "Retexture (Trellis 2)",
+    "endpoint": "trellis-2-retexture",
+    "family": "tool-retexture-trellis",
+    "kind": "edit",
+    "description": "Repaint an existing model to match a reference image with TRELLIS.2.",
+    "required": [
+      "model_url",
+      "image_url"
+    ],
+    "hasPrompt": false,
+    "inputs": {
+      "model_url": {
+        "type": "string",
+        "title": "Model",
+        "field": "model",
+        "description": "The 3D model to work on (GLB).",
+        "name": "model_url"
+      },
+      "image_url": {
+        "type": "string",
+        "title": "Reference image",
+        "field": "image",
+        "description": "The look to apply.",
+        "name": "image_url"
+      },
+      "texture_size": {
+        "type": "integer",
+        "title": "Texture size",
+        "enum": [
+          1024,
+          2048,
+          4096
+        ],
+        "default": 2048,
+        "description": "",
+        "name": "texture_size"
+      }
+    },
+    "provider": "microsoft",
+    "provider_name": "Microsoft",
+    "toolLabel": "retexture"
+  },
+  {
+    "id": "meshy-rigging",
+    "name": "Rig",
+    "endpoint": "meshy-rigging",
+    "family": "tool-rig",
+    "kind": "edit",
+    "description": "Auto-rig a humanoid model with a skeleton, optionally with a default animation, returning GLB and FBX.",
+    "required": [
+      "model_url"
+    ],
+    "hasPrompt": false,
+    "inputs": {
+      "model_url": {
+        "type": "string",
+        "title": "Model",
+        "field": "model",
+        "description": "The 3D model to work on (GLB).",
+        "name": "model_url"
+      },
+      "height_meters": {
+        "type": "number",
+        "title": "Height",
+        "enum": [
+          1.2,
+          1.5,
+          1.7,
+          1.9,
+          2.2
+        ],
+        "default": 1.7,
+        "description": "Character height in metres, for correct bone scale.",
+        "name": "height_meters"
+      },
+      "enable_animation": {
+        "type": "boolean",
+        "title": "Add animation",
+        "default": false,
+        "description": "Apply Meshy's default animation to the rigged model.",
+        "name": "enable_animation"
+      }
+    },
+    "provider": "meshy",
+    "provider_name": "Meshy",
+    "toolLabel": "rig"
+  },
+  {
+    "id": "tripo-remesh",
+    "name": "Remesh",
+    "endpoint": "tripo-remesh",
+    "family": "tool-remesh",
+    "kind": "edit",
+    "description": "Rebuild the mesh with clean topology at a target polygon count, with baked textures.",
+    "required": [
+      "model_url"
+    ],
+    "hasPrompt": false,
+    "inputs": {
+      "model_url": {
+        "type": "string",
+        "title": "Model",
+        "field": "model",
+        "description": "The 3D model to work on (GLB).",
+        "name": "model_url"
+      },
+      "quad": {
+        "type": "boolean",
+        "title": "Quad topology",
+        "default": true,
+        "description": "Quads instead of triangles; best for editing and animation.",
+        "name": "quad"
+      },
+      "face_limit": {
+        "type": "integer",
+        "title": "Faces",
+        "enum": [
+          1000,
+          3000,
+          5000,
+          10000,
+          20000
+        ],
+        "default": 10000,
+        "description": "Target face count.",
+        "name": "face_limit"
+      },
+      "bake": {
+        "type": "boolean",
+        "title": "Bake textures",
+        "default": true,
+        "description": "Bake the original textures onto the new mesh.",
+        "name": "bake"
+      }
+    },
+    "provider": "tripo3d",
+    "provider_name": "Tripo",
+    "toolLabel": "remesh"
+  },
+  {
+    "id": "tripo-segment",
+    "name": "Segment parts",
+    "endpoint": "tripo-segment",
+    "family": "tool-segment",
+    "kind": "edit",
+    "description": "Split a model into semantic parts for editing, texturing or animation.",
+    "required": [
+      "model_url"
+    ],
+    "hasPrompt": false,
+    "inputs": {
+      "model_url": {
+        "type": "string",
+        "title": "Model",
+        "field": "model",
+        "description": "The 3D model to work on (GLB).",
+        "name": "model_url"
+      }
+    },
+    "provider": "tripo3d",
+    "provider_name": "Tripo",
+    "toolLabel": "segment"
+  },
+  {
+    "id": "hunyuan-3d-3-1-part",
+    "name": "Split parts (Hunyuan)",
+    "endpoint": "hunyuan-3d-3-1-part",
+    "family": "tool-part-hunyuan",
+    "kind": "edit",
+    "description": "Split a model into parts with Hunyuan 3D 3.1.",
+    "required": [
+      "model_url"
+    ],
+    "hasPrompt": false,
+    "inputs": {
+      "model_url": {
+        "type": "string",
+        "title": "Model",
+        "field": "model",
+        "description": "The 3D model to work on (GLB).",
+        "name": "model_url"
+      }
+    },
+    "provider": "hunyuan",
+    "provider_name": "Hunyuan",
+    "toolLabel": "segment"
+  },
+  {
+    "id": "hunyuan-3d-3-1-smart-topology",
+    "name": "Smart topology",
+    "endpoint": "hunyuan-3d-3-1-smart-topology",
+    "family": "tool-topology",
+    "kind": "edit",
+    "description": "Optimise a mesh's topology with Hunyuan 3D 3.1.",
+    "required": [
+      "model_url"
+    ],
+    "hasPrompt": false,
+    "inputs": {
+      "model_url": {
+        "type": "string",
+        "title": "Model",
+        "field": "model",
+        "description": "The 3D model to work on (GLB).",
+        "name": "model_url"
+      },
+      "polygon_type": {
+        "type": "string",
+        "title": "Polygons",
+        "enum": [
+          "triangle",
+          "quadrilateral"
+        ],
+        "default": "triangle",
+        "description": "",
+        "name": "polygon_type"
+      },
+      "face_level": {
+        "type": "string",
+        "title": "Density",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "description": "",
+        "name": "face_level"
+      }
+    },
+    "provider": "hunyuan",
+    "provider_name": "Hunyuan",
+    "toolLabel": "topology"
+  },
+  {
+    "id": "hunyuan-3d-3-sketch-to-3d",
+    "name": "Hunyuan 3D Sketch",
+    "endpoint": "hunyuan-3d-3-sketch-to-3d",
+    "family": "hunyuan-3d-3-sketch",
+    "kind": "image",
+    "description": "Turn a rough sketch plus a short description into a textured 3D model with Hunyuan 3D v3.",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "imageField": "image_url",
+    "required": [
+      "image_url",
+      "prompt"
+    ],
+    "sketch": true,
+    "inputs": {
+      "enable_pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "default": false,
+        "description": "Metallic, roughness and normal maps.",
+        "name": "enable_pbr"
+      },
+      "face_count": {
+        "type": "integer",
+        "title": "Faces",
+        "enum": [
+          100000,
+          300000,
+          500000,
+          1000000
+        ],
+        "default": 500000,
+        "description": "Target face count.",
+        "name": "face_count"
+      }
+    },
+    "provider": "hunyuan",
+    "provider_name": "Hunyuan"
   }
 ];
 export const threeDModels = [...withRoutes(ALL_threeDModels)];

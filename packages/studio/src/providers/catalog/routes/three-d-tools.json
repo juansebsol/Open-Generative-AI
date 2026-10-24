@@ -1,0 +1,68 @@
+{
+  "meshy-7-retexture": [
+    {
+      "provider": "fal",
+      "endpoint": "meshy/v7/retexture",
+      "rename": {
+        "prompt": "text_style_prompt",
+        "image_url": "image_style_url"
+      }
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "meshy/v7/retexture",
+      "rename": {
+        "image_url": "texture_image"
+      }
+    }
+  ],
+  "trellis-2-retexture": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/trellis-2/retexture"
+    }
+  ],
+  "meshy-rigging": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/meshy/rigging"
+    }
+  ],
+  "tripo-remesh": [
+    {
+      "provider": "fal",
+      "endpoint": "tripo3d/tripo/remesh"
+    }
+  ],
+  "tripo-segment": [
+    {
+      "provider": "fal",
+      "endpoint": "tripo3d/tripo/segment"
+    }
+  ],
+  "hunyuan-3d-3-1-part": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-3d/v3.1/part"
+    }
+  ],
+  "hunyuan-3d-3-1-smart-topology": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-3d/v3.1/smart-topology",
+      "fixed": {
+        "input_file_type": "glb"
+      }
+    }
+  ],
+  "hunyuan-3d-3-sketch-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan3d-v3/sketch-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/hunyuan3d-v3/sketch-to-3d"
+    }
+  ]
+}
