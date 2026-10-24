@@ -31,7 +31,7 @@ const { DIRECT_PROVIDERS } = await import(pathToFileURL(path.join(STUDIO_SRC, 'p
 const { applyPromptPresets } = await import(pathToFileURL(path.join(STUDIO_SRC, 'imageEffects.js')));
 const catalog = await import(pathToFileURL(path.join(STUDIO_SRC, 'models.js')));
 
-const MODEL_LISTS = ['t2iModels', 'i2iModels', 't2vModels', 'i2vModels', 'v2vModels', 'lipsyncModels', 'audioModels', 'recastModels', 'motionControlModels'];
+const MODEL_LISTS = ['t2iModels', 'i2iModels', 't2vModels', 'i2vModels', 'v2vModels', 'lipsyncModels', 'audioModels', 'recastModels', 'motionControlModels', 'threeDModels'];
 const SAMPLE = {
   image: 'https://example.com/sample.png',
   video: 'https://example.com/sample.mp4',
@@ -120,6 +120,7 @@ function samplePayload(model, listName) {
     ensure('audio_url', 'audio');
     ensure(model.category === 'video' ? 'video_url' : 'image_url', model.category === 'video' ? 'video' : 'image');
   }
+  if (listName === 'threeDModels' && model.imageField) ensure(model.imageField, 'image', model.imageField === 'images_list');
   if (listName === 'motionControlModels') {
     ensure('video_url', 'video');
     ensure('images_list', 'image', true);

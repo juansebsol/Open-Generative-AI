@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio,
+  ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio, ThreeDStudio,
   PROVIDERS, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
-  IconAlertCircle, IconAperture, IconCheck, IconChevronDown, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX,
+  IconAlertCircle, IconAperture, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX,
 } from '@tabler/icons-react';
 import ProvidersModal from './ProvidersModal';
 import CommandPalette from './CommandPalette';
@@ -31,6 +31,7 @@ const TABS = [
   { id: 'marketing', label: 'Marketing Studio', icon: IconSpeakerphone },
   { id: 'vibe-motion', label: 'Vibe Motion', icon: IconWand },
   { id: 'audio', label: 'Audio Studio', icon: IconMusic },
+  { id: 'three-d', label: '3D Studio', icon: IconCube },
   { id: 'agents', label: 'Agents', icon: IconRobot },
   { id: 'workflows', label: 'Workflows', icon: IconSitemap },
 ];
@@ -39,6 +40,7 @@ const NAVIGATION_CATEGORIES = [
   { id: 'images', label: 'Images', tabIds: ['image', 'layers', 'cinema', 'ai-influencer', 'design-agent'] },
   { id: 'video', label: 'Video', tabIds: ['video', 'clipping', 'motion-control', 'lipsync', 'body-swap', 'marketing', 'vibe-motion'] },
   { id: 'audio', label: 'Audio', tabIds: ['audio'] },
+  { id: '3d', label: '3D', tabIds: ['three-d'] },
   { id: 'agents-automation', label: 'Automation', tabIds: ['agents', 'workflows'] },
 ];
 
@@ -604,6 +606,11 @@ export default function StandaloneShell({ locale = 'en' }) {
         {AVAILABLE_TAB_IDS.has('design-agent') && (
           <div className={activeTab === 'design-agent' ? "h-full w-full" : "hidden"}>
             <DesignAgentStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('design-agent')} onGenerationEnd={makeGenerationEndCallback('design-agent')} onGenerationComplete={makeSuccessCallback('design-agent')} onGenerationError={makeErrorCallback('design-agent')} />
+          </div>
+        )}
+        {AVAILABLE_TAB_IDS.has('three-d') && (
+          <div className={activeTab === 'three-d' ? "h-full w-full" : "hidden"}>
+            <ThreeDStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('three-d')} onGenerationEnd={makeGenerationEndCallback('three-d')} onGenerationComplete={makeSuccessCallback('three-d')} onGenerationError={makeErrorCallback('three-d')} />
           </div>
         )}
         {AVAILABLE_TAB_IDS.has('workflows') && (

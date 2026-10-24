@@ -26158,6 +26158,861 @@ export const audioModels = [...withRoutes(ALL_audioModels)];
 
 export const getAudioModelById = (id) => audioModels.find(m => m.id === id);
 
+
+// ─── 3D models (text, image or multi-view to mesh) ───────────────────────────
+const ALL_threeDModels = [
+  {
+    "id": "meshy-7-1-text-to-3d",
+    "name": "Meshy 7.1",
+    "endpoint": "meshy-7-1-text-to-3d",
+    "family": "meshy-7-1",
+    "mode": "text",
+    "description": "Meshy 7.1 turns a prompt into a textured, PBR-ready mesh with clean geometry.",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "required": [
+      "prompt"
+    ],
+    "inputs": {
+      "model_type": {
+        "type": "string",
+        "title": "Mesh type",
+        "name": "model_type",
+        "enum": [
+          "standard",
+          "lowpoly",
+          "smart-topology"
+        ],
+        "default": "standard",
+        "description": "Standard mesh, a low-poly game asset, or smart topology."
+      },
+      "topology": {
+        "type": "string",
+        "title": "Topology",
+        "name": "topology",
+        "enum": [
+          "triangle",
+          "quad"
+        ],
+        "default": "triangle",
+        "description": "Quad topology is easier to edit and animate."
+      },
+      "target_polycount": {
+        "type": "integer",
+        "title": "Polygons",
+        "name": "target_polycount",
+        "enum": [
+          10000,
+          30000,
+          100000,
+          300000
+        ],
+        "default": 30000,
+        "description": "Target polygon count."
+      },
+      "enable_pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "enable_pbr",
+        "default": false,
+        "description": "Generate metallic, roughness and normal maps."
+      },
+      "symmetry_mode": {
+        "type": "string",
+        "title": "Symmetry",
+        "name": "symmetry_mode",
+        "enum": [
+          "auto",
+          "on",
+          "off"
+        ],
+        "default": "auto",
+        "description": "Force or disable left-right symmetry."
+      }
+    },
+    "provider": "meshy",
+    "provider_name": "Meshy"
+  },
+  {
+    "id": "meshy-7-1-image-to-3d",
+    "name": "Meshy 7.1",
+    "endpoint": "meshy-7-1-image-to-3d",
+    "family": "meshy-7-1",
+    "mode": "image",
+    "description": "Meshy 7.1 rebuilds a single photo as a textured 3D model.",
+    "hasPrompt": false,
+    "imageField": "image_url",
+    "required": [
+      "image_url"
+    ],
+    "inputs": {
+      "model_type": {
+        "type": "string",
+        "title": "Mesh type",
+        "name": "model_type",
+        "enum": [
+          "standard",
+          "lowpoly",
+          "smart-topology"
+        ],
+        "default": "standard",
+        "description": "Standard mesh, a low-poly game asset, or smart topology."
+      },
+      "topology": {
+        "type": "string",
+        "title": "Topology",
+        "name": "topology",
+        "enum": [
+          "triangle",
+          "quad"
+        ],
+        "default": "triangle",
+        "description": "Quad topology is easier to edit and animate."
+      },
+      "target_polycount": {
+        "type": "integer",
+        "title": "Polygons",
+        "name": "target_polycount",
+        "enum": [
+          10000,
+          30000,
+          100000,
+          300000
+        ],
+        "default": 30000,
+        "description": "Target polygon count."
+      },
+      "enable_pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "enable_pbr",
+        "default": false,
+        "description": "Generate metallic, roughness and normal maps."
+      },
+      "symmetry_mode": {
+        "type": "string",
+        "title": "Symmetry",
+        "name": "symmetry_mode",
+        "enum": [
+          "auto",
+          "on",
+          "off"
+        ],
+        "default": "auto",
+        "description": "Force or disable left-right symmetry."
+      },
+      "should_texture": {
+        "type": "boolean",
+        "title": "Texture",
+        "name": "should_texture",
+        "default": true,
+        "description": "Off returns the untextured mesh."
+      }
+    },
+    "provider": "meshy",
+    "provider_name": "Meshy"
+  },
+  {
+    "id": "meshy-7-1-multi-image-to-3d",
+    "name": "Meshy 7.1 Multi-view",
+    "endpoint": "meshy-7-1-multi-image-to-3d",
+    "family": "meshy-7-1",
+    "mode": "multi",
+    "description": "Meshy 7.1 from one to four views of the same object.",
+    "hasPrompt": false,
+    "imageField": "images_list",
+    "maxImages": 4,
+    "required": [
+      "images_list"
+    ],
+    "inputs": {
+      "model_type": {
+        "type": "string",
+        "title": "Mesh type",
+        "name": "model_type",
+        "enum": [
+          "standard",
+          "lowpoly",
+          "smart-topology"
+        ],
+        "default": "standard",
+        "description": "Standard mesh, a low-poly game asset, or smart topology."
+      },
+      "topology": {
+        "type": "string",
+        "title": "Topology",
+        "name": "topology",
+        "enum": [
+          "triangle",
+          "quad"
+        ],
+        "default": "triangle",
+        "description": "Quad topology is easier to edit and animate."
+      },
+      "target_polycount": {
+        "type": "integer",
+        "title": "Polygons",
+        "name": "target_polycount",
+        "enum": [
+          10000,
+          30000,
+          100000,
+          300000
+        ],
+        "default": 30000,
+        "description": "Target polygon count."
+      },
+      "enable_pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "enable_pbr",
+        "default": false,
+        "description": "Generate metallic, roughness and normal maps."
+      },
+      "symmetry_mode": {
+        "type": "string",
+        "title": "Symmetry",
+        "name": "symmetry_mode",
+        "enum": [
+          "auto",
+          "on",
+          "off"
+        ],
+        "default": "auto",
+        "description": "Force or disable left-right symmetry."
+      },
+      "should_texture": {
+        "type": "boolean",
+        "title": "Texture",
+        "name": "should_texture",
+        "default": true,
+        "description": "Off returns the untextured mesh."
+      }
+    },
+    "provider": "meshy",
+    "provider_name": "Meshy"
+  },
+  {
+    "id": "tripo-h3-1-text-to-3d",
+    "name": "Tripo H3.1",
+    "endpoint": "tripo-h3-1-text-to-3d",
+    "family": "tripo-h3-1",
+    "mode": "text",
+    "description": "Tripo H3.1 generates high-quality 3D models from a description.",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "required": [
+      "prompt"
+    ],
+    "inputs": {
+      "texture": {
+        "type": "boolean",
+        "title": "Texture",
+        "name": "texture",
+        "default": true,
+        "description": "Generate a texture; off returns the bare mesh."
+      },
+      "pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "pbr",
+        "default": true,
+        "description": "Physically based materials."
+      },
+      "quad": {
+        "type": "boolean",
+        "title": "Quad mesh",
+        "name": "quad",
+        "default": false,
+        "description": "Quad topology instead of triangles."
+      },
+      "geometry_quality": {
+        "type": "string",
+        "title": "Geometry",
+        "name": "geometry_quality",
+        "enum": [
+          "standard",
+          "detailed"
+        ],
+        "default": "standard",
+        "description": "Detailed takes longer."
+      },
+      "texture_quality": {
+        "type": "string",
+        "title": "Texture quality",
+        "name": "texture_quality",
+        "enum": [
+          "standard",
+          "detailed"
+        ],
+        "default": "standard",
+        "description": ""
+      },
+      "face_limit": {
+        "type": "integer",
+        "title": "Faces",
+        "name": "face_limit",
+        "enum": [
+          20000,
+          50000,
+          100000,
+          500000
+        ],
+        "default": 50000,
+        "description": "Maximum face count."
+      }
+    },
+    "provider": "tripo3d",
+    "provider_name": "Tripo"
+  },
+  {
+    "id": "tripo-h3-1-image-to-3d",
+    "name": "Tripo H3.1",
+    "endpoint": "tripo-h3-1-image-to-3d",
+    "family": "tripo-h3-1",
+    "mode": "image",
+    "description": "Tripo H3.1 reconstructs a 3D model from one image.",
+    "hasPrompt": false,
+    "imageField": "image_url",
+    "required": [
+      "image_url"
+    ],
+    "inputs": {
+      "texture": {
+        "type": "boolean",
+        "title": "Texture",
+        "name": "texture",
+        "default": true,
+        "description": "Generate a texture; off returns the bare mesh."
+      },
+      "pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "pbr",
+        "default": true,
+        "description": "Physically based materials."
+      },
+      "quad": {
+        "type": "boolean",
+        "title": "Quad mesh",
+        "name": "quad",
+        "default": false,
+        "description": "Quad topology instead of triangles."
+      },
+      "geometry_quality": {
+        "type": "string",
+        "title": "Geometry",
+        "name": "geometry_quality",
+        "enum": [
+          "standard",
+          "detailed"
+        ],
+        "default": "standard",
+        "description": "Detailed takes longer."
+      },
+      "texture_quality": {
+        "type": "string",
+        "title": "Texture quality",
+        "name": "texture_quality",
+        "enum": [
+          "standard",
+          "detailed"
+        ],
+        "default": "standard",
+        "description": ""
+      },
+      "face_limit": {
+        "type": "integer",
+        "title": "Faces",
+        "name": "face_limit",
+        "enum": [
+          20000,
+          50000,
+          100000,
+          500000
+        ],
+        "default": 50000,
+        "description": "Maximum face count."
+      }
+    },
+    "provider": "tripo3d",
+    "provider_name": "Tripo"
+  },
+  {
+    "id": "tripo-p2-text-to-3d",
+    "name": "Tripo P2",
+    "endpoint": "tripo-p2-text-to-3d",
+    "family": "tripo-p2",
+    "mode": "text",
+    "description": "Tripo P2: production assets with PBR textures and a tight polygon budget.",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "required": [
+      "prompt"
+    ],
+    "inputs": {
+      "texture": {
+        "type": "boolean",
+        "title": "Texture",
+        "name": "texture",
+        "default": true,
+        "description": "Generate a texture; off returns the bare mesh."
+      },
+      "pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "pbr",
+        "default": true,
+        "description": "Physically based materials."
+      },
+      "quad": {
+        "type": "boolean",
+        "title": "Quad mesh",
+        "name": "quad",
+        "default": false,
+        "description": "Quad topology instead of triangles."
+      },
+      "texture_quality": {
+        "type": "string",
+        "title": "Texture quality",
+        "name": "texture_quality",
+        "enum": [
+          "fast",
+          "standard",
+          "detailed",
+          "extreme"
+        ],
+        "default": "standard",
+        "description": ""
+      },
+      "face_limit": {
+        "type": "integer",
+        "title": "Faces",
+        "name": "face_limit",
+        "enum": [
+          5000,
+          10000,
+          20000,
+          50000
+        ],
+        "default": 20000,
+        "description": "Maximum face count (P2 tops out at 50,000)."
+      }
+    },
+    "provider": "tripo3d",
+    "provider_name": "Tripo"
+  },
+  {
+    "id": "tripo-p2-image-to-3d",
+    "name": "Tripo P2",
+    "endpoint": "tripo-p2-image-to-3d",
+    "family": "tripo-p2",
+    "mode": "image",
+    "description": "Tripo P2 from a single image, with PBR textures and a tight polygon budget.",
+    "hasPrompt": false,
+    "imageField": "image_url",
+    "required": [
+      "image_url"
+    ],
+    "inputs": {
+      "texture": {
+        "type": "boolean",
+        "title": "Texture",
+        "name": "texture",
+        "default": true,
+        "description": "Generate a texture; off returns the bare mesh."
+      },
+      "pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "pbr",
+        "default": true,
+        "description": "Physically based materials."
+      },
+      "quad": {
+        "type": "boolean",
+        "title": "Quad mesh",
+        "name": "quad",
+        "default": false,
+        "description": "Quad topology instead of triangles."
+      },
+      "texture_quality": {
+        "type": "string",
+        "title": "Texture quality",
+        "name": "texture_quality",
+        "enum": [
+          "fast",
+          "standard",
+          "detailed",
+          "extreme"
+        ],
+        "default": "standard",
+        "description": ""
+      },
+      "face_limit": {
+        "type": "integer",
+        "title": "Faces",
+        "name": "face_limit",
+        "enum": [
+          5000,
+          10000,
+          20000,
+          50000
+        ],
+        "default": 20000,
+        "description": "Maximum face count (P2 tops out at 50,000)."
+      }
+    },
+    "provider": "tripo3d",
+    "provider_name": "Tripo"
+  },
+  {
+    "id": "hunyuan-3d-3-1-pro-text-to-3d",
+    "name": "Hunyuan 3D 3.1 Pro",
+    "endpoint": "hunyuan-3d-3-1-pro-text-to-3d",
+    "family": "hunyuan-3d-3-1-pro",
+    "mode": "text",
+    "description": "Tencent's Hunyuan 3D 3.1 Pro: film-quality detail from a prompt.",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "required": [
+      "prompt"
+    ],
+    "inputs": {
+      "enable_pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "enable_pbr",
+        "default": false,
+        "description": "Metallic, roughness and normal maps."
+      },
+      "generate_type": {
+        "type": "string",
+        "title": "Output",
+        "name": "generate_type",
+        "enum": [
+          "Normal",
+          "Geometry"
+        ],
+        "default": "Normal",
+        "description": "Textured model, or geometry only."
+      },
+      "face_count": {
+        "type": "integer",
+        "title": "Faces",
+        "name": "face_count",
+        "enum": [
+          100000,
+          300000,
+          500000,
+          1000000
+        ],
+        "default": 500000,
+        "description": "Target face count."
+      }
+    },
+    "provider": "hunyuan",
+    "provider_name": "Hunyuan"
+  },
+  {
+    "id": "hunyuan-3d-3-1-pro-image-to-3d",
+    "name": "Hunyuan 3D 3.1 Pro",
+    "endpoint": "hunyuan-3d-3-1-pro-image-to-3d",
+    "family": "hunyuan-3d-3-1-pro",
+    "mode": "image",
+    "description": "Tencent's Hunyuan 3D 3.1 Pro: film-quality detail from a photo.",
+    "hasPrompt": false,
+    "imageField": "image_url",
+    "required": [
+      "image_url"
+    ],
+    "inputs": {
+      "enable_pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "enable_pbr",
+        "default": false,
+        "description": "Metallic, roughness and normal maps."
+      },
+      "generate_type": {
+        "type": "string",
+        "title": "Output",
+        "name": "generate_type",
+        "enum": [
+          "Normal",
+          "Geometry"
+        ],
+        "default": "Normal",
+        "description": "Textured model, or geometry only."
+      },
+      "face_count": {
+        "type": "integer",
+        "title": "Faces",
+        "name": "face_count",
+        "enum": [
+          100000,
+          300000,
+          500000,
+          1000000
+        ],
+        "default": 500000,
+        "description": "Target face count."
+      }
+    },
+    "provider": "hunyuan",
+    "provider_name": "Hunyuan"
+  },
+  {
+    "id": "hunyuan-3d-3-1-rapid-text-to-3d",
+    "name": "Hunyuan 3D 3.1 Rapid",
+    "endpoint": "hunyuan-3d-3-1-rapid-text-to-3d",
+    "family": "hunyuan-3d-3-1-rapid",
+    "mode": "text",
+    "description": "Hunyuan 3D 3.1 Rapid: a fast, cheaper pass from a prompt.",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "required": [
+      "prompt"
+    ],
+    "inputs": {
+      "enable_pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "enable_pbr",
+        "default": false,
+        "description": "Metallic, roughness and normal maps."
+      }
+    },
+    "provider": "hunyuan",
+    "provider_name": "Hunyuan"
+  },
+  {
+    "id": "hunyuan-3d-3-1-rapid-image-to-3d",
+    "name": "Hunyuan 3D 3.1 Rapid",
+    "endpoint": "hunyuan-3d-3-1-rapid-image-to-3d",
+    "family": "hunyuan-3d-3-1-rapid",
+    "mode": "image",
+    "description": "Hunyuan 3D 3.1 Rapid: a fast, cheaper pass from a photo.",
+    "hasPrompt": false,
+    "imageField": "image_url",
+    "required": [
+      "image_url"
+    ],
+    "inputs": {
+      "enable_pbr": {
+        "type": "boolean",
+        "title": "PBR materials",
+        "name": "enable_pbr",
+        "default": false,
+        "description": "Metallic, roughness and normal maps."
+      }
+    },
+    "provider": "hunyuan",
+    "provider_name": "Hunyuan"
+  },
+  {
+    "id": "rodin-2-5-text-to-3d",
+    "name": "Rodin 2.5",
+    "endpoint": "rodin-2-5-text-to-3d",
+    "family": "rodin-2-5",
+    "mode": "text",
+    "description": "Hyper3D's Rodin 2.5: production-ready assets from a prompt, with format and material control.",
+    "hasPrompt": true,
+    "promptRequired": true,
+    "required": [
+      "prompt"
+    ],
+    "inputs": {
+      "tier": {
+        "type": "string",
+        "title": "Quality tier",
+        "name": "tier",
+        "enum": [
+          "Gen-2.5-Low",
+          "Gen-2.5-Medium",
+          "Gen-2.5-High",
+          "Gen-2.5-Extreme-High"
+        ],
+        "default": "Gen-2.5-High",
+        "description": "Higher tiers take longer and cost more."
+      },
+      "material": {
+        "type": "string",
+        "title": "Material",
+        "name": "material",
+        "enum": [
+          "All",
+          "PBR",
+          "Shaded",
+          "None"
+        ],
+        "default": "All",
+        "description": ""
+      },
+      "quality_mesh_option": {
+        "type": "string",
+        "title": "Mesh",
+        "name": "quality_mesh_option",
+        "enum": [
+          "Auto",
+          "4K Quad",
+          "18K Quad",
+          "50K Quad",
+          "20K Triangle",
+          "50K Triangle"
+        ],
+        "default": "Auto",
+        "description": "Polygon budget and topology."
+      },
+      "geometry_file_format": {
+        "type": "string",
+        "title": "Format",
+        "name": "geometry_file_format",
+        "enum": [
+          "glb",
+          "fbx",
+          "obj",
+          "usdz",
+          "stl"
+        ],
+        "default": "glb",
+        "description": "File format of the geometry."
+      }
+    },
+    "provider": "hyper3d",
+    "provider_name": "Hyper3D"
+  },
+  {
+    "id": "rodin-2-5-image-to-3d",
+    "name": "Rodin 2.5",
+    "endpoint": "rodin-2-5-image-to-3d",
+    "family": "rodin-2-5",
+    "mode": "multi",
+    "description": "Hyper3D's Rodin 2.5 from one or more reference images.",
+    "hasPrompt": false,
+    "imageField": "images_list",
+    "maxImages": 4,
+    "required": [
+      "images_list"
+    ],
+    "inputs": {
+      "tier": {
+        "type": "string",
+        "title": "Quality tier",
+        "name": "tier",
+        "enum": [
+          "Gen-2.5-Low",
+          "Gen-2.5-Medium",
+          "Gen-2.5-High",
+          "Gen-2.5-Extreme-High"
+        ],
+        "default": "Gen-2.5-High",
+        "description": "Higher tiers take longer and cost more."
+      },
+      "material": {
+        "type": "string",
+        "title": "Material",
+        "name": "material",
+        "enum": [
+          "All",
+          "PBR",
+          "Shaded",
+          "None"
+        ],
+        "default": "All",
+        "description": ""
+      },
+      "quality_mesh_option": {
+        "type": "string",
+        "title": "Mesh",
+        "name": "quality_mesh_option",
+        "enum": [
+          "Auto",
+          "4K Quad",
+          "18K Quad",
+          "50K Quad",
+          "20K Triangle",
+          "50K Triangle"
+        ],
+        "default": "Auto",
+        "description": "Polygon budget and topology."
+      },
+      "geometry_file_format": {
+        "type": "string",
+        "title": "Format",
+        "name": "geometry_file_format",
+        "enum": [
+          "glb",
+          "fbx",
+          "obj",
+          "usdz",
+          "stl"
+        ],
+        "default": "glb",
+        "description": "File format of the geometry."
+      }
+    },
+    "provider": "hyper3d",
+    "provider_name": "Hyper3D"
+  },
+  {
+    "id": "trellis-2-image-to-3d",
+    "name": "Trellis 2",
+    "endpoint": "trellis-2-image-to-3d",
+    "family": "trellis-2",
+    "mode": "image",
+    "description": "Microsoft's open TRELLIS.2: a textured GLB from a single image at the lowest price.",
+    "hasPrompt": false,
+    "imageField": "image_url",
+    "required": [
+      "image_url"
+    ],
+    "inputs": {
+      "texture_size": {
+        "type": "integer",
+        "title": "Texture size",
+        "name": "texture_size",
+        "enum": [
+          1024,
+          2048,
+          4096
+        ],
+        "default": 2048,
+        "description": ""
+      },
+      "resolution": {
+        "type": "integer",
+        "title": "Resolution",
+        "name": "resolution",
+        "enum": [
+          512,
+          1024,
+          1536
+        ],
+        "default": 1024,
+        "description": "Internal generation resolution."
+      },
+      "decimation_target": {
+        "type": "integer",
+        "title": "Faces",
+        "name": "decimation_target",
+        "enum": [
+          50000,
+          200000,
+          500000,
+          1000000
+        ],
+        "default": 500000,
+        "description": "Target face count after decimation."
+      }
+    },
+    "provider": "microsoft",
+    "provider_name": "Microsoft"
+  }
+];
+export const threeDModels = [...withRoutes(ALL_threeDModels)];
+export const getThreeDModelById = (id) => threeDModels.find(m => m.id === id);
+
 export const ALL_MODEL_LISTS = {
   t2iModels: ALL_t2iModels,
   t2vModels: ALL_t2vModels,
@@ -26168,4 +27023,5 @@ export const ALL_MODEL_LISTS = {
   recastModels: ALL_recastModels,
   motionControlModels: ALL_motionControlModels,
   audioModels: ALL_audioModels,
+  threeDModels: ALL_threeDModels,
 };

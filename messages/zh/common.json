@@ -14,13 +14,15 @@
     "vibe-motion": "Vibe Motion 动态图形",
     "agents": "智能体",
     "design-agent": "设计助手",
-    "workflows": "工作流"
+    "workflows": "工作流",
+    "three-d": "3D 工作室"
   },
   "categories": {
     "images": "图像",
     "video": "视频",
     "audio": "音频",
-    "agents-automation": "智能体与自动化"
+    "agents-automation": "智能体与自动化",
+    "3d": "3D"
   },
   "shell": {
     "brand": "Openstudio",
@@ -139,6 +141,7 @@
     "vibe-motion": "由 AI 编写、在本地渲染的动态图形",
     "audio": "语音、对话、音效与音乐",
     "agents": "与可调用全部工具的智能体对话",
-    "workflows": "在画布上把模型串成流水线"
+    "workflows": "在画布上把模型串成流水线",
+    "three-d": "由文本或图像生成带贴图的 3D 模型，内置查看器"
   }
 }

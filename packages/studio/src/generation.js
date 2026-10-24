@@ -1,4 +1,4 @@
-import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getRecastModelById, getLipSyncModelById, getAudioModelById } from './models.js';
+import { getModelById, getVideoModelById, getI2IModelById, getI2VModelById, getV2VModelById, getRecastModelById, getLipSyncModelById, getAudioModelById, getThreeDModelById } from './models.js';
 import {
     buildVideoToolPayload,
     serializeVideoToolOptions,
@@ -260,6 +260,18 @@ export async function generateAudio(params) {
         if (!skipKeys.includes(key) && params[key] !== undefined && params[key] !== null) {
             payload[key] = params[key];
         }
+    }
+    return submitAndPoll(endpoint, payload, params.onRequestId, 900);
+}
+
+// 3D generation: the studio sends the catalog field names as they are. Jobs
+// take minutes, so polling runs up to 30 minutes.
+export async function generateThreeD(params) {
+    const modelInfo = getThreeDModelById(params.model);
+    const endpoint = modelInfo?.endpoint || params.model;
+    const payload = {};
+    for (const [key, value] of Object.entries(params)) {
+        if (!['model', 'onRequestId'].includes(key) && value !== undefined && value !== null && value !== '') payload[key] = value;
     }
     return submitAndPoll(endpoint, payload, params.onRequestId, 900);
 }

@@ -11,6 +11,7 @@ import {
   recastModels,
   t2iModels,
   t2vModels,
+  threeDModels,
   v2vModels,
 } from './models.js';
 import { hasRoute } from './providers/catalog/index.js';
@@ -45,6 +46,7 @@ const STUDIO_REQUIREMENTS = {
   agents: () => true,
   // The board works offline; the chat prompts for a key when none is set.
   'design-agent': () => true,
+  'three-d': () => threeDModels.length > 0,
   workflows: () => [t2iModels, i2iModels, t2vModels, i2vModels, v2vModels, audioModels, lipsyncModels].some((models) => models.length > 0),
 };
 

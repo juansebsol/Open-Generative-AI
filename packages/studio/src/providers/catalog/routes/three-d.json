@@ -1,0 +1,143 @@
+{
+  "meshy-7-1-text-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "meshy/v7.1/text-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "meshy/v7.1/text-to-3d"
+    }
+  ],
+  "meshy-7-1-image-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "meshy/v7.1/image-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "meshy/v7.1/image-to-3d"
+    }
+  ],
+  "meshy-7-1-multi-image-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "meshy/v7.1/multi-image-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "meshy/v7.1/multi-image-to-3d"
+    }
+  ],
+  "tripo-h3-1-text-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "tripo3d/h3.1/text-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "tripo3d/h3.1/text-to-3d"
+    }
+  ],
+  "tripo-h3-1-image-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "tripo3d/h3.1/image-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "tripo3d/h3.1/image-to-3d"
+    }
+  ],
+  "tripo-p2-text-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "tripo3d/p2/text-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "tripo3d/p2/text-to-3d"
+    }
+  ],
+  "tripo-p2-image-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "tripo3d/p2/image-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "tripo3d/p2/image-to-3d"
+    }
+  ],
+  "hunyuan-3d-3-1-pro-text-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-3d/v3.1/pro/text-to-3d"
+    }
+  ],
+  "hunyuan-3d-3-1-pro-image-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-3d/v3.1/pro/image-to-3d"
+    }
+  ],
+  "hunyuan-3d-3-1-rapid-text-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-3d/v3.1/rapid/text-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/hunyuan-3d-v3.1/text-to-3d-rapid"
+    }
+  ],
+  "hunyuan-3d-3-1-rapid-image-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hunyuan-3d/v3.1/rapid/image-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/hunyuan-3d-v3.1/image-to-3d-rapid"
+    }
+  ],
+  "rodin-2-5-text-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hyper3d/rodin/v2.5/text-to-3d"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "hyper3d/rodin-v2.5/text-to-3d",
+      "rename": {
+        "quality_mesh_option": "quality_and_mesh"
+      }
+    }
+  ],
+  "rodin-2-5-image-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/hyper3d/rodin/v2.5"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "hyper3d/rodin-v2.5/image-to-3d",
+      "rename": {
+        "quality_mesh_option": "quality_and_mesh"
+      }
+    }
+  ],
+  "trellis-2-image-to-3d": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/trellis-2"
+    },
+    {
+      "provider": "wavespeed",
+      "endpoint": "wavespeed-ai/trellis-2/image-to-3d",
+      "rename": {
+        "decimation_target": "target_face_count"
+      }
+    }
+  ]
+}

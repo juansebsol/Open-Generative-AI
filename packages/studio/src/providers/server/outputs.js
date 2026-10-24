@@ -5,13 +5,14 @@ const EXTENSION_TYPES = [
   [/\.(png|jpe?g|webp|gif|bmp|avif|heic)(\?|$)/i, 'image'],
   [/\.(mp4|webm|mov|m4v|mkv)(\?|$)/i, 'video'],
   [/\.(mp3|wav|m4a|ogg|flac|aac|opus)(\?|$)/i, 'audio'],
-  [/\.(glb|gltf|obj|ply|splat|spz)(\?|$)/i, 'model'],
+  [/\.(glb|gltf|obj|fbx|usdz|stl|ply|splat|spz)(\?|$)/i, 'model'],
 ];
 
 const KEY_TYPES = [
   [/image|frame|thumbnail|layer|mask/i, 'image'],
   [/video/i, 'video'],
   [/audio|speech|music|voice|sound/i, 'audio'],
+  [/model|mesh|glb|fbx|obj|usdz|pbr/i, 'model'],
 ];
 
 export function mediaTypeOf(url, { contentType, key } = {}) {

@@ -12,7 +12,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 const DEFAULT_HOST_SUFFIXES = ['fal.media', 'fal.ai', 'fal.run', 'wavespeed.ai'];
-const ALLOWED_TYPES = /^(image|video|audio)\/|^application\/octet-stream/;
+const ALLOWED_TYPES = /^(image|video|audio|model)\/|^application\/octet-stream/;
 const MAX_BYTES = 1024 * 1024 * 1024;
 
 function allowedHost(hostname) {

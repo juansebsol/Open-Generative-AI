@@ -1,0 +1,45 @@
+{
+  "empty": {
+    "heading": "Start creating with",
+    "accent": "3D Studio",
+    "subtitle": "Describe an object, or switch to Image and upload a photo. You get a textured mesh you can orbit, download and drop into any 3D tool.",
+    "starters": [
+      { "label": "A worn leather armchair, studio lit", "prompt": "A worn brown leather armchair with brass studs, slightly scuffed, studio lighting, clean background" },
+      { "label": "Low-poly cartoon fox, game-ready", "prompt": "A stylized low-poly fox character, orange and cream fur, big friendly eyes, game asset" },
+      { "label": "Stone garden lantern with moss", "prompt": "A traditional Japanese stone garden lantern covered in moss, weathered granite, photorealistic" }
+    ]
+  },
+  "modes": { "text": "Text to 3D", "image": "Image to 3D" },
+  "controls": { "model": "Model" },
+  "prompt": {
+    "placeholder": "Describe the object you want as a 3D model",
+    "imageEmpty": "Add a photo of the object. One clear view on a plain background works best.",
+    "imageHint": "{count} of {max} images. Generation takes a few minutes."
+  },
+  "media": { "addImages": "Add up to {max} images", "maxImages": "This model takes up to {max} images", "remove": "Remove image" },
+  "buttons": { "generate": "Generate" },
+  "gallery": {
+    "pendingTitle": "Building with {model}",
+    "pendingHint": "Usually 1 to 5 minutes. You can keep working.",
+    "noPreview": "No preview for {ext} files; download to open",
+    "fromImage": "From image",
+    "download": "Download",
+    "fullscreen": "View larger",
+    "delete": "Delete",
+    "close": "Close"
+  },
+  "confirm": { "deleteItem": "Delete this model?" },
+  "providers": {
+    "needKey": "3D models run on {providers}. Add a key in Settings → Providers to start.",
+    "openSettings": "Open Providers",
+    "or": "or"
+  },
+  "errors": {
+    "notImage": "Only image files can be used as references.",
+    "uploadFailed": "Upload failed: {message}",
+    "needPrompt": "Describe the object first.",
+    "needImage": "Add a photo first.",
+    "noModel": "The provider returned no 3D file.",
+    "generationFailed": "3D generation failed."
+  }
+}

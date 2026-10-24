@@ -14,13 +14,15 @@
     "vibe-motion": "Vibe Motion",
     "agents": "Agents",
     "design-agent": "Design Agent",
-    "workflows": "Workflows"
+    "workflows": "Workflows",
+    "three-d": "3D Studio"
   },
   "categories": {
     "images": "Images",
     "video": "Video",
     "audio": "Audio",
-    "agents-automation": "Automation"
+    "agents-automation": "Automation",
+    "3d": "3D"
   },
   "shell": {
     "brand": "Openstudio",
@@ -139,6 +141,7 @@
     "vibe-motion": "Motion graphics written by AI, rendered here",
     "audio": "Speech, dialogue, sound effects and music",
     "agents": "Chat with agents that use every tool here",
-    "workflows": "Chain models into pipelines on a canvas"
+    "workflows": "Chain models into pipelines on a canvas",
+    "three-d": "Text or image to textured 3D models, with a viewer"
   }
 }

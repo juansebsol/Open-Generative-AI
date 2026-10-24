@@ -55,11 +55,16 @@ const EXTENSIONS = {
   'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif',
   'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov',
   'audio/mpeg': 'mp3', 'audio/mp3': 'mp3', 'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a', 'audio/flac': 'flac',
+  'model/gltf-binary': 'glb', 'model/gltf+json': 'gltf', 'model/obj': 'obj', 'model/stl': 'stl', 'model/vnd.usdz+zip': 'usdz',
 };
+const GENERIC_TYPES = new Set(['', 'application/octet-stream', 'binary/octet-stream', 'application/binary']);
 
-function extensionFor(type) {
+function extensionFor(type, name = null) {
   const mime = String(type || '').split(';')[0].trim().toLowerCase();
-  return EXTENSIONS[mime] || mime.split('/')[1]?.replace(/[^a-z0-9]/g, '') || 'bin';
+  if (EXTENSIONS[mime]) return EXTENSIONS[mime];
+  const fromName = String(name || '').split(/[?#]/)[0].match(/\.([a-z0-9]{2,5})$/i)?.[1]?.toLowerCase();
+  if (fromName && (GENERIC_TYPES.has(mime) || !mime.includes('/'))) return fromName;
+  return mime.split('/')[1]?.replace(/[^a-z0-9]/g, '') || fromName || 'bin';
 }
 
 // Local URLs only work while the service worker controls the page.
@@ -98,7 +103,7 @@ async function saveBlob(blob, { remoteUrl = null, name = null } = {}) {
     remoteSavedAt: remoteUrl ? Date.now() : null,
     createdAt: Date.now(),
   });
-  return `${LOCAL_MEDIA_PREFIX}${id}.${extensionFor(blob.type)}`;
+  return `${LOCAL_MEDIA_PREFIX}${id}.${extensionFor(blob.type, name)}`;
 }
 
 // Decoded in place: the page's CSP doesn't allow fetch() on data: URLs.
@@ -148,7 +153,7 @@ export async function persistOutputs(outputs) {
     try {
       const isRemote = /^https?:\/\//i.test(output.url);
       const blob = isRemote ? await downloadRemote(output.url) : dataUrlToBlob(output.url);
-      const url = await saveBlob(blob, { remoteUrl: isRemote ? output.url : null });
+      const url = await saveBlob(blob, { remoteUrl: isRemote ? output.url : null, name: isRemote ? output.url.split('/').pop() : null });
       return { ...output, url, remoteUrl: isRemote ? output.url : undefined };
     } catch (error) {
       console.warn('[media] keeping provider link for', output.url.slice(0, 80), error.message);

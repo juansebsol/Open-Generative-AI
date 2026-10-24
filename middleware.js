@@ -13,7 +13,7 @@ const CONTENT_SECURITY_POLICY = [
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https: http://localhost:* http://127.0.0.1:*",
     "media-src 'self' data: blob: https: http://localhost:* http://127.0.0.1:*",
-    `connect-src 'self' https: http://localhost:* http://127.0.0.1:*${isDev ? ' ws:' : ''}`,
+    `connect-src 'self' blob: https: http://localhost:* http://127.0.0.1:*${isDev ? ' ws:' : ''}`,
     "font-src 'self' data:",
     "object-src 'none'",
     "base-uri 'self'",
