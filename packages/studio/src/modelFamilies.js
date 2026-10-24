@@ -1,3 +1,4 @@
+import { resolveVendor } from "./vendors.js";
 import {
   i2iModels,
   i2vModels,
@@ -376,8 +377,8 @@ function buildCatalog(modeLists, config) {
       const family = familyMap.get(id) || {
         id,
         name: "",
-        provider: model.provider || "other",
-        provider_name: model.provider_name || "Other",
+        provider: resolveVendor(model).id,
+        provider_name: resolveVendor(model).name,
         rawVariants: {},
         freshness: 0,
       };
@@ -392,8 +393,9 @@ function buildCatalog(modeLists, config) {
       (a, b) => b.freshness - a.freshness,
     )[0];
     family.name = config.familyName(family.id, namingEntry.model.name);
-    family.provider = namingEntry.model.provider || family.provider;
-    family.provider_name = namingEntry.model.provider_name || family.provider_name;
+    const vendor = resolveVendor(namingEntry.model);
+    family.provider = vendor.id;
+    family.provider_name = vendor.name;
     family.variants = {};
     family.supports = {};
 

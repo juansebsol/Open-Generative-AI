@@ -7,6 +7,8 @@ import { isEndpointAvailable } from "../providers/client.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import DrawModal from "./DrawModal.jsx";
 import ModelParameterControls from "./ModelParameterControls.jsx";
+import VendorRail from "./VendorRail.jsx";
+import { vendorById } from "../vendors.js";
 import { VideoOptionControl, VideoSettingsControl } from "./VideoModelControls.jsx";
 import WatermarkDialog from "./WatermarkDialog.jsx";
 import CharactersMenu from "./CharactersMenu.jsx";
@@ -454,31 +456,10 @@ const VideoReadySvg = () => (
 
 // ── Dropdown components ───────────────────────────────────────────────────────
 
-// Text badges for model providers (no hosted logo images).
+// Small vendor badge for the selected model: monogram and colour from the registry.
 function getProviderStyle(provider) {
-  switch (provider) {
-    case "grok":
-      return { text: "xI", bg: "bg-orange-500/10 text-orange-400 border-orange-500/25" };
-    case "google":
-      return { text: "G", bg: "bg-blue-500/10 text-blue-400 border-blue-500/25" };
-    case "blackforest":
-      return { text: "BF", bg: "bg-amber-500/10 text-amber-400 border-amber-500/25" };
-    case "bytedance":
-      return { text: "BD", bg: "bg-purple-500/10 text-purple-400 border-purple-500/25" };
-    case "kling":
-      return { text: "KL", bg: "bg-rose-500/10 text-rose-400 border-rose-500/25" };
-    case "vidu":
-      return { text: "VD", bg: "bg-cyan-500/10 text-cyan-400 border-cyan-500/25" };
-    case "minimax":
-      return { text: "MX", bg: "bg-pink-500/10 text-pink-400 border-pink-500/25" };
-    case "alibaba":
-      return { text: "AL", bg: "bg-sky-500/10 text-sky-400 border-sky-500/25" };
-    case "leonardoai":
-      return { text: "LE", bg: "bg-violet-500/10 text-violet-400 border-violet-500/25" };
-    default:
-      const name = provider ? provider.toUpperCase() : "AI";
-      return { text: name.substring(0, 2), bg: "bg-primary/10 text-primary border-primary/25" };
-  }
+  const vendor = vendorById(provider);
+  return { text: vendor.mono, bg: `bg-white/[0.06] ${vendor.color} border-white/10` };
 }
 
 function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
@@ -524,17 +505,14 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
   }, []);
 
   // Dynamically compute list of providers from the input models lists
-  const availableProviders = [];
-  const seenProviders = new Set();
-  
+  const vendorCounts = new Map();
   modelEntries.forEach(({ family }) => {
-    const pId = family.provider || 'other';
-    const pName = family.provider_name || 'Other';
-    if (!seenProviders.has(pId)) {
-      seenProviders.add(pId);
-      availableProviders.push({ id: pId, name: pName });
-    }
+    const id = family.provider || 'other';
+    const current = vendorCounts.get(id) || { id, name: family.provider_name || 'Other', count: 0 };
+    current.count += 1;
+    vendorCounts.set(id, current);
   });
+  const availableProviders = [...vendorCounts.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
   const lf = search.toLowerCase();
 
@@ -596,44 +574,13 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
 
   return (
     <div className="flex gap-4 h-full max-h-[70vh] min-h-[350px]">
-      {/* Left Sidebar: Provider tabs */}
-      <div className="flex flex-col gap-2.5 items-center pr-2 border-r border-white/5 shrink-0 select-none overflow-y-auto custom-scrollbar w-14 pt-0.5">
-        <button
-          type="button"
-          onClick={() => setSelectedProvider("all")}
-          className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all flex-shrink-0 cursor-pointer ${
-            selectedProvider === "all"
-              ? "bg-white/10 text-yellow-400 border-yellow-500/30 shadow-md scale-105"
-              : "bg-white/[0.02] text-white/50 border-white/[0.03] hover:bg-white/5 hover:text-white"
-          }`}
-          title={copy.providers.allProviders}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill={selectedProvider === "all" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-        </button>
-        
-        {availableProviders.map(p => {
-          const style = getProviderStyle(p.id);
-          const isSelected = selectedProvider === p.id;
-          return (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setSelectedProvider(p.id)}
-              aria-pressed={isSelected}
-              className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center overflow-hidden font-black text-[10px] border transition-all cursor-pointer ${
-                isSelected
-                  ? `${style.bg} scale-105 shadow-md shadow-black/10`
-                  : "bg-white/[0.02] text-white/40 border-white/[0.02] hover:bg-white/5 hover:text-white/80"
-              }`}
-              title={p.name}
-            >
-              {style.text}
-            </button>
-          );
-        })}
-      </div>
+      <VendorRail
+        vendors={availableProviders}
+        selected={selectedProvider}
+        onSelect={setSelectedProvider}
+        allLabel={copy.providers.allProviders}
+        allCount={modelEntries.length}
+      />
 
       {/* Right Pane: Search + Lists */}
       <div className="flex-1 flex flex-col gap-2 min-w-0">
