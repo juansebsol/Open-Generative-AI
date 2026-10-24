@@ -33,6 +33,10 @@ export const ROUTE_GROUPS = {
      "prompt": "text",
      "similarity_boost": "similarity"
     }
+   },
+   {
+    "provider": "elevenlabs",
+    "endpoint": "eleven_flash_v2_5"
    }
   ],
   "elevenlabs-v4": [
@@ -62,6 +66,10 @@ export const ROUTE_GROUPS = {
       "voice_liam": "Liam"
      }
     }
+   },
+   {
+    "provider": "elevenlabs",
+    "endpoint": "eleven_v4"
    }
   ],
   "lyria-3-pro": [
@@ -1846,6 +1854,10 @@ export const ROUTE_GROUPS = {
     "provider": "fal",
     "endpoint": "fal-ai/elevenlabs/text-to-dialogue/eleven-v3",
     "transform": "elevenlabs-dialogue"
+   },
+   {
+    "provider": "elevenlabs",
+    "endpoint": "eleven_v3"
    }
   ]
  },

@@ -113,7 +113,8 @@
         "comfyInstall": "ComfyUI 桌面版",
         "sdDownload": "发布页"
       }
-    }
+    },
+    "balanceCharacters": "本周期剩余 {remaining} / {limit} 字符"
   },
   "palette": {
     "placeholder": "跳转到工作室或操作",

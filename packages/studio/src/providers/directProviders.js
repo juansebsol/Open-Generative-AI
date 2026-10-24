@@ -45,6 +45,14 @@ export const PROVIDERS = [
     description: 'GPT Image models direct from OpenAI.',
   },
   {
+    id: 'elevenlabs',
+    label: 'ElevenLabs',
+    kind: 'cloud',
+    keyUrl: 'https://elevenlabs.io/app/settings/api-keys',
+    keyPlaceholder: 'ElevenLabs API key',
+    description: 'Speech and dialogue direct from ElevenLabs, with the voices in your account.',
+  },
+  {
     id: 'comfyui',
     label: 'ComfyUI (local)',
     kind: 'local',
@@ -66,7 +74,7 @@ export const LOCAL_PROVIDER_IDS = PROVIDERS.filter((provider) => provider.kind =
 
 // Providers whose adapters build the request themselves instead of mapping
 // through a schema snapshot. Their routes only name the provider model id.
-export const DIRECT_PROVIDERS = new Set(['google', 'openai', 'openrouter']);
+export const DIRECT_PROVIDERS = new Set(['google', 'openai', 'openrouter', 'elevenlabs']);
 
 export function getProvider(id) {
   return PROVIDERS.find((provider) => provider.id === id) || null;

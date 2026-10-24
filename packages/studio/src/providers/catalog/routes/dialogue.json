@@ -1,3 +1,13 @@
 {
-  "elevenlabs-text-to-dialogue-v3": [{ "provider": "fal", "endpoint": "fal-ai/elevenlabs/text-to-dialogue/eleven-v3", "transform": "elevenlabs-dialogue" }]
+  "elevenlabs-text-to-dialogue-v3": [
+    {
+      "provider": "fal",
+      "endpoint": "fal-ai/elevenlabs/text-to-dialogue/eleven-v3",
+      "transform": "elevenlabs-dialogue"
+    },
+    {
+      "provider": "elevenlabs",
+      "endpoint": "eleven_v3"
+    }
+  ]
 }

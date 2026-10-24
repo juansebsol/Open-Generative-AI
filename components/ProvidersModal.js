@@ -39,7 +39,7 @@ function KeyField({ provider, value, onChange, copy }) {
 }
 
 // Providers whose balance /api/balance can read.
-const BALANCE_PROVIDERS = new Set(['fal', 'wavespeed', 'openrouter']);
+const BALANCE_PROVIDERS = new Set(['fal', 'wavespeed', 'openrouter', 'elevenlabs']);
 
 function BalanceLine({ providerId, apiKey, autoCheck, locale, copy }) {
   const [state, setState] = useState({ status: 'idle' });
@@ -83,7 +83,11 @@ function BalanceLine({ providerId, apiKey, autoCheck, locale, copy }) {
   }
   if (state.status === 'done') {
     if (state.kind === 'needsAdminKey') text = copy.balanceNeedsAdmin;
-    else {
+    else if (state.kind === 'characters') {
+      const number = (value) => new Intl.NumberFormat(locale).format(value ?? 0);
+      text = copy.balanceCharacters.replace('{remaining}', number(state.remaining)).replace('{limit}', number(state.limit));
+      tone = state.remaining > 0 ? 'text-emerald-300' : 'text-amber-300';
+    } else {
       const template = { balance: copy.balance, keyLimit: copy.balanceKeyLimit, usage: copy.balanceUsage }[state.kind] || copy.balance;
       text = template.replace('{amount}', money(state.amount, state.currency));
       if (state.kind !== 'usage') tone = 'text-emerald-300';

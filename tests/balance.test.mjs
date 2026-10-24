@@ -31,3 +31,9 @@ test('fal reports when the key is not an admin key', async () => {
   assert.deepEqual(await getBalance({ provider: 'fal', key: 'fal-key-123456' }), { kind: 'needsAdminKey' });
   assert.equal(calls[0].auth, 'Key fal-key-123456');
 });
+
+test('elevenlabs reports characters left in the billing period', async () => {
+  const calls = mockFetch({ 'https://api.elevenlabs.io/v1/user/subscription': [200, { tier: 'creator', character_count: 12000, character_limit: 100000 }] });
+  assert.deepEqual(await getBalance({ provider: 'elevenlabs', key: 'xi-key-1234567' }), { kind: 'characters', used: 12000, limit: 100000, remaining: 88000, tier: 'creator' });
+  assert.equal(calls[0].url, 'https://api.elevenlabs.io/v1/user/subscription');
+});

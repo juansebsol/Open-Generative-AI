@@ -32,6 +32,7 @@ Add any combination in **Settings → Providers**. A model appears when at least
 | [OpenRouter](https://openrouter.ai) | One key for Gemini and GPT image models | [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys) |
 | [Google Gemini](https://aistudio.google.com) | Nano Banana image models, direct | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | [OpenAI](https://platform.openai.com) | GPT Image models, direct | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| [ElevenLabs](https://elevenlabs.io) | Speech and multi-voice dialogue with the voices in your own account; your plan's characters are used instead of a reseller's rate. Optional: fal and WaveSpeed also serve these models. | [elevenlabs.io/app/settings/api-keys](https://elevenlabs.io/app/settings/api-keys) |
 | ComfyUI (local) | Your own checkpoints and workflows | — |
 | sd.cpp `sd-server` (local) | Lightweight local Stable Diffusion | — |
 

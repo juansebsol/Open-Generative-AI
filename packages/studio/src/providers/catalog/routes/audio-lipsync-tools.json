@@ -21,6 +21,10 @@
         "prompt": "text",
         "similarity_boost": "similarity"
       }
+    },
+    {
+      "provider": "elevenlabs",
+      "endpoint": "eleven_flash_v2_5"
     }
   ],
   "elevenlabs-v4": [
@@ -50,6 +54,10 @@
           "voice_liam": "Liam"
         }
       }
+    },
+    {
+      "provider": "elevenlabs",
+      "endpoint": "eleven_v4"
     }
   ],
   "lyria-3-pro": [

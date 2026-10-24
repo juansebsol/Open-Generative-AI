@@ -113,7 +113,8 @@
         "comfyInstall": "ComfyUI Desktop",
         "sdDownload": "Releases"
       }
-    }
+    },
+    "balanceCharacters": "{remaining} of {limit} characters left this period"
   },
   "palette": {
     "placeholder": "Jump to a studio or action",

@@ -12,10 +12,11 @@ import * as wavespeed from './adapters/wavespeed.js';
 import * as google from './adapters/google.js';
 import * as openai from './adapters/openai.js';
 import * as openrouter from './adapters/openrouter.js';
+import * as elevenlabs from './adapters/elevenlabs.js';
 export { chatCompletion, CHAT_PROVIDER_IDS } from './chat.js';
 export { getBalance, BALANCE_PROVIDER_IDS } from './balance.js';
 
-const ADAPTERS = { fal, wavespeed, google, openai, openrouter };
+const ADAPTERS = { fal, wavespeed, google, openai, openrouter, elevenlabs };
 
 export { ProviderError, MappingError, assertPublicHttpsUrl };
 

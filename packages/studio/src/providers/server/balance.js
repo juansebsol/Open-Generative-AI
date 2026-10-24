@@ -6,7 +6,7 @@ import { ProviderError, requestJson } from './http.js';
 const TIMEOUT_MS = 15_000;
 const UNAUTHORIZED = new Set([401, 403]);
 
-export const BALANCE_PROVIDER_IDS = ['fal', 'wavespeed', 'openrouter'];
+export const BALANCE_PROVIDER_IDS = ['fal', 'wavespeed', 'openrouter', 'elevenlabs'];
 
 const usd = (value) => (Number.isFinite(Number(value)) ? Number(value) : null);
 
@@ -49,7 +49,18 @@ async function falBalance(key) {
   }
 }
 
-const LOOKUPS = { fal: falBalance, wavespeed: wavespeedBalance, openrouter: openrouterBalance };
+// ElevenLabs plans are metered in characters per billing period.
+async function elevenlabsBalance(key) {
+  const body = await requestJson('elevenlabs', 'https://api.elevenlabs.io/v1/user/subscription', {
+    headers: { 'xi-api-key': key },
+    timeoutMs: TIMEOUT_MS,
+  });
+  const used = Number(body?.character_count) || 0;
+  const limit = Number(body?.character_limit) || 0;
+  return { kind: 'characters', used, limit, remaining: Math.max(0, limit - used), tier: body?.tier || '' };
+}
+
+const LOOKUPS = { fal: falBalance, wavespeed: wavespeedBalance, openrouter: openrouterBalance, elevenlabs: elevenlabsBalance };
 
 export async function getBalance({ provider, key }) {
   const lookup = LOOKUPS[provider];
