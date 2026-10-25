@@ -20,7 +20,7 @@ An open-source, **bring-your-own-key** studio for AI images, video, audio and li
 | Body Swap | Recast the subject of a video from a reference image |
 | Marketing | Product ad videos from product and avatar images |
 | Audio | Text-to-speech, sound effects and music |
-| 3D | Text, image or multi-view to textured 3D models (Meshy 7.1, Tripo, Hunyuan 3D 3.1, Rodin 2.5, Trellis 2) with a built-in viewer and GLB/FBX/OBJ downloads |
+| 3D | Text to 3D and Image to 3D (Meshy 7.1, Tripo, Hunyuan 3D 3.1, Rodin 2.5, Trellis 2, sketch input), plus Retexture, Rig and animate, and Mesh tools (remesh, split into parts, smart topology) on a shared model library with a built-in viewer |
 
 ## Providers
 

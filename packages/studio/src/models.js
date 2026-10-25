@@ -27359,6 +27359,35 @@ const ALL_threeDModels = [
     "provider_name": "Hunyuan"
   }
 ];
+// Plain words for the 3D option values, so the studio can show "Polygons · 30k"
+// instead of the raw enum. Inputs listed in THREE_D_ADVANCED sit behind a
+// "More" toggle in the prompt bar.
+const THREE_D_OPTION_LABELS = {
+  model_type: { standard: 'Standard', lowpoly: 'Low poly', 'smart-topology': 'Smart topology' },
+  topology: { triangle: 'Triangles', quad: 'Quads' },
+  polygon_type: { triangle: 'Triangles', quadrilateral: 'Quads' },
+  symmetry_mode: { auto: 'Auto', on: 'On', off: 'Off' },
+  geometry_quality: { standard: 'Standard', detailed: 'Detailed' },
+  texture_quality: { fast: 'Fast', standard: 'Standard', detailed: 'Detailed', extreme: 'Extreme' },
+  generate_type: { Normal: 'Textured', Geometry: 'Geometry only' },
+  tier: { 'Gen-2.5-Low': 'Low', 'Gen-2.5-Medium': 'Medium', 'Gen-2.5-High': 'High', 'Gen-2.5-Extreme-High': 'Extreme' },
+  material: { All: 'All maps', PBR: 'PBR', Shaded: 'Shaded', None: 'None' },
+  geometry_file_format: { glb: 'GLB', fbx: 'FBX', obj: 'OBJ', usdz: 'USDZ', stl: 'STL' },
+  texture_resolution: { '2k': '2K', '4k': '4K', '8k': '8K' },
+  texture_size: { 1024: '1K', 2048: '2K', 4096: '4K' },
+  face_level: { low: 'Low', medium: 'Medium', high: 'High' },
+};
+const THREE_D_ADVANCED = new Set(['symmetry_mode', 'topology', 'should_texture', 'texture', 'quad', 'enable_original_uv', 'resolution', 'geometry_file_format', 'material', 'bake', 'generate_type', 'texture_size']);
+const compactNumber = (value) => (value >= 1000000 ? `${value / 1000000}M` : value >= 1000 ? `${Math.round(value / 100) / 10}k` : String(value));
+for (const model of ALL_threeDModels) {
+  for (const [key, input] of Object.entries(model.inputs || {})) {
+    if (Array.isArray(input.enum) && !input.optionLabels) {
+      input.optionLabels = THREE_D_OPTION_LABELS[key] || Object.fromEntries(input.enum.map((value) => [value, key === 'height_meters' ? `${value} m` : typeof value === 'number' ? compactNumber(value) : String(value)]));
+    }
+    if (THREE_D_ADVANCED.has(key)) input.advanced = true;
+  }
+}
+
 export const threeDModels = [...withRoutes(ALL_threeDModels)];
 export const getThreeDModelById = (id) => threeDModels.find(m => m.id === id);
 

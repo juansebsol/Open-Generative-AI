@@ -7,7 +7,7 @@ import {
   PROVIDERS, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
-  IconAlertCircle, IconAperture, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX,
+  IconAlertCircle, IconAperture, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3
 } from '@tabler/icons-react';
 import ProvidersModal from './ProvidersModal';
 import CommandPalette from './CommandPalette';
@@ -31,7 +31,11 @@ const TABS = [
   { id: 'marketing', label: 'Marketing Studio', icon: IconSpeakerphone },
   { id: 'vibe-motion', label: 'Vibe Motion', icon: IconWand },
   { id: 'audio', label: 'Audio Studio', icon: IconMusic },
-  { id: 'three-d', label: '3D Studio', icon: IconCube },
+  { id: 'three-d-text', label: 'Text to 3D', icon: IconCube },
+  { id: 'three-d-image', label: 'Image to 3D', icon: IconPhotoScan },
+  { id: 'three-d-retexture', label: 'Retexture', icon: IconBrush },
+  { id: 'three-d-rig', label: 'Rig and animate', icon: IconBone },
+  { id: 'three-d-mesh', label: 'Mesh tools', icon: IconTopologyStar3 },
   { id: 'agents', label: 'Agents', icon: IconRobot },
   { id: 'workflows', label: 'Workflows', icon: IconSitemap },
 ];
@@ -40,10 +44,12 @@ const NAVIGATION_CATEGORIES = [
   { id: 'images', label: 'Images', tabIds: ['image', 'layers', 'cinema', 'ai-influencer', 'design-agent'] },
   { id: 'video', label: 'Video', tabIds: ['video', 'clipping', 'motion-control', 'lipsync', 'body-swap', 'marketing', 'vibe-motion'] },
   { id: 'audio', label: 'Audio', tabIds: ['audio'] },
-  { id: '3d', label: '3D', tabIds: ['three-d'] },
+  { id: '3d', label: '3D', tabIds: ['three-d-text', 'three-d-image', 'three-d-retexture', 'three-d-rig', 'three-d-mesh'] },
   { id: 'agents-automation', label: 'Automation', tabIds: ['agents', 'workflows'] },
 ];
 
+// The 3D pages share one component; each tab passes its page id.
+const THREE_D_TABS = TABS.map((tab) => tab.id).filter((id) => id.startsWith('three-d-'));
 const AVAILABLE_TAB_IDS = new Set(TABS.map((tab) => tab.id).filter(isStudioAvailable));
 const VISIBLE_CATEGORIES = NAVIGATION_CATEGORIES
   .map((category) => ({ ...category, tabIds: category.tabIds.filter((id) => AVAILABLE_TAB_IDS.has(id)) }))
@@ -339,6 +345,17 @@ export default function StandaloneShell({ locale = 'en' }) {
     };
   }, []);
 
+  // Studios hand work to each other (a 3D result sent to Retexture) by
+  // asking the shell to open a tab.
+  useEffect(() => {
+    const openStudio = (event) => {
+      const tabId = event.detail?.tabId;
+      if (AVAILABLE_TAB_IDS.has(tabId)) handleTabChange(tabId);
+    };
+    window.addEventListener('oga:open-studio', openStudio);
+    return () => window.removeEventListener('oga:open-studio', openStudio);
+  }, [handleTabChange]);
+
   // Drag and Drop Handlers
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -608,11 +625,11 @@ export default function StandaloneShell({ locale = 'en' }) {
             <DesignAgentStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('design-agent')} onGenerationEnd={makeGenerationEndCallback('design-agent')} onGenerationComplete={makeSuccessCallback('design-agent')} onGenerationError={makeErrorCallback('design-agent')} />
           </div>
         )}
-        {AVAILABLE_TAB_IDS.has('three-d') && (
-          <div className={activeTab === 'three-d' ? "h-full w-full" : "hidden"}>
-            <ThreeDStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('three-d')} onGenerationEnd={makeGenerationEndCallback('three-d')} onGenerationComplete={makeSuccessCallback('three-d')} onGenerationError={makeErrorCallback('three-d')} />
+        {THREE_D_TABS.filter((tabId) => AVAILABLE_TAB_IDS.has(tabId)).map((tabId) => (
+          <div key={tabId} className={activeTab === tabId ? "h-full w-full" : "hidden"}>
+            <ThreeDStudio page={tabId.slice('three-d-'.length)} locale={locale} droppedFiles={activeTab === tabId ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback(tabId)} onGenerationEnd={makeGenerationEndCallback(tabId)} onGenerationComplete={makeSuccessCallback(tabId)} onGenerationError={makeErrorCallback(tabId)} />
           </div>
-        )}
+        ))}
         {AVAILABLE_TAB_IDS.has('workflows') && (
           <div className={activeTab === 'workflows' ? "h-full w-full" : "hidden"}>
             <WorkflowStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('workflows')} onGenerationEnd={makeGenerationEndCallback('workflows')} onGenerationComplete={makeSuccessCallback('workflows')} onGenerationError={makeErrorCallback('workflows')} />

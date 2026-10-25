@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { IconBrush, IconCube, IconDownload, IconEraser, IconMaximize, IconPencil, IconPhotoPlus, IconTrash, IconUpload, IconWand, IconX } from "@tabler/icons-react";
+import { IconAdjustments, IconBrush, IconCube, IconDownload, IconEraser, IconMaximize, IconPencil, IconPhotoPlus, IconSend, IconTrash, IconUpload, IconX } from "@tabler/icons-react";
 import { generateThreeD, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import { threeDModels } from "../models.js";
@@ -11,6 +11,7 @@ import { isEndpointAvailable } from "../providers/client.js";
 import { getProvider } from "../providers/directProviders.js";
 import { subscribeProviderSettings } from "../providers/keys.js";
 import { vendorById } from "../vendors.js";
+import { addEntry, addPending, getEmptyLibrary, getLibrary, removeEntry, removePending, sendTo, subscribeLibrary, takeHandoff } from "../threeDLibrary.js";
 import {
   PROMPT_CONTROL_LABEL_CLASS,
   PromptAction,
@@ -22,8 +23,6 @@ import {
   PromptMenuList,
   PromptPopover,
   PromptPopoverHeader,
-  PromptSegmentedControl,
-  PromptSegmentOption,
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
@@ -33,13 +32,28 @@ import en from "../messages/en/threeDStudio.json";
 import zh from "../messages/zh/threeDStudio.json";
 import { resolveCopy } from "../i18nUtils";
 
-// Text, image/sketch or multi-view to a textured mesh, plus tools that work
-// on an existing model (retexture, rig, remesh, segment, topology). Catalog
-// entries with the same `family` are one model with text/image variants;
-// entries of kind "edit" are tools.
+// Five pages share this component: Text to 3D and Image to 3D generate a
+// mesh; Retexture, Rig and animate, and Mesh tools work on an existing one.
+// All pages show the same library (threeDLibrary.js), and "Send to" moves a
+// result to another page with the model preloaded.
 
-const PERSIST_KEY = "hg_three_d_studio_persistent";
-const HISTORY_LIMIT = 40;
+export const THREE_D_PAGES = {
+  text: { mode: "text" },
+  image: { mode: "image" },
+  retexture: { tools: ["retexture"] },
+  rig: { tools: ["rig"] },
+  mesh: { tools: ["remesh", "segment", "topology"] },
+};
+
+// "Send to" targets, in menu order: page + which tool to preselect there.
+const DESTINATIONS = [
+  { page: "retexture", toolLabel: "retexture" },
+  { page: "rig", toolLabel: "rig" },
+  { page: "mesh", toolLabel: "remesh" },
+  { page: "mesh", toolLabel: "segment" },
+  { page: "mesh", toolLabel: "topology" },
+];
+
 const MODEL_FILE = /\.(glb|gltf|obj|fbx|usdz|stl|ply)(\?|$)/i;
 const VIEWABLE = /\.(glb|gltf)(\?|$)/i;
 const MODEL_ACCEPT = ".glb,.gltf,.obj,.fbx,model/gltf-binary,model/gltf+json";
@@ -118,12 +132,13 @@ function SketchPad({ copy, onUse, onClose }) {
   const [tool, setTool] = useState("pen");
   const [size, setSize] = useState(6);
 
-  useEffect(() => {
+  const clear = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
+  useEffect(() => { clear(); }, [clear]);
 
   const point = (event) => {
     const rect = canvasRef.current.getBoundingClientRect();
@@ -150,12 +165,6 @@ function SketchPad({ copy, onUse, onClose }) {
     ctx.stroke();
   };
   const stop = () => { drawing.current = false; };
-  const clear = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  };
   const use = () => canvasRef.current.toBlob((blob) => blob && onUse(new File([blob], "sketch.png", { type: "image/png" })), "image/png");
 
   const toolButton = (id, Icon, label) => (
@@ -189,18 +198,30 @@ function SketchPad({ copy, onUse, onClose }) {
   );
 }
 
-export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGenerationComplete, onGenerationError, droppedFiles, onFilesHandled, locale = "en" }) {
+function useLibrary() {
+  return useSyncExternalStore(subscribeLibrary, getLibrary, getEmptyLibrary);
+}
+
+export default function ThreeDStudio({ page = "text", onGenerationStart, onGenerationEnd, onGenerationComplete, onGenerationError, droppedFiles, onFilesHandled, locale = "en" }) {
   const copy = resolveCopy(en, zh, locale);
-  const [mode, setMode] = useState("text"); // text | image | edit
-  const [familyId, setFamilyId] = useState(FAMILIES[0]?.id || "");
-  const [toolId, setToolId] = useState(TOOLS[0]?.id || "");
+  const pageCopy = copy.pages[page] || copy.pages.text;
+  const config = THREE_D_PAGES[page] || THREE_D_PAGES.text;
+  const isTool = Boolean(config.tools);
+  const mode = config.mode || "text";
+  const PERSIST_KEY = `hg_three_d_${page}`;
+
+  const library = useLibrary();
+  const families = useMemo(() => (isTool ? [] : FAMILIES.filter((entry) => (mode === "text" ? entry.variants.text : entry.variants.image || entry.variants.multi))), [isTool, mode]);
+  const tools = useMemo(() => (isTool ? TOOLS.filter((tool) => config.tools.includes(tool.toolLabel)) : []), [isTool, config.tools]);
+
+  const [familyId, setFamilyId] = useState(families[0]?.id || "");
+  const [toolId, setToolId] = useState(tools[0]?.id || "");
   const [prompt, setPrompt] = useState("");
   const [images, setImages] = useState([]); // [{ url, name }]
   const [source, setSource] = useState(null); // { url, name, thumbnail, fromId }
   const [uploading, setUploading] = useState(null);
   const [options, setOptions] = useState({});
-  const [history, setHistory] = useState([]);
-  const [pending, setPending] = useState([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [viewer, setViewer] = useState(null);
   const [sketchOpen, setSketchOpen] = useState(false);
@@ -210,19 +231,15 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
   const textareaRef = useRef(null);
   const hasRestored = useRef(false);
 
-  const family = FAMILIES.find((entry) => entry.id === familyId) || FAMILIES[0];
-  const tool = TOOLS.find((entry) => entry.id === toolId) || TOOLS[0];
-  const generator = variantFor(family, mode === "edit" ? "text" : mode, images.length);
-  const selectedModel = mode === "edit" ? tool : generator;
-  const maxImages = mode === "edit" ? 1 : family?.variants.multi ? (family.variants.multi.maxImages || 4) : 1;
-  const familiesForMode = FAMILIES.filter((entry) => (mode === "text" ? entry.variants.text : entry.variants.image || entry.variants.multi));
+  const family = families.find((entry) => entry.id === familyId) || families[0] || null;
+  const tool = tools.find((entry) => entry.id === toolId) || tools[0] || null;
+  const selectedModel = isTool ? tool : variantFor(family, mode, images.length);
+  const maxImages = isTool ? 1 : family?.variants.multi ? (family.variants.multi.maxImages || 4) : 1;
   const showPrompt = mode === "text" || Boolean(selectedModel?.hasPrompt);
-  const needsImage = mode === "image" || (mode === "edit" && (tool?.required || []).includes("image_url"));
-  const allowsImage = needsImage || (mode === "edit" && Boolean(tool?.inputs?.image_url));
-
-  useEffect(() => {
-    if (mode !== "edit" && !familiesForMode.some((entry) => entry.id === family?.id) && familiesForMode[0]) setFamilyId(familiesForMode[0].id);
-  }, [mode, family?.id, familiesForMode]);
+  const needsImage = mode === "image" || (isTool && (tool?.required || []).includes("image_url"));
+  const allowsImage = needsImage || (isTool && Boolean(tool?.inputs?.image_url));
+  const toolLabel = (item) => copy.tools[item?.toolLabel] || item?.name || "";
+  const toolMeta = (item) => (toolLabel(item) === item.name ? item.provider_name : `${item.name} · ${item.provider_name}`);
 
   useEffect(() => {
     if (!selectedModel) return;
@@ -253,38 +270,48 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
     window.dispatchEvent(new CustomEvent("oga:provider-setup-needed", { detail: { providers } }));
   };
 
-  // Persistence
+  // Per-page persistence (the library persists itself).
   useEffect(() => {
     try {
       const data = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null");
       if (data) {
-        if (["text", "image", "edit"].includes(data.mode)) setMode(data.mode);
-        if (FAMILIES.some((entry) => entry.id === data.familyId)) setFamilyId(data.familyId);
-        if (TOOLS.some((entry) => entry.id === data.toolId)) setToolId(data.toolId);
+        if (families.some((entry) => entry.id === data.familyId)) setFamilyId(data.familyId);
+        if (tools.some((entry) => entry.id === data.toolId)) setToolId(data.toolId);
         if (typeof data.prompt === "string") setPrompt(data.prompt);
         if (Array.isArray(data.images)) setImages(data.images.filter((image) => typeof image?.url === "string"));
         if (data.source && typeof data.source.url === "string") setSource(data.source);
         if (data.options && typeof data.options === "object") setOptions(data.options);
-        if (Array.isArray(data.history)) setHistory(data.history.filter((entry) => entry?.id && typeof entry.url === "string"));
       }
     } catch (error) {
       console.warn("[ThreeDStudio] could not restore state", error);
     } finally {
       hasRestored.current = true;
     }
-  }, []);
+  }, [PERSIST_KEY, families, tools]);
 
   useEffect(() => {
     if (!hasRestored.current) return;
     const timer = setTimeout(() => {
       try {
-        localStorage.setItem(PERSIST_KEY, JSON.stringify({ mode, familyId, toolId, prompt, images, source, options, history: history.slice(0, HISTORY_LIMIT) }));
+        localStorage.setItem(PERSIST_KEY, JSON.stringify({ familyId, toolId, prompt, images, source, options }));
       } catch (error) {
         console.warn("[ThreeDStudio] could not save state", error);
       }
     }, 400);
     return () => clearTimeout(timer);
-  }, [mode, familyId, toolId, prompt, images, source, options, history]);
+  }, [PERSIST_KEY, familyId, toolId, prompt, images, source, options]);
+
+  // A model sent here from another page.
+  useEffect(() => {
+    if (!library.handoffs[page]) return;
+    const handoff = takeHandoff(page);
+    if (!handoff) return;
+    setSource(handoff.source);
+    const target = tools.find((item) => item.toolLabel === handoff.toolLabel);
+    if (target) setToolId(target.id);
+    setViewer(null);
+    setOpenDropdown(null);
+  }, [library.handoffs, page, tools]);
 
   // Uploads: reference images, or a model file for the tools.
   const uploadImages = useCallback(async (fileList, { sketch = false } = {}) => {
@@ -293,25 +320,23 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
       toast.error(copy.errors.notImage);
       return;
     }
-    const limit = mode === "edit" ? 1 : maxImages;
-    const replace = limit === 1;
-    const room = replace ? 1 : Math.max(0, limit - images.length);
-    if (files.length > room) toast(fill(copy.media.maxImages, { max: limit }));
+    const replace = maxImages === 1;
+    const room = replace ? 1 : Math.max(0, maxImages - images.length);
+    if (files.length > room) toast(fill(copy.media.maxImages, { max: maxImages }));
     const queue = files.slice(0, room);
     if (queue.length === 0) return;
     setUploading({ done: 0, total: queue.length, progress: 0 });
     for (const [index, file] of queue.entries()) {
       try {
         const url = await uploadFile(file, (progress) => setUploading({ done: index, total: queue.length, progress }));
-        setImages((previous) => (replace ? [{ url, name: file.name }] : [...previous, { url, name: file.name }].slice(0, limit)));
+        setImages((previous) => (replace ? [{ url, name: file.name }] : [...previous, { url, name: file.name }].slice(0, maxImages)));
       } catch (error) {
         toast.error(fill(copy.errors.uploadFailed, { message: formatErrorMessage(error, "") }));
       }
     }
     setUploading(null);
-    if (mode === "text") setMode("image");
     if (sketch && SKETCH_FAMILY) setFamilyId(SKETCH_FAMILY.id);
-  }, [copy, images.length, maxImages, mode]);
+  }, [copy, images.length, maxImages]);
 
   const uploadModel = useCallback(async (file) => {
     if (!isModelFile(file)) {
@@ -322,7 +347,6 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
     try {
       const url = await uploadFile(file, (progress) => setUploading({ done: 0, total: 1, progress }));
       setSource({ url, name: file.name, thumbnail: null, fromId: null });
-      setMode("edit");
     } catch (error) {
       toast.error(fill(copy.errors.uploadFailed, { message: formatErrorMessage(error, "") }));
     } finally {
@@ -334,18 +358,22 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
     if (!droppedFiles?.length) return;
     const model = droppedFiles.find(isModelFile);
     const imageFiles = droppedFiles.filter(isImageFile);
-    if (model) uploadModel(model);
-    else if (imageFiles.length > 0) uploadImages(imageFiles);
+    if (isTool && model) uploadModel(model);
+    else if (allowsImage && imageFiles.length > 0) uploadImages(imageFiles);
+    else toast.error(isTool ? copy.errors.notModel : copy.errors.notImage);
     onFilesHandled?.();
-  }, [droppedFiles, onFilesHandled, uploadImages, uploadModel]);
+  }, [droppedFiles, onFilesHandled, uploadImages, uploadModel, isTool, allowsImage, copy]);
 
-  // "Use this result" from a card: feed it into a tool.
-  const useResult = (entry, nextToolId) => {
-    setSource({ url: entry.url, name: entry.prompt || entry.modelName, thumbnail: entry.thumbnail, fromId: entry.id });
-    if (nextToolId) setToolId(nextToolId);
-    setMode("edit");
+  const asSource = (entry) => ({ url: entry.url, name: entry.prompt || entry.modelName, thumbnail: entry.thumbnail, fromId: entry.id });
+  const useHere = (entry) => {
+    setSource(asSource(entry));
     setOpenDropdown(null);
     setViewer(null);
+  };
+  const send = (entry, destination) => {
+    setOpenDropdown(null);
+    setViewer(null);
+    sendTo(destination.page, { source: asSource(entry), toolLabel: destination.toolLabel });
   };
 
   // Generation
@@ -355,27 +383,27 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
       openProviderSettings();
       return;
     }
-    if (mode === "edit" && !source) return toast.error(copy.errors.needModel);
+    if (isTool && !source) return toast.error(copy.errors.needModel);
     if (showPrompt && selectedModel.promptRequired && !prompt.trim()) {
       textareaRef.current?.focus();
       return toast.error(copy.errors.needPrompt);
     }
-    if (needsImage && images.length === 0) return toast.error(mode === "edit" ? copy.errors.needReference : copy.errors.needImage);
+    if (needsImage && images.length === 0) return toast.error(isTool ? copy.errors.needReference : copy.errors.needImage);
 
     const runId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const runPrompt = showPrompt ? prompt.trim() : "";
     const payload = { model: selectedModel.id, ...options };
     if (runPrompt) payload.prompt = runPrompt;
-    if (mode === "edit") {
+    if (isTool) {
       payload.model_url = source.url;
       if (images[0] && allowsImage) payload.image_url = images[0].url;
     } else if (mode === "image") {
       if (selectedModel.imageField === "images_list") payload.images_list = images.map((image) => image.url);
       else payload.image_url = images[0].url;
     }
-    const label = mode === "edit" ? `${copy.tools[tool.toolLabel] || tool.name} · ${tool.provider_name}` : family.name;
+    const label = isTool ? `${toolLabel(tool)} · ${tool.provider_name}` : family.name;
 
-    setPending((previous) => [{ id: runId, label, prompt: runPrompt }, ...previous]);
+    addPending({ id: runId, label, prompt: runPrompt });
     onGenerationStart?.();
     try {
       const result = await generateThreeD(payload);
@@ -383,21 +411,21 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
       const files = media.filter((item) => item.type === "model" || MODEL_FILE.test(item.url));
       if (files.length === 0) throw new Error(copy.errors.noModel);
       const viewable = files.find((item) => VIEWABLE.test(item.url)) || files[0];
-      const thumbnail = media.find((item) => item.type === "image")?.url || (mode === "edit" ? source.thumbnail : images[0]?.url) || null;
+      const thumbnail = media.find((item) => item.type === "image")?.url || (isTool ? source.thumbnail : images[0]?.url) || null;
       const entry = {
         id: result.id || runId,
         url: viewable.url,
         files: files.map((item) => ({ url: item.url, ext: fileExt(item.url) })),
         thumbnail,
-        prompt: runPrompt || (mode === "edit" ? `${copy.tools[tool.toolLabel] || tool.name}: ${source.name}` : ""),
+        prompt: runPrompt || (isTool ? `${toolLabel(tool)}: ${source.name}` : ""),
         model: selectedModel.id,
-        modelName: mode === "edit" ? tool.name : family.name,
+        modelName: isTool ? toolLabel(tool) : family.name,
         vendor: selectedModel.provider_name || "",
-        mode,
-        sourceId: mode === "edit" ? source.fromId : null,
+        page,
+        sourceId: isTool ? source.fromId : null,
         timestamp: new Date().toISOString(),
       };
-      setHistory((previous) => [entry, ...previous].slice(0, HISTORY_LIMIT));
+      addEntry(entry);
       onGenerationComplete?.({ url: entry.url, model: selectedModel.id, prompt: runPrompt, type: "3d" });
     } catch (error) {
       console.error("[ThreeDStudio]", error);
@@ -405,7 +433,7 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
       if (onGenerationError) onGenerationError(message);
       else toast.error(message);
     } finally {
-      setPending((previous) => previous.filter((run) => run.id !== runId));
+      removePending(runId);
       onGenerationEnd?.();
     }
   };
@@ -426,37 +454,43 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
 
   const deleteEntry = (id) => {
     if (!confirm(copy.confirm.deleteItem)) return;
-    setHistory((previous) => previous.filter((entry) => entry.id !== id));
+    removeEntry(id);
     if (viewer?.id === id) setViewer(null);
   };
 
   const setOption = (key, value) => setOptions((previous) => ({ ...previous, [key]: value }));
-  const inputs = selectedModel?.inputs || {};
-  const enumOptions = Object.entries(inputs).filter(([, input]) => Array.isArray(input.enum));
-  const boolOptions = Object.entries(inputs).filter(([, input]) => input.type === "boolean");
-  const hasGallery = history.length > 0 || pending.length > 0;
-  const starters = (copy.empty.starters || []).map((starter) => ({ label: starter.label, prompt: starter.prompt }));
+  const inputs = Object.entries(selectedModel?.inputs || {}).filter(([, input]) => !input.field && (Array.isArray(input.enum) || input.type === "boolean"));
+  const primaryInputs = inputs.filter(([, input]) => !input.advanced);
+  const advancedInputs = inputs.filter(([, input]) => input.advanced);
+  const visibleInputs = showAdvanced ? inputs : primaryInputs;
   const optionLabel = (input, value) => input.optionLabels?.[value] ?? String(value);
-  const toolMeta = (item) => ((copy.tools[item.toolLabel] || item.name) === item.name ? item.provider_name : `${item.name} · ${item.provider_name}`);
+  const hasGallery = library.entries.length > 0 || library.pending.length > 0;
+  const starters = (pageCopy.starters || []).map((starter) => ({ label: starter.label, prompt: starter.prompt }));
+  const destinations = DESTINATIONS.filter((destination) => destination.page !== page);
+
+  const sendMenu = (entry, placement = "below") => (
+    <div className={`absolute z-20 w-[220px] rounded-[10px] border border-white/[0.12] bg-[#111114] p-1 shadow-xl ${placement === "below" ? "right-0 top-full mt-1" : "left-0 bottom-full mb-1"}`}>
+      {destinations.map((destination) => (
+        <button key={`${destination.page}-${destination.toolLabel}`} type="button" onClick={() => send(entry, destination)} className="flex w-full flex-col items-start rounded-lg px-2.5 py-1.5 text-left hover:bg-white/[0.06]">
+          <span className="text-[12.5px] text-white/90">{copy.tools[destination.toolLabel]}</span>
+          {copy.pages[destination.page].title !== copy.tools[destination.toolLabel] && <span className="text-[11px] text-white/40">{copy.pages[destination.page].title}</span>}
+        </button>
+      ))}
+    </div>
+  );
 
   const cardActions = (entry) => (
     <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+      {isTool && (
+        <button type="button" onClick={() => useHere(entry)} className="flex h-8 items-center gap-1.5 rounded-lg bg-primary px-2.5 text-[12px] font-semibold text-[#04202a] hover:brightness-110">{copy.send.here}</button>
+      )}
       <div className="relative">
-        <button type="button" title={copy.use.button} aria-label={copy.use.button} onClick={() => setOpenDropdown(openDropdown === `use-${entry.id}` ? null : `use-${entry.id}`)} className="flex h-8 items-center gap-1.5 rounded-lg bg-black/60 px-2.5 text-[12px] font-medium text-white hover:bg-primary hover:text-black"><IconWand size={14} stroke={1.75} aria-hidden="true" />{copy.use.button}</button>
-        {openDropdown === `use-${entry.id}` && (
-          <div className="absolute right-0 top-full z-20 mt-1 w-[220px] rounded-[10px] border border-white/[0.12] bg-[#111114] p-1 shadow-xl">
-            {TOOLS.map((item) => (
-              <button key={item.id} type="button" onClick={() => useResult(entry, item.id)} className="flex w-full flex-col items-start rounded-lg px-2.5 py-1.5 text-left hover:bg-white/[0.06]">
-                <span className="text-[12.5px] text-white/90">{copy.tools[item.toolLabel] || item.name}</span>
-                <span className="text-[11px] text-white/40">{toolMeta(item)}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <button type="button" title={copy.send.button} aria-label={copy.send.button} onClick={() => setOpenDropdown(openDropdown === `send-${entry.id}` ? null : `send-${entry.id}`)} className="flex h-8 items-center gap-1.5 rounded-lg bg-black/60 px-2.5 text-[12px] font-medium text-white hover:bg-white/20"><IconSend size={14} stroke={1.75} aria-hidden="true" />{copy.send.button}</button>
+        {openDropdown === `send-${entry.id}` && sendMenu(entry)}
       </div>
-      <button type="button" title={copy.gallery.fullscreen} aria-label={copy.gallery.fullscreen} onClick={() => setViewer(entry)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-primary hover:text-black"><IconMaximize size={15} stroke={1.75} aria-hidden="true" /></button>
+      <button type="button" title={copy.gallery.fullscreen} aria-label={copy.gallery.fullscreen} onClick={() => setViewer(entry)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-white/20"><IconMaximize size={15} stroke={1.75} aria-hidden="true" /></button>
       <div className="relative">
-        <button type="button" title={copy.gallery.download} aria-label={copy.gallery.download} onClick={() => setOpenDropdown(openDropdown === `dl-${entry.id}` ? null : `dl-${entry.id}`)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-primary hover:text-black"><IconDownload size={15} stroke={1.75} aria-hidden="true" /></button>
+        <button type="button" title={copy.gallery.download} aria-label={copy.gallery.download} onClick={() => setOpenDropdown(openDropdown === `dl-${entry.id}` ? null : `dl-${entry.id}`)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-white/20"><IconDownload size={15} stroke={1.75} aria-hidden="true" /></button>
         {openDropdown === `dl-${entry.id}` && (
           <div className="absolute right-0 top-full z-20 mt-1 min-w-[140px] rounded-[10px] border border-white/[0.12] bg-[#111114] p-1 shadow-xl">
             {entry.files.map((file) => (
@@ -469,6 +503,22 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
       </div>
       <button type="button" title={copy.gallery.delete} aria-label={copy.gallery.delete} onClick={() => deleteEntry(entry.id)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-red-300 hover:bg-red-500 hover:text-white"><IconTrash size={15} stroke={1.75} aria-hidden="true" /></button>
     </div>
+  );
+
+  const sourceChip = source ? (
+    <div className="flex h-10 items-center gap-2 rounded-full border border-primary/30 bg-primary/[0.08] pl-1 pr-3">
+      {source.thumbnail
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img src={source.thumbnail} alt="" className="h-8 w-8 rounded-full object-cover" />
+        : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-primary"><IconCube size={15} stroke={1.75} aria-hidden="true" /></span>}
+      <span className="max-w-[200px] truncate text-[12.5px] text-white/85">{source.name}</span>
+      <button type="button" onClick={() => setSource(null)} aria-label={copy.edit.clearModel} className="text-white/40 hover:text-white"><IconX size={14} stroke={2} aria-hidden="true" /></button>
+    </div>
+  ) : (
+    <button type="button" onClick={() => modelInputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-10 items-center gap-2 rounded-full border border-dashed border-white/20 px-3.5 whitespace-nowrap text-[12.5px] text-white/60 hover:border-white/40 hover:text-white">
+      {uploading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconUpload size={15} stroke={1.75} aria-hidden="true" />}
+      {copy.edit.uploadModel}
+    </button>
   );
 
   return (
@@ -484,35 +534,41 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
 
       <div className="flex-1 w-full overflow-y-auto custom-scrollbar pb-64 pt-4 px-4 md:px-8">
         {hasGallery ? (
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 pt-12 sm:grid-cols-2 lg:grid-cols-3">
-            {pending.map((run) => (
-              <div key={run.id} className="aspect-square rounded-2xl border border-white/[0.08] bg-[#0e0e11] flex flex-col items-center justify-center gap-3 text-center p-6">
-                <span className="h-7 w-7 animate-spin rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
-                <div className="text-[14px] font-medium text-white/85">{fill(copy.gallery.pendingTitle, { model: run.label })}</div>
-                <div className="text-[12px] text-white/45">{copy.gallery.pendingHint}</div>
-              </div>
-            ))}
-            {history.map((entry) => (
-              <div key={entry.id} className="group relative aspect-square overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0e0e11]">
-                {VIEWABLE.test(entry.url)
-                  ? <ModelView src={entry.url} poster={entry.thumbnail} className="h-full w-full" />
-                  : (
-                    <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-white/40">
-                      <IconCube size={30} stroke={1.5} aria-hidden="true" />
-                      <span className="text-[12px]">{fill(copy.gallery.noPreview, { ext: entry.files[0]?.ext || "" })}</span>
-                    </div>
-                  )}
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#09090b]/95 to-transparent p-3 pt-10">
-                  <div className="truncate text-[13px] font-medium text-white/90">{entry.prompt || copy.gallery.fromImage}</div>
-                  <div className="text-[11.5px] text-white/45">{entry.modelName}{entry.vendor ? ` · ${entry.vendor}` : ""}{entry.sourceId ? ` · ${copy.gallery.edited}` : ""}</div>
+          <div className="mx-auto max-w-6xl pt-12">
+            <div className="mb-3 flex items-baseline justify-between px-1">
+              <div className="text-[12px] font-medium uppercase tracking-[0.08em] text-white/40">{fill(copy.gallery.library, { count: library.entries.length })}</div>
+              {isTool && !source && <div className="text-[12px] text-white/45">{copy.gallery.pickHint}</div>}
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {library.pending.map((run) => (
+                <div key={run.id} className="aspect-square rounded-2xl border border-white/[0.08] bg-[#0e0e11] flex flex-col items-center justify-center gap-3 text-center p-6">
+                  <span className="h-7 w-7 animate-spin rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
+                  <div className="text-[14px] font-medium text-white/85">{fill(copy.gallery.pendingTitle, { model: run.label })}</div>
+                  <div className="text-[12px] text-white/45">{copy.gallery.pendingHint}</div>
                 </div>
-                {cardActions(entry)}
-              </div>
-            ))}
+              ))}
+              {library.entries.map((entry) => (
+                <div key={entry.id} className={`group relative aspect-square overflow-hidden rounded-2xl border bg-[#0e0e11] ${source?.fromId === entry.id ? "border-primary/60" : "border-white/[0.08]"}`}>
+                  {VIEWABLE.test(entry.url)
+                    ? <ModelView src={entry.url} poster={entry.thumbnail} className="h-full w-full" />
+                    : (
+                      <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-white/40">
+                        <IconCube size={30} stroke={1.5} aria-hidden="true" />
+                        <span className="text-[12px]">{fill(copy.gallery.noPreview, { ext: entry.files[0]?.ext || "" })}</span>
+                      </div>
+                    )}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#09090b]/95 to-transparent p-3 pt-10">
+                    <div className="truncate text-[13px] font-medium text-white/90">{entry.prompt || copy.gallery.fromImage}</div>
+                    <div className="text-[11.5px] text-white/45">{entry.modelName}{entry.vendor ? ` · ${entry.vendor}` : ""}</div>
+                  </div>
+                  {cardActions(entry)}
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="h-full w-full animate-fade-in-up">
-            <StudioEmptyState heading={copy.empty.heading} accent={mode === "edit" ? copy.modes.edit : family?.name || copy.empty.accent} subtitle={mode === "edit" ? copy.empty.editSubtitle : copy.empty.subtitle} starters={mode === "edit" ? [] : starters} onStarter={(text) => { setMode("text"); setPrompt(text); textareaRef.current?.focus(); }} showcase={null} />
+            <StudioEmptyState heading={pageCopy.heading} accent={pageCopy.accent} subtitle={pageCopy.subtitle} starters={starters} onStarter={(text) => { setPrompt(text); textareaRef.current?.focus(); }} showcase={null} />
           </div>
         )}
       </div>
@@ -524,7 +580,11 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
             <button type="button" onClick={() => setViewer(null)} aria-label={copy.gallery.close} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-white/20"><IconX size={16} stroke={1.75} aria-hidden="true" /></button>
             <div className="absolute bottom-3 left-3 flex items-center gap-2">
               <span className="rounded-lg bg-black/60 px-3 py-1.5 text-[12px] text-white/80">{viewer.prompt || viewer.modelName}</span>
-              <button type="button" onClick={() => useResult(viewer, TOOLS[0]?.id)} className="rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-[#04202a]">{copy.use.button}</button>
+              {isTool && <button type="button" onClick={() => useHere(viewer)} className="rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-[#04202a]">{copy.send.here}</button>}
+              <div className="relative">
+                <button type="button" onClick={() => setOpenDropdown(openDropdown === "viewer-send" ? null : "viewer-send")} className="flex items-center gap-1.5 rounded-lg bg-black/60 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-white/20"><IconSend size={14} stroke={1.75} aria-hidden="true" />{copy.send.button}</button>
+                {openDropdown === "viewer-send" && sendMenu(viewer, "above")}
+              </div>
             </div>
           </div>
         </div>
@@ -534,23 +594,9 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
 
       <PromptComposer>
         <div className="flex items-start gap-2 px-1">
-          {mode === "edit" && (
+          {isTool && (
             <div className="flex items-center gap-2">
-              {source ? (
-                <div className="flex h-10 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] pl-1 pr-3">
-                  {source.thumbnail
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={source.thumbnail} alt="" className="h-8 w-8 rounded-full object-cover" />
-                    : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-primary"><IconCube size={15} stroke={1.75} aria-hidden="true" /></span>}
-                  <span className="max-w-[180px] truncate text-[12.5px] text-white/80">{source.name}</span>
-                  <button type="button" onClick={() => setSource(null)} aria-label={copy.edit.clearModel} className="text-white/40 hover:text-white"><IconX size={14} stroke={2} aria-hidden="true" /></button>
-                </div>
-              ) : (
-                <button type="button" onClick={() => modelInputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-10 items-center gap-2 rounded-full border border-dashed border-white/20 px-3.5 text-[12.5px] text-white/60 hover:border-white/40 hover:text-white">
-                  {uploading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconUpload size={15} stroke={1.75} aria-hidden="true" />}
-                  {copy.edit.uploadModel}
-                </button>
-              )}
+              {sourceChip}
               <input ref={modelInputRef} type="file" accept={MODEL_ACCEPT} className="hidden" onChange={(event) => { uploadModel(event.target.files?.[0]); event.target.value = ""; }} />
             </div>
           )}
@@ -565,8 +611,8 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
                 </div>
               ))}
               {(images.length < maxImages || maxImages === 1) && (
-                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(uploading)} title={mode === "edit" ? copy.edit.styleImage : fill(copy.media.addImages, { max: maxImages })} className={promptMediaButtonClassName()}>
-                  {uploading && mode !== "edit" ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconPhotoPlus size={16} stroke={1.75} className="text-white/60" aria-hidden="true" />}
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(uploading)} title={isTool ? copy.edit.styleImage : fill(copy.media.addImages, { max: maxImages })} className={promptMediaButtonClassName()}>
+                  {uploading && !isTool ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconPhotoPlus size={16} stroke={1.75} className="text-white/60" aria-hidden="true" />}
                 </button>
               )}
               {mode === "image" && SKETCH_FAMILY && (
@@ -579,53 +625,61 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
           )}
 
           {showPrompt
-            ? <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder={mode === "edit" ? copy.prompt.editPlaceholder : selectedModel?.sketch ? copy.prompt.sketchPlaceholder : copy.prompt.placeholder} />
+            ? <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder={selectedModel?.sketch ? copy.prompt.sketchPlaceholder : pageCopy.placeholder} />
             : <p className="flex-1 px-1.5 pt-2.5 text-[13.5px] text-white/40">
-                {mode === "edit"
-                  ? (source ? fill(copy.prompt.editHint, { tool: copy.tools[tool.toolLabel] || tool.name }) : copy.prompt.editEmpty)
-                  : (images.length ? fill(copy.prompt.imageHint, { count: images.length, max: maxImages }) : copy.prompt.imageEmpty)}
+                {isTool
+                  ? (source ? fill(copy.prompt.editHint, { tool: toolLabel(tool) }) : pageCopy.placeholder)
+                  : (images.length ? fill(copy.prompt.imageHint, { count: images.length, max: maxImages }) : pageCopy.placeholder)}
               </p>}
         </div>
 
         <PromptFooter>
           <PromptControls>
-            <PromptSegmentedControl>
-              <PromptSegmentOption selected={mode === "text"} onClick={() => setMode("text")}>{copy.modes.text}</PromptSegmentOption>
-              <PromptSegmentOption selected={mode === "image"} onClick={() => setMode("image")}>{copy.modes.image}</PromptSegmentOption>
-              <PromptSegmentOption selected={mode === "edit"} onClick={() => setMode("edit")}>{copy.modes.edit}</PromptSegmentOption>
-            </PromptSegmentedControl>
+            {(isTool ? tools.length > 1 : families.length > 1) && (
+              <div className="relative">
+                <button type="button" onClick={() => setOpenDropdown(openDropdown === "model" ? null : "model")} className={promptControlClassName({ active: openDropdown === "model" })}>
+                  {isTool
+                    ? <span className="text-[11px] text-white/40">{copy.controls.tool}</span>
+                    : <span className={`flex h-5 w-5 items-center justify-center rounded-md border border-white/10 bg-white/[0.05] text-[9px] font-semibold ${family?.vendor.color || "text-primary"}`}>{family?.vendor.mono}</span>}
+                  <span className={PROMPT_CONTROL_LABEL_CLASS}>{isTool ? `${toolLabel(tool)} · ${tool?.provider_name}` : family?.name}</span>
+                  <PromptChevronIcon />
+                </button>
+                {openDropdown === "model" && (
+                  <PromptPopover className="w-[340px]">
+                    <PromptPopoverHeader>{isTool ? copy.controls.tool : copy.controls.model}</PromptPopoverHeader>
+                    <PromptMenuList>
+                      {isTool
+                        ? tools.map((item) => (
+                          <PromptMenuItem key={item.id} selected={item.id === tool?.id} description={item.description} wrapDescription onClick={() => { setToolId(item.id); setOpenDropdown(null); }}>
+                            {toolLabel(item)} <span className="text-white/40">· {toolMeta(item)}</span>
+                          </PromptMenuItem>
+                        ))
+                        : families.map((entry) => (
+                          <PromptMenuItem key={entry.id} selected={entry.id === family?.id} description={variantFor(entry, mode, images.length)?.description} wrapDescription onClick={() => { setFamilyId(entry.id); setOpenDropdown(null); }}>
+                            {entry.name} <span className="text-white/40">· {entry.vendor.name}</span>
+                          </PromptMenuItem>
+                        ))}
+                    </PromptMenuList>
+                  </PromptPopover>
+                )}
+              </div>
+            )}
+            {isTool && tools.length === 1 && tool && (
+              <span className={promptControlClassName({ active: false })} title={tool.description}>
+                <span className="text-[11px] text-white/40">{copy.controls.tool}</span>
+                <span className={PROMPT_CONTROL_LABEL_CLASS}>{toolLabel(tool)} · {tool.provider_name}</span>
+              </span>
+            )}
 
-            <div className="relative">
-              <button type="button" onClick={() => setOpenDropdown(openDropdown === "model" ? null : "model")} className={promptControlClassName({ active: openDropdown === "model" })}>
-                {mode === "edit"
-                  ? <IconWand size={14} stroke={1.75} className="text-primary" aria-hidden="true" />
-                  : <span className={`flex h-5 w-5 items-center justify-center rounded-md border border-white/10 bg-white/[0.05] text-[9px] font-semibold ${family?.vendor.color || "text-primary"}`}>{family?.vendor.mono}</span>}
-                <span className={PROMPT_CONTROL_LABEL_CLASS}>{mode === "edit" ? (copy.tools[tool?.toolLabel] || tool?.name) : family?.name}</span>
-                <PromptChevronIcon />
+            {visibleInputs.map(([key, input]) => (input.type === "boolean" ? (
+              <button key={key} type="button" aria-pressed={Boolean(options[key])} onClick={() => setOption(key, !options[key])} className={promptControlClassName({ active: Boolean(options[key]) })} title={input.description || input.title}>
+                <span className={`h-1.5 w-1.5 rounded-full ${options[key] ? "bg-primary" : "bg-white/25"}`} aria-hidden="true" />
+                <span className={PROMPT_CONTROL_LABEL_CLASS}>{input.title}</span>
               </button>
-              {openDropdown === "model" && (
-                <PromptPopover className="w-[340px]">
-                  <PromptPopoverHeader>{mode === "edit" ? copy.controls.tool : copy.controls.model}</PromptPopoverHeader>
-                  <PromptMenuList>
-                    {mode === "edit"
-                      ? TOOLS.map((item) => (
-                        <PromptMenuItem key={item.id} selected={item.id === tool?.id} description={item.description} wrapDescription onClick={() => { setToolId(item.id); setOpenDropdown(null); }}>
-                          {copy.tools[item.toolLabel] || item.name} <span className="text-white/40">· {toolMeta(item)}</span>
-                        </PromptMenuItem>
-                      ))
-                      : familiesForMode.map((entry) => (
-                        <PromptMenuItem key={entry.id} selected={entry.id === family?.id} description={variantFor(entry, mode, images.length)?.description} wrapDescription onClick={() => { setFamilyId(entry.id); setOpenDropdown(null); }}>
-                          {entry.name} <span className="text-white/40">· {entry.vendor.name}</span>
-                        </PromptMenuItem>
-                      ))}
-                  </PromptMenuList>
-                </PromptPopover>
-              )}
-            </div>
-
-            {enumOptions.map(([key, input]) => (
+            ) : (
               <div key={key} className="relative">
                 <button type="button" onClick={() => setOpenDropdown(openDropdown === key ? null : key)} className={promptControlClassName({ active: openDropdown === key })} title={input.description || input.title}>
+                  <span className="text-[11px] text-white/40">{input.title}</span>
                   <span className={PROMPT_CONTROL_LABEL_CLASS}>{optionLabel(input, options[key] ?? input.default)}</span>
                   <PromptChevronIcon />
                 </button>
@@ -640,18 +694,18 @@ export default function ThreeDStudio({ onGenerationStart, onGenerationEnd, onGen
                   </PromptPopover>
                 )}
               </div>
-            ))}
+            )))}
 
-            {boolOptions.map(([key, input]) => (
-              <button key={key} type="button" aria-pressed={Boolean(options[key])} onClick={() => setOption(key, !options[key])} className={promptControlClassName({ active: Boolean(options[key]) })} title={input.description || input.title}>
-                <span className={`h-1.5 w-1.5 rounded-full ${options[key] ? "bg-primary" : "bg-white/25"}`} aria-hidden="true" />
-                <span className={PROMPT_CONTROL_LABEL_CLASS}>{input.title}</span>
+            {advancedInputs.length > 0 && (
+              <button type="button" onClick={() => setShowAdvanced((value) => !value)} aria-expanded={showAdvanced} className={promptControlClassName({ active: showAdvanced })} title={copy.controls.advancedHint}>
+                <IconAdjustments size={14} stroke={1.75} aria-hidden="true" />
+                <span className={PROMPT_CONTROL_LABEL_CLASS}>{showAdvanced ? copy.controls.less : fill(copy.controls.more, { count: advancedInputs.length })}</span>
               </button>
-            ))}
+            )}
           </PromptControls>
 
           <PromptAction onClick={handleGenerate} disabled={Boolean(uploading) || !selectedModel}>
-            {mode === "edit" ? copy.buttons.apply : copy.buttons.generate}
+            {isTool ? copy.buttons.apply : copy.buttons.generate}
           </PromptAction>
         </PromptFooter>
       </PromptComposer>

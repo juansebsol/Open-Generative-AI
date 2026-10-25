@@ -46,7 +46,11 @@ const STUDIO_REQUIREMENTS = {
   agents: () => true,
   // The board works offline; the chat prompts for a key when none is set.
   'design-agent': () => true,
-  'three-d': () => threeDModels.length > 0,
+  'three-d-text': () => threeDModels.some((model) => model.kind === 'text'),
+  'three-d-image': () => threeDModels.some((model) => model.kind === 'image' || model.kind === 'multi'),
+  'three-d-retexture': () => threeDModels.some((model) => model.toolLabel === 'retexture'),
+  'three-d-rig': () => threeDModels.some((model) => model.toolLabel === 'rig'),
+  'three-d-mesh': () => threeDModels.some((model) => ['remesh', 'segment', 'topology'].includes(model.toolLabel)),
   workflows: () => [t2iModels, i2iModels, t2vModels, i2vModels, v2vModels, audioModels, lipsyncModels].some((models) => models.length > 0),
 };
 

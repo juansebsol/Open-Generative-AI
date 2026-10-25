@@ -1,26 +1,52 @@
 {
-  "empty": {
-    "heading": "开始使用",
-    "accent": "3D 工作室",
-    "subtitle": "描述一个物体、上传照片或画一张草图。你会得到可旋转查看、下载、重新贴图、绑定骨骼和优化的带贴图网格。",
-    "editSubtitle": "上传 GLB，或在任意结果上点击“使用”，然后重新贴图、绑定骨骼、重建网格或拆分部件。",
-    "starters": [
-      { "label": "旧皮革扶手椅，棚拍光", "prompt": "一把带黄铜铆钉的旧棕色皮革扶手椅，略有磨损，棚拍光，干净背景" },
-      { "label": "低多边形卡通狐狸，游戏资产", "prompt": "风格化的低多边形狐狸角色，橙色与奶白色皮毛，友好的大眼睛，游戏资产" },
-      { "label": "长满青苔的石灯笼", "prompt": "传统日式石灯笼，覆盖青苔，风化花岗岩，照片级写实" }
-    ]
+  "pages": {
+    "text": {
+      "title": "文本生成 3D",
+      "heading": "描述它，得到一个",
+      "accent": "3D 模型",
+      "subtitle": "一句话变成带贴图的网格，可旋转查看、下载，然后在其他 3D 页面重新贴图、绑定骨骼或优化。",
+      "placeholder": "描述你想生成的 3D 物体",
+      "starters": [
+        { "label": "旧皮革扶手椅，棚拍光", "prompt": "一把带黄铜铆钉的旧棕色皮革扶手椅，略有磨损，棚拍光，干净背景" },
+        { "label": "低多边形卡通狐狸，游戏资产", "prompt": "风格化的低多边形狐狸角色，橙色与奶白色皮毛，友好的大眼睛，游戏资产" },
+        { "label": "长满青苔的石灯笼", "prompt": "传统日式石灯笼，覆盖青苔，风化花岗岩，照片级写实" }
+      ]
+    },
+    "image": {
+      "title": "图像生成 3D",
+      "heading": "把照片或草图变成",
+      "accent": "3D 模型",
+      "subtitle": "一张纯色背景的清晰照片效果最好。Meshy 和 Rodin 最多可添加四个视角，也可以画一张草图交给 Hunyuan 生成。",
+      "placeholder": "添加物体的照片，或画一张草图，然后生成。"
+    },
+    "retexture": {
+      "title": "重新贴图",
+      "heading": "给任意模型换上",
+      "accent": "新材质",
+      "subtitle": "从素材库选择模型或上传 GLB，描述新外观或放入参考图。几何体不变，只改表面。",
+      "placeholder": "描述新的外观，例如带绿色铜锈的风化铜"
+    },
+    "rig": {
+      "title": "绑定骨骼与动画",
+      "heading": "让角色",
+      "accent": "动起来",
+      "subtitle": "Meshy 为人形模型添加骨骼，还可附带默认动画。输出 GLB 和 FBX，可直接用于游戏引擎。",
+      "placeholder": "从素材库选择人形模型或上传 GLB，设置身高，然后应用。"
+    },
+    "mesh": {
+      "title": "网格工具",
+      "heading": "把网格整理到",
+      "accent": "可用于生产",
+      "subtitle": "按多边形预算重建网格并烘焙贴图、把模型拆分成部件，或用干净的四边面重建拓扑。",
+      "placeholder": "从素材库选择模型或上传 GLB，选择工具，然后应用。"
+    }
   },
-  "modes": { "text": "文本", "image": "图像", "edit": "编辑模型" },
-  "controls": { "model": "模型", "tool": "工具" },
+  "controls": { "model": "模型", "tool": "工具", "more": "更多（{count}）", "less": "收起", "advancedHint": "显示不常用的选项" },
   "tools": { "retexture": "重新贴图", "rig": "绑定骨骼与动画", "remesh": "重建网格", "segment": "拆分部件", "topology": "智能拓扑" },
-  "use": { "button": "使用" },
+  "send": { "button": "发送到", "here": "在此使用" },
   "prompt": {
-    "placeholder": "描述你想生成的 3D 物体",
     "sketchPlaceholder": "描述草图画的是什么，例如一把木制摇椅",
-    "editPlaceholder": "描述新的外观，例如带绿色铜锈的风化铜",
-    "imageEmpty": "添加物体的照片，或画一张草图。单一清晰视角、纯色背景效果最好。",
     "imageHint": "已添加 {count} / {max} 张图片。生成需要几分钟。",
-    "editEmpty": "选择要处理的模型：上传 GLB，或在结果上点击“使用”。",
     "editHint": "将对所选模型执行“{tool}”。"
   },
   "media": { "addImages": "最多添加 {max} 张图片", "maxImages": "此模型最多接受 {max} 张图片", "remove": "移除图片" },
@@ -38,17 +64,18 @@
   },
   "buttons": { "generate": "生成", "apply": "应用" },
   "gallery": {
+    "library": "素材库 · {count} 个模型",
+    "pickHint": "悬停模型并选择“在此使用”",
     "pendingTitle": "正在用 {model} 处理",
     "pendingHint": "通常需要 1 到 5 分钟，你可以继续其他操作。",
     "noPreview": "{ext} 文件无法预览，请下载后打开",
     "fromImage": "来自图片",
-    "edited": "已编辑",
     "download": "下载",
     "fullscreen": "放大查看",
     "delete": "删除",
     "close": "关闭"
   },
-  "confirm": { "deleteItem": "删除这个模型？" },
+  "confirm": { "deleteItem": "从素材库中删除这个模型？" },
   "providers": {
     "needKey": "3D 模型运行在 {providers} 上。请在 设置 → 服务提供商 中添加密钥。",
     "openSettings": "打开服务提供商",

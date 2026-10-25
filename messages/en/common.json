@@ -15,7 +15,11 @@
     "agents": "Agents",
     "design-agent": "Design Agent",
     "workflows": "Workflows",
-    "three-d": "3D Studio"
+    "three-d-text": "Text to 3D",
+    "three-d-image": "Image to 3D",
+    "three-d-retexture": "Retexture",
+    "three-d-rig": "Rig and animate",
+    "three-d-mesh": "Mesh tools"
   },
   "categories": {
     "images": "Images",
@@ -142,6 +146,10 @@
     "audio": "Speech, dialogue, sound effects and music",
     "agents": "Chat with agents that use every tool here",
     "workflows": "Chain models into pipelines on a canvas",
-    "three-d": "Text or image to textured 3D models, with a viewer"
+    "three-d-text": "Describe an object, get a textured 3D model",
+    "three-d-image": "Photo, multi-view or sketch to a 3D model",
+    "three-d-retexture": "New materials for any model, by prompt or reference image",
+    "three-d-rig": "Skeleton and animation for humanoid models",
+    "three-d-mesh": "Remesh, split into parts and clean topology"
   }
 }

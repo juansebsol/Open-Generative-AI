@@ -15,7 +15,11 @@
     "agents": "智能体",
     "design-agent": "设计助手",
     "workflows": "工作流",
-    "three-d": "3D 工作室"
+    "three-d-text": "文本生成 3D",
+    "three-d-image": "图像生成 3D",
+    "three-d-retexture": "重新贴图",
+    "three-d-rig": "绑定骨骼与动画",
+    "three-d-mesh": "网格工具"
   },
   "categories": {
     "images": "图像",
@@ -142,6 +146,10 @@
     "audio": "语音、对话、音效与音乐",
     "agents": "与可调用全部工具的智能体对话",
     "workflows": "在画布上把模型串成流水线",
-    "three-d": "由文本或图像生成带贴图的 3D 模型，内置查看器"
+    "three-d-text": "描述物体，生成带贴图的 3D 模型",
+    "three-d-image": "照片、多视角或草图生成 3D 模型",
+    "three-d-retexture": "通过提示词或参考图为任意模型换材质",
+    "three-d-rig": "为人形模型添加骨骼和动画",
+    "three-d-mesh": "重建网格、拆分部件与整理拓扑"
   }
 }
