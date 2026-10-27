@@ -439,6 +439,21 @@ export const PromptControls = forwardRef(function PromptControls(
   );
 });
 
+// Price chip + primary action, right-aligned; on phones the action keeps
+// its full width under the chip.
+export function PromptActionGroup({ children, className = "" }) {
+  return (
+    <div
+      className={joinClasses(
+        "flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 export const PromptAction = forwardRef(function PromptAction(
   { children, className = "", type = "button", ...props },
   ref,

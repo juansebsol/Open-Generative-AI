@@ -9,6 +9,8 @@ import { configuredProviders, getProviderKey, getProviderOptions, getProviderUrl
 import { runComfyUI } from './local/comfyui.js';
 import { runSdServer } from './local/sdserver.js';
 import { persistOutputs, resolveLocalMedia, storeUpload } from './mediaStore.js';
+import { quoteRun } from './pricing.js';
+import { recordSpend } from './spend.js';
 
 const STORAGE_PROVIDERS = ['fal', 'wavespeed'];
 const INLINE_UPLOAD_LIMIT = 8 * 1024 * 1024;
@@ -92,6 +94,24 @@ function toStudioResult(handle, outputs, raw) {
   };
 }
 
+// Writes one ledger line for a finished run: the provider's actual charge
+// when it reported one, else the quote for what was sent (media included,
+// so WaveSpeed can measure it). Never blocks or fails the run.
+function recordRun(route, endpoint, payload, actualCost) {
+  const base = { provider: route.provider, endpoint };
+  if (Number.isFinite(Number(actualCost))) {
+    recordSpend({ ...base, amount: Number(actualCost), estimated: false });
+    return;
+  }
+  quoteRun(endpoint, payload, { full: true })
+    .then((quote) => {
+      if (quote.kind === 'total') recordSpend({ ...base, amount: quote.amount, currency: quote.currency, estimated: true });
+      else if (quote.kind === 'characters') recordSpend({ ...base, amount: null, characters: quote.characters, estimated: true });
+      else if (quote.kind !== 'free' && quote.kind !== 'noProvider') recordSpend({ ...base, amount: null, estimated: true });
+    })
+    .catch(() => recordSpend({ ...base, amount: null, estimated: true }));
+}
+
 async function runLocal(route, payload, onRequestId) {
   const baseUrl = getProviderUrl(route.provider);
   const options = getProviderOptions(route.provider);
@@ -121,6 +141,7 @@ export async function runEndpoint(endpoint, payload, { onRequestId, maxAttempts 
   onRequestId?.(submitted.handle?.id);
 
   if (submitted.state === 'succeeded') {
+    recordRun(route, endpoint, requestPayload, submitted.cost);
     return toStudioResult(submitted.handle, await persistOutputs(submitted.outputs || []));
   }
 
@@ -136,6 +157,7 @@ export async function runEndpoint(endpoint, payload, { onRequestId, maxAttempts 
       throw error;
     }
     if (status.state === 'succeeded') {
+      recordRun(route, endpoint, requestPayload, status.cost);
       return toStudioResult(submitted.handle, await persistOutputs(status.outputs || []), status.raw);
     }
     if (status.state === 'failed') {

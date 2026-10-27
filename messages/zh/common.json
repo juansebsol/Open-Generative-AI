@@ -120,7 +120,18 @@
         "sdDownload": "发布页"
       }
     },
-    "balanceCharacters": "本周期剩余 {remaining} / {limit} 字符"
+    "balanceCharacters": "本周期剩余 {remaining} / {limit} 字符",
+    "balanceUnavailable": "{provider} 不提供 API 密钥的余额信息，请在其控制台查看用量。",
+    "viewUsage": "查看用量",
+    "spentMonth": "本月：{amount} · {runs}",
+    "spentMonthCharacters": "本月：{characters} 个字符 · {runs}",
+    "spentEstimated": "预估",
+    "spentNone": "本月尚无运行",
+    "spendHint": "花费由此浏览器根据每次运行的报价统计；若服务商返回实际费用则以其为准。最终以服务商账单为准。",
+    "spendReset": "重置花费",
+    "spendResetConfirm": "清除此浏览器中的花费统计？",
+    "runsOne": "1 次运行",
+    "runs": "{runs} 次运行"
   },
   "palette": {
     "placeholder": "跳转到工作室或操作",

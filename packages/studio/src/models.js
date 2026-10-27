@@ -27391,6 +27391,15 @@ for (const model of ALL_threeDModels) {
 export const threeDModels = [...withRoutes(ALL_threeDModels)];
 export const getThreeDModelById = (id) => threeDModels.find(m => m.id === id);
 
+/** Catalog endpoint for any model id across every studio list. */
+export const getEndpointForModelId = (id) => {
+  for (const list of Object.values(ALL_MODEL_LISTS)) {
+    const model = list.find((entry) => entry.id === id);
+    if (model) return model.endpoint || model.id;
+  }
+  return id;
+};
+
 export const ALL_MODEL_LISTS = {
   t2iModels: ALL_t2iModels,
   t2vModels: ALL_t2vModels,

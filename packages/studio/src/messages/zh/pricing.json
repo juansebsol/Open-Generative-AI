@@ -1,0 +1,28 @@
+{
+  "loading": "正在询价…",
+  "estimate": "≈ {amount}",
+  "from": "{amount} 起",
+  "perUnit": "每{unit} {amount}",
+  "times": "× {count}",
+  "listPrice": "标价 {amount}",
+  "perMillionTokens": "每 100 万 token {amount}",
+  "characters": "{count} 个字符",
+  "free": "免费 · 本地",
+  "unavailable": "未公布价格",
+  "error": "无法获取价格",
+  "title": "本次运行在 {provider} 上的预估费用。实际金额以服务商账单为准，可能有所不同。",
+  "freeTitle": "通过 {provider} 在你自己的电脑上运行，不产生费用。",
+  "charactersTitle": "{provider} 按字符计入套餐额度，而不是按次收费。",
+  "unavailableTitle": "{provider} 尚未公布此模型的价格，运行前请查看其价格页面。",
+  "partial": "未计入媒体文件和缺失的输入，实际价格可能更高。",
+  "units": {
+    "image": "张图片",
+    "video": "个视频",
+    "second": "秒",
+    "minute": "分钟",
+    "megapixel": "百万像素",
+    "character": "字符",
+    "request": "次请求",
+    "run": "次运行"
+  }
+}

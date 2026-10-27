@@ -14,6 +14,9 @@ individual Studio component.
 - `PromptFooter` provides the responsive divider and action-row layout.
 - `PromptControls` keeps parameter controls aligned and spaced consistently.
 - `PromptAction` provides the shared primary generation button.
+- `PromptActionGroup` sits the price chip (`PriceChip` from `./PriceChip.jsx`)
+  next to `PromptAction`; every composer that submits a catalog endpoint shows
+  one so the visitor sees the estimated cost before generating.
 - `promptControlClassName()` provides the 38 px parameter-control contract.
 - `promptMediaButtonClassName()` provides the 40 px circular media-attachment
   contract.

@@ -120,7 +120,18 @@
         "sdDownload": "Releases"
       }
     },
-    "balanceCharacters": "{remaining} of {limit} characters left this period"
+    "balanceCharacters": "{remaining} of {limit} characters left this period",
+    "balanceUnavailable": "{provider} doesn't report a balance for API keys. Check your usage on their dashboard.",
+    "viewUsage": "View usage",
+    "spentMonth": "This month: {amount} · {runs}",
+    "spentMonthCharacters": "This month: {characters} characters · {runs}",
+    "spentEstimated": "estimated",
+    "spentNone": "No runs this month",
+    "spendHint": "Spend is counted in this browser from each run's price quote, or the provider's reported charge when it sends one. Your provider's bill is what counts.",
+    "spendReset": "Reset spend",
+    "spendResetConfirm": "Clear the spend counters in this browser?",
+    "runsOne": "1 run",
+    "runs": "{runs} runs"
   },
   "palette": {
     "placeholder": "Jump to a studio or action",

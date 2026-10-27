@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, PROVIDERS, listCheckpoints, loadProviderSettings, saveProviderSettings } from 'studio';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, PROVIDERS, NO_BALANCE_PROVIDER_IDS, listCheckpoints, loadProviderSettings, saveProviderSettings, clearSpend, formatMoney, getSpend, monthlySpend, subscribeSpend } from 'studio';
 import { getCommonCopy } from '@/lib/locales';
 import LocalEngineSetup from './LocalEngineSetup';
 
@@ -111,6 +111,28 @@ function BalanceLine({ providerId, apiKey, autoCheck, locale, copy }) {
         {state.status === 'idle' ? copy.balanceCheck : copy.balanceRefresh}
       </button>
     </div>
+  );
+}
+
+const EMPTY_SPEND = { entries: [] };
+
+// What this browser has sent to one provider this calendar month, from the
+// price quotes (or the provider's own charge when it reports one).
+function SpendLine({ providerId, locale, copy }) {
+  const spend = useSyncExternalStore(subscribeSpend, getSpend, () => EMPTY_SPEND);
+  const totals = useMemo(() => (spend.entries.length ? monthlySpend() : {}), [spend]);
+  const bucket = totals[providerId];
+  if (!bucket) return <span className="text-[11px] text-white/30">{copy.spentNone}</span>;
+  const number = (value) => new Intl.NumberFormat(locale).format(value ?? 0);
+  const runs = (bucket.runs === 1 ? copy.runsOne : copy.runs).replace('{runs}', number(bucket.runs));
+  const text = bucket.priced === 0 && bucket.characters > 0
+    ? copy.spentMonthCharacters.replace('{characters}', number(bucket.characters)).replace('{runs}', runs)
+    : copy.spentMonth.replace('{amount}', `${bucket.estimated > 0 ? '≈ ' : ''}${formatMoney(bucket.amount, bucket.currency, locale)}`).replace('{runs}', runs);
+  return (
+    <span className="text-[11px] text-white/45" title={copy.spendHint}>
+      {text}
+      {bucket.estimated > 0 && <span className="text-white/25"> · {copy.spentEstimated}</span>}
+    </span>
   );
 }
 
@@ -236,7 +258,27 @@ export default function ProvidersModal({ onClose, locale = 'en' }) {
                   copy={copy}
                 />
               )}
+              {NO_BALANCE_PROVIDER_IDS.includes(provider.id) && settings.keys[provider.id] && (
+                <span className="flex items-start gap-2 min-w-0 text-[11px] font-semibold text-white/45 text-right">
+                  <span>{copy.balanceUnavailable.replace('{provider}', provider.label)}</span>
+                  {provider.usageUrl && (
+                    <a href={provider.usageUrl} target="_blank" rel="noopener noreferrer" className="text-[#22d3ee] hover:underline flex-shrink-0">
+                      {copy.viewUsage} ↗
+                    </a>
+                  )}
+                </span>
+              )}
             </div>
+            {settings.keys[provider.id] && (
+              <div className="mt-1.5 flex items-center justify-between gap-3">
+                <SpendLine providerId={provider.id} locale={locale} copy={copy} />
+                {provider.usageUrl && !NO_BALANCE_PROVIDER_IDS.includes(provider.id) && (
+                  <a href={provider.usageUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold text-white/35 hover:text-white flex-shrink-0">
+                    {copy.viewUsage} ↗
+                  </a>
+                )}
+              </div>
+            )}
             {CHAT_PROVIDER_IDS.includes(provider.id) && (
               <div className="mt-3">
                 <label className="block text-[11px] font-semibold text-white/40 mb-1">{copy.chatModel}</label>
@@ -290,6 +332,16 @@ export default function ProvidersModal({ onClose, locale = 'en' }) {
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-white/40 mb-3">{copy.cloudSection}</h3>
             <div className="space-y-3">{ordered.filter((provider) => provider.kind === 'cloud').map(renderProvider)}</div>
             <p className="text-[11px] text-white/30 mt-2">{copy.orderHint}</p>
+            <p className="text-[11px] text-white/30 mt-1 flex items-start justify-between gap-3">
+              <span>{copy.spendHint}</span>
+              <button
+                type="button"
+                onClick={() => { if (window.confirm(copy.spendResetConfirm)) clearSpend(); }}
+                className="font-semibold text-white/40 hover:text-white flex-shrink-0"
+              >
+                {copy.spendReset}
+              </button>
+            </p>
           </section>
           <section>
             <h3 className="text-[11px] font-bold uppercase tracking-wider text-white/40 mb-1">{copy.localSection}</h3>

@@ -93,7 +93,9 @@ import {
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
+  PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import usePromptMenu from "./prompt/usePromptMenu.js";
 import en from "../messages/en/videoStudio.json";
 import zh from "../messages/zh/videoStudio.json";
@@ -3176,6 +3178,8 @@ export default function VideoStudio({
               )}
             </PromptControls>
 
+<PromptActionGroup>
+<PriceChip locale={locale} endpoint={selectedVariant?.model?.endpoint || selectedModel} payload={{ aspect_ratio: selectedAr, duration: selectedDuration, resolution: selectedResolution, quality: selectedQuality, ...modelParameterValues }} />
             {/* Generate button */}
             <PromptAction
               onClick={handleGenerate}
@@ -3194,6 +3198,7 @@ export default function VideoStudio({
                 </>
               )}
             </PromptAction>
+</PromptActionGroup>
           </PromptFooter>
       </PromptComposer>
 

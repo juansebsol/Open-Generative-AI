@@ -263,8 +263,9 @@ function mergeInto(output, key, value, prop) {
  * @param {object|null} schema  snapshot { required: [], props: { name: prop } }
  * @returns {{ input: object, warnings: string[] }}
  */
-export function mapInput(payload, route, schema) {
+export function mapInput(payload, route, schema, { allowMissing = false } = {}) {
   const warnings = [];
+  let missing = [];
   const output = {};
   const drop = new Set(route.drop || []);
   let source = { ...(payload || {}) };
@@ -340,11 +341,13 @@ export function mapInput(payload, route, schema) {
         delete output[key];
       }
     }
-    const missing = (schema.required || []).filter((key) => isEmpty(output[key]) && schema.props[key]?.default === undefined);
-    if (missing.length > 0) {
+    missing = (schema.required || []).filter((key) => isEmpty(output[key]) && schema.props[key]?.default === undefined);
+    // Price quotes map whatever the studio has so far; only a real submit
+    // needs every required input.
+    if (missing.length > 0 && !allowMissing) {
       throw new MappingError(`Missing required input: ${missing.join(', ')}`, { missing, endpoint: route.endpoint });
     }
   }
 
-  return { input: output, warnings };
+  return { input: output, warnings, missing };
 }

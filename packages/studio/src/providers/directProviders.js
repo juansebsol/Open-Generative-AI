@@ -9,6 +9,7 @@ export const PROVIDERS = [
     label: 'fal.ai',
     kind: 'cloud',
     keyUrl: 'https://fal.ai/dashboard/keys',
+    usageUrl: 'https://fal.ai/dashboard/usage',
     keyPlaceholder: 'fal key (key_id:key_secret)',
     description: 'Largest catalog: image, video, audio, lip sync and upscaling.',
   },
@@ -17,6 +18,7 @@ export const PROVIDERS = [
     label: 'WaveSpeedAI',
     kind: 'cloud',
     keyUrl: 'https://wavespeed.ai/accesskey',
+    usageUrl: 'https://wavespeed.ai/dashboard/billing',
     keyPlaceholder: 'WaveSpeed API key',
     description: 'Wide video coverage including Veo, Runway, Seedance and Wan.',
   },
@@ -25,6 +27,7 @@ export const PROVIDERS = [
     label: 'OpenRouter',
     kind: 'cloud',
     keyUrl: 'https://openrouter.ai/settings/keys',
+    usageUrl: 'https://openrouter.ai/activity',
     keyPlaceholder: 'sk-or-...',
     description: 'One key for Gemini, GPT and other image models, plus the chat model behind the assistants.',
   },
@@ -33,6 +36,7 @@ export const PROVIDERS = [
     label: 'Google Gemini',
     kind: 'cloud',
     keyUrl: 'https://aistudio.google.com/apikey',
+    usageUrl: 'https://aistudio.google.com/usage',
     keyPlaceholder: 'Gemini API key',
     description: 'Nano Banana image models direct from Google.',
   },
@@ -41,6 +45,7 @@ export const PROVIDERS = [
     label: 'OpenAI',
     kind: 'cloud',
     keyUrl: 'https://platform.openai.com/api-keys',
+    usageUrl: 'https://platform.openai.com/usage',
     keyPlaceholder: 'sk-...',
     description: 'GPT Image models direct from OpenAI.',
   },
@@ -49,6 +54,7 @@ export const PROVIDERS = [
     label: 'ElevenLabs',
     kind: 'cloud',
     keyUrl: 'https://elevenlabs.io/app/settings/api-keys',
+    usageUrl: 'https://elevenlabs.io/app/subscription',
     keyPlaceholder: 'ElevenLabs API key',
     description: 'Speech and dialogue direct from ElevenLabs, with the voices in your account.',
   },
@@ -71,6 +77,10 @@ export const PROVIDERS = [
 export const PROVIDER_IDS = PROVIDERS.map((provider) => provider.id);
 export const CLOUD_PROVIDER_IDS = PROVIDERS.filter((provider) => provider.kind === 'cloud').map((provider) => provider.id);
 export const LOCAL_PROVIDER_IDS = PROVIDERS.filter((provider) => provider.kind === 'local').map((provider) => provider.id);
+
+// Providers that never report a balance for a plain API key: the panel
+// shows a note and links to their usage page instead.
+export const NO_BALANCE_PROVIDER_IDS = ['google', 'openai'];
 
 // Providers whose adapters build the request themselves instead of mapping
 // through a schema snapshot. Their routes only name the provider model id.

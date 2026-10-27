@@ -58,7 +58,9 @@ import {
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
+  PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/imageStudio.json";
 import zh from "../messages/zh/imageStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -1694,6 +1696,8 @@ export default function ImageStudio({
               />
             </PromptControls>
 
+<PromptActionGroup>
+<PriceChip locale={locale} endpoint={selectedVariant?.model?.endpoint || selectedModelId} runs={batchSize} payload={{ aspect_ratio: selectedAr, ...(currentQualityField && selectedQuality ? { [currentQualityField]: selectedQuality } : {}) }} />
             {/* Generate button */}
             <PromptAction
               onClick={handleGenerate}
@@ -1710,6 +1714,7 @@ export default function ImageStudio({
                 </>
               )}
             </PromptAction>
+</PromptActionGroup>
           </PromptFooter>
       </PromptComposer>
 

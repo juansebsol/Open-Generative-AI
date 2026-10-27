@@ -1,0 +1,28 @@
+{
+  "loading": "Pricing…",
+  "estimate": "≈ {amount}",
+  "from": "from {amount}",
+  "perUnit": "{amount} per {unit}",
+  "times": "× {count}",
+  "listPrice": "list price {amount}",
+  "perMillionTokens": "{amount} per 1M tokens",
+  "characters": "{count} characters",
+  "free": "Free · local",
+  "unavailable": "No price listed",
+  "error": "Price unavailable",
+  "title": "Estimated cost of this run on {provider}. The provider bills the real amount, which can differ.",
+  "freeTitle": "Runs on your own computer through {provider}. Nothing is charged.",
+  "charactersTitle": "{provider} counts characters against your plan instead of charging per run.",
+  "unavailableTitle": "{provider} has not published a price for this model. Check its pricing page before running.",
+  "partial": "Media and missing inputs are not included, so the real price can be higher.",
+  "units": {
+    "image": "image",
+    "video": "video",
+    "second": "second",
+    "minute": "minute",
+    "megapixel": "megapixel",
+    "character": "character",
+    "request": "request",
+    "run": "run"
+  }
+}

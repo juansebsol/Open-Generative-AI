@@ -10,6 +10,7 @@ import {
   removeBackground,
   expandImage,
 } from "../generation.js";
+import PriceChip from "./prompt/PriceChip.jsx";
 import { formatErrorMessage } from "../utils/formatError.js";
 import en from "../messages/en/layersStudio.json";
 import zh from "../messages/zh/layersStudio.json";
@@ -2037,6 +2038,8 @@ export default function LayersStudio({
               }
               className="flex-1 bg-transparent text-sm text-white placeholder-white/40 focus:outline-none px-2 font-medium min-w-0"
             />
+
+            <PriceChip locale={locale} endpoint="bytedance-seedream-5.0-pro-layer" payload={{ resolution, output_format: outputFormat }} className="ml-2" />
 
             <button
               onClick={() => handleDecompose()}

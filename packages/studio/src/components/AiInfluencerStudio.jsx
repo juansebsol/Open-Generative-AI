@@ -3,6 +3,8 @@
 import { useState, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { generateImage } from "../generation.js";
+import { getEndpointForModelId } from "../models.js";
+import PriceChip from "./prompt/PriceChip.jsx";
 import { formatErrorMessage } from "../utils/formatError.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
@@ -570,6 +572,8 @@ export default function AiInfluencerStudio({
               <ShuffleIcon />
               {copy.toolbar.shuffle}
             </button>
+
+            <PriceChip locale={locale} endpoint={getEndpointForModelId(INFLUENCER_MODEL)} payload={{ aspect_ratio: aspectRatio }} />
 
             {/* Generate */}
             <button

@@ -31,7 +31,9 @@ import {
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
+  PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/lipSyncStudio.json";
 import zh from "../messages/zh/lipSyncStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -1233,6 +1235,8 @@ export default function LipSyncStudio({
               )}
             </PromptControls>
 
+<PromptActionGroup>
+<PriceChip locale={locale} endpoint={selectedModel?.endpoint || selectedModelId} payload={showResolution ? { resolution: selectedResolution } : {}} />
             {/* Generate button */}
             <PromptAction
               onClick={handleGenerate}
@@ -1251,6 +1255,7 @@ export default function LipSyncStudio({
                 </>
               )}
             </PromptAction>
+</PromptActionGroup>
           </PromptFooter>
       </PromptComposer>
 

@@ -5,6 +5,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { generateAudio, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import { audioModels, getAudioModelById } from "../models.js";
+import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/audioStudio.json";
 import zh from "../messages/zh/audioStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -1048,6 +1049,9 @@ export default function AudioStudio({
 
         {/* Generate Section */}
         <div className="p-4 border-t border-zinc-900 bg-zinc-950/80 backdrop-blur-xl absolute bottom-0 left-0 w-full lg:w-[400px] z-40">
+          <div className="flex justify-end mb-2 empty:hidden">
+            <PriceChip locale={locale} endpoint={selectedModel?.endpoint || selectedModelId} enabled={Boolean(selectedModel)} payload={params} />
+          </div>
           <button
             type="button"
             onClick={handleGenerate}

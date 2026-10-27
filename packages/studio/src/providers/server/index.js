@@ -15,6 +15,7 @@ import * as openrouter from './adapters/openrouter.js';
 import * as elevenlabs from './adapters/elevenlabs.js';
 export { chatCompletion, CHAT_PROVIDER_IDS } from './chat.js';
 export { getBalance, BALANCE_PROVIDER_IDS } from './balance.js';
+export { getPrice, PRICE_PROVIDER_IDS } from './pricing.js';
 
 const ADAPTERS = { fal, wavespeed, google, openai, openrouter, elevenlabs };
 
@@ -42,6 +43,7 @@ export async function submitJob({ endpoint, provider, payload, key, origin }) {
   const apiKey = requireKey(provider, key);
 
   if (DIRECT_PROVIDERS.has(provider)) {
+    // Direct adapters finish in one call and may know the actual cost.
     return adapter.submit({ endpoint: route.endpoint, input: payload, key: apiKey, origin });
   }
 

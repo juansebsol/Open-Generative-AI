@@ -28,7 +28,9 @@ import {
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
+  PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/clippingStudio.json";
 import zh from "../messages/zh/clippingStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -726,6 +728,8 @@ export default function ClippingStudio({
             )}
           </PromptControls>
 
+<PromptActionGroup>
+<PriceChip locale={locale} endpoint={selectedModel.endpoint || selectedModel.id} payload={options} />
           <PromptAction onClick={handleGenerate} disabled={isUploading || !selectedModel}>
             {pending.length > 0 ? (
               <>
@@ -735,6 +739,7 @@ export default function ClippingStudio({
               <span>{copy.actions.generate}</span>
             )}
           </PromptAction>
+</PromptActionGroup>
         </PromptFooter>
       </PromptComposer>
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { generateImage, uploadFile } from "../generation.js";
+import { getEndpointForModelId } from "../models.js";
 import MobileGenerationActions, {
   CopyContentIcon,
 } from "./MobileGenerationActions.jsx";
@@ -19,7 +20,9 @@ import {
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
+  PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/cinemaStudio.json";
 import zh from "../messages/zh/cinemaStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -1199,6 +1202,8 @@ export default function CinemaStudio({
               </button>
             </PromptControls>
 
+<PromptActionGroup>
+<PriceChip locale={locale} endpoint={getEndpointForModelId(uploadedImage ? "nano-banana-pro-edit" : "nano-banana-pro")} payload={{ aspect_ratio: settings.aspect_ratio, resolution: resolution.toLowerCase() }} />
             {/* Generate Button */}
             <PromptAction
               disabled={isGenerating || !settings.prompt.trim()}
@@ -1215,6 +1220,7 @@ export default function CinemaStudio({
                 </>
               )}
             </PromptAction>
+</PromptActionGroup>
           </PromptFooter>
       </PromptComposer>
       {fullscreenUrl && (

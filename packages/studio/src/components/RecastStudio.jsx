@@ -27,7 +27,9 @@ import {
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
+  PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/recastStudio.json";
 import zh from "../messages/zh/recastStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -1184,6 +1186,8 @@ export default function RecastStudio({
               </div>
             </PromptControls>
 
+<PromptActionGroup>
+<PriceChip locale={locale} endpoint={selectedModel?.endpoint || selectedModelId} payload={showAspect ? { aspect_ratio: selectedAspectRatio } : {}} />
             {/* Generate button */}
             <PromptAction
               onClick={handleGenerate}
@@ -1198,6 +1202,7 @@ export default function RecastStudio({
                 <span>{copy.buttons.swapBody}</span>
               )}
             </PromptAction>
+</PromptActionGroup>
           </PromptFooter>
       </PromptComposer>
 

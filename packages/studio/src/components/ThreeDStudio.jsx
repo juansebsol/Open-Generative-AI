@@ -26,7 +26,9 @@ import {
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
+  PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import StudioEmptyState from "./StudioEmptyState.jsx";
 import en from "../messages/en/threeDStudio.json";
 import zh from "../messages/zh/threeDStudio.json";
@@ -704,9 +706,12 @@ export default function ThreeDStudio({ page = "text", onGenerationStart, onGener
             )}
           </PromptControls>
 
+<PromptActionGroup>
+<PriceChip locale={locale} endpoint={selectedModel?.endpoint || selectedModel?.id} enabled={Boolean(selectedModel)} payload={options} />
           <PromptAction onClick={handleGenerate} disabled={Boolean(uploading) || !selectedModel}>
             {isTool ? copy.buttons.apply : copy.buttons.generate}
           </PromptAction>
+</PromptActionGroup>
         </PromptFooter>
       </PromptComposer>
     </div>

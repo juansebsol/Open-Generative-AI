@@ -22,7 +22,9 @@ import {
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
+  PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/marketingStudio.json";
 import zh from "../messages/zh/marketingStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -632,6 +634,8 @@ export default function MarketingStudio({
               ))}
             </PromptControls>
 
+<PromptActionGroup>
+<PriceChip locale={locale} endpoint={params.res === "1080p" ? "sd-2-vip-omni-reference-1080p" : "seedance-2-vip-omni-reference"} payload={{ aspect_ratio: params.ratio, duration: params.duration }} />
             <PromptAction
               onClick={handleGenerate}
               disabled={isGenerating}
@@ -645,6 +649,7 @@ export default function MarketingStudio({
                 <span>{copy.buttons.launch}</span>
               )}
             </PromptAction>
+</PromptActionGroup>
           </PromptFooter>
       </PromptComposer>
 

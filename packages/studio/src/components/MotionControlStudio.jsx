@@ -29,7 +29,9 @@ import {
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
+  PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/motionControlStudio.json";
 import zh from "../messages/zh/motionControlStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -1333,6 +1335,8 @@ export default function MotionControlStudio({
             </div>
           </PromptControls>
 
+<PromptActionGroup>
+<PriceChip locale={locale} endpoint={selectedModel.endpoint || selectedModel.id} payload={{ mode, aspect_ratio: aspectRatio, duration, high_bitrate: highBitrate, generate_audio: generateAudio }} />
           {/* Action Generate Button */}
           <PromptAction onClick={handleGenerate} className="whitespace-nowrap" disabled={isGenerating}>
             {isGenerating ? (
@@ -1344,6 +1348,7 @@ export default function MotionControlStudio({
               <span>{copy.buttons.generate}</span>
             )}
           </PromptAction>
+</PromptActionGroup>
         </PromptFooter>
       </PromptComposer>
 
