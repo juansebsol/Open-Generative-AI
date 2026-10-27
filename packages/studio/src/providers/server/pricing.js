@@ -1,23 +1,27 @@
 // Per-run price quotes, read before a job is sent so the visitor knows what
 // they are agreeing to pay. WaveSpeed and fal quote through their own
 // pricing APIs with the visitor's key (account discounts included);
-// OpenRouter's public model list gives a per-token rate; Google, OpenAI and
-// ElevenLabs have no pricing API, so their quotes come from catalog/prices.json
-// and the text length (fal's OpenAI and Google models use that table too).
-// Every quote is an estimate: the provider's own bill
-// is what counts.
+// Google, OpenAI and ElevenLabs have no pricing API, so their quotes come from
+// catalog/prices.js (fal's OpenAI and Google models use that table too); the
+// per-token rates behind the Google and OpenAI prices are re-read from
+// OpenRouter's public model list every PRICE_REFRESH_MINUTES, so a vendor
+// price change shows up without a redeploy. Every quote is an estimate: the
+// provider's own bill is what counts.
 
 import { createHash } from 'node:crypto';
 import { findRoute } from '../catalog/index.js';
 import { SCHEMAS } from '../catalog/schemas.generated.js';
-import { PRICES } from '../catalog/prices.js';
+import { PRICES, PRICES_UPDATED } from '../catalog/prices.js';
 import { mapInput, MappingError } from '../mapper.js';
 import { ProviderError, requestJson } from './http.js';
 
 export const PRICE_PROVIDER_IDS = ['fal', 'wavespeed', 'openrouter', 'google', 'openai', 'elevenlabs'];
 
 const TIMEOUT_MS = 15_000;
-const DAY_MS = 24 * 60 * 60 * 1000;
+// How often list prices are re-read from the providers (fal unit prices,
+// OpenRouter's per-token rates). Minutes, from the environment.
+export const refreshMs = () => Math.max(1, Number(process.env.PRICE_REFRESH_MINUTES) || 30) * 60 * 1000;
+const RETRY_MS = 60 * 1000;
 const MEDIA_KEY = /image|video|audio|url|file|mask|model/i;
 // Rough output size by resolution label, for fal endpoints billed per megapixel.
 const MEGAPIXELS = { 512: 0.26, '0.5K': 0.26, '1K': 1, '1024': 1, '1.5K': 2.3, '2K': 4.2, '2048': 4.2, '4K': 16.6, '720P': 0.9, '1080P': 2.1 };
@@ -38,6 +42,10 @@ function cached(key, ttl, load) {
   });
   cache.set(key, { value, until: Date.now() + ttl });
   return value;
+}
+/** Test helper. */
+export function resetPriceCache() {
+  cache.clear();
 }
 const keyFingerprint = (key) => createHash('sha256').update(key).digest('hex').slice(0, 16);
 
@@ -131,7 +139,7 @@ async function wavespeedPrice({ endpoint, key, route, payload }) {
 // ── fal: GET /v1/models/pricing, then multiply by what the run will use ──────
 
 async function falUnitPrice(endpoint, key) {
-  return cached(`fal:${keyFingerprint(key)}:${endpoint}`, DAY_MS, async () => {
+  return cached(`fal:${keyFingerprint(key)}:${endpoint}`, refreshMs(), async () => {
     const body = await requestJson('fal', `https://api.fal.ai/v1/models/pricing?endpoint_id=${encodeURIComponent(endpoint)}`, {
       headers: { Authorization: `Key ${key}` },
       timeoutMs: TIMEOUT_MS,
@@ -167,7 +175,7 @@ export function falQuantity(unit, payload) {
 // its pricing API reports them as a generic "unit" whose price means nothing
 // per image. When the same catalog entry also routes to OpenAI or Google, the
 // published table is the honest quote.
-function passthroughTable(catalogId, route, payload) {
+function passthroughTable(catalogId, route, payload, live) {
   // Fields the fal route drops never reach the model, so they cannot change
   // the price (GPT Image 2 on fal ignores the studio's resolution).
   const sent = { ...payload };
@@ -175,7 +183,7 @@ function passthroughTable(catalogId, route, payload) {
   for (const provider of ['openai', 'google']) {
     const sibling = findRoute(catalogId, provider);
     if (!sibling) continue;
-    const quote = tablePrice(provider, sibling.endpoint, sent);
+    const quote = tablePrice(provider, sibling.endpoint, sent, live);
     if (quote.kind !== 'unavailable') return { ...quote, listOf: provider };
   }
   return null;
@@ -184,8 +192,8 @@ function passthroughTable(catalogId, route, payload) {
 // "unit"/"units"/"token": fal's placeholder for formula-priced endpoints.
 const GENERIC_UNIT = /^units?$|token/i;
 
-async function falPrice({ catalogId, route, endpoint, key, payload }) {
-  const table = catalogId ? passthroughTable(catalogId, route, payload) : null;
+async function falPrice({ catalogId, route, endpoint, key, payload, live }) {
+  const table = catalogId ? passthroughTable(catalogId, route, payload, live) : null;
   if (table) return table;
   const price = await falUnitPrice(endpoint, key);
   if (!price) return { kind: 'unavailable', source: 'fal' };
@@ -208,35 +216,64 @@ async function falPrice({ catalogId, route, endpoint, key, payload }) {
 
 // ── OpenRouter: public model list, per output token ──────────────────────────
 
+// OpenRouter's public model list carries the vendors' per-token image rates.
+// It is the live source for Google and OpenAI prices too (see prices.js).
 async function openrouterModels() {
-  return cached('openrouter:models', DAY_MS, async () => {
+  return cached('openrouter:models', refreshMs(), async () => {
     const body = await requestJson('openrouter', 'https://openrouter.ai/api/v1/models', { timeoutMs: TIMEOUT_MS });
     const map = new Map();
     for (const model of body?.data || []) if (model?.id) map.set(model.id, model.pricing || {});
-    return map;
+    return { models: map, fetchedAt: Date.now() };
   });
 }
 
+/** Live per-token rates, or null when OpenRouter cannot be reached right now. */
+export async function liveRates() {
+  try {
+    return await openrouterModels();
+  } catch {
+    // Do not retry on every quote while OpenRouter is down.
+    cache.set('openrouter:models', { value: Promise.resolve(null), until: Date.now() + RETRY_MS });
+    return null;
+  }
+}
+
+// The table entry that an OpenRouter model id stands for.
+function tableEntryFor(openrouterId) {
+  for (const provider of ['google', 'openai']) {
+    for (const [endpoint, entry] of Object.entries(PRICES[provider])) {
+      if (entry.openrouter === openrouterId) return { provider, endpoint };
+    }
+  }
+  return null;
+}
+
 async function openrouterPrice({ endpoint, payload }) {
-  const pricing = (await openrouterModels()).get(endpoint);
-  const perToken = money(pricing?.image_output);
+  const live = await liveRates();
+  const perToken = money(live?.models.get(endpoint)?.image_output);
   if (perToken === null) return { kind: 'unavailable', source: 'openrouter' };
-  // The underlying model's tokens per image come from the static table.
-  const table = PRICES.google?.[endpoint.replace(/^google\//, '')];
-  const tier = tierLabel(payload) || table?.default;
-  const tokens = table?.tokens?.[tier] || table?.tokens?.[table?.default];
-  if (!tokens) return { kind: 'tokens', perMillion: round(perToken * 1_000_000), currency: 'USD', source: 'openrouter' };
-  const count = imagesIn(payload);
-  return { kind: 'total', amount: round(perToken * tokens * count), currency: 'USD', unitPrice: round(perToken * tokens), unit: 'image', quantity: count, source: 'openrouter' };
+  // OpenRouter charges the vendor's rate for the same tokens per image, so
+  // the table (scaled to today's rate) is the quote.
+  const known = tableEntryFor(endpoint);
+  if (known) return { ...tablePrice(known.provider, known.endpoint, payload, live), source: 'openrouter' };
+  return { kind: 'tokens', perMillion: round(perToken * 1_000_000), currency: 'USD', source: 'openrouter', rateCheckedAt: live.fetchedAt, rateSource: 'openrouter' };
 }
 
 // ── Google and OpenAI: published list prices ────────────────────────────────
 
-export function tablePrice(provider, endpoint, payload = {}) {
+/**
+ * @param {{ models: Map<string, object>, fetchedAt: number } | null} live  today's
+ *   per-token rates from OpenRouter; when the entry's rate has moved, the
+ *   table price is scaled to it.
+ */
+export function tablePrice(provider, endpoint, payload = {}, live = null) {
   const entry = PRICES[provider]?.[endpoint];
   if (!entry) return { kind: 'unavailable', source: 'table' };
+  const liveRate = entry.openrouter ? money(live?.models?.get(entry.openrouter)?.image_output) : null;
+  const factor = liveRate && entry.rate ? liveRate / entry.rate : 1;
+  const freshness = liveRate ? { rateSource: 'openrouter', rateCheckedAt: live.fetchedAt, rate: liveRate } : { asOf: PRICES_UPDATED, rate: entry.rate };
   if (entry.per === 'token') {
-    return { kind: 'tokens', perMillion: entry.perMillionOutputTokens, currency: 'USD', source: 'table', note: entry.note };
+    return { kind: 'tokens', perMillion: round((entry.rate || 0) * factor * 1_000_000), currency: 'USD', source: 'table', note: entry.note, ...freshness };
   }
   const count = imagesIn(payload);
   // "auto" or an unset tier is priced at the provider's default, which is
@@ -260,12 +297,27 @@ export function tablePrice(provider, endpoint, payload = {}) {
     unitPrice = entry.prices[tier];
   }
   if (!Number.isFinite(unitPrice)) return { kind: 'unavailable', source: 'table' };
-  return { kind: 'total', amount: round(unitPrice * count), currency: 'USD', unitPrice, unit: 'image', quantity: count, tier: label, ...(assumed ? { assumed: true } : {}), source: 'table' };
+  unitPrice = round(unitPrice * factor);
+  return {
+    kind: 'total', amount: round(unitPrice * count), currency: 'USD', unitPrice, unit: 'image', quantity: count, tier: label,
+    ...(assumed ? { assumed: true } : {}), ...(entry.note ? { note: entry.note } : {}), ...freshness, source: 'table',
+  };
 }
 
-function elevenlabsPrice({ payload }) {
+// ── ElevenLabs: characters × the published API rate for the model ───────────
+
+export function elevenlabsRate(model) {
+  const { perThousandCharacters, flashModels } = PRICES.elevenlabs;
+  return (flashModels.test(String(model || '')) ? perThousandCharacters.flash : perThousandCharacters.standard) / 1000;
+}
+
+function elevenlabsPrice({ endpoint, payload }) {
   const characters = textIn(payload).length;
-  return { kind: 'characters', characters, source: 'elevenlabs' };
+  const rate = elevenlabsRate(endpoint);
+  return {
+    kind: 'total', amount: round(characters * rate), currency: 'USD', unitPrice: round(rate * 1000), unit: 'thousandCharacters',
+    quantity: round(characters / 1000), characters, asOf: PRICES_UPDATED, source: 'elevenlabs',
+  };
 }
 
 export async function getPrice({ provider, endpoint, key, payload = {} }) {
@@ -281,10 +333,10 @@ export async function getPrice({ provider, endpoint, key, payload = {} }) {
   let quote;
   switch (provider) {
     case 'wavespeed': quote = await wavespeedPrice({ endpoint: providerEndpoint, key: key.trim(), route, payload: input }); break;
-    case 'fal': quote = await falPrice({ catalogId: route ? endpoint : null, route, endpoint: providerEndpoint, key: key.trim(), payload: input }); break;
+    case 'fal': quote = await falPrice({ catalogId: route ? endpoint : null, route, endpoint: providerEndpoint, key: key.trim(), payload: input, live: await liveRates() }); break;
     case 'openrouter': quote = await openrouterPrice({ endpoint: providerEndpoint, payload: input }); break;
-    case 'elevenlabs': quote = elevenlabsPrice({ payload: input }); break;
-    default: quote = tablePrice(provider, providerEndpoint, input);
+    case 'elevenlabs': quote = elevenlabsPrice({ endpoint: providerEndpoint, payload: input }); break;
+    default: quote = tablePrice(provider, providerEndpoint, input, await liveRates());
   }
   return { provider, endpoint: providerEndpoint, estimated: true, ...quote };
 }

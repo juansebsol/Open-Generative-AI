@@ -105,7 +105,7 @@ function recordRun(route, endpoint, payload, actualCost) {
   }
   quoteRun(endpoint, payload, { full: true })
     .then((quote) => {
-      if (quote.kind === 'total') recordSpend({ ...base, amount: quote.amount, currency: quote.currency, estimated: true });
+      if (quote.kind === 'total') recordSpend({ ...base, amount: quote.amount, currency: quote.currency, characters: quote.characters, estimated: true });
       else if (quote.kind === 'characters') recordSpend({ ...base, amount: null, characters: quote.characters, estimated: true });
       else if (quote.kind !== 'free' && quote.kind !== 'noProvider') recordSpend({ ...base, amount: null, estimated: true });
     })

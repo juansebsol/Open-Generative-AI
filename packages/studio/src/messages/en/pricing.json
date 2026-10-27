@@ -18,6 +18,9 @@
   "tier": "at {tier}",
   "assumedTier": "priced at {tier}, the provider's default when the tier is auto or unset",
   "listOf": "{provider} list price",
+  "rateChecked": "rate confirmed {minutes} min ago via {source}",
+  "rateJustChecked": "rate confirmed just now via {source}",
+  "asOf": "list price as of {date}",
   "units": {
     "image": "image",
     "video": "video",
@@ -26,6 +29,7 @@
     "megapixel": "megapixel",
     "character": "character",
     "request": "request",
-    "run": "run"
+    "run": "run",
+    "thousandCharacters": "1,000 characters"
   }
 }

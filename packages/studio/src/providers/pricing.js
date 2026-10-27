@@ -98,6 +98,17 @@ export function formatMoney(amount, currency = 'USD', locale = 'en') {
 
 const fill = (template, values) => Object.entries(values).reduce((text, [key, value]) => text.replaceAll(`{${key}}`, String(value)), template);
 
+// When the rate behind a table price was last confirmed.
+function freshness(quote, copy, locale) {
+  if (quote.rateCheckedAt) {
+    const minutes = Math.max(0, Math.round((Date.now() - quote.rateCheckedAt) / 60000));
+    const source = quote.rateSource === 'openrouter' ? 'OpenRouter' : quote.rateSource;
+    return [fill(minutes < 1 ? copy.rateJustChecked : copy.rateChecked, { minutes: new Intl.NumberFormat(locale).format(minutes), source })];
+  }
+  if (quote.asOf) return [fill(copy.asOf, { date: quote.asOf })];
+  return [];
+}
+
 /**
  * Turns a quote into the chip's label and tooltip.
  * @returns {{ label: string, title: string, tone: 'muted'|'ok'|'warn' } | null}
@@ -119,15 +130,18 @@ export function describeQuote(quote, copy, locale = 'en') {
       }
       if (quote.quantity && quote.quantity !== 1) details.push(fill(copy.times, { count: number(quote.quantity) }));
       if (quote.listPrice !== undefined) details.push(fill(copy.listPrice, { amount: formatMoney(quote.listPrice, quote.currency, locale) }));
+      if (quote.characters !== undefined) details.push(fill(copy.characters, { count: number(quote.characters) }));
       if (quote.tier) details.push(fill(quote.assumed ? copy.assumedTier : copy.tier, { tier: quote.tier }));
       if (quote.listOf) details.push(fill(copy.listOf, { provider: getProvider(quote.listOf)?.label || quote.listOf }));
       if (quote.partial) details.push(copy.partial);
+      details.push(...freshness(quote, copy, locale));
+      if (quote.note) details.push(quote.note);
       return { ...base, label, title: [base.title, ...details].join(' · ') };
     }
     case 'unit':
       return { ...base, label: fill(copy.perUnit, { amount: formatMoney(quote.unitPrice, quote.currency, locale), unit: copy.units[quote.unit] || quote.unit }) };
     case 'tokens':
-      return { ...base, label: fill(copy.perMillionTokens, { amount: formatMoney(quote.perMillion, quote.currency, locale) }), title: [base.title, quote.note].filter(Boolean).join(' · ') };
+      return { ...base, label: fill(copy.perMillionTokens, { amount: formatMoney(quote.perMillion, quote.currency, locale) }), title: [base.title, ...freshness(quote, copy, locale), quote.note].filter(Boolean).join(' · ') };
     case 'characters':
       return { ...base, label: fill(copy.characters, { count: number(quote.characters) }), title: fill(copy.charactersTitle, { provider: providerName }) };
     default:

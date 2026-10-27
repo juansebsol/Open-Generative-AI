@@ -52,6 +52,11 @@ test('quotes read as short labels with a fuller tooltip', () => {
   assert.match(floor.title, /real price can be higher/);
   assert.equal(pricing.describeQuote({ kind: 'free', provider: 'comfyui' }, copy).label, 'Free · local');
   assert.equal(pricing.describeQuote({ kind: 'characters', provider: 'elevenlabs', characters: 1234 }, copy).label, '1,234 characters');
+  const speech = pricing.describeQuote({ kind: 'total', provider: 'elevenlabs', amount: 0.0987, currency: 'USD', unitPrice: 0.08, unit: 'thousandCharacters', quantity: 1.234, characters: 1234, asOf: '2026-10-27' }, copy);
+  assert.equal(speech.label, '≈ $0.099');
+  assert.match(speech.title, /\$0\.08 per 1,000 characters · × 1\.234 · 1,234 characters · list price as of 2026-10-27/);
+  const live = pricing.describeQuote({ kind: 'total', provider: 'google', amount: 0.0336, currency: 'USD', rateSource: 'openrouter', rateCheckedAt: Date.now() - 5 * 60000 }, copy);
+  assert.match(live.title, /rate confirmed 5 min ago via OpenRouter/);
   assert.equal(pricing.describeQuote({ kind: 'tokens', provider: 'openai', perMillion: 30, currency: 'USD' }, copy).label, '$30.00 per 1M tokens');
   assert.equal(pricing.describeQuote({ kind: 'unavailable', provider: 'openai' }, copy).tone, 'warn');
   assert.equal(pricing.describeQuote({ kind: 'noProvider' }, copy), null);

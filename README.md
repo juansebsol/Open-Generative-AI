@@ -37,7 +37,7 @@ Add any combination in **Settings → Providers**. A model appears when at least
 | ComfyUI (local) | Your own checkpoints and workflows | — |
 | sd.cpp `sd-server` (local) | Lightweight local Stable Diffusion | — |
 
-Prices: a chip next to every Generate button shows the estimated cost of that run on the provider it will go to. fal and WaveSpeed are asked through their pricing APIs with your key (account discounts included; WaveSpeed quotes without media are shown as "from"), OpenRouter uses its per-token rate, Google and OpenAI use the published list prices in `packages/studio/src/providers/catalog/prices.js`, ElevenLabs shows characters, and local engines are free. Finished runs are added up per provider under **Settings → Providers** ("This month"), using the quote or, for OpenRouter, the charge it reports. The provider's own bill is what counts. Google and OpenAI do not expose a balance for API keys, so the panel links to their usage pages instead.
+Prices: a chip next to every Generate button shows the estimated cost of that run on the provider it will go to. fal and WaveSpeed are asked through their pricing APIs with your key (account discounts included; WaveSpeed quotes without media are shown as "from"). Google, OpenAI and ElevenLabs have no pricing API: their quotes come from the published price table in `packages/studio/src/providers/catalog/prices.js` (fal's OpenAI and Google models use it too), and the per-token rates behind the Google and OpenAI prices are re-read from OpenRouter's public model list every 30 minutes (`PRICE_REFRESH_MINUTES`), so a vendor price change shows up without a redeploy; the tooltip says when the rate was last confirmed. ElevenLabs is priced at its per-character API rate, and local engines are free. Finished runs are added up per provider under **Settings → Providers** ("This month"), using the tokens the provider reports after the run (OpenRouter, OpenAI, Google) or else the quote. The provider's own bill is what counts. Google and OpenAI do not expose a balance for API keys, so the panel links to their usage pages instead.
 
 Uploads: with a fal or WaveSpeed key, reference images, videos and audio go straight from your browser to that provider's storage (signed upload URL). Without one, images up to 8 MB are sent inline.
 
@@ -92,7 +92,7 @@ To update: `git pull && npm ci && npm run build && npm run pm2:reload`.
 
 ### Vercel
 
-Import the repository; the defaults work (framework Next.js, `npm run build`). There are no environment variables to set. Notes:
+Import the repository; the defaults work (framework Next.js, `npm run build`). No environment variable is required; `PRICE_REFRESH_MINUTES` (default 30) sets how often list prices are re-read. Notes:
 
 - Generation requests are short (submit, then the browser polls), so function time limits don't matter. Direct Gemini/OpenAI/OpenRouter image calls run synchronously and are allowed up to 300 s.
 - Vercel rejects request bodies over 4.5 MB. Uploads go straight to fal/WaveSpeed storage so they aren't affected, but the inline fallback (no fal/WaveSpeed key) is limited to small images.

@@ -3,6 +3,7 @@
 
 import { loadMedia, requestJson, toDataUrl, ProviderError } from '../http.js';
 import { collectImages, imageCount, requirePrompt } from './direct.js';
+import { googleUsageCost, sumCosts } from '../usage.js';
 
 const API_HOST = 'https://generativelanguage.googleapis.com/v1beta';
 const ASPECT_RATIOS = new Set(['1:1', '1:4', '4:1', '1:8', '8:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9']);
@@ -52,7 +53,7 @@ async function generateOnce({ endpoint, key, prompt, images, payload }) {
     const reason = data?.promptFeedback?.blockReason || data?.candidates?.[0]?.finishReason;
     throw new ProviderError(`Gemini returned no image${reason ? ` (${reason})` : ''}.`, { provider: 'google', status: 422 });
   }
-  return outputs;
+  return { outputs, cost: googleUsageCost(endpoint, data?.usageMetadata) };
 }
 
 export async function submit({ endpoint, input: payload, key }) {
@@ -60,8 +61,13 @@ export async function submit({ endpoint, input: payload, key }) {
   const images = collectImages(payload);
   const count = imageCount(payload);
   const outputs = [];
+  const costs = [];
   for (let i = 0; i < count; i++) {
-    outputs.push(...await generateOnce({ endpoint, key, prompt, images, payload }));
+    const result = await generateOnce({ endpoint, key, prompt, images, payload });
+    outputs.push(...result.outputs);
+    costs.push(result.cost);
   }
-  return { handle: { provider: 'google', id: `google-${Date.now()}` }, state: 'succeeded', outputs };
+  // usageMetadata lists the billed image tokens; summed when every call had it.
+  const cost = sumCosts(costs);
+  return { handle: { provider: 'google', id: `google-${Date.now()}` }, state: 'succeeded', outputs, ...(cost !== null ? { cost } : {}) };
 }

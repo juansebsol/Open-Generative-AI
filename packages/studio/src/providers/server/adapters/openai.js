@@ -2,6 +2,7 @@
 
 import { loadMedia, ProviderError, requestJson, toDataUrl } from '../http.js';
 import { collectImages, imageCount, requirePrompt } from './direct.js';
+import { openaiUsageCost } from '../usage.js';
 
 const API_HOST = 'https://api.openai.com/v1';
 
@@ -74,5 +75,7 @@ export async function submit({ endpoint, input: payload, key }) {
     });
   }
 
-  return { handle: { provider: 'openai', id: `openai-${Date.now()}` }, state: 'succeeded', outputs: toOutputs(data) };
+  // The Images API reports the tokens it billed; the ledger prefers that to the quote.
+  const cost = openaiUsageCost(endpoint, data?.usage);
+  return { handle: { provider: 'openai', id: `openai-${Date.now()}` }, state: 'succeeded', outputs: toOutputs(data), ...(cost !== null ? { cost } : {}) };
 }

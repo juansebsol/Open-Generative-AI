@@ -1,11 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getPrice, tablePrice, falQuantity } from '../packages/studio/src/providers/server/pricing.js';
+import { getPrice, tablePrice, falQuantity, liveRates, resetPriceCache, refreshMs } from '../packages/studio/src/providers/server/pricing.js';
+import { openaiUsageCost, googleUsageCost, sumCosts } from '../packages/studio/src/providers/server/usage.js';
 import { PRICES } from '../packages/studio/src/providers/catalog/prices.js';
 import { mapInput } from '../packages/studio/src/providers/mapper.js';
 import { ROUTE_GROUPS } from '../packages/studio/src/providers/catalog/routes.generated.js';
 
+const OPENROUTER = 'https://openrouter.ai/api/v1/models';
+const openrouterList = (overrides = {}) => [200, { data: [
+  { id: 'google/gemini-3.1-flash-image', pricing: { image_output: '0.00006' } },
+  { id: 'google/gemini-nano-banana-2.1', pricing: { image_output: '0.00003' } },
+  { id: 'openai/gpt-5.4-image-2', pricing: { image_output: '0.00003' } },
+].map((model) => (overrides[model.id] ? { ...model, pricing: { image_output: String(overrides[model.id]) } } : model)) }];
+
 function mockFetch(handlers) {
+  resetPriceCache();
   const calls = [];
   globalThis.fetch = async (url, init = {}) => {
     const body = init.body ? JSON.parse(init.body) : null;
@@ -51,11 +60,11 @@ test('fal multiplies the unit price by what the run will use', async () => {
     'https://api.fal.ai/v1/models/pricing?endpoint_id=fal-ai%2Fesrgan': [200, { prices: [{ endpoint_id: 'fal-ai/esrgan', unit_price: 0.025, unit: 'image', currency: 'USD' }] }],
   });
   const quote = await getPrice({ provider: 'fal', endpoint: 'ai-image-upscale', key: KEY, payload: { num_images: 3 } });
-  assert.equal(calls[0].auth, `Key ${KEY}`);
+  assert.equal(calls.find((call) => call.url.includes('fal.ai')).auth, `Key ${KEY}`);
   assert.deepEqual([quote.kind, quote.amount, quote.quantity, quote.unit], ['total', 0.075, 3, 'image']);
   // Unit prices are cached per key for a day.
   await getPrice({ provider: 'fal', endpoint: 'ai-image-upscale', key: KEY, payload: { num_images: 1 } });
-  assert.equal(calls.length, 1);
+  assert.equal(calls.filter((call) => call.url.includes('fal.ai')).length, 1);
 });
 
 test('fal quotes OpenAI and Google models from the price table, not its generic unit', async () => {
@@ -71,7 +80,7 @@ test('fal quotes OpenAI and Google models from the price table, not its generic 
   assert.equal(fourK.amount, 0.211);
   const banana = await getPrice({ provider: 'fal', endpoint: 'nano-banana-2-1', key: KEY, payload: { resolution: '2K' } });
   assert.deepEqual([banana.amount, banana.listOf], [0.0504, 'google']);
-  assert.equal(calls.length, 0, 'the table answers without asking fal');
+  assert.equal(calls.filter((call) => call.url.includes('fal.ai')).length, 0, 'the table answers without asking fal');
 });
 
 test('a generic fal unit with no table behind it is reported as unavailable', async () => {
@@ -95,7 +104,6 @@ test('google and openai come from the price table', () => {
   assert.equal(tablePrice('openai', 'gpt-image-2', {}).tier, 'high', 'unset quality is priced at the top tier');
   assert.deepEqual([tablePrice('openai', 'gpt-image-2', { resolution: '4K' }).amount, tablePrice('openai', 'gpt-image-2', { resolution: '4K' }).tier], [0.401, 'high 4K']);
   assert.equal(tablePrice('openai', 'gpt-image-2', { resolution: '2K', quality: 'medium' }).amount, 0.056);
-  assert.equal(tablePrice('openai', 'gpt-image-2.5-flare', {}).kind, 'tokens');
   assert.equal(tablePrice('openai', 'unknown-model', {}).kind, 'unavailable');
 });
 
@@ -110,19 +118,53 @@ test('every google and openai route in the catalog has a table entry', () => {
   }
 });
 
-test('openrouter prices per output token using the table tokens per image', async () => {
-  mockFetch({
-    'https://openrouter.ai/api/v1/models': [200, { data: [{ id: 'google/gemini-3.1-flash-image', pricing: { image_output: '0.00006' } }, { id: 'openai/gpt-5.4-image-2', pricing: { image_output: '0.00003' } }] }],
-  });
+test('openrouter prices the same table at its live per-token rate', async () => {
+  mockFetch({ [OPENROUTER]: openrouterList() });
   const flash = await getPrice({ provider: 'openrouter', endpoint: 'nano-banana-2', key: '', payload: { resolution: '2K' } });
-  assert.deepEqual([flash.kind, flash.amount], ['total', 0.1008]);
-  const gpt = await getPrice({ provider: 'openrouter', endpoint: 'gpt-image-2-text-to-image', key: '', payload: {} });
-  assert.deepEqual([gpt.kind, gpt.perMillion], ['tokens', 30]);
+  assert.deepEqual([flash.kind, flash.amount, flash.rateSource], ['total', 0.101, 'openrouter']);
+  const gpt = await getPrice({ provider: 'openrouter', endpoint: 'gpt-image-2-text-to-image', key: '', payload: { quality: 'medium' } });
+  assert.deepEqual([gpt.kind, gpt.amount], ['total', 0.053]);
 });
 
-test('elevenlabs counts characters', async () => {
-  const quote = await getPrice({ provider: 'elevenlabs', endpoint: 'elevenlabs-text-to-dialogue', key: '', payload: { dialogue: [{ text: 'Hello' }, { text: 'there' }] } });
-  assert.deepEqual([quote.kind, quote.characters], ['characters', 11]);
+test('google and openai prices follow the live rate when it moves', async () => {
+  const calls = mockFetch({ [OPENROUTER]: openrouterList({ 'google/gemini-nano-banana-2.1': 0.00006, 'openai/gpt-5.4-image-2': 0.000015 }) });
+  const banana = await getPrice({ provider: 'google', endpoint: 'nano-banana-2-1', key: '', payload: { resolution: '1K' } });
+  assert.equal(banana.amount, 0.0672, 'doubled rate doubles the price');
+  assert.ok(banana.rateCheckedAt > 0);
+  const gpt = await getPrice({ provider: 'openai', endpoint: 'gpt-image-2-text-to-image', key: '', payload: { quality: 'high' } });
+  assert.equal(gpt.amount, 0.1055, 'halved rate halves the price');
+  await getPrice({ provider: 'google', endpoint: 'nano-banana-2-1', key: '', payload: {} });
+  assert.equal(calls.length, 1, 'the rate list is cached for PRICE_REFRESH_MINUTES');
+  assert.equal(refreshMs(), 30 * 60 * 1000);
+});
+
+test('without OpenRouter the table stands, dated', async () => {
+  mockFetch({});
+  const quote = await getPrice({ provider: 'google', endpoint: 'nano-banana-2-1', key: '', payload: { resolution: '4K' } });
+  assert.deepEqual([quote.amount, quote.asOf, quote.rateCheckedAt], [0.113, '2026-10-27', undefined]);
+  assert.equal(await liveRates(), null);
+});
+
+test('gpt image 2.5 is priced per image from the published size table', () => {
+  assert.deepEqual([tablePrice('openai', 'gpt-image-2.5-flare', {}).amount, tablePrice('openai', 'gpt-image-2.5-flare', {}).tier], [0.0527, 'high']);
+  assert.equal(tablePrice('openai', 'gpt-image-2.5-sunburst', { quality: 'max', resolution: '4K' }).amount, 0.4003);
+  assert.equal(tablePrice('openai', 'gpt-image-2.5-flare', { quality: 'xhigh', aspect_ratio: '16:9' }).amount, 0.0738);
+});
+
+test('elevenlabs quotes characters at the API rate for the model', async () => {
+  const dialogue = await getPrice({ provider: 'elevenlabs', endpoint: 'elevenlabs-text-to-dialogue', key: '', payload: { dialogue: [{ text: 'Hello' }, { text: 'there' }] } });
+  assert.deepEqual([dialogue.kind, dialogue.characters, dialogue.amount, dialogue.unitPrice], ['total', 11, 0.0009, 0.08]);
+  const flash = await getPrice({ provider: 'elevenlabs', endpoint: 'elevenlabs-tts-turbo-2-5', key: '', payload: { prompt: 'x'.repeat(1000) } });
+  assert.deepEqual([flash.amount, flash.unitPrice], [0.04, 0.04]);
+});
+
+test('usage reported after a run becomes the actual cost', () => {
+  assert.equal(openaiUsageCost('gpt-image-2', { input_tokens: 20, output_tokens: 7033, input_tokens_details: { text_tokens: 20, image_tokens: 0 } }), 0.21109);
+  assert.equal(openaiUsageCost('gpt-image-2.5-flare-2026-09-08', { output_tokens: 1756 }), 0.05268);
+  assert.equal(openaiUsageCost('gpt-image-2', {}), null);
+  assert.equal(googleUsageCost('gemini-nano-banana-2.1', { promptTokenCount: 10, candidatesTokenCount: 1120, candidatesTokensDetails: [{ modality: 'IMAGE', tokenCount: 1120 }] }), 0.033615);
+  assert.equal(googleUsageCost('gemini-nano-banana-2.1', null), null);
+  assert.deepEqual([sumCosts([0.1, 0.2]), sumCosts([0.1, null]), sumCosts([])], [0.3, null, null]);
 });
 
 test('fal and wavespeed quotes need a key', async () => {

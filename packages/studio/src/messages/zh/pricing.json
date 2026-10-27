@@ -18,6 +18,9 @@
   "tier": "{tier} 档",
   "assumedTier": "按 {tier} 档计价（档位为 auto 或未设置时服务商默认采用）",
   "listOf": "{provider} 官方标价",
+  "rateChecked": "费率 {minutes} 分钟前经 {source} 核对",
+  "rateJustChecked": "费率刚刚经 {source} 核对",
+  "asOf": "标价截至 {date}",
   "units": {
     "image": "张图片",
     "video": "个视频",
@@ -26,6 +29,7 @@
     "megapixel": "百万像素",
     "character": "字符",
     "request": "次请求",
-    "run": "次运行"
+    "run": "次运行",
+    "thousandCharacters": "千字符"
   }
 }
