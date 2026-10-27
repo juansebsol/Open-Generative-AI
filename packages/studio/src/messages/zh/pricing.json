@@ -21,6 +21,10 @@
   "rateChecked": "费率 {minutes} 分钟前经 {source} 核对",
   "rateJustChecked": "费率刚刚经 {source} 核对",
   "asOf": "标价截至 {date}",
+  "runsOn": "通过 {provider} 的 {endpoint} 运行。",
+  "noProvider": "缺少服务商密钥",
+  "noProviderTitle": "你已配置密钥的服务商都不支持此模型。可用服务商：{providers}。",
+  "change": "点击可更换服务商。",
   "units": {
     "image": "张图片",
     "video": "个视频",

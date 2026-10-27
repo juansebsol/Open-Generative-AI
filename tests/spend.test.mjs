@@ -40,9 +40,10 @@ test('only price-relevant inputs travel with a quote', () => {
 });
 
 test('quotes read as short labels with a fuller tooltip', () => {
-  const total = pricing.describeQuote({ kind: 'total', provider: 'fal', amount: 0.075, currency: 'USD', unitPrice: 0.025, unit: 'image', quantity: 3 }, copy);
-  assert.equal(total.label, '≈ $0.075');
-  assert.match(total.title, /fal\.ai/);
+  const total = pricing.describeQuote({ kind: 'total', provider: 'fal', endpoint: 'fal-ai/esrgan', amount: 0.075, currency: 'USD', unitPrice: 0.025, unit: 'image', quantity: 3 }, copy);
+  assert.deepEqual([total.provider, total.label], ['fal.ai', '≈ $0.075']);
+  assert.match(total.title, /^Runs on fal\.ai via fal-ai\/esrgan\./);
+  assert.match(total.title, /Click to change providers\.$/);
   assert.match(total.title, /\$0\.025 per image · × 3/);
   const floor = pricing.describeQuote({ kind: 'total', provider: 'wavespeed', amount: 0.45, currency: 'USD', partial: true }, copy);
   assert.equal(floor.label, 'from $0.45');
@@ -50,7 +51,8 @@ test('quotes read as short labels with a fuller tooltip', () => {
   assert.match(table.title, /priced at high, the provider's default/);
   assert.match(table.title, /OpenAI list price/);
   assert.match(floor.title, /real price can be higher/);
-  assert.equal(pricing.describeQuote({ kind: 'free', provider: 'comfyui' }, copy).label, 'Free · local');
+  const free = pricing.describeQuote({ kind: 'free', provider: 'comfyui', endpoint: 'sdxl' }, copy);
+  assert.deepEqual([free.provider, free.label], ['ComfyUI', 'Free · local']);
   assert.equal(pricing.describeQuote({ kind: 'characters', provider: 'elevenlabs', characters: 1234 }, copy).label, '1,234 characters');
   const speech = pricing.describeQuote({ kind: 'total', provider: 'elevenlabs', amount: 0.0987, currency: 'USD', unitPrice: 0.08, unit: 'thousandCharacters', quantity: 1.234, characters: 1234, asOf: '2026-10-27' }, copy);
   assert.equal(speech.label, '≈ $0.099');
@@ -59,5 +61,8 @@ test('quotes read as short labels with a fuller tooltip', () => {
   assert.match(live.title, /rate confirmed 5 min ago via OpenRouter/);
   assert.equal(pricing.describeQuote({ kind: 'tokens', provider: 'openai', perMillion: 30, currency: 'USD' }, copy).label, '$30.00 per 1M tokens');
   assert.equal(pricing.describeQuote({ kind: 'unavailable', provider: 'openai' }, copy).tone, 'warn');
-  assert.equal(pricing.describeQuote({ kind: 'noProvider' }, copy), null);
+  assert.equal(pricing.describeQuote({ kind: 'noProvider', providers: [] }, copy), null, 'a model no provider serves shows nothing');
+  const missing = pricing.describeQuote({ kind: 'noProvider', providers: ['fal', 'wavespeed', 'openai'] }, copy);
+  assert.deepEqual([missing.label, missing.tone], ['No provider key', 'warn']);
+  assert.match(missing.title, /available on fal\.ai, WaveSpeedAI, or OpenAI/);
 });

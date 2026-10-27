@@ -21,6 +21,10 @@
   "rateChecked": "rate confirmed {minutes} min ago via {source}",
   "rateJustChecked": "rate confirmed just now via {source}",
   "asOf": "list price as of {date}",
+  "runsOn": "Runs on {provider} via {endpoint}.",
+  "noProvider": "No provider key",
+  "noProviderTitle": "None of the providers you have a key for serves this model. It is available on {providers}.",
+  "change": "Click to change providers.",
   "units": {
     "image": "image",
     "video": "video",

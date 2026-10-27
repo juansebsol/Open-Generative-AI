@@ -68,8 +68,9 @@ async function postQuote(route, endpoint, payload) {
  */
 export async function quoteRun(endpoint, payload = {}, { full = false } = {}) {
   const route = routeFor(endpoint);
-  if (!route) return { kind: 'noProvider', endpoint };
-  if (getProvider(route.provider)?.kind === 'local') return { kind: 'free', provider: route.provider, endpoint };
+  // Which providers could serve it, so the chip can say whose key is missing.
+  if (!route) return { kind: 'noProvider', endpoint, providers: [...new Set(getRoutes(endpoint).map((candidate) => candidate.provider))] };
+  if (getProvider(route.provider)?.kind === 'local') return { kind: 'free', provider: route.provider, endpoint: route.endpoint };
   const inputs = full ? payload : pricedInputs(payload);
   const cacheKey = `${route.provider}|${endpoint}|${JSON.stringify(inputs)}`;
   const hit = cache.get(cacheKey);
@@ -109,14 +110,39 @@ function freshness(quote, copy, locale) {
   return [];
 }
 
+// "ComfyUI (local)" is "ComfyUI" in the chip.
+export const providerName = (id) => (getProvider(id)?.label || id || '').replace(/\s*\(.*\)$/, '');
+
+const listNames = (ids, locale) => {
+  const names = ids.map(providerName);
+  try {
+    return new Intl.ListFormat(locale, { type: 'disjunction' }).format(names);
+  } catch {
+    return names.join(' / ');
+  }
+};
+
 /**
- * Turns a quote into the chip's label and tooltip.
- * @returns {{ label: string, title: string, tone: 'muted'|'ok'|'warn' } | null}
+ * Turns a quote into the chip's text: `provider` (who runs it), `label`
+ * (the price) and `title` (the tooltip, which names the provider's endpoint).
+ * @returns {{ provider: string, label: string, title: string, tone: 'muted'|'ok'|'warn' } | null}
  */
 export function describeQuote(quote, copy, locale = 'en') {
-  if (!quote || quote.kind === 'noProvider') return null;
-  const providerName = getProvider(quote.provider)?.label || quote.provider || '';
+  if (!quote) return null;
+  if (quote.kind === 'noProvider') {
+    const providers = quote.providers || [];
+    if (providers.length === 0) return null;
+    return { provider: '', label: copy.noProvider, tone: 'warn', title: `${fill(copy.noProviderTitle, { providers: listNames(providers, locale) })} ${copy.change}` };
+  }
+  const name = providerName(quote.provider);
   const number = (value) => new Intl.NumberFormat(locale).format(value);
+  const runsOn = fill(copy.runsOn, { provider: name, endpoint: quote.endpoint || '' });
+  const described = describePrice(quote, copy, locale, number, name);
+  if (!described) return null;
+  return { provider: name, ...described, title: [runsOn, described.title, copy.change].filter(Boolean).join(' · ') };
+}
+
+function describePrice(quote, copy, locale, number, providerName) {
   const base = { tone: 'muted', title: fill(copy.title, { provider: providerName }) };
   switch (quote.kind) {
     case 'free':

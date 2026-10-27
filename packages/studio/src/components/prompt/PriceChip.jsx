@@ -1,11 +1,12 @@
 "use client";
 
-// The price chip next to every Generate button: what this run is expected
-// to cost on the provider it will go to. Quotes come from /api/price through
-// quoteRun() and refresh when the model or a priced option changes.
+// The chip next to every Generate button: which provider (API) this run
+// will go to and what it is expected to cost there. Quotes come from
+// /api/price through quoteRun() and refresh when the model or a priced
+// option changes; clicking the chip opens the Providers panel.
 
 import { useEffect, useMemo, useState } from "react";
-import { describeQuote, quoteRun, routeFor } from "../../providers/pricing.js";
+import { describeQuote, providerName, quoteRun, routeFor } from "../../providers/pricing.js";
 import { subscribeProviderSettings } from "../../providers/keys.js";
 import { resolveCopy } from "../../i18nUtils";
 import en from "../../messages/en/pricing.json";
@@ -30,7 +31,7 @@ export function usePriceQuote(endpoint, payload, { enabled = true } = {}) {
       return undefined;
     }
     if (!routeFor(endpoint)) {
-      setState({ status: "ready", quote: { kind: "noProvider", endpoint } });
+      quoteRun(endpoint, {}).then((quote) => setState({ status: "ready", quote }));
       return undefined;
     }
     let cancelled = false;
@@ -69,20 +70,32 @@ export default function PriceChip({ endpoint, payload, enabled = true, runs = 1,
   const copy = resolveCopy(en, zh, locale);
   const { status, quote } = usePriceQuote(endpoint, payload, { enabled });
 
+  const provider = providerName(routeFor(endpoint)?.provider);
   let view = null;
-  if (status === "error") view = { label: copy.error, title: copy.error, tone: "warn" };
+  if (status === "error") view = { provider, label: copy.error, title: copy.error, tone: "warn" };
   else if (quote) view = describeQuote(multiply(quote, runs), copy, locale);
-  if (!view && status === "loading") view = { label: copy.loading, title: copy.loading, tone: "muted" };
+  if (!view && status === "loading") view = { provider, label: copy.loading, title: copy.loading, tone: "muted" };
   if (!view) return null;
 
+  const openProviders = () => window.dispatchEvent(new CustomEvent("oga:provider-setup-needed"));
+
   return (
-    <span
+    <button
+      type="button"
+      onClick={openProviders}
       title={view.title}
       aria-label={view.title}
       data-price-status={status}
-      className={`inline-flex h-7 max-w-[200px] items-center gap-1 truncate rounded-full border px-2.5 text-[11.5px] font-semibold tabular-nums whitespace-nowrap transition-opacity ${TONE[view.tone] || TONE.muted} ${status === "loading" && quote ? "opacity-60" : ""} ${className}`}
+      data-provider={view.provider || undefined}
+      className={`inline-flex h-7 max-w-[240px] items-center gap-1.5 rounded-full border px-2.5 text-[11.5px] font-semibold tabular-nums whitespace-nowrap transition-[opacity,background-color] hover:bg-white/[0.06] focus:outline-none focus-visible:ring-1 focus-visible:ring-white/30 ${TONE[view.tone] || TONE.muted} ${status === "loading" && quote ? "opacity-60" : ""} ${className}`}
     >
-      {view.label}
-    </span>
+      {view.provider ? (
+        <>
+          <span className="truncate font-medium opacity-75">{view.provider}</span>
+          <span aria-hidden="true" className="opacity-40">·</span>
+        </>
+      ) : null}
+      <span className="truncate">{view.label}</span>
+    </button>
   );
 }
