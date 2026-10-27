@@ -795,7 +795,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy, locale = "en", 
                   isSelected ? "bg-white/5 border-white/5" : ""
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
                   <div
                     className={`w-8 h-8 shrink-0 ${
                       family.id.includes("kontext")
@@ -806,7 +806,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy, locale = "en", 
                     {entry.name.charAt(0)}
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="text-xs font-bold text-white tracking-tight truncate">
+                    <span title={entry.name} className="text-xs font-bold text-white tracking-tight truncate">
                       {entry.name}
                     </span>
                     <div className="flex items-center gap-1.5">
@@ -1574,7 +1574,7 @@ export default function ImageStudio({
                 {dropdownOpen === "model" && (
                   <PromptPopover
                     onClick={(e) => e.stopPropagation()}
-                    className="w-[calc(100vw-2rem)] md:w-[480px] max-w-md md:max-w-none max-h-[70vh]"
+                    className="w-[calc(100vw-2rem)] md:w-[560px] max-w-md md:max-w-[calc(100vw-2rem)] max-h-[70vh]"
                   >
                     <PromptPopoverHeader>{copy.popovers.model}</PromptPopoverHeader>
                     <ModelDropdown
