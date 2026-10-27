@@ -58,6 +58,30 @@ test('fal multiplies the unit price by what the run will use', async () => {
   assert.equal(calls.length, 1);
 });
 
+test('fal quotes OpenAI and Google models from the price table, not its generic unit', async () => {
+  const calls = mockFetch({
+    'https://api.fal.ai/v1/models/pricing?endpoint_id=openai%2Fgpt-image-2': [200, { prices: [{ endpoint_id: 'openai/gpt-image-2', unit_price: 1, unit: 'units', currency: 'USD' }] }],
+  });
+  const auto = await getPrice({ provider: 'fal', endpoint: 'gpt-image-2-text-to-image', key: KEY, payload: { quality: 'auto', aspect_ratio: '1:1' } });
+  assert.deepEqual([auto.kind, auto.amount, auto.tier, auto.assumed, auto.listOf], ['total', 0.211, 'high', true, 'openai']);
+  const medium = await getPrice({ provider: 'fal', endpoint: 'gpt-image-2-text-to-image', key: KEY, payload: { quality: 'medium', aspect_ratio: '1:1' } });
+  assert.deepEqual([medium.amount, medium.assumed], [0.053, undefined]);
+  // fal's GPT Image 2 route drops the studio's resolution, so 4K does not raise its quote.
+  const fourK = await getPrice({ provider: 'fal', endpoint: 'gpt-image-2-text-to-image', key: KEY, payload: { resolution: '4K' } });
+  assert.equal(fourK.amount, 0.211);
+  const banana = await getPrice({ provider: 'fal', endpoint: 'nano-banana-2-1', key: KEY, payload: { resolution: '2K' } });
+  assert.deepEqual([banana.amount, banana.listOf], [0.0504, 'google']);
+  assert.equal(calls.length, 0, 'the table answers without asking fal');
+});
+
+test('a generic fal unit with no table behind it is reported as unavailable', async () => {
+  mockFetch({
+    'https://api.fal.ai/v1/models/pricing?endpoint_id=fal-ai%2Fesrgan': [200, { prices: [{ endpoint_id: 'fal-ai/esrgan', unit_price: 1, unit: 'unit', currency: 'USD' }] }],
+  });
+  const quote = await getPrice({ provider: 'fal', endpoint: 'ai-image-upscale', key: 'another-key-0987654321', payload: {} });
+  assert.equal(quote.kind, 'unavailable');
+});
+
 test('fal units it cannot count become a per-unit quote', () => {
   assert.equal(falQuantity('gpu-h100-second', { prompt: 'x' }), null);
   assert.deepEqual(falQuantity('video second', { duration: 8 }), { quantity: 8, unit: 'second' });
@@ -69,6 +93,8 @@ test('google and openai come from the price table', () => {
   assert.equal(tablePrice('google', 'gemini-3.1-flash-image', {}).tier, '1K');
   assert.equal(tablePrice('openai', 'gpt-image-2', { quality: 'medium', aspect_ratio: '3:2' }).amount, 0.041);
   assert.equal(tablePrice('openai', 'gpt-image-2', {}).tier, 'high', 'unset quality is priced at the top tier');
+  assert.deepEqual([tablePrice('openai', 'gpt-image-2', { resolution: '4K' }).amount, tablePrice('openai', 'gpt-image-2', { resolution: '4K' }).tier], [0.401, 'high 4K']);
+  assert.equal(tablePrice('openai', 'gpt-image-2', { resolution: '2K', quality: 'medium' }).amount, 0.056);
   assert.equal(tablePrice('openai', 'gpt-image-2.5-flare', {}).kind, 'tokens');
   assert.equal(tablePrice('openai', 'unknown-model', {}).kind, 'unavailable');
 });

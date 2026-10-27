@@ -46,6 +46,9 @@ test('quotes read as short labels with a fuller tooltip', () => {
   assert.match(total.title, /\$0\.025 per image · × 3/);
   const floor = pricing.describeQuote({ kind: 'total', provider: 'wavespeed', amount: 0.45, currency: 'USD', partial: true }, copy);
   assert.equal(floor.label, 'from $0.45');
+  const table = pricing.describeQuote({ kind: 'total', provider: 'fal', amount: 0.211, currency: 'USD', unitPrice: 0.211, unit: 'image', quantity: 1, tier: 'high', assumed: true, listOf: 'openai' }, copy);
+  assert.match(table.title, /priced at high, the provider's default/);
+  assert.match(table.title, /OpenAI list price/);
   assert.match(floor.title, /real price can be higher/);
   assert.equal(pricing.describeQuote({ kind: 'free', provider: 'comfyui' }, copy).label, 'Free · local');
   assert.equal(pricing.describeQuote({ kind: 'characters', provider: 'elevenlabs', characters: 1234 }, copy).label, '1,234 characters');

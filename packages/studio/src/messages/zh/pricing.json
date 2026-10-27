@@ -15,6 +15,9 @@
   "charactersTitle": "{provider} 按字符计入套餐额度，而不是按次收费。",
   "unavailableTitle": "{provider} 尚未公布此模型的价格，运行前请查看其价格页面。",
   "partial": "未计入媒体文件和缺失的输入，实际价格可能更高。",
+  "tier": "{tier} 档",
+  "assumedTier": "按 {tier} 档计价（档位为 auto 或未设置时服务商默认采用）",
+  "listOf": "{provider} 官方标价",
   "units": {
     "image": "张图片",
     "video": "个视频",

@@ -97,6 +97,12 @@ export const PRICES = {
           0.165
         ]
       },
+      // Larger sizes are billed per output token by OpenAI; these are fal's
+      // published GPT Image 2 prices for 2560×1440 and 3840×2160.
+      sizes: {
+        "2K": { low: 0.007, medium: 0.056, high: 0.222 },
+        "4K": { low: 0.012, medium: 0.101, high: 0.401 }
+      },
       note: "square, then portrait or landscape. 2K and 4K sizes have no published per-image price."
     },
     "gpt-image-2.5-flare": {

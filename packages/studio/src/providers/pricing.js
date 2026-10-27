@@ -119,6 +119,8 @@ export function describeQuote(quote, copy, locale = 'en') {
       }
       if (quote.quantity && quote.quantity !== 1) details.push(fill(copy.times, { count: number(quote.quantity) }));
       if (quote.listPrice !== undefined) details.push(fill(copy.listPrice, { amount: formatMoney(quote.listPrice, quote.currency, locale) }));
+      if (quote.tier) details.push(fill(quote.assumed ? copy.assumedTier : copy.tier, { tier: quote.tier }));
+      if (quote.listOf) details.push(fill(copy.listOf, { provider: getProvider(quote.listOf)?.label || quote.listOf }));
       if (quote.partial) details.push(copy.partial);
       return { ...base, label, title: [base.title, ...details].join(' · ') };
     }

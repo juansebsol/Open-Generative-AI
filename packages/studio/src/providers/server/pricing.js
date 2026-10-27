@@ -3,7 +3,8 @@
 // pricing APIs with the visitor's key (account discounts included);
 // OpenRouter's public model list gives a per-token rate; Google, OpenAI and
 // ElevenLabs have no pricing API, so their quotes come from catalog/prices.json
-// and the text length. Every quote is an estimate: the provider's own bill
+// and the text length (fal's OpenAI and Google models use that table too).
+// Every quote is an estimate: the provider's own bill
 // is what counts.
 
 import { createHash } from 'node:crypto';
@@ -162,11 +163,37 @@ export function falQuantity(unit, payload) {
   return null;
 }
 
-async function falPrice({ endpoint, key, payload }) {
+// fal hosts OpenAI and Google image models at those vendors' list prices, and
+// its pricing API reports them as a generic "unit" whose price means nothing
+// per image. When the same catalog entry also routes to OpenAI or Google, the
+// published table is the honest quote.
+function passthroughTable(catalogId, route, payload) {
+  // Fields the fal route drops never reach the model, so they cannot change
+  // the price (GPT Image 2 on fal ignores the studio's resolution).
+  const sent = { ...payload };
+  for (const field of route?.drop || []) delete sent[field];
+  for (const provider of ['openai', 'google']) {
+    const sibling = findRoute(catalogId, provider);
+    if (!sibling) continue;
+    const quote = tablePrice(provider, sibling.endpoint, sent);
+    if (quote.kind !== 'unavailable') return { ...quote, listOf: provider };
+  }
+  return null;
+}
+
+// "unit"/"units"/"token": fal's placeholder for formula-priced endpoints.
+const GENERIC_UNIT = /^units?$|token/i;
+
+async function falPrice({ catalogId, route, endpoint, key, payload }) {
+  const table = catalogId ? passthroughTable(catalogId, route, payload) : null;
+  if (table) return table;
   const price = await falUnitPrice(endpoint, key);
   if (!price) return { kind: 'unavailable', source: 'fal' };
   const used = falQuantity(price.unit, payload);
-  if (!used) return { kind: 'unit', unitPrice: price.unitPrice, unit: price.unit, currency: price.currency, source: 'fal' };
+  if (!used) {
+    if (GENERIC_UNIT.test(price.unit.trim())) return { kind: 'unavailable', source: 'fal' };
+    return { kind: 'unit', unitPrice: price.unitPrice, unit: price.unit, currency: price.currency, source: 'fal' };
+  }
   return {
     kind: 'total',
     amount: round(price.unitPrice * used.quantity),
@@ -212,21 +239,28 @@ export function tablePrice(provider, endpoint, payload = {}) {
     return { kind: 'tokens', perMillion: entry.perMillionOutputTokens, currency: 'USD', source: 'table', note: entry.note };
   }
   const count = imagesIn(payload);
-  let tier;
+  // "auto" or an unset tier is priced at the provider's default, which is
+  // the top tier for OpenAI; the quote says so.
+  const requested = entry.tier === 'quality' ? String(payload.quality || '').toLowerCase() : tierLabel(payload);
+  const tier = entry.prices[requested] ? requested : entry.default;
+  const assumed = tier !== requested;
   let unitPrice;
+  let label = tier;
   if (entry.tier === 'quality') {
-    tier = String(payload.quality || '').toLowerCase();
-    if (!entry.prices[tier]) tier = entry.default;
-    const [w, h] = String(payload.aspect_ratio || '1:1').split(':').map(Number);
-    const square = !w || !h || Math.abs(w - h) < 0.01;
-    unitPrice = entry.prices[tier][square ? 0 : 1];
+    const size = tierLabel({ resolution: payload.resolution || payload.image_size || payload.size || '' });
+    if (entry.sizes?.[size]?.[tier] !== undefined) {
+      unitPrice = entry.sizes[size][tier];
+      label = `${tier} ${size}`;
+    } else {
+      const [w, h] = String(payload.aspect_ratio || '1:1').split(':').map(Number);
+      const square = !w || !h || Math.abs(w - h) < 0.01;
+      unitPrice = entry.prices[tier][square ? 0 : 1];
+    }
   } else {
-    tier = tierLabel(payload);
-    if (!entry.prices[tier]) tier = entry.default;
     unitPrice = entry.prices[tier];
   }
   if (!Number.isFinite(unitPrice)) return { kind: 'unavailable', source: 'table' };
-  return { kind: 'total', amount: round(unitPrice * count), currency: 'USD', unitPrice, unit: 'image', quantity: count, tier, source: 'table' };
+  return { kind: 'total', amount: round(unitPrice * count), currency: 'USD', unitPrice, unit: 'image', quantity: count, tier: label, ...(assumed ? { assumed: true } : {}), source: 'table' };
 }
 
 function elevenlabsPrice({ payload }) {
@@ -247,7 +281,7 @@ export async function getPrice({ provider, endpoint, key, payload = {} }) {
   let quote;
   switch (provider) {
     case 'wavespeed': quote = await wavespeedPrice({ endpoint: providerEndpoint, key: key.trim(), route, payload: input }); break;
-    case 'fal': quote = await falPrice({ endpoint: providerEndpoint, key: key.trim(), payload: input }); break;
+    case 'fal': quote = await falPrice({ catalogId: route ? endpoint : null, route, endpoint: providerEndpoint, key: key.trim(), payload: input }); break;
     case 'openrouter': quote = await openrouterPrice({ endpoint: providerEndpoint, payload: input }); break;
     case 'elevenlabs': quote = elevenlabsPrice({ payload: input }); break;
     default: quote = tablePrice(provider, providerEndpoint, input);

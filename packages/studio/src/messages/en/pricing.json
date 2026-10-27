@@ -15,6 +15,9 @@
   "charactersTitle": "{provider} counts characters against your plan instead of charging per run.",
   "unavailableTitle": "{provider} has not published a price for this model. Check its pricing page before running.",
   "partial": "Media and missing inputs are not included, so the real price can be higher.",
+  "tier": "at {tier}",
+  "assumedTier": "priced at {tier}, the provider's default when the tier is auto or unset",
+  "listOf": "{provider} list price",
   "units": {
     "image": "image",
     "video": "video",
