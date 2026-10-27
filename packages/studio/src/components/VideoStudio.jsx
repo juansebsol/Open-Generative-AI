@@ -95,7 +95,7 @@ import {
   promptMediaButtonClassName,
   PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
-import PriceChip from "./prompt/PriceChip.jsx";
+import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
 import usePromptMenu from "./prompt/usePromptMenu.js";
 import en from "../messages/en/videoStudio.json";
 import zh from "../messages/zh/videoStudio.json";
@@ -464,8 +464,10 @@ function getProviderStyle(provider) {
   return { text: vendor.mono, bg: `bg-white/[0.06] ${vendor.color} border-white/10` };
 }
 
-function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
+function ModelDropdown({ selectedModel, onSelect, onClose, copy = en, locale = "en", pricePayload, priceMode }) {
   const [search, setSearch] = useState("");
+  // Only the hovered row is priced (see PriceHint).
+  const [hoveredId, setHoveredId] = useState(null);
   const selectedEntry = videoModelPickerEntryByVariantId.get(selectedModel);
   const selectedModelProvider = selectedEntry?.family.provider || "all";
   const modelCategories = [
@@ -537,18 +539,25 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
   const renderItem = (entry) => {
     const { family } = entry;
     const isSelected = selectedEntry === entry;
+    // The variant a click would pick, so the hover price matches.
+    const mode = activeCategory.id !== "all" ? activeCategory.id : priceMode;
+    const priceVariant = entry.variantsByMode[mode] || entry.defaultVariant || Object.values(entry.variantsByMode)[0];
     return (
     <button
       type="button"
       key={entry.id}
       aria-pressed={isSelected}
       ref={isSelected ? activeItemRef : null}
-      className={`flex w-full text-left items-center justify-between p-3.5 hover:bg-white/5 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${isSelected ? "bg-white/5 border-white/5" : ""}`}
+      className={`flex w-full text-left items-center justify-between gap-3 p-3.5 hover:bg-white/5 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${isSelected ? "bg-white/5 border-white/5" : ""}`}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(entry, activeCategory.id);
         onClose();
       }}
+      onMouseEnter={() => setHoveredId(entry.id)}
+      onMouseLeave={() => setHoveredId((id) => (id === entry.id ? null : id))}
+      onFocus={() => setHoveredId(entry.id)}
+      onBlur={() => setHoveredId((id) => (id === entry.id ? null : id))}
     >
       <div className="flex items-center gap-3.5">
         <div
@@ -569,7 +578,10 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en }) {
           </div>
         </div>
       </div>
-      {isSelected && <CheckSvg />}
+      <span className="flex shrink-0 items-center gap-2">
+        <PriceHint locale={locale} endpoint={priceVariant?.model?.endpoint || priceVariant?.model?.id} payload={pricePayload} hovered={hoveredId === entry.id} />
+        {isSelected && <CheckSvg />}
+      </span>
     </button>
     );
   };
@@ -907,6 +919,11 @@ export default function VideoStudio({
   const selectedFamily =
     videoModelCatalog.familyById.get(selectedFamilyId) || defaultFamily;
   const currentFamilyMode = v2vMode ? "v2v" : imageMode ? "i2v" : "t2v";
+  // Shared by the price chip and the model picker's hover prices.
+  const pricePayload = useMemo(
+    () => ({ aspect_ratio: selectedAr, duration: selectedDuration, resolution: selectedResolution, quality: selectedQuality, ...modelParameterValues }),
+    [selectedAr, selectedDuration, selectedResolution, selectedQuality, modelParameterValues],
+  );
   const workflowFamily = getVideoWorkflowFamily(selectedFamilyId);
   const selectedWorkflow = selectedWorkflowId
     ? workflowFamily?.workflowById.get(selectedWorkflowId) || null
@@ -2812,6 +2829,9 @@ export default function VideoStudio({
                       onSelect={handleModelSelect}
                       onClose={() => setOpenDropdown(null)}
                       copy={copy}
+                      locale={locale}
+                      priceMode={currentFamilyMode}
+                      pricePayload={pricePayload}
                     />
                   </PromptPopover>
                 )}
@@ -3179,7 +3199,7 @@ export default function VideoStudio({
             </PromptControls>
 
 <PromptActionGroup>
-<PriceChip locale={locale} endpoint={selectedVariant?.model?.endpoint || selectedModel} payload={{ aspect_ratio: selectedAr, duration: selectedDuration, resolution: selectedResolution, quality: selectedQuality, ...modelParameterValues }} />
+<PriceChip locale={locale} endpoint={selectedVariant?.model?.endpoint || selectedModel} payload={pricePayload} />
             {/* Generate button */}
             <PromptAction
               onClick={handleGenerate}

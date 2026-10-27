@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { generateImage, generateI2I, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
@@ -60,7 +60,7 @@ import {
   promptMediaButtonClassName,
   PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
-import PriceChip from "./prompt/PriceChip.jsx";
+import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
 import en from "../messages/en/imageStudio.json";
 import zh from "../messages/zh/imageStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -637,9 +637,11 @@ function getProviderStyle(provider) {
   return { text: vendor.mono, bg: `bg-white/[0.06] ${vendor.color} border-white/10` };
 }
 
-function ModelDropdown({ selectedModel, onSelect, onClose, copy }) {
+function ModelDropdown({ selectedModel, onSelect, onClose, copy, locale = "en", pricePayload, priceMode }) {
   const t = copy.modelDropdown;
   const [search, setSearch] = useState("");
+  // Only the hovered row is priced (see PriceHint).
+  const [hoveredId, setHoveredId] = useState(null);
   const selectedEntry = imageModelPickerEntryByVariantId.get(selectedModel);
   const modelCategories = [
     {
@@ -772,6 +774,9 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy }) {
             filtered.map((entry) => {
               const { family } = entry;
               const isSelected = selectedEntry === entry;
+              // The variant a click would pick, so the hover price matches.
+              const mode = activeCategory.id !== "all" ? activeCategory.id : priceMode;
+              const priceVariant = entry.variantsByMode[mode] || entry.defaultVariant || Object.values(entry.variantsByMode)[0];
               return (
               <div
                 key={entry.id}
@@ -781,7 +786,12 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy }) {
                   onSelect(entry, activeCategory.id);
                   onClose();
                 }}
-                className={`flex items-center justify-between p-3 hover:bg-white/5 rounded-lg cursor-pointer transition-all border border-transparent hover:border-white/5 ${
+                onMouseEnter={() => setHoveredId(entry.id)}
+                onMouseLeave={() => setHoveredId((id) => (id === entry.id ? null : id))}
+                onFocus={() => setHoveredId(entry.id)}
+                onBlur={() => setHoveredId((id) => (id === entry.id ? null : id))}
+                tabIndex={0}
+                className={`flex items-center justify-between gap-3 p-3 hover:bg-white/5 rounded-lg cursor-pointer transition-all border border-transparent hover:border-white/5 ${
                   isSelected ? "bg-white/5 border-white/5" : ""
                 }`}
               >
@@ -808,18 +818,21 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy }) {
                     </div>
                   </div>
                 </div>
-                {isSelected && (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#22d3ee"
-                    strokeWidth="4"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  <PriceHint locale={locale} endpoint={priceVariant?.model?.endpoint || priceVariant?.model?.id} payload={pricePayload} hovered={hoveredId === entry.id} />
+                  {isSelected && (
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#22d3ee"
+                      strokeWidth="4"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </div>
               </div>
               );
             })
@@ -1080,6 +1093,11 @@ export default function ImageStudio({
   const selectedPickerEntry = imageModelPickerEntryByVariantId.get(selectedModelId);
   const selectedModelDisplayName = selectedPickerEntry?.name || selectedFamily.name;
   const currentMode = imageMode ? "i2i" : "t2i";
+  // Shared by the price chip and the model picker's hover prices.
+  const pricePayload = useMemo(
+    () => ({ aspect_ratio: selectedAr, ...(currentQualityField && selectedQuality ? { [currentQualityField]: selectedQuality } : {}) }),
+    [selectedAr, currentQualityField, selectedQuality],
+  );
   const selectedVariant = imageModelCatalog.variantById.get(selectedModelId);
   const supplementalInputs = getSupplementalModelInputs(selectedVariant?.model);
   const referenceVariant = getImageReferenceVariant(
@@ -1564,6 +1582,9 @@ export default function ImageStudio({
                       onSelect={handleModelSelect}
                       onClose={() => setDropdownOpen(null)}
                       copy={copy}
+                      locale={locale}
+                      priceMode={uploadedImageUrls.length > 0 ? "i2i" : currentMode}
+                      pricePayload={pricePayload}
                     />
                   </PromptPopover>
                 )}
@@ -1697,7 +1718,7 @@ export default function ImageStudio({
             </PromptControls>
 
 <PromptActionGroup>
-<PriceChip locale={locale} endpoint={selectedVariant?.model?.endpoint || selectedModelId} runs={batchSize} payload={{ aspect_ratio: selectedAr, ...(currentQualityField && selectedQuality ? { [currentQualityField]: selectedQuality } : {}) }} />
+<PriceChip locale={locale} endpoint={selectedVariant?.model?.endpoint || selectedModelId} runs={batchSize} payload={pricePayload} />
             {/* Generate button */}
             <PromptAction
               onClick={handleGenerate}

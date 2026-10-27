@@ -16,7 +16,9 @@ individual Studio component.
 - `PromptAction` provides the shared primary generation button.
 - `PromptActionGroup` sits the price chip (`PriceChip` from `./PriceChip.jsx`)
   next to `PromptAction`; every composer that submits a catalog endpoint shows
-  one so the visitor sees the estimated cost before generating.
+  one so the visitor sees the provider and the estimated cost before
+  generating. `PriceHint` (same file) is the quiet version for a model picker
+  row: it quotes only while that row is hovered.
 - `promptControlClassName()` provides the 38 px parameter-control contract.
 - `promptMediaButtonClassName()` provides the 40 px circular media-attachment
   contract.

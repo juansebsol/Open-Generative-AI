@@ -99,3 +99,36 @@ export default function PriceChip({ endpoint, payload, enabled = true, runs = 1,
     </button>
   );
 }
+
+/**
+ * A quiet price for one row of a model picker. It only asks for a quote
+ * while `hovered` is true, so opening the picker costs nothing, and it reads
+ * "fal.ai · ≈ $0.21" so the visitor sees the provider and the price before
+ * choosing. Renders nothing while not hovered.
+ * @param {{ endpoint?: string, payload?: object, hovered: boolean, locale?: string, className?: string }} props
+ */
+export function PriceHint({ endpoint, payload, hovered, locale = "en", className = "" }) {
+  const copy = resolveCopy(en, zh, locale);
+  const { status, quote } = usePriceQuote(endpoint, payload, { enabled: hovered && Boolean(endpoint) });
+  if (!hovered || !endpoint) return null;
+
+  let view = null;
+  const provider = providerName(routeFor(endpoint)?.provider);
+  if (status === "error") view = { provider, label: copy.error, title: copy.error, tone: "warn" };
+  else if (quote) view = describeQuote(quote, copy, locale);
+  if (!view && status === "loading") view = { provider, label: copy.loading, title: copy.loading, tone: "muted" };
+  if (!view) return null;
+
+  const tone = view.tone === "warn" ? "text-amber-300/80" : view.tone === "ok" ? "text-emerald-300/80" : "text-white/55";
+  return (
+    <span
+      title={view.title}
+      data-price-hint={status}
+      className={`inline-flex shrink-0 items-center gap-1 text-[10.5px] font-semibold tabular-nums whitespace-nowrap ${tone} ${status === "loading" && quote ? "opacity-60" : ""} ${className}`}
+    >
+      {view.provider ? <span className="font-medium opacity-75">{view.provider}</span> : null}
+      {view.provider ? <span aria-hidden="true" className="opacity-40">·</span> : null}
+      <span>{view.label}</span>
+    </span>
+  );
+}
