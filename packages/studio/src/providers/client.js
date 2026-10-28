@@ -112,6 +112,23 @@ function recordRun(route, endpoint, payload, actualCost) {
     .catch(() => recordSpend({ ...base, amount: null, estimated: true }));
 }
 
+/**
+ * One code-written SVG from a chat model (catalog/chatRoutes.js), or a
+ * refinement of one. Goes through /api/vector/svg, which prompts the model,
+ * extracts and sanitises the markup and reports the cost when the provider
+ * does. Resolves to { svg, model, usage, cost }.
+ * @param {string} endpoint catalog slug, for example "svg-gemini-3-8-flash"
+ * @param {{ prompt?: string, page?: string, palette?: object|null, refine?: { svg: string, instruction: string } }} input
+ */
+export async function runSvgChat(endpoint, { prompt, page, palette, refine } = {}) {
+  const route = pickRoute(endpoint);
+  const key = getProviderKey(route.provider);
+  const data = await postJson('/api/vector/svg', { provider: route.provider, model: endpoint, prompt, page, palette, refine }, key);
+  const priced = { num_images: 1, prompt_characters: String(refine?.instruction ?? prompt ?? '').length, ...(refine ? { source_characters: String(refine.svg || '').length } : {}) };
+  recordRun(route, endpoint, priced, data?.cost);
+  return data;
+}
+
 async function runLocal(route, payload, onRequestId) {
   const baseUrl = getProviderUrl(route.provider);
   const options = getProviderOptions(route.provider);

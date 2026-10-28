@@ -3,8 +3,9 @@
 
 import { ROUTE_GROUPS } from './routes.generated.js';
 import { LOCAL_ROUTES } from '../local/models.js';
+import { CHAT_SVG_ROUTES } from './chatRoutes.js';
 
-const ROUTES = Object.assign({}, ...Object.values(ROUTE_GROUPS), LOCAL_ROUTES);
+const ROUTES = Object.assign({}, ...Object.values(ROUTE_GROUPS), LOCAL_ROUTES, CHAT_SVG_ROUTES);
 
 export function getRoutes(endpoint) {
   return ROUTES[endpoint] || [];

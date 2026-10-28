@@ -173,6 +173,8 @@ for (const [endpoint, special] of Object.entries(SPECIAL_ENDPOINTS)) {
 }
 for (const listName of MODEL_LISTS) {
   for (const model of (listName === 'vectorModels' ? vectorCatalog.ALL_vectorModels : catalog.ALL_MODEL_LISTS?.[listName] || catalog[listName]) || []) {
+    // Chat models writing SVG are routed by catalog/chatRoutes.js, not by a route file.
+    if (listName === 'vectorModels' && model.kind === 'chat') continue;
     const endpoint = model.endpoint || model.id;
     if (!seen.has(endpoint)) seen.set(endpoint, { model, listName });
   }

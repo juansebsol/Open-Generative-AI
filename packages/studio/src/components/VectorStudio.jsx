@@ -4,13 +4,13 @@ import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore
 import toast, { Toaster } from "react-hot-toast";
 import {
   IconAdjustments, IconArrowsExchange, IconDownload, IconFileExport, IconFileZip, IconMaximize, IconMoon, IconPalette, IconPhotoPlus,
-  IconPhotoUp, IconSun, IconSvg, IconTrash, IconUpload, IconX,
+  IconPhotoUp, IconSun, IconSvg, IconTrash, IconUpload, IconWand, IconX,
 } from "@tabler/icons-react";
 import { generateVector, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
-import { vectorTextModels, vectorizeModels, vectorModels, vectorModelDefaults } from "../vectorModels.js";
+import { vectorTextModels, vectorizeModels, vectorModels, vectorModelDefaults, getVectorModelById } from "../vectorModels.js";
 import { getRoutes } from "../providers/catalog/index.js";
-import { isEndpointAvailable } from "../providers/client.js";
+import { isEndpointAvailable, runSvgChat } from "../providers/client.js";
 import { getProvider } from "../providers/directProviders.js";
 import { subscribeProviderSettings } from "../providers/keys.js";
 import { fetchMediaBlob, saveLocalBlob } from "../providers/mediaStore.js";
@@ -46,8 +46,10 @@ import zh from "../messages/zh/vectorStudio.json";
 import { resolveCopy } from "../i18nUtils";
 
 // Three pages share this component, like the 3D pages share ThreeDStudio:
-// Text to Logo and Icon Set generate SVGs from a prompt (Recraft,
-// Ideogram); Vectorize traces a raster. Every page shows the same library
+// Text to Logo and Icon Set generate SVGs from a prompt (Recraft and
+// Ideogram draw them; chat models such as Gemini, Claude and GPT write the
+// markup, see vector/svgChat.js, and those results can be refined with an
+// instruction); Vectorize traces a raster. Every page shows the same library
 // (vectorLibrary.js), results are sanitised SVGs, and the Export kit turns
 // any of them into PNG, PDF, favicon or app icons in the browser for free.
 // Later pages (Logo Rescue, Sketch to Vector, the Vibe Motion and 3D
@@ -216,6 +218,43 @@ function ExportKitDialog({ entry, copy, onClose, onVectorize }) {
   );
 }
 
+// Sends a code-written SVG back to its model with an instruction.
+function RefineDialog({ entry, model, copy, locale, onClose, onSubmit }) {
+  const svg = useSvgText(entry.url);
+  const [text, setText] = useState("");
+  const inputRef = useRef(null);
+  useEffect(() => { inputRef.current?.focus(); }, []);
+  const submit = () => {
+    if (!text.trim()) return toast.error(copy.refine.needText);
+    if (!svg) return toast.error(copy.errors.badSvg);
+    onSubmit(entry, text.trim(), svg);
+  };
+  const pricePayload = useMemo(() => ({ num_images: 1, prompt_characters: Math.ceil(text.length / 100) * 100, source_characters: svg ? Math.ceil(svg.length / 500) * 500 : 0 }), [text.length, svg]);
+  return (
+    <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/80 p-4" onClick={onClose} role="presentation">
+      <div className="w-[min(94vw,720px)] rounded-2xl border border-white/[0.12] bg-[#111114] p-4" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={copy.refine.action} data-vector-refine>
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[15px] font-semibold text-white">{fill(copy.refine.title, { model: model.name })}</div>
+            <p className="mt-1 max-w-[52ch] text-[12.5px] text-white/50">{copy.refine.hint}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label={copy.buttons.close} className="flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/[0.06] hover:text-white"><IconX size={16} stroke={1.75} aria-hidden="true" /></button>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[220px_1fr]">
+          <div className="aspect-square overflow-hidden rounded-xl border border-white/[0.08]"><Preview entry={entry} tone="light" /></div>
+          <div className="flex flex-col gap-3">
+            <textarea ref={inputRef} value={text} onChange={(event) => setText(event.target.value)} placeholder={copy.refine.placeholder} rows={4} onKeyDown={(event) => { if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) submit(); }} className="min-h-[96px] w-full resize-y rounded-[10px] border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[13px] text-white/85 placeholder:text-white/30 focus:border-white/20 focus:outline-none" />
+            <div className="flex items-center justify-between gap-3">
+              <PriceChip locale={locale} endpoint={model.endpoint} payload={pricePayload} runs={1} />
+              <button type="button" onClick={submit} disabled={!svg} className="flex h-10 items-center gap-2 rounded-[10px] bg-primary px-4 text-[13px] font-semibold text-[#04202a] hover:brightness-110 disabled:opacity-60"><IconWand size={15} stroke={1.75} aria-hidden="true" />{copy.refine.apply}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function useLibrary() {
   return useSyncExternalStore(subscribeLibrary, getLibrary, getEmptyLibrary);
 }
@@ -247,6 +286,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
   const [exporting, setExporting] = useState(null);
   const [compareId, setCompareId] = useState(null);
   const [uploading, setUploading] = useState(null);
+  const [refining, setRefining] = useState(null); // library entry being refined
   const [dragging, setDragging] = useState(false);
   const [providerReady, setProviderReady] = useState(null);
   const [libraryImages, setLibraryImages] = useState([]);
@@ -256,10 +296,13 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
   const hasRestored = useRef(false);
 
   const selectedModel = models.find((model) => model.id === modelId) || models[0] || null;
+  const isChat = selectedModel?.kind === "chat"; // a language model writes the SVG
   const palette = paletteId === "custom" ? customPalette : PALETTES.find((entry) => entry.id === paletteId) || PALETTES[0];
   const paletteSummary = normalizePalette(palette);
   const maxCandidates = selectedModel?.maxCandidates || 1;
-  const plan = useMemo(() => planIconSet({ names: iconNames, style: prompt, paletteWords: selectedModel?.palette ? "" : paletteToPromptWords(palette) }), [iconNames, prompt, selectedModel, palette]);
+  // Recraft takes the palette as an input and chat models get it in their
+  // system prompt; only Ideogram needs the colours spelled out in the prompt.
+  const plan = useMemo(() => planIconSet({ names: iconNames, style: prompt, paletteWords: selectedModel?.palette || selectedModel?.kind === "chat" ? "" : paletteToPromptWords(palette) }), [iconNames, prompt, selectedModel, palette]);
   const iconCount = plan.count;
 
   // Option defaults follow the selected model; values that still apply are kept.
@@ -289,8 +332,8 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     return labels.length <= 1 ? labels[0] || "" : `${labels.slice(0, -1).join(", ")} ${copy.providers.or} ${labels[labels.length - 1]}`;
   }, [copy.providers.or]);
 
-  const openProviderSettings = () => {
-    const providers = selectedModel ? [...new Set(getRoutes(selectedModel.endpoint).map((route) => route.provider))] : [];
+  const openProviderSettings = (model = selectedModel) => {
+    const providers = model ? [...new Set(getRoutes(model.endpoint).map((route) => route.provider))] : [];
     window.dispatchEvent(new CustomEvent("oga:provider-setup-needed", { detail: { providers } }));
   };
 
@@ -400,7 +443,20 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     if (openDropdown === "library") setLibraryImages(readImageStudioImages());
   }, [openDropdown]);
 
-  // Results: download, sniff, sanitise, store as image/svg+xml with a PNG thumbnail.
+  // Stores sanitised SVG text as image/svg+xml with a PNG thumbnail.
+  const fileSvg = useCallback(async (svg, remoteUrl = null) => {
+    const url = await saveLocalBlob(new Blob([svg], { type: "image/svg+xml" }), { name: "vector.svg" });
+    svgCache.set(url, Promise.resolve(svg));
+    let thumbnail = null;
+    try {
+      thumbnail = await saveLocalBlob(await svgToPngBlob(svg, THUMBNAIL_SIZE), { name: "vector-thumbnail.png" });
+    } catch (error) {
+      console.warn("[VectorStudio] no thumbnail", error);
+    }
+    return { kind: "svg", url, thumbnail, remoteUrl, bytes: svg.length };
+  }, []);
+
+  // Provider results: download, sniff, sanitise, file.
   const materialize = useCallback(async (output) => {
     const blob = await fetchMediaBlob(output.url);
     const head = await blob.slice(0, 512).text();
@@ -411,16 +467,8 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
       if (kind === "svg") throw new Error(copy.errors.badSvg);
       return { kind: "raster", url: output.url, thumbnail: output.url, remoteUrl: output.remoteUrl || null, bytes: blob.size };
     }
-    const url = await saveLocalBlob(new Blob([svg], { type: "image/svg+xml" }), { name: "vector.svg" });
-    svgCache.set(url, Promise.resolve(svg));
-    let thumbnail = null;
-    try {
-      thumbnail = await saveLocalBlob(await svgToPngBlob(svg, THUMBNAIL_SIZE), { name: "vector-thumbnail.png" });
-    } catch (error) {
-      console.warn("[VectorStudio] no thumbnail", error);
-    }
-    return { kind: "svg", url, thumbnail, remoteUrl: output.remoteUrl || null, bytes: svg.length };
-  }, [copy]);
+    return fileSvg(svg, output.remoteUrl || null);
+  }, [copy, fileSvg]);
 
   const report = (error) => {
     console.error("[VectorStudio]", error);
@@ -429,7 +477,10 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     else toast.error(message);
   };
 
-  // Runs `jobs` ({ payload, meta }) a few at a time and files every output.
+  // Runs `jobs` a few at a time and files every output. A job is either
+  // { payload, meta } for a provider endpoint or { chat, meta } for a chat
+  // model writing the SVG (chat = runSvgChat's input, sanitised server-side
+  // and again here before it is filed).
   const runJobs = async ({ jobs, label, promptText, concurrency }) => {
     const runId = newId();
     addPending({ id: runId, label, prompt: promptText, done: 0, total: jobs.length });
@@ -440,11 +491,19 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     try {
       await runPool(jobs, async (job) => {
         try {
-          const result = await generateVector(job.payload);
-          const outputs = describeVectorOutputs(result);
-          if (outputs.length === 0) throw new Error(copy.errors.noOutput);
-          for (const output of outputs) {
-            const file = await materialize(output);
+          const files = [];
+          if (job.chat) {
+            const data = await runSvgChat(job.chat.model, job.chat);
+            const svg = sanitizeSvg(data?.svg);
+            if (!svg) throw new Error(copy.errors.badSvg);
+            files.push(await fileSvg(svg));
+          } else {
+            const result = await generateVector(job.payload);
+            const outputs = describeVectorOutputs(result);
+            if (outputs.length === 0) throw new Error(copy.errors.noOutput);
+            for (const output of outputs) files.push(await materialize(output));
+          }
+          for (const file of files) {
             const entry = { id: newId(), ...file, ...job.meta, timestamp: new Date().toISOString() };
             addEntry(entry);
             made.push(entry);
@@ -470,13 +529,19 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     }
   };
 
-  const modelMeta = (model) => ({ model: model.id, modelName: model.name, vendor: model.provider_name || "" });
+  const modelMeta = (model) => ({ model: model.id, modelName: model.name, vendor: model.provider_name || "", chat: model.kind === "chat" });
 
   const generateLogo = async () => {
     const text = prompt.trim();
     if (!text) {
       textareaRef.current?.focus();
       return toast.error(copy.errors.needPrompt);
+    }
+    if (isChat) {
+      // One call per candidate: the model writes a whole SVG each time.
+      const chat = { model: selectedModel.id, prompt: text, page: "logo", palette: paletteSummary };
+      const meta = { page: "logo", prompt: text, name: "", ...modelMeta(selectedModel), setId: null, palette: paletteSummary };
+      return runJobs({ jobs: Array.from({ length: candidates }, () => ({ chat, meta })), label: selectedModel.name, promptText: text, concurrency: LOGO_CONCURRENCY });
     }
     const words = selectedModel.palette ? "" : paletteToPromptWords(palette);
     const payload = { model: selectedModel.id, prompt: words ? `${text}, ${words}` : text, ...options, ...(selectedModel.palette ? paletteToRecraft(palette) : {}) };
@@ -496,6 +561,14 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     const setId = newId();
     const names = plan.runs.map((run) => run.name);
     const setName = `${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""}`;
+    if (isChat) {
+      // Still one run per icon, so every icon is its own SVG in the set.
+      const jobs = plan.runs.map((run) => ({
+        chat: { model: selectedModel.id, prompt: run.prompt, page: "icons", palette: paletteSummary },
+        meta: { page: "icons", prompt: run.prompt, name: run.name, ...modelMeta(selectedModel), setId, setName, palette: paletteSummary },
+      }));
+      return runJobs({ jobs, label: selectedModel.name, promptText: prompt.trim(), concurrency: ICON_CONCURRENCY });
+    }
     const shape = selectedModel.candidates === "num_images" ? { aspect_ratio: "1:1", num_images: 1 } : { image_size: "square_hd" };
     const paletteInput = selectedModel.palette ? paletteToRecraft(palette) : {};
     const jobs = plan.runs.map((run) => ({
@@ -519,6 +592,32 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     if (isVectorize) return generateVectorize();
     if (isIcons) return generateIcons();
     return generateLogo();
+  };
+
+  // Refine: the current SVG plus an instruction go back to the model that
+  // wrote it; the answer is a new entry linked to this one (parentId).
+  const refineModelFor = (entry) => {
+    const model = entry?.chat ? getVectorModelById(entry.model) : null;
+    return model?.kind === "chat" ? model : null;
+  };
+  const openRefine = (entry) => {
+    const model = refineModelFor(entry);
+    if (!model) return;
+    if (!isEndpointAvailable(model.endpoint)) {
+      const providers = [...new Set(getRoutes(model.endpoint).map((route) => getProvider(route.provider)?.label || route.provider))].join(` ${copy.providers.or} `);
+      toast.error(fill(copy.errors.chatUnavailable, { model: model.name, providers }));
+      return openProviderSettings(model);
+    }
+    setViewer(null);
+    setRefining(entry);
+  };
+  const refineEntry = async (entry, instruction, svg) => {
+    const model = refineModelFor(entry);
+    if (!model) return;
+    setRefining(null);
+    const meta = { page: entry.page, prompt: entry.prompt, name: entry.name || "", ...modelMeta(model), setId: null, palette: entry.palette || null, parentId: entry.id, refinement: instruction };
+    const chat = { model: model.id, page: entry.page === "icons" ? "icons" : "logo", palette: entry.palette || null, refine: { svg, instruction } };
+    await runJobs({ jobs: [{ chat, meta }], label: model.name, promptText: instruction, concurrency: 1 });
   };
 
   // Library actions
@@ -604,11 +703,19 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
   const visibleEnums = inputs.filter(([, input]) => Array.isArray(input.enum) && (showAdvanced || !input.advanced));
   const optionLabel = (input, value) => input.optionLabels?.[value] ?? String(value);
   const shapeFor = (model) => (model.candidates === "num_images" ? { aspect_ratio: "1:1", num_images: 1 } : { image_size: "square_hd" });
+  // Chat models are priced per token, so the quote needs the prompt length
+  // (rounded, so typing does not re-quote every keystroke) and one SVG per run.
+  const chatPayload = () => ({ num_images: 1, prompt_characters: Math.ceil((isIcons ? plan.runs[0]?.prompt.length || prompt.length : prompt.length) / 100) * 100 });
   const pricePayload = isVectorize
     ? options
-    : isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(selectedModel || {}) } : { ...options, ...(selectedModel?.candidates === "num_images" ? { num_images: candidates } : {}) };
+    : isChat ? chatPayload()
+      : isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(selectedModel || {}) } : { ...options, ...(selectedModel?.candidates === "num_images" ? { num_images: candidates } : {}) };
   const priceRuns = isIcons ? Math.max(1, iconCount) : selectedModel?.candidates === "runs" ? candidates : 1;
-  const pickerPayload = (model) => (isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(model) } : { ...options, ...(model.candidates === "num_images" ? { num_images: candidates } : {}) });
+  const pickerPayload = (model) => (model.kind === "chat" ? chatPayload() : isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(model) } : { ...options, ...(model.candidates === "num_images" ? { num_images: candidates } : {}) });
+  const pickerGroups = [
+    { key: "native", label: copy.controls.nativeGroup, items: models.filter((model) => model.kind !== "chat") },
+    { key: "chat", label: copy.controls.chatGroup, items: models.filter((model) => model.kind === "chat") },
+  ].filter((group) => group.items.length > 0);
   const toggle = (id) => setOpenDropdown(openDropdown === id ? null : id);
   const actionLabel = isIcons ? fill(copy.icons.generate, { count: number(iconCount, locale) }) : isVectorize ? copy.vectorize.apply : copy.buttons.generate;
 
@@ -624,6 +731,9 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
       {entry.kind === "raster" && (
         <button type="button" onClick={() => sendToVectorize(entry)} className="flex h-8 items-center gap-1.5 rounded-lg bg-primary px-2.5 text-[12px] font-semibold text-[#04202a] hover:brightness-110"><IconArrowsExchange size={14} stroke={1.75} aria-hidden="true" />{copy.vectorize.sendHere}</button>
       )}
+      {entry.kind === "svg" && refineModelFor(entry) && (
+        <button type="button" title={copy.refine.hint} onClick={() => openRefine(entry)} data-vector-refine-action className="flex h-8 items-center gap-1.5 rounded-lg bg-primary px-2.5 text-[12px] font-semibold text-[#04202a] hover:brightness-110"><IconWand size={14} stroke={1.75} aria-hidden="true" />{copy.refine.action}</button>
+      )}
       <button type="button" title={copy.buttons.export} aria-label={copy.buttons.export} onClick={() => setExporting(entry)} className="flex h-8 items-center gap-1.5 rounded-lg bg-black/60 px-2.5 text-[12px] font-medium text-white hover:bg-white/20"><IconFileExport size={14} stroke={1.75} aria-hidden="true" />{copy.buttons.export}</button>
       <button type="button" title={copy.buttons.download} aria-label={copy.buttons.download} onClick={() => downloadSvg(entry)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-white/20"><IconDownload size={15} stroke={1.75} aria-hidden="true" /></button>
       <button type="button" title={copy.buttons.fullscreen} aria-label={copy.buttons.fullscreen} onClick={() => setViewer(entry)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-white/20"><IconMaximize size={15} stroke={1.75} aria-hidden="true" /></button>
@@ -635,10 +745,16 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     <div key={entry.id} data-vector-entry={entry.kind} className={`group relative aspect-square overflow-hidden rounded-2xl border bg-[#0e0e11] ${compareId === entry.id && isVectorize ? "border-primary/60" : "border-white/[0.08]"}`} onClick={() => entry.sourceUrl && setCompareId(entry.id)} role={entry.sourceUrl ? "button" : undefined} tabIndex={entry.sourceUrl ? 0 : undefined}>
       <Preview entry={entry} tone={tone} />
       {entry.kind === "raster" && <span className="absolute left-2 top-2 rounded-md bg-amber-400/90 px-1.5 py-0.5 text-[10px] font-semibold text-black" title={copy.vectorize.rasterNote}>{copy.gallery.raster}</span>}
+      {entry.kind === "svg" && entry.chat && (
+        <span className="absolute left-2 top-2 flex items-center gap-1">
+          <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white/80" title={copy.gallery.chatNote}>{copy.gallery.chat}</span>
+          {entry.refinement && <span className="rounded-md bg-primary/90 px-1.5 py-0.5 text-[10px] font-semibold text-[#04202a]" title={entry.refinement}>{copy.refine.badge}</span>}
+        </span>
+      )}
       {!compact && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#09090b]/95 to-transparent p-3 pt-10">
-          <div className="truncate text-[13px] font-medium text-white/90">{entry.name || entry.prompt || copy.gallery.fromImage}</div>
-          <div className="text-[11.5px] text-white/45">{entry.modelName}{entry.vendor ? ` · ${entry.vendor}` : ""}</div>
+          <div className="truncate text-[13px] font-medium text-white/90">{entry.refinement || entry.name || entry.prompt || copy.gallery.fromImage}</div>
+          <div className="truncate text-[11.5px] text-white/45">{entry.refinement ? `${copy.refine.badge} · ` : ""}{entry.modelName}{entry.vendor ? ` · ${entry.vendor}` : ""}</div>
         </div>
       )}
       {compact && <div className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-[#09090b]/90 to-transparent px-2 pb-1.5 pt-6 text-[11px] text-white/85">{entry.name}</div>}
@@ -844,6 +960,9 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
             <div className="absolute bottom-3 left-3 flex items-center gap-2">
               <span className="max-w-[50vw] truncate rounded-lg bg-black/60 px-3 py-1.5 text-[12px] text-white/80">{viewer.name || viewer.prompt || viewer.modelName}</span>
               <ToneToggle tone={tone} onChange={setTone} copy={copy} />
+              {viewer.kind === "svg" && refineModelFor(viewer) && (
+                <button type="button" onClick={() => openRefine(viewer)} className="flex items-center gap-1.5 rounded-lg bg-white/[0.1] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-white/20"><IconWand size={14} stroke={1.75} aria-hidden="true" />{copy.refine.action}</button>
+              )}
               <button type="button" onClick={() => { setExporting(viewer); setViewer(null); }} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-[#04202a]"><IconFileExport size={14} stroke={1.75} aria-hidden="true" />{copy.buttons.export}</button>
             </div>
           </div>
@@ -851,6 +970,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
       )}
 
       {exporting && <ExportKitDialog entry={exporting} copy={copy} onClose={() => setExporting(null)} onVectorize={sendToVectorize} />}
+      {refining && refineModelFor(refining) && <RefineDialog entry={refining} model={refineModelFor(refining)} copy={copy} locale={locale} onClose={() => setRefining(null)} onSubmit={refineEntry} />}
 
       <PromptComposer>
         <div className="flex items-start gap-2 px-1">
@@ -915,18 +1035,24 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
                   <PromptChevronIcon />
                 </button>
                 {openDropdown === "model" && (
-                  <PromptPopover className="w-[360px]">
+                  <PromptPopover className="w-[calc(100vw-2rem)] md:w-[480px] max-w-[calc(100vw-2rem)]">
                     <PromptPopoverHeader>{copy.controls.model}</PromptPopoverHeader>
-                    <PromptMenuList>
-                      {models.map((model) => (
-                        <div key={model.id} onMouseEnter={() => setHoveredId(model.id)} onMouseLeave={() => setHoveredId((current) => (current === model.id ? null : current))} className="flex items-center gap-2">
-                          <PromptMenuItem selected={model.id === selectedModel?.id} description={model.description} wrapDescription onClick={() => { setModelId(model.id); setOpenDropdown(null); }} className="flex-1">
-                            {model.name} <span className="text-white/40">· {model.provider_name}</span>
-                          </PromptMenuItem>
-                          <PriceHint locale={locale} endpoint={model.endpoint} payload={pickerPayload(model)} hovered={hoveredId === model.id} className="pr-2" />
-                        </div>
-                      ))}
-                    </PromptMenuList>
+                    <p className="px-2.5 pb-2 text-[11.5px] text-white/45">{copy.controls.modelHint}</p>
+                    {pickerGroups.map((group) => (
+                      <div key={group.key} data-vector-model-group={group.key}>
+                        <div className="px-2.5 pb-1 pt-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-white/35">{group.label}</div>
+                        <PromptMenuList>
+                          {group.items.map((model) => (
+                            <div key={model.id} onMouseEnter={() => setHoveredId(model.id)} onMouseLeave={() => setHoveredId((current) => (current === model.id ? null : current))} className="flex items-center gap-2">
+                              <PromptMenuItem selected={model.id === selectedModel?.id} description={model.description} wrapDescription title={model.note ? `${model.note} ${copy.controls.modelHint}` : copy.controls.modelHint} onClick={() => { setModelId(model.id); setOpenDropdown(null); }} className="min-w-0 flex-1">
+                                {model.name} <span className="text-white/40">· {model.provider_name}</span>
+                              </PromptMenuItem>
+                              <PriceHint locale={locale} endpoint={model.endpoint} payload={pickerPayload(model)} hovered={hoveredId === model.id} className="pr-2" />
+                            </div>
+                          ))}
+                        </PromptMenuList>
+                      </div>
+                    ))}
                   </PromptPopover>
                 )}
               </div>

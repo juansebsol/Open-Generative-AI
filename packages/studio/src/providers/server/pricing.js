@@ -13,6 +13,7 @@ import { findRoute } from '../catalog/index.js';
 import { SCHEMAS } from '../catalog/schemas.generated.js';
 import { PRICES, PRICES_UPDATED } from '../catalog/prices.js';
 import { mapInput, MappingError } from '../mapper.js';
+import { SVG_ESTIMATE_NOTE, estimateSvgTokens } from '../../vector/svgChat.js';
 import { ProviderError, requestJson } from './http.js';
 
 export const PRICE_PROVIDER_IDS = ['fal', 'wavespeed', 'openrouter', 'google', 'openai', 'elevenlabs'];
@@ -351,6 +352,34 @@ export function tablePrice(provider, endpoint, payload = {}, live = null) {
   };
 }
 
+// ── Chat models writing SVG: tokens × the vendor's per-token rate ───────────
+
+/**
+ * Quotes one code-written SVG (catalog/chatRoutes.js) from the token budget
+ * in vector/svgChat.js. The rate is OpenRouter's live figure for the model
+ * when the list can be read (it mirrors the vendors' own prices), else the
+ * table in prices.js. The same quote serves the direct vendor route and the
+ * OpenRouter route, since OpenRouter charges the vendor's rate.
+ */
+export function chatPrice(catalogId, payload = {}, live = null) {
+  const entry = PRICES.chat?.[catalogId];
+  if (!entry) return { kind: 'unavailable', source: 'table' };
+  const liveModel = live?.models?.get(entry.openrouter);
+  const liveInput = money(liveModel?.prompt);
+  const liveOutput = money(liveModel?.completion);
+  const useLive = liveInput !== null && liveOutput !== null && liveInput >= 0 && liveOutput >= 0;
+  const input = useLive ? liveInput : entry.input;
+  const output = useLive ? liveOutput : entry.output;
+  const tokens = estimateSvgTokens(payload);
+  const unitPrice = round(tokens.input * input + tokens.output * output);
+  return {
+    kind: 'total', amount: round(unitPrice * tokens.count), currency: 'USD', unitPrice, unit: 'svg', quantity: tokens.count,
+    tokens: { input: tokens.input, output: tokens.output }, note: SVG_ESTIMATE_NOTE,
+    ...(useLive ? { rateSource: 'openrouter', rateCheckedAt: live.fetchedAt } : { asOf: PRICES_UPDATED }),
+    source: useLive ? 'openrouter' : 'table',
+  };
+}
+
 // ── ElevenLabs: characters × the published API rate for the model ───────────
 
 export function elevenlabsRate(model) {
@@ -378,6 +407,10 @@ export async function getPrice({ provider, endpoint, key, payload = {} }) {
     throw new ProviderError(`Add your ${provider} API key in Settings → Providers.`, { status: 401, provider });
   }
   let quote;
+  if (route && PRICES.chat?.[endpoint]) {
+    quote = chatPrice(endpoint, input, await liveRates());
+    return { provider, endpoint: providerEndpoint, estimated: true, ...quote };
+  }
   switch (provider) {
     case 'wavespeed': quote = await wavespeedPrice({ endpoint: providerEndpoint, key: key.trim(), route, payload: input }); break;
     case 'fal': quote = await falPrice({ catalogId: route ? endpoint : null, route, endpoint: providerEndpoint, key: key.trim(), payload: input, live: await liveRates() }); break;

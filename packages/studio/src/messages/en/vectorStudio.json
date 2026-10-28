@@ -4,7 +4,7 @@
       "title": "Text to Logo",
       "heading": "Describe a mark, get an",
       "accent": "editable SVG",
-      "subtitle": "Recraft and Ideogram draw real vectors: layers, paths and clean geometry that open in Figma or Illustrator. Pick a brand palette, ask for a few candidates, then export the one you like as PNG, PDF, favicon or app icons for free.",
+      "subtitle": "Recraft and Ideogram draw real vectors: layers, paths and clean geometry that open in Figma or Illustrator. Or let a chat model (Gemini, Claude, GPT) write the SVG by hand for a fraction of the price, then refine it with a sentence. Pick a brand palette, ask for a few candidates, then export the one you like as PNG, PDF, favicon or app icons for free.",
       "placeholder": "Describe the logo: subject, style and mood, for example a minimal fox head mark, geometric, two colours",
       "starters": [
         { "label": "Geometric fox head mark", "prompt": "Minimal geometric fox head logo mark, flat vector, two colours, negative space, no text" },
@@ -16,7 +16,7 @@
       "title": "Icon Set",
       "heading": "One style, a whole",
       "accent": "icon set",
-      "subtitle": "Write the style once and list the icons you need, one per line. Every name runs with the same style words and palette, and the finished set exports as an SVG sprite or a zip of single files.",
+      "subtitle": "Write the style once and list the icons you need, one per line. Every name runs with the same style words and palette, drawn by Recraft or Ideogram or written as clean paths by a chat model, and the finished set exports as an SVG sprite or a zip of single files.",
       "placeholder": "Style for every icon, for example thin line icons, 2px stroke, rounded corners, single colour",
       "namesPlaceholder": "home\nsearch\nsettings\nuser\nbell",
       "starters": [
@@ -35,6 +35,9 @@
   },
   "controls": {
     "model": "Model",
+    "nativeGroup": "Drawn by a vector model",
+    "chatGroup": "Written by a chat model",
+    "modelHint": "Native vector models draw richer illustration; chat models write cleaner paths for icons, geometric marks and wordmarks, at a fraction of the price.",
     "tier": "Tracer",
     "palette": "Palette",
     "candidates": "Results",
@@ -82,6 +85,15 @@
     "sendHere": "Vectorize",
     "rasterNote": "The provider returned a PNG instead of an SVG. Send it to Vectorize to trace it."
   },
+  "refine": {
+    "action": "Refine",
+    "title": "Refine with {model}",
+    "hint": "Say what to change. The current SVG goes back to the same model with your instruction, and the answer is saved as a new entry linked to this one.",
+    "placeholder": "make the mark bolder, remove the gradient",
+    "apply": "Refine",
+    "badge": "Refined",
+    "needText": "Say what to change first."
+  },
   "preview": { "light": "Light", "dark": "Dark", "toggle": "Preview background" },
   "buttons": {
     "generate": "Generate",
@@ -112,6 +124,8 @@
     "pendingProgress": "{done} of {total} done",
     "pendingHint": "Usually under a minute. You can keep working.",
     "raster": "PNG",
+    "chat": "Code-written",
+    "chatNote": "SVG markup written by a language model. Use Refine to change it with a sentence.",
     "fromImage": "Vectorized image"
   },
   "confirm": { "deleteItem": "Delete this result from the library?", "deleteSet": "Delete the whole icon set?" },
@@ -129,6 +143,7 @@
     "needImage": "Add an image to vectorize first.",
     "noOutput": "The provider returned no file.",
     "badSvg": "The provider returned a file that is not a valid SVG.",
+    "chatUnavailable": "{model} needs a {providers} key. Add one in Settings → Providers.",
     "generationFailed": "Vector generation failed."
   }
 }

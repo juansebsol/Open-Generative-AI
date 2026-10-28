@@ -31,6 +31,7 @@ const PRICED_KEYS = new Set([
   'should_texture', 'texture', 'quad', 'material', 'bake', 'face_level', 'texture_size', 'texture_resolution', 'target_polycount',
   'upscale_factor', 'fps', 'frames', 'num_frames', 'steps', 'num_inference_steps', 'batch_size', 'n', 'output_format', 'voice_id',
   'text', 'dialogue', 'dialogue_turns', 'inputs', 'prompt', 'version', 'style', 'quality_mode', 'high_bitrate', 'enable_prompt_expansion',
+  'prompt_characters', 'source_characters',
 ]);
 
 export function pricedInputs(payload = {}) {

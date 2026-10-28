@@ -35,6 +35,23 @@ export function googleUsageCost(model, usage) {
   return round(imageOut * entry.rate + promptTokens * (entry.inputRate || 0));
 }
 
+/**
+ * Chat completions that write SVG (catalog/chatRoutes.js): OpenRouter
+ * reports the charge itself in `usage.cost`; Google's and OpenAI's
+ * OpenAI-style `usage` carries token counts, priced at the table rates.
+ * @param {string} catalogId the svg-* slug the rates are keyed by
+ */
+export function chatUsageCost(catalogId, usage) {
+  if (!usage || typeof usage !== 'object') return null;
+  if (Number.isFinite(Number(usage.cost)) && usage.cost !== null) return round(Number(usage.cost));
+  const entry = PRICES.chat[String(catalogId || '')];
+  if (!entry) return null;
+  const input = count(usage.prompt_tokens ?? usage.input_tokens);
+  const output = count(usage.completion_tokens ?? usage.output_tokens);
+  if (!input && !output) return null;
+  return round(input * entry.input + output * entry.output);
+}
+
 /** Sums per-call costs; null unless every call reported one. */
 export function sumCosts(costs) {
   if (costs.length === 0 || costs.some((cost) => cost === null || cost === undefined)) return null;

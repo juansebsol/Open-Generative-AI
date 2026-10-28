@@ -34,6 +34,7 @@
     "character": "character",
     "request": "request",
     "run": "run",
+    "svg": "SVG",
     "thousandCharacters": "1,000 characters"
   }
 }

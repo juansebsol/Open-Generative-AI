@@ -236,6 +236,21 @@ export const PRICES = {
       "note": "OpenAI bills GPT Image 2.5 per output token ($30 per 1M); these per-image figures are fal's published table for the same model. \"auto\" quality can reach the max column."
     }
   },
+  // Chat models that write SVG for the Vector pages (catalog/chatRoutes.js),
+  // keyed by catalog slug. USD per token, input and output, from the
+  // vendors' pricing pages; `openrouter` is the id whose live rate replaces
+  // these when the model list can be read.
+  // Sources: https://ai.google.dev/gemini-api/docs/pricing
+  //          https://developers.openai.com/api/docs/pricing
+  //          https://openrouter.ai/api/v1/models (prompt / completion per token)
+  chat: {
+    "svg-gemini-4-argon": { "input": 2e-06, "output": 1e-05, "openrouter": "google/gemini-4-argon" },
+    "svg-gemini-3-8-flash": { "input": 7.5e-07, "output": 3.75e-06, "openrouter": "google/gemini-3.8-flash" },
+    "svg-claude-sonnet-5-5": { "input": 2e-06, "output": 1e-05, "openrouter": "anthropic/claude-sonnet-5.5" },
+    "svg-claude-haiku-5-5": { "input": 1e-07, "output": 5e-07, "openrouter": "anthropic/claude-haiku-5.5" },
+    "svg-gpt-6-1-sol": { "input": 2e-06, "output": 1e-05, "openrouter": "openai/gpt-6.1-sol" },
+    "svg-gpt-6-luna": { "input": 1e-07, "output": 5e-07, "openrouter": "openai/gpt-6-luna" }
+  },
   // Pay-as-you-go API rates per 1,000 characters. Subscription plans count
   // the same characters against their included credits instead.
   elevenlabs: {

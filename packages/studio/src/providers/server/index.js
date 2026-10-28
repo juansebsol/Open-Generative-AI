@@ -14,6 +14,7 @@ import * as openai from './adapters/openai.js';
 import * as openrouter from './adapters/openrouter.js';
 import * as elevenlabs from './adapters/elevenlabs.js';
 export { chatCompletion, CHAT_PROVIDER_IDS } from './chat.js';
+export { generateSvgChat } from './svgChat.js';
 export { getBalance, BALANCE_PROVIDER_IDS } from './balance.js';
 export { getPrice, getPrices, PRICE_PROVIDER_IDS } from './pricing.js';
 

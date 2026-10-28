@@ -15,10 +15,10 @@ const MAX_MESSAGES = 200;
 
 export const CHAT_PROVIDER_IDS = Object.keys(CHAT_ENDPOINTS);
 
-// OpenAI reasoning models (gpt-5, o-series) reject non-default sampling
-// settings and take max_completion_tokens instead of max_tokens.
+// OpenAI reasoning models (gpt-5 and later, o-series) reject non-default
+// sampling settings and take max_completion_tokens instead of max_tokens.
 export function adaptChatRequest(provider, request) {
-  if (provider !== 'openai' || !/^(gpt-5|o\d)/.test(request.model)) return request;
+  if (provider !== 'openai' || !/^(gpt-[5-9]|o\d)/.test(request.model)) return request;
   const { temperature, top_p: topP, max_tokens: maxTokens, ...rest } = request;
   if (maxTokens !== undefined && rest.max_completion_tokens === undefined) rest.max_completion_tokens = maxTokens;
   return rest;
@@ -35,6 +35,8 @@ export async function chatCompletion({ provider, key, body, origin }) {
   }
 
   const request = adaptChatRequest(provider, Object.fromEntries(ALLOWED_FIELDS.filter((field) => body[field] !== undefined).map((field) => [field, body[field]])));
+  // OpenRouter reports the actual charge in usage.cost when asked.
+  if (provider === 'openrouter') request.usage = { include: true };
   const data = await requestJson(provider, url, {
     method: 'POST',
     headers: {
