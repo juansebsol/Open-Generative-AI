@@ -137,7 +137,33 @@
     "spendReset": "重置花费",
     "spendResetConfirm": "清除此浏览器中的花费统计？",
     "runsOne": "1 次运行",
-    "runs": "{runs} 次运行"
+    "runs": "{runs} 次运行",
+    "library": {
+      "title": "素材库",
+      "hint": "你创作的一切都保存在此浏览器中。素材库文件会把全部内容，包括每张图片、视频、音频、模型和矢量及其历史，打包成一个 .openstudio 文件，可以保存在任何地方，再导回这里或另一个浏览器。",
+      "stats": "{files} 个文件 · 本浏览器中 {size}",
+      "statsEmpty": "此浏览器中还没有保存内容",
+      "persisted": "存储：已受保护，不会被清理",
+      "notPersisted": "存储：尽力保留（空间不足时浏览器可能清除）",
+      "lastExport": "上次导出 {when}",
+      "neverExported": "从未导出",
+      "lastImport": "上次导入 {when}",
+      "export": "导出素材库…",
+      "exporting": "正在写入 {done} / {total}…",
+      "exported": "已保存 {files} 个文件（{size}）。",
+      "exportCancelled": "已取消导出。",
+      "exportFailed": "导出失败：{message}",
+      "includeKeys": "在文件中包含服务商密钥",
+      "includeKeysHint": "如果要分享此文件或存到云端，请不要勾选。",
+      "import": "导入素材库…",
+      "importing": "正在恢复 {done} / {total}…",
+      "imported": "已恢复 {files} 个文件和 {histories} 个工作室。正在重新加载…",
+      "importedKeys": "已应用文件中的服务商密钥。",
+      "importSkipped": "清单中有 {count} 个文件在压缩包里缺失。",
+      "importFailed": "导入失败：{message}",
+      "importHint": "导入只会添加此浏览器中没有的内容，不会删除任何东西。",
+      "pickFile": "选择 .openstudio 文件"
+    }
   },
   "palette": {
     "placeholder": "跳转到工作室或操作",
@@ -145,7 +171,9 @@
     "open": "打开",
     "actions": "操作",
     "openProviders": "打开服务提供商",
-    "addKey": "添加服务商密钥"
+    "addKey": "添加服务商密钥",
+    "exportLibrary": "导出素材库…",
+    "importLibrary": "导入素材库…"
   },
   "tabDescriptions": {
     "benchmarks": "按任务查看最佳、性价比最高与最便宜够用的模型及价格",

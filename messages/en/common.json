@@ -137,7 +137,33 @@
     "spendReset": "Reset spend",
     "spendResetConfirm": "Clear the spend counters in this browser?",
     "runsOne": "1 run",
-    "runs": "{runs} runs"
+    "runs": "{runs} runs",
+    "library": {
+      "title": "Library",
+      "hint": "Everything you make is saved in this browser. A library file packs all of it, every image, video, sound, model and vector with its history, into one .openstudio file you can keep anywhere and bring back here, or into another browser.",
+      "stats": "{files} files · {size} in this browser",
+      "statsEmpty": "Nothing saved in this browser yet",
+      "persisted": "Storage: protected from eviction",
+      "notPersisted": "Storage: best effort (the browser may clear it when space runs low)",
+      "lastExport": "Last export {when}",
+      "neverExported": "Never exported",
+      "lastImport": "Last import {when}",
+      "export": "Export library…",
+      "exporting": "Writing {done} of {total}…",
+      "exported": "Saved {files} files ({size}).",
+      "exportCancelled": "Export cancelled.",
+      "exportFailed": "Export failed: {message}",
+      "includeKeys": "Include provider keys in the file",
+      "includeKeysHint": "Leave this off for a file you will share or keep in the cloud.",
+      "import": "Import library…",
+      "importing": "Restoring {done} of {total}…",
+      "imported": "Restored {files} files and {histories} studios. Reloading…",
+      "importedKeys": "Provider keys from the file were applied.",
+      "importSkipped": "{count} files in the manifest were missing from the archive.",
+      "importFailed": "Import failed: {message}",
+      "importHint": "Importing adds what the file has that this browser does not. Nothing here is deleted.",
+      "pickFile": "Choose a .openstudio file"
+    }
   },
   "palette": {
     "placeholder": "Jump to a studio or action",
@@ -145,7 +171,9 @@
     "open": "Open",
     "actions": "Actions",
     "openProviders": "Open providers",
-    "addKey": "Add a provider key"
+    "addKey": "Add a provider key",
+    "exportLibrary": "Export library…",
+    "importLibrary": "Import library…"
   },
   "tabDescriptions": {
     "benchmarks": "Best, best-value and cheapest-decent models per task, with prices",

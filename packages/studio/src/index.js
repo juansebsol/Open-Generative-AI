@@ -22,3 +22,4 @@ export { default as BenchmarksHelper } from './components/BenchmarksHelper';
 export * from './generation.js';
 export * from './providers/index.js';
 export { isStudioAvailable } from './studioAvailability.js';
+export { exportLibrary, importLibrary, inspectLibrary, libraryStats, libraryFileName, formatBytes as formatLibraryBytes, LIBRARY_EXTENSION } from './library/libraryFile.js';

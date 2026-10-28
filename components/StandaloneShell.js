@@ -7,7 +7,7 @@ import {
   PROVIDERS, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
-  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline
+  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen
 } from '@tabler/icons-react';
 import ProvidersModal from './ProvidersModal';
 import CommandPalette from './CommandPalette';
@@ -139,6 +139,7 @@ export default function StandaloneShell({ locale = 'en' }) {
   const [activeTab, setActiveTab] = useState(getInitialTab());
 
   const [showSettings, setShowSettings] = useState(false);
+  const [libraryAction, setLibraryAction] = useState(null); // 'export' | 'import', from the palette
   const [hasMounted, setHasMounted] = useState(false);
 
   // Top navigation: one open category menu at a time, a mobile sheet, the palette.
@@ -327,6 +328,8 @@ export default function StandaloneShell({ locale = 'en' }) {
     }))),
     { id: 'providers', group: copy.palette.actions, label: copy.palette.openProviders, icon: IconSettings, onSelect: () => setShowSettings(true) },
     { id: 'add-key', group: copy.palette.actions, label: copy.palette.addKey, icon: IconKey, onSelect: () => setShowSettings(true) },
+    { id: 'export-library', group: copy.palette.actions, label: copy.palette.exportLibrary, icon: IconDownload, onSelect: () => { setLibraryAction('export'); setShowSettings(true); } },
+    { id: 'import-library', group: copy.palette.actions, label: copy.palette.importLibrary, icon: IconFolderOpen, onSelect: () => { setLibraryAction('import'); setShowSettings(true); } },
   ], [categoryLabel, copy.palette, handleTabChange, tabDescription, tabLabel]);
 
   // Generated media is saved in this browser and served by a service worker.
@@ -779,7 +782,7 @@ export default function StandaloneShell({ locale = 'en' }) {
       `}</style>
 
       <CommandPalette open={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} items={paletteItems} copy={copy.palette} />
-      {showSettings && <ProvidersModal locale={locale} onClose={() => setShowSettings(false)} />}
+      {showSettings && <ProvidersModal locale={locale} libraryAction={libraryAction} onClose={() => { setShowSettings(false); setLibraryAction(null); }} />}
     </div>
   );
 }

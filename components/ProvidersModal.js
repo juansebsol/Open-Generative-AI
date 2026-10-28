@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, PROVIDERS, NO_BALANCE_PROVIDER_IDS, listCheckpoints, loadProviderSettings, saveProviderSettings, clearSpend, formatMoney, getSpend, monthlySpend, subscribeSpend } from 'studio';
 import { getCommonCopy } from '@/lib/locales';
 import LocalEngineSetup from './LocalEngineSetup';
+import LibrarySection from './LibrarySection';
 
 function KeyField({ provider, value, onChange, copy }) {
   const [visible, setVisible] = useState(false);
@@ -192,7 +193,7 @@ function ComfyOptions({ url, options, onChange, copy }) {
   );
 }
 
-export default function ProvidersModal({ onClose, locale = 'en' }) {
+export default function ProvidersModal({ onClose, locale = 'en', libraryAction = null }) {
   const copy = getCommonCopy(locale).providersModal;
   const [settings, setSettings] = useState(() => loadProviderSettings());
   const [savedKeys] = useState(() => settings.keys);
@@ -348,6 +349,7 @@ export default function ProvidersModal({ onClose, locale = 'en' }) {
             <p className="text-[11px] text-white/30 mb-3">{copy.localHint}</p>
             <div className="space-y-3">{ordered.filter((provider) => provider.kind === 'local').map(renderProvider)}</div>
           </section>
+          <LibrarySection locale={locale} copy={copy.library} initialAction={libraryAction} />
         </div>
 
         <div className="px-6 py-4 border-t border-white/[0.06] flex justify-end">

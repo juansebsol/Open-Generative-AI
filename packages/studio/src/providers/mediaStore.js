@@ -225,6 +225,41 @@ export async function resolveLocalMedia(payload, upload) {
   return walk(payload);
 }
 
+/** Every stored file, blobs included, for the library export. */
+export async function listMediaRecords() {
+  if (typeof indexedDB === 'undefined') return [];
+  const records = await withStore('readonly', (store) => store.getAll());
+  return Array.isArray(records) ? records : [];
+}
+
+/** Puts a file back under its original id (library import); same id overwrites. */
+export async function importMediaRecord({ id, blob, type = null, name = null, createdAt = null }) {
+  if (!id || !(blob instanceof Blob)) throw new Error('A media record needs an id and a blob');
+  await putRecord({
+    id,
+    blob,
+    type: type || blob.type || 'application/octet-stream',
+    name,
+    size: blob.size,
+    remoteUrl: null,
+    remoteSavedAt: null,
+    createdAt: createdAt || Date.now(),
+  });
+  return `${LOCAL_MEDIA_PREFIX}${id}.${extensionFor(type || blob.type, name)}`;
+}
+
+/** The extension a stored file gets in a local URL or an export. */
+export const mediaExtension = (type, name = null) => extensionFor(type, name);
+
+/** Whether the browser has promised not to evict this site's storage. */
+export async function isStoragePersisted() {
+  try {
+    return Boolean(await navigator.storage?.persisted?.());
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Deletes stored files that no saved studio state references any more.
  * Studio history lives in localStorage, so referenced ids are found there.
