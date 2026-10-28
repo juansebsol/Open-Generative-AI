@@ -12,7 +12,7 @@
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
     "start": "next start -H 127.0.0.1",
-    "lint": "eslint app components lib middleware.js packages/studio/src/providers packages/studio/src/generation.js packages/studio/src/studioAvailability.js packages/studio/src/benchmarks.js scripts",
+    "lint": "eslint app components lib middleware.js packages/studio/src/providers packages/studio/src/generation.js packages/studio/src/studioAvailability.js packages/studio/src/benchmarks.js packages/studio/src/benchmarksHelper.js scripts",
     "test": "node --test 'tests/**/*.test.mjs'",
     "routes:sync": "node scripts/sync-provider-schemas.mjs",
     "routes:validate": "node scripts/validate-routes.mjs",

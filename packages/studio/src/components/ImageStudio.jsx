@@ -64,6 +64,7 @@ import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
 import en from "../messages/en/imageStudio.json";
 import zh from "../messages/zh/imageStudio.json";
 import { resolveCopy } from "../i18nUtils";
+import { announceStudioMode } from "../benchmarksHelper.js";
 import StudioEmptyState from "./StudioEmptyState.jsx";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -1157,6 +1158,11 @@ export default function ImageStudio({
     window.addEventListener("oga:open-studio", onOpen);
     return () => window.removeEventListener("oga:open-studio", onOpen);
   }, [applyUserSelectedVariant]);
+
+  // Tells the Benchmarks helper whether this page is making or editing images.
+  useEffect(() => {
+    announceStudioMode("image", imageMode ? "edit" : "text");
+  }, [imageMode]);
 
   // ── Textarea auto-resize ─────────────────────────────────────────────────
   // ── Upload picker callbacks ──────────────────────────────────────────────

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { BENCHMARKS, BENCHMARKS_UPDATED, DECENT_GAP, SOURCES, VALUE_FLOOR_GAP } from '../packages/studio/src/providers/catalog/benchmarks.js';
 import { CATEGORIES, benchmarkPayload, categoryEntries, compareRows, priceOf, rankEntries, valueScore, TTS_SAMPLE_CHARACTERS } from '../packages/studio/src/benchmarks.js';
 import { ALL_MODEL_LISTS } from '../packages/studio/src/models.js';
+import { ALL_vectorModels } from '../packages/studio/src/vectorModels.js';
 
 const entry = (id, score, price) => ({ id, name: id, score, price });
 
@@ -76,7 +77,7 @@ test('table sorting puts missing scores and prices last in either direction', ()
 });
 
 test('every scored id is a catalog model and every score names its source', () => {
-  const ids = new Set(Object.values(ALL_MODEL_LISTS).flat().map((model) => model.id));
+  const ids = new Set([...Object.values(ALL_MODEL_LISTS).flat(), ...ALL_vectorModels].map((model) => model.id));
   for (const [id, benchmark] of Object.entries(BENCHMARKS)) {
     assert.ok(ids.has(id), `${id} is scored but not in the catalog`);
     assert.ok(Number.isFinite(benchmark.score), `${id} has no numeric score`);

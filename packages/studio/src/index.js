@@ -18,6 +18,7 @@ export { default as ThreeDStudio } from './components/ThreeDStudio';
 export { default as VectorStudio } from './components/VectorStudio';
 export { default as WorkflowStudio } from './components/WorkflowStudio';
 export { default as BenchmarksStudio } from './components/BenchmarksStudio';
+export { default as BenchmarksHelper } from './components/BenchmarksHelper';
 export * from './generation.js';
 export * from './providers/index.js';
 export { isStudioAvailable } from './studioAvailability.js';

@@ -9,7 +9,8 @@
     "image-to-video": "Image to video",
     "text-to-speech": "Speech",
     "music": "Music",
-    "three-d": "3D"
+    "three-d": "3D",
+    "vector": "Vector"
   },
   "picks": {
     "best": "Best quality",
@@ -25,7 +26,9 @@
     "video": "Video Studio",
     "audio": "Audio Studio",
     "three-d-text": "Text to 3D",
-    "three-d-image": "Image to 3D"
+    "three-d-image": "Image to 3D",
+    "vector-logo": "Text to Logo",
+    "vector-icons": "Icon Set"
   },
   "columns": {
     "model": "Model",
@@ -48,6 +51,7 @@
   "pricing": "Pricing…",
   "priceError": "Price unavailable",
   "perCharacters": "Speech is priced on a {count}-character sample.",
+  "svgPrompt": "Code-written SVG is priced on a {count}-character prompt, one SVG per run; Rapidata's Elo scale is stretched about 2.3× compared with the other boards, so the same gaps are stricter cuts here.",
   "none": "Nothing to pick yet",
   "noneHint": "No model in this category has both a score and a price. Add a provider key to see prices.",
   "empty": "No models in this category are served by a supported provider.",

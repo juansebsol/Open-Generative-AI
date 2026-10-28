@@ -60,13 +60,19 @@ Chrome asks once to allow local network access for the site. An HTTPS site can r
 
 ## Benchmarks
 
-**Benchmarks** in the top navigation (`/studio/benchmarks`) answers one question per kind of job: which model is the best, which is the best for the money, and which is the cheapest one that is still decent. It covers text to image, image editing, text to video, image to video, speech, music and 3D, and each pick has a button that opens the right studio with that model selected.
+**Benchmarks** in the top navigation (`/studio/benchmarks`) answers one question per kind of job: which model is the best, which is the best for the money, and which is the cheapest one that is still decent. It covers text to image, image editing, text to video, image to video, speech, music, 3D and vector (SVG from a prompt), and each pick has a button that opens the right studio with that model selected.
 
-- **Scores** are curated in `packages/studio/src/providers/catalog/benchmarks.js`, keyed by catalog model id. Each entry records the Elo read from a public blind-vote leaderboard (Artificial Analysis image, video, speech and music arenas; Top3D for 3D), the leaderboard row it came from, and the date it was read. A model that no public board lists is shown as unscored rather than guessed.
+- **Scores** are curated in `packages/studio/src/providers/catalog/benchmarks.js`, keyed by catalog model id. Each entry records the Elo read from a public blind-vote leaderboard (Artificial Analysis image, video, speech and music arenas; Top3D for 3D; Rapidata's SVG benchmark for vector models and the chat models that write SVG), the leaderboard row it came from, and the date it was read. A model that no public board lists is shown as unscored rather than guessed: Ideogram Vector and the Vectorize tracers are on no public board, so they stay unscored and there is no tracer category. Rapidata's Elo scale is stretched about 2.3× compared with the other boards, so the same gaps are stricter cuts in the vector category.
 - **Prices** are the same quotes as the price chip: fal and WaveSpeed through their pricing APIs with your key, Google, OpenAI and ElevenLabs from the published table. Each model is priced on its default inputs (speech on a 500-character sample), in one `/api/price` batch per provider so fal's pricing API is asked for up to 50 endpoints per call. When none of your keyed providers serves a model, the page shows its published list price if it has one, otherwise "Needs a key".
 - **Decent** means within `DECENT_GAP` (200) Elo of the category leader. **Value** is quality per dollar, counting only quality above a floor `VALUE_FLOOR_GAP` (300) Elo below the leader, so a weak model does not win just by being cheap. Both constants are explained in the catalog file.
 
 To update the scores, open each source linked in the file header, change the numbers and `BENCHMARKS_UPDATED`, and add new catalog models by their id. `npm test` checks that every scored id exists in the catalog and cites a known source.
+
+### Picks on every page
+
+Every studio page that has a model picker shows a small **Benchmarks helper** bubble in the bottom-right corner with that page's picks (best quality, best value, cheapest decent), each with its provider, price and score and a **Use** button that selects the model on the page you are on. **More** lists the next few ranked models, **See all** opens the Benchmarks page on that category, and the X closes the bubble; a small chart button in the same corner brings it back, and the choice is remembered in this browser (on a phone-width screen it starts as the button). Escape closes it while it has focus.
+
+The bubble follows what the page is doing: Image shows text-to-image picks until a reference image is loaded, then image-editing picks; Video shows text-to-video or image-to-video picks (none for video to video); Audio shows speech or music picks depending on the selected tool; Text to 3D and Image to 3D show the 3D models that run on that page; Text to Logo and Icon Set show the vector picks. Pages without a model picker (Vibe Motion, Agents, Workflows) and Vectorize (no public board scores tracers) show no bubble. Prices and "needs a key" states come from the same batched `/api/price` quotes as the Benchmarks page and refresh when you change provider keys.
 
 ## Quick start
 
@@ -142,6 +148,7 @@ studio component ─▶ generation.js (builds a payload in one shared vocabulary
 | `packages/studio/src/providers/mediaStore.js`, `public/oga-media-sw.js` | Saves results and uploads in the browser and serves them at `/oga-media/…` |
 | `components/StandaloneShell.js`, `components/ProvidersModal.js` | App shell and provider settings |
 | `packages/studio/src/benchmarks.js`, `packages/studio/src/providers/catalog/benchmarks.js` | Benchmarks ranking and the curated leaderboard scores |
+| `packages/studio/src/benchmarksHelper.js`, `packages/studio/src/components/BenchmarksHelper.jsx` | The per-page Benchmarks helper bubble: page-to-category mapping, open state, and the card itself |
 
 ### Adding or fixing a model route
 

@@ -5,6 +5,7 @@
 
 import { BENCHMARKS, BENCHMARKS_UPDATED, DECENT_GAP, SOURCES, VALUE_FLOOR_GAP } from './providers/catalog/benchmarks.js';
 import { audioModels, i2iModels, i2vModels, t2iModels, t2vModels, threeDModels } from './models.js';
+import { vectorTextModels } from './vectorModels.js';
 
 // Utility and derivative entries that are not comparable on a quality board:
 // upscalers, background tools, LoRA inference variants, layer decomposition,
@@ -19,6 +20,16 @@ const MUSIC_FAMILIES = new Set(['minimax-music', 'lyria', 'mureka', 'elevenlabs-
 export const TTS_SAMPLE_CHARACTERS = 500;
 const TTS_SAMPLE = 'The quick brown fox jumps over the lazy dog. '.repeat(12).slice(0, TTS_SAMPLE_CHARACTERS);
 
+// Prompt length every code-written SVG model is priced on (per-token rates).
+export const SVG_PROMPT_CHARACTERS = 100;
+
+/** Which audio category a model belongs to, from its family. */
+export function audioCategoryOf(model) {
+  if (TTS_FAMILIES.has(model?.family)) return 'text-to-speech';
+  if (MUSIC_FAMILIES.has(model?.family)) return 'music';
+  return null;
+}
+
 export const CATEGORIES = [
   { id: 'text-to-image', studio: () => 'image', models: () => t2iModels.filter((model) => !UTILITY.test(model.id)) },
   { id: 'image-editing', studio: () => 'image', models: () => i2iModels.filter((model) => !UTILITY.test(model.id) && model.inputs?.prompt) },
@@ -27,6 +38,9 @@ export const CATEGORIES = [
   { id: 'text-to-speech', studio: () => 'audio', models: () => audioModels.filter((model) => TTS_FAMILIES.has(model.family)) },
   { id: 'music', studio: () => 'audio', models: () => audioModels.filter((model) => MUSIC_FAMILIES.has(model.family)) },
   { id: 'three-d', studio: (model) => (model.kind === 'text' ? 'three-d-text' : 'three-d-image'), models: () => threeDModels.filter((model) => model.kind !== 'edit') },
+  // Text to Logo and Icon Set share these models; the tracers on Vectorize
+  // are on no public board, so there is no category for them.
+  { id: 'vector', studio: () => 'vector-logo', models: () => vectorTextModels },
 ];
 
 export function getCategory(id) {
@@ -46,6 +60,11 @@ export function benchmarkPayload(model, categoryId) {
     if (model.inputs?.dialogue_turns) payload.dialogue_turns = [{ text: TTS_SAMPLE }];
     else if (model.inputs?.text) payload.text = TTS_SAMPLE;
     else payload.prompt = TTS_SAMPLE;
+  }
+  if (categoryId === 'vector') {
+    // One SVG per run, the way the Vector pages quote a single candidate.
+    if (model.kind === 'chat') Object.assign(payload, { num_images: 1, prompt_characters: SVG_PROMPT_CHARACTERS });
+    else if (model.candidates === 'num_images') payload.num_images = 1;
   }
   return payload;
 }

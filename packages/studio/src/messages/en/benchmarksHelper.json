@@ -1,0 +1,14 @@
+{
+  "title": "Picks for {category}",
+  "subtitle": "From the Benchmarks page, priced with your keys.",
+  "reopen": "Show Benchmarks picks",
+  "close": "Hide picks",
+  "use": "Use",
+  "useTitle": "Select {model} on this page",
+  "used": "Selected",
+  "seeAll": "See all",
+  "more": "More",
+  "less": "Less",
+  "noneHint": "Add a provider key to see prices and picks.",
+  "pricing": "Pricing…"
+}

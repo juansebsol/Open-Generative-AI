@@ -100,6 +100,7 @@ import usePromptMenu from "./prompt/usePromptMenu.js";
 import en from "../messages/en/videoStudio.json";
 import zh from "../messages/zh/videoStudio.json";
 import { resolveCopy } from "../i18nUtils";
+import { announceStudioMode } from "../benchmarksHelper.js";
 import StudioEmptyState from "./StudioEmptyState.jsx";
 
 async function downloadFile(url, filename) {
@@ -1895,6 +1896,11 @@ export default function VideoStudio({
     window.addEventListener("oga:open-studio", onOpen);
     return () => window.removeEventListener("oga:open-studio", onOpen);
   }, [handleModelSelect]);
+
+  // Tells the Benchmarks helper which kind of video this page is set up for.
+  useEffect(() => {
+    announceStudioMode("video", currentFamilyMode);
+  }, [currentFamilyMode]);
 
   const handleWorkflowSelect = useCallback((workflowId) => {
     if (getGroupedVideoConfiguration(selectedModel)) {

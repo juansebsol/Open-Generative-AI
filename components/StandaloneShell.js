@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio, ThreeDStudio, VectorStudio, BenchmarksStudio,
+  ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio, ThreeDStudio, VectorStudio, BenchmarksStudio, BenchmarksHelper,
   PROVIDERS, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
@@ -297,7 +297,8 @@ export default function StandaloneShell({ locale = 'en' }) {
   }, [locale]);
 
   const handleTabChange = useCallback((tabId) => {
-    window.history.pushState(null, '', studioPath(tabId));
+    // Selecting a model on the page already open must not add history.
+    if (window.location.pathname !== studioPath(tabId)) window.history.pushState(null, '', studioPath(tabId));
     setActiveTab(tabId);
   }, [studioPath]);
 
@@ -750,6 +751,15 @@ export default function StandaloneShell({ locale = 'en' }) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Benchmarks picks for the page that is open, selectable in place.
+          Top right, under the header: every studio keeps its prompt bar and
+          the notification stack at the bottom, so the two never collide. */}
+      {AVAILABLE_TAB_IDS.has('benchmarks') && !isMobileOpen && (
+        <div className="fixed right-4 top-[68px] z-[95] flex max-w-[calc(100vw-32px)] flex-col items-end" data-testid="benchmarks-helper">
+          <BenchmarksHelper tabId={activeTab} locale={locale} benchmarksPath={studioPath('benchmarks')} />
         </div>
       )}
 

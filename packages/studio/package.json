@@ -28,7 +28,8 @@
     "./WorkflowStudio": "./src/components/WorkflowStudio.jsx",
     "./ThreeDStudio": "./src/components/ThreeDStudio.jsx",
     "./VectorStudio": "./src/components/VectorStudio.jsx",
-    "./BenchmarksStudio": "./src/components/BenchmarksStudio.jsx"
+    "./BenchmarksStudio": "./src/components/BenchmarksStudio.jsx",
+    "./BenchmarksHelper": "./src/components/BenchmarksHelper.jsx"
   },
   "files": [
     "src"

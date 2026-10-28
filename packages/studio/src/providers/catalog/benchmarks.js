@@ -25,6 +25,15 @@
 //            https://www.top3d.ai/leaderboard
 //            Cross-checked against https://crafiq.ai/rankings/3d, which ranks
 //            Tripo H3.1 and Hunyuan3D 3.1 first and second on its own scale.
+//   rapidata-svg
+//            Rapidata SVG benchmark (benchmark.ai), overall ranking: blind
+//            pairwise human preference on SVGs written by language models
+//            and native vector models, Bradley-Terry fitted and rescaled to
+//            Elo as R = 400β + 1000, which stretches the spread about 2.3×
+//            compared with a standard Elo board. The same DECENT_GAP and
+//            VALUE_FLOOR_GAP apply, so on this board they are stricter cuts.
+//            https://www.benchmark.ai/svg (data: huggingface.co/datasets/Rapidata/svg-benchmark)
+//            Read 2026-10-27; the page dates its latest update 2026-10-28 (UTC+).
 //   Also consulted: LMArena / arena.ai text-to-image and image-edit boards
 //   (https://arena.ai/leaderboard). Their Elo is on a different scale, so
 //   only one scale per category is used here.
@@ -51,6 +60,7 @@ export const SOURCES = {
   'aa-vocal': { name: 'Artificial Analysis Music Arena (vocal)', url: 'https://artificialanalysis.ai/music/leaderboard/vocals' },
   'aa-inst': { name: 'Artificial Analysis Music Arena (instrumental)', url: 'https://artificialanalysis.ai/music/leaderboard/instrumental' },
   top3d: { name: 'Top3D.ai 3D arena (overall quality)', url: 'https://www.top3d.ai/leaderboard' },
+  'rapidata-svg': { name: 'Rapidata SVG benchmark (human preference)', url: 'https://www.benchmark.ai/svg' },
 };
 
 // ── Thresholds ──────────────────────────────────────────────────────────────
@@ -251,6 +261,19 @@ export const BENCHMARKS = {
   'hunyuan-3d-3-1-pro-text-to-3d': entry('top3d', 1042, 'Hunyuan 3D v3.1'),
   'hunyuan-3d-3-1-pro-image-to-3d': entry('top3d', 1042, 'Hunyuan 3D v3.1'),
   'trellis-2-image-to-3d': entry('top3d', 861, 'TRELLIS.2'),
+
+  // ── Vector (SVG from a prompt): rapidata-svg ──────────────────────────────
+  // Chat models were scored at medium reasoning effort, which the board notes
+  // per model. Ideogram Vector, Recraft Vectorize, Ideogram Image to Vector
+  // and Image2SVG are on no public board and stay unscored.
+  'svg-gpt-6-1-sol': entry('rapidata-svg', 1437, 'gpt-6.1-sol', 'Scored at medium reasoning effort.'),
+  'svg-claude-sonnet-5-5': entry('rapidata-svg', 1392, 'claude-sonnet-5.5'),
+  'svg-gemini-4-argon': entry('rapidata-svg', 1318, 'gemini-4-argon', 'Scored at medium reasoning effort.'),
+  'svg-claude-haiku-5-5': entry('rapidata-svg', 1247, 'claude-haiku-5.5-thinking', 'The board lists only the thinking variant; the studio calls the model without extended thinking.'),
+  'svg-gemini-3-8-flash': entry('rapidata-svg', 1079, 'gemini-3.8-flash', 'Scored at medium reasoning effort.'),
+  'svg-gpt-6-luna': entry('rapidata-svg', 1054, 'gpt-6-luna'),
+  'recraft-v4-1-pro-text-to-vector': entry('rapidata-svg', 1009, 'recraft-v4.1-pro-vector'),
+  'recraft-v4-1-text-to-vector': entry('rapidata-svg', 998, 'recraft-v4.1-vector'),
 };
 
 /** Score entry for a catalog model id, or null when the model is unscored. */

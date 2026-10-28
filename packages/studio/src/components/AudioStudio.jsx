@@ -9,6 +9,8 @@ import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/audioStudio.json";
 import zh from "../messages/zh/audioStudio.json";
 import { resolveCopy } from "../i18nUtils";
+import { announceStudioMode } from "../benchmarksHelper.js";
+import { audioCategoryOf } from "../benchmarks.js";
 
 // ---------------------------------------------------------------------------
 // Upload button states
@@ -644,6 +646,11 @@ export default function AudioStudio({
     window.addEventListener("oga:open-studio", onOpen);
     return () => window.removeEventListener("oga:open-studio", onOpen);
   }, []);
+
+  // Tells the Benchmarks helper whether the selected tool is speech or music.
+  useEffect(() => {
+    announceStudioMode("audio", audioCategoryOf(selectedModel) === "music" ? "music" : "speech");
+  }, [selectedModel]);
 
   // ── Persistence: Load ────────────────────────────────────────────────────
   useEffect(() => {
