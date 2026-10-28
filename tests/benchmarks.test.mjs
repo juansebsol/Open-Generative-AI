@@ -113,3 +113,40 @@ test('speech is priced on a fixed sample so per-character rates compare', () => 
   const image = categoryEntries('text-to-image').find((item) => item.id === 'gpt-image-2');
   assert.equal(benchmarkPayload(image.model, 'text-to-image').prompt, undefined, 'image payloads carry only the model defaults');
 });
+
+test("the editor's pick resolves to its ranked row without touching the computed picks", async () => {
+  const { EDITORS_PICKS, defaultModelId, editorsPickRow, isEditorsPick } = await import('../packages/studio/src/benchmarks.js');
+  const rows = [entry('svg-gpt-6-1-sol', 1437, 0.02), entry('svg-gemini-4-argon', 1318, 0.01), entry('recraft-v4-1-text-to-vector', 998, 0.08)];
+  const pick = editorsPickRow('vector', rows);
+  assert.equal(pick.id, 'svg-gemini-4-argon');
+  assert.equal(pick.editorsPick.note, EDITORS_PICKS.vector.note);
+  assert.equal(pick.editorsPick.asOf, EDITORS_PICKS.vector.asOf);
+  assert.equal(pick.score, 1318, 'the row keeps its score and price');
+  const { picks } = rankEntries(rows);
+  assert.equal(picks.best.id, 'svg-gpt-6-1-sol', 'best quality is still the top score');
+  assert.ok(isEditorsPick('vector', 'svg-gemini-4-argon'));
+  assert.ok(!isEditorsPick('vector', 'svg-gpt-6-1-sol'));
+});
+
+test("a category without a pick, or rows without the model, give no editor's pick", async () => {
+  const { editorsPickRow, isEditorsPick, defaultModelId } = await import('../packages/studio/src/benchmarks.js');
+  assert.equal(editorsPickRow('text-to-image', [entry('gpt-image-2', 1186, 0.2)]), null);
+  assert.equal(editorsPickRow('vector', [entry('svg-gpt-6-1-sol', 1437, 0.02)]), null, 'the pick is missing from the rows');
+  assert.equal(editorsPickRow('vector', []), null);
+  assert.equal(isEditorsPick('text-to-image', 'gpt-image-2'), false);
+  assert.equal(defaultModelId('vector', [{ id: 'recraft-v4-1-text-to-vector' }, { id: 'svg-gemini-4-argon' }]), 'svg-gemini-4-argon');
+  assert.equal(defaultModelId('vector', [{ id: 'recraft-v4-1-text-to-vector' }]), 'recraft-v4-1-text-to-vector', 'first model when the pick is not offered');
+  assert.equal(defaultModelId('text-to-image', [{ id: 'a' }, { id: 'b' }]), 'a');
+  assert.equal(defaultModelId(null, [{ id: 'a' }]), 'a');
+  assert.equal(defaultModelId('vector', []), '');
+});
+
+test("every editor's pick names a model of its category with a note and a date", async () => {
+  const { EDITORS_PICKS } = await import('../packages/studio/src/benchmarks.js');
+  for (const [categoryId, pick] of Object.entries(EDITORS_PICKS)) {
+    assert.ok(CATEGORIES.some((category) => category.id === categoryId), `${categoryId} is not a Benchmarks category`);
+    assert.ok(categoryEntries(categoryId).some((item) => item.id === pick.modelId), `${pick.modelId} is not in ${categoryId}`);
+    assert.ok(pick.note && pick.note.length > 10, `${categoryId} pick has no note`);
+    assert.match(pick.asOf, /^\d{4}-\d{2}-\d{2}$/);
+  }
+});

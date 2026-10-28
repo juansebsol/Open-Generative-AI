@@ -96,6 +96,7 @@ import {
   PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
 import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
+import { EditorsPickStar } from "./benchmarks/shared.jsx";
 import usePromptMenu from "./prompt/usePromptMenu.js";
 import en from "../messages/en/videoStudio.json";
 import zh from "../messages/zh/videoStudio.json";
@@ -581,6 +582,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy = en, locale = "
       </div>
       <span className="flex shrink-0 items-center gap-2">
         <PriceHint locale={locale} endpoint={priceVariant?.model?.endpoint || priceVariant?.model?.id} payload={pricePayload} hovered={hoveredId === entry.id} />
+        <EditorsPickStar categoryId={priceMode === "i2v" ? "image-to-video" : priceMode === "t2v" ? "text-to-video" : null} modelId={priceVariant?.model?.id} locale={locale} />
         {isSelected && <CheckSvg />}
       </span>
     </button>

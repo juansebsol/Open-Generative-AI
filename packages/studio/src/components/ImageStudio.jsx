@@ -61,6 +61,7 @@ import {
   PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
 import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
+import { EditorsPickStar } from "./benchmarks/shared.jsx";
 import en from "../messages/en/imageStudio.json";
 import zh from "../messages/zh/imageStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -821,6 +822,7 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy, locale = "en", 
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <PriceHint locale={locale} endpoint={priceVariant?.model?.endpoint || priceVariant?.model?.id} payload={pricePayload} hovered={hoveredId === entry.id} />
+                  <EditorsPickStar categoryId={priceMode === "i2i" ? "image-editing" : "text-to-image"} modelId={priceVariant?.model?.id} locale={locale} />
                   {isSelected && (
                     <svg
                       width="14"

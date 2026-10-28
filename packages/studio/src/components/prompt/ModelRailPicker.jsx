@@ -18,7 +18,7 @@ import { getRoutes } from "../../providers/catalog/index.js";
 import { getProvider } from "../../providers/directProviders.js";
 import { subscribeProviderSettings } from "../../providers/keys.js";
 import { quoteRuns, routeFor } from "../../providers/pricing.js";
-import { describePriceCell, fill } from "../benchmarks/shared.jsx";
+import { EditorsPickStar, describePriceCell, fill } from "../benchmarks/shared.jsx";
 import { resolveCopy } from "../../i18nUtils";
 import en from "../../messages/en/modelRailPicker.json";
 import zh from "../../messages/zh/modelRailPicker.json";
@@ -230,6 +230,7 @@ export default function ModelRailPicker({ open, onClose, groups, selectedId, onS
                           <span data-picker-price={quotes[model.id]?.status || "idle"} title={price?.title} className={`block whitespace-nowrap text-[11px] font-semibold ${price?.tone === "warn" ? "text-amber-300/85" : price?.tone === "ok" ? "text-emerald-300/85" : "text-white/60"}`}>
                             {price?.label || ""}
                             {price?.tag ? <span className="ml-1 rounded-full border border-white/[0.1] px-1 py-px text-[8.5px] font-medium uppercase tracking-wide text-white/45">{price.tag}</span> : null}
+                            <EditorsPickStar categoryId={benchmarksCategory} modelId={model.id} locale={locale} className="ml-1 align-[-1px]" />
                           </span>
                           <span title={scoreTitle} className="block text-[9.5px] uppercase tracking-[0.04em] text-white/40">{score === null ? copy.unscored : fill(copy.elo, { score })}</span>
                         </span>

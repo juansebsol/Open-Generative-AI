@@ -7,7 +7,7 @@
 // shell which one is active by dispatching STUDIO_MODE_EVENT with
 // { tabId, mode }; the bubble keeps the last mode per tab.
 
-import { categoryEntries, getCategory } from './benchmarks.js';
+import { categoryEntries, editorsPickRow, getCategory } from './benchmarks.js';
 
 export const STUDIO_MODE_EVENT = 'oga:studio-mode';
 export const HELPER_STORAGE_KEY = 'oga_benchmarks_helper_v1';
@@ -57,12 +57,19 @@ export function helperEntries(tabId, mode) {
 const PICK_KINDS = ['best', 'bestValue', 'cheapestDecent'];
 
 /**
- * Rows for the bubble from a ranking (see rankEntries): the picks, one row
- * per distinct model with every label it earned, then the next best scored
- * models that are not picks for the "More" section.
- * @returns {{ picks: Array<{ row: object, kinds: string[] }>, more: object[] }}
+ * Rows for the bubble from a ranking (see rankEntries): the editor's pick of
+ * the category pinned first (when it has one and the model is among the
+ * rows), then the computed picks, one row per distinct model with every
+ * label it earned, then the next best scored models that are neither for
+ * the "More" section. A model appears once: the editor's pick keeps the pick
+ * labels it also earned, and is left out of the ranked rows.
+ * @param {{ picks: object, rows: object[] }} ranking
+ * @param {number} [moreCount]
+ * @param {{ categoryId?: string|null }} [options]  category whose editor's pick to pin
+ * @returns {{ editorsPick: { row: object, kinds: string[] }|null, picks: Array<{ row: object, kinds: string[] }>, more: object[] }}
  */
-export function helperRows({ picks, rows }, moreCount = MORE_COUNT) {
+export function helperRows({ picks, rows }, moreCount = MORE_COUNT, { categoryId = null } = {}) {
+  const pinnedRow = categoryId ? editorsPickRow(categoryId, rows) : null;
   const picked = [];
   for (const kind of PICK_KINDS) {
     const row = picks?.[kind];
@@ -71,12 +78,14 @@ export function helperRows({ picks, rows }, moreCount = MORE_COUNT) {
     if (existing) existing.kinds.push(kind);
     else picked.push({ row, kinds: [kind] });
   }
-  const pickedIds = new Set(picked.map((item) => item.row.id));
+  const editorsPick = pinnedRow ? { row: pinnedRow, kinds: picked.find((item) => item.row.id === pinnedRow.id)?.kinds || [] } : null;
+  const listed = pinnedRow ? picked.filter((item) => item.row.id !== pinnedRow.id) : picked;
+  const taken = new Set([...listed.map((item) => item.row.id), ...(pinnedRow ? [pinnedRow.id] : [])]);
   const more = (rows || [])
-    .filter((row) => Number.isFinite(row.score) && !pickedIds.has(row.id))
+    .filter((row) => Number.isFinite(row.score) && !taken.has(row.id))
     .sort((a, b) => b.score - a.score || (a.price ?? Infinity) - (b.price ?? Infinity))
     .slice(0, moreCount);
-  return { picks: picked, more };
+  return { editorsPick, picks: listed, more };
 }
 
 // ── Per-visitor open state ──────────────────────────────────────────────────

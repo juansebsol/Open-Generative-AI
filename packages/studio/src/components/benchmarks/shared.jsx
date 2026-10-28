@@ -5,7 +5,11 @@
 // same words.
 
 import { useEffect, useState } from "react";
-import { benchmarkPayload } from "../../benchmarks.js";
+import { IconStarFilled } from "@tabler/icons-react";
+import { benchmarkPayload, getEditorsPick, isEditorsPick } from "../../benchmarks.js";
+import { resolveCopy } from "../../i18nUtils";
+import benchmarksEn from "../../messages/en/benchmarks.json";
+import benchmarksZh from "../../messages/zh/benchmarks.json";
 import { describeQuote, providerName, quoteRuns } from "../../providers/pricing.js";
 import { subscribeProviderSettings } from "../../providers/keys.js";
 
@@ -107,6 +111,28 @@ export function ScoreText({ row, copy, className = "", size = "text-[12px]" }) {
   return (
     <span title={title} className={`${size} font-semibold tabular-nums text-white/85 ${className}`}>
       {fill(copy.score, { score: row.score })}
+    </span>
+  );
+}
+
+/** "Editor's pick · <note>" for tooltips, or '' when the category has no pick. */
+export function editorsPickTitle(categoryId, locale = "en") {
+  const pick = getEditorsPick(categoryId);
+  if (!pick) return "";
+  return fill(resolveCopy(benchmarksEn, benchmarksZh, locale).editorsPickTitle, { note: pick.note });
+}
+
+/**
+ * A small filled star after a price when `modelId` is the editor's pick of
+ * `categoryId`, with "Editor's pick · <note>" as its tooltip. Nothing else.
+ * @param {{ categoryId: string|null, modelId: string, locale?: string, size?: number, className?: string }} props
+ */
+export function EditorsPickStar({ categoryId, modelId, locale = "en", size = 11, className = "" }) {
+  if (!categoryId || !isEditorsPick(categoryId, modelId)) return null;
+  const title = editorsPickTitle(categoryId, locale);
+  return (
+    <span title={title} aria-label={title} role="img" data-editors-pick={modelId} className={`inline-flex shrink-0 items-center text-primary ${className}`}>
+      <IconStarFilled size={size} aria-hidden="true" />
     </span>
   );
 }

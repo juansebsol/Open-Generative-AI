@@ -18,7 +18,9 @@
     "cheapestDecent": "够用且最便宜",
     "bestHint": "排行榜上分数最高。",
     "bestValueHint": "每美元获得的超出底线的质量最多。",
-    "cheapestDecentHint": "与榜首差距在 {gap} Elo 以内的模型中价格最低。"
+    "cheapestDecentHint": "与榜首差距在 {gap} Elo 以内的模型中价格最低。",
+    "editorsPick": "编辑推荐",
+    "editorsPickHint": "Openstudio 自己的推荐，与分数无关。"
   },
   "open": "在{studio}中打开",
   "studios": {
@@ -58,5 +60,6 @@
   "decentNote": "“够用”指与榜首差距在 {gap} Elo 以内（{floor} 分及以上）。性价比只计算高于 {valueFloor} Elo（低于榜首 {valueGap} 分）的质量，再除以一次默认运行的价格。",
   "sourcesTitle": "数据来源",
   "decent": "够用",
-  "sameAs": "与“{pick}”为同一模型"
+  "sameAs": "与“{pick}”为同一模型",
+  "editorsPickTitle": "编辑推荐 · {note}"
 }

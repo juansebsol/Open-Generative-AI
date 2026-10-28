@@ -45,6 +45,7 @@ import StudioEmptyState from "./StudioEmptyState.jsx";
 import en from "../messages/en/vectorStudio.json";
 import zh from "../messages/zh/vectorStudio.json";
 import { resolveCopy } from "../i18nUtils";
+import { defaultModelId } from "../benchmarks.js";
 
 // Three pages share this component, like the 3D pages share ThreeDStudio:
 // Text to Logo and Icon Set generate SVGs from a prompt (Recraft and
@@ -270,7 +271,8 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
   const library = useLibrary();
   const models = isVectorize ? vectorizeModels : vectorTextModels;
 
-  const [modelId, setModelId] = useState(models[0]?.id || "");
+  // The editor's pick of the vector category, unless a saved choice is restored below.
+  const [modelId, setModelId] = useState(() => defaultModelId(isVectorize ? null : "vector", models));
   const [options, setOptions] = useState({});
   const [prompt, setPrompt] = useState(""); // the logo prompt, or the icon style
   const [iconNames, setIconNames] = useState("");

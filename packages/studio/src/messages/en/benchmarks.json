@@ -18,7 +18,9 @@
     "cheapestDecent": "Cheapest decent",
     "bestHint": "Highest score on the leaderboard.",
     "bestValueHint": "Most quality above the floor per dollar.",
-    "cheapestDecentHint": "Lowest price among models within {gap} Elo of the leader."
+    "cheapestDecentHint": "Lowest price among models within {gap} Elo of the leader.",
+    "editorsPick": "Editor's pick",
+    "editorsPickHint": "Openstudio's own pick, independent of the scores."
   },
   "open": "Open in {studio}",
   "studios": {
@@ -58,5 +60,6 @@
   "decentNote": "Decent means within {gap} Elo of the leader ({floor} or more). Value counts only quality above {valueFloor} Elo ({valueGap} below the leader) and divides it by the price of one default run.",
   "sourcesTitle": "Sources",
   "decent": "decent",
-  "sameAs": "Same model as {pick}"
+  "sameAs": "Same model as {pick}",
+  "editorsPickTitle": "Editor's pick · {note}"
 }

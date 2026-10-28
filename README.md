@@ -68,6 +68,8 @@ Chrome asks once to allow local network access for the site. An HTTPS site can r
 
 To update the scores, open each source linked in the file header, change the numbers and `BENCHMARKS_UPDATED`, and add new catalog models by their id. `npm test` checks that every scored id exists in the catalog and cites a known source.
 
+- **Editor's pick** is Openstudio's own recommendation per category, set by hand in `packages/studio/src/providers/catalog/editorsPicks.js` (one optional `{ modelId, note, asOf }` per category) and independent of the scores. It shows as a fourth, leading card on the Benchmarks page with a star and the note, a star next to the model in the table, the first row of the helper card on each page, a star after the price in the model pickers, and it is the initial selection on pages of that category for visitors who have not chosen a model yet (a saved choice wins). The three computed picks stay as they are. Today only the vector category has one: Gemini 4 Argon, for the cleanest geometric marks, even though a few chat models score higher on the SVG arena.
+
 ### Picks on every page
 
 Every studio page that has a model picker shows a small **Benchmarks helper** card, top right under the header, with that page's picks (best quality, best value, cheapest decent) as a numbered mini leaderboard: name, score bar, price and Elo, and clicking a row selects that model on the page you are on. **More** continues the list with the next few ranked models, **Open Benchmarks** opens the Benchmarks page on that category, and the X closes the card; a small chart button in the same corner brings it back, and the choice is remembered in this browser (on a phone-width screen it starts as the button). Escape closes it while it has focus.

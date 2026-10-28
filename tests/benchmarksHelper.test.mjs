@@ -81,7 +81,7 @@ test('helper rows keep the three picks in order when they differ', () => {
   assert.deepEqual(picks.map((item) => item.row.id), ['best', 'value', 'cheap']);
   assert.deepEqual(picks.map((item) => item.kinds), [['best'], ['bestValue'], ['cheapestDecent']]);
   assert.deepEqual(more, []);
-  assert.deepEqual(helper.helperRows({ picks: {}, rows: [] }), { picks: [], more: [] });
+  assert.deepEqual(helper.helperRows({ picks: {}, rows: [] }), { editorsPick: null, picks: [], more: [] });
 });
 
 test('the bubble is open the first time and remembers being closed per visitor', () => {
@@ -125,4 +125,25 @@ test('See all links to the Benchmarks page with the category preselected', () =>
   assert.equal(helper.benchmarksHref('/studio/benchmarks', 'image-editing'), '/studio/benchmarks?category=image-editing');
   assert.equal(helper.benchmarksHref('/zh/studio/benchmarks', 'three-d'), '/zh/studio/benchmarks?category=three-d');
   assert.equal(helper.benchmarksHref('/studio/benchmarks', null), '/studio/benchmarks');
+});
+
+test("the editor's pick is pinned first in the bubble and never listed twice", () => {
+  const ranking = rankEntries([row('svg-gpt-6-1-sol', 1437, 0.02), row('svg-claude-sonnet-5-5', 1392, 0.02), row('svg-gemini-4-argon', 1318, 0.01), row('svg-claude-haiku-5-5', 1247, 0.001), row('recraft-v4-1-text-to-vector', 998, 0.08)]);
+  const { editorsPick, picks, more } = helper.helperRows(ranking, 10, { categoryId: 'vector' });
+  assert.equal(editorsPick.row.id, 'svg-gemini-4-argon');
+  assert.equal(editorsPick.row.editorsPick.note.length > 0, true);
+  const ids = [...picks.map((item) => item.row.id), ...more.map((item) => item.id)];
+  assert.ok(!ids.includes('svg-gemini-4-argon'), 'the pinned model is left out of the ranked rows');
+  assert.equal(picks[0].row.id, 'svg-gpt-6-1-sol', 'best quality still leads the ranked rows');
+  assert.equal(new Set(ids).size, ids.length);
+  // A pick that also wins a computed pick keeps its labels on the pinned row.
+  const small = rankEntries([row('svg-gemini-4-argon', 1318, 0.01), row('recraft-v4-1-text-to-vector', 998, 0.08)]);
+  const pinned = helper.helperRows(small, 10, { categoryId: 'vector' });
+  assert.deepEqual(pinned.editorsPick.kinds, ['best', 'bestValue', 'cheapestDecent']);
+  assert.deepEqual(pinned.picks, []);
+  assert.deepEqual(pinned.more.map((item) => item.id), ['recraft-v4-1-text-to-vector']);
+  // No category, or one without a pick: nothing is pinned and the rows are as before.
+  assert.equal(helper.helperRows(ranking, 10).editorsPick, null);
+  assert.equal(helper.helperRows(ranking, 10, { categoryId: 'text-to-image' }).editorsPick, null);
+  assert.equal(helper.helperRows(ranking, 10, { categoryId: 'text-to-image' }).picks.length, helper.helperRows(ranking, 10).picks.length);
 });

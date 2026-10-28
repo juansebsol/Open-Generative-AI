@@ -10,7 +10,7 @@ import en from "../messages/en/audioStudio.json";
 import zh from "../messages/zh/audioStudio.json";
 import { resolveCopy } from "../i18nUtils";
 import { announceStudioMode } from "../benchmarksHelper.js";
-import { audioCategoryOf } from "../benchmarks.js";
+import { audioCategoryOf, defaultModelId } from "../benchmarks.js";
 
 // ---------------------------------------------------------------------------
 // Upload button states
@@ -586,7 +586,7 @@ export default function AudioStudio({
 }) {
   const copy = resolveCopy(en, zh, locale);
   // ── Mode & model state ──────────────────────────────────────────────────
-  const [selectedModelId, setSelectedModelId] = useState(audioModels[0]?.id ?? "");
+  const [selectedModelId, setSelectedModelId] = useState(() => defaultModelId("text-to-speech", audioModels));
   const [params, setParams] = useState({});
   const [openDropdown, setOpenDropdown] = useState(false);
   const [openParamDropdown, setOpenParamDropdown] = useState(null);

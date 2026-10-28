@@ -7,10 +7,10 @@
 // category only and a few at a time. Nothing here generates anything.
 
 import { useEffect, useMemo, useState } from "react";
-import { IconArrowRight, IconArrowDown, IconArrowUp, IconExternalLink, IconSelector } from "@tabler/icons-react";
+import { IconArrowRight, IconArrowDown, IconArrowUp, IconExternalLink, IconSelector, IconStarFilled } from "@tabler/icons-react";
 import {
   BENCHMARKS_UPDATED, CATEGORIES, DECENT_GAP, SVG_PROMPT_CHARACTERS, TTS_SAMPLE_CHARACTERS, VALUE_FLOOR_GAP,
-  categoryEntries, compareRows, priceOf, rankEntries,
+  categoryEntries, compareRows, editorsPickRow, priceOf, rankEntries,
 } from "../benchmarks.js";
 import { providerName, routeFor } from "../providers/pricing.js";
 import { PriceText, ScoreText, describePriceCell, fill, formatValue, quotesSettled, useCategoryQuotes } from "./benchmarks/shared.jsx";
@@ -24,13 +24,19 @@ function openStudio(row) {
   window.dispatchEvent(new CustomEvent("oga:open-studio", { detail: { tabId: row.studio, modelId: row.id } }));
 }
 
+// `kind` "editorsPick" is the curated card: a star, a thin cyan outline and
+// the pick's note as its hint; the three computed cards are unchanged.
 function PickCard({ kind, row, hint, copy, pricingCopy, locale, quotes, settled, sameAs }) {
   const state = row ? quotes[row.id] : null;
   const price = row ? describePriceCell(row, settled ? state : null, copy, pricingCopy, locale) : null;
+  const curated = kind === "editorsPick";
   return (
-    <section className="flex min-w-0 flex-col gap-3 rounded-[14px] border border-white/[0.08] bg-[#111114] p-4" data-pick={kind}>
+    <section className={`flex min-w-0 flex-col gap-3 rounded-[14px] border bg-[#111114] p-4 ${curated ? "border-primary/40 shadow-[0_0_0_1px_rgba(34,211,238,0.12)]" : "border-white/[0.08]"}`} data-pick={kind}>
       <div>
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-primary/90">{copy.picks[kind]}</h3>
+        <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-primary/90">
+          {curated ? <IconStarFilled size={12} aria-hidden="true" /> : null}
+          {copy.picks[kind]}
+        </h3>
         <p className="mt-0.5 text-[12px] leading-snug text-white/40">{hint}</p>
       </div>
       {row ? (
@@ -122,6 +128,8 @@ export default function BenchmarksStudio({ locale = "en" }) {
   })), [entries, quotes, settled]);
 
   const sortedRows = useMemo(() => [...ranking.rows].sort(compareRows(sort.key, sort.direction)), [ranking.rows, sort]);
+  const editorsPick = useMemo(() => editorsPickRow(categoryId, ranking.rows), [categoryId, ranking.rows]);
+  const editorsPickTitle = editorsPick ? fill(copy.editorsPickTitle, { note: editorsPick.editorsPick.note }) : "";
   const sources = useMemo(() => [...new Map(ranking.rows.filter((row) => row.source).map((row) => [row.source.url, row.source])).values()], [ranking.rows]);
   const { best, bestValue, cheapestDecent } = ranking.picks;
 
@@ -164,7 +172,8 @@ export default function BenchmarksStudio({ locale = "en" }) {
           <p className="rounded-[14px] border border-dashed border-white/[0.08] px-4 py-6 text-center text-[13px] text-white/45">{copy.empty}</p>
         ) : (
           <>
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className={`grid gap-3 ${editorsPick ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
+              {editorsPick ? <PickCard kind="editorsPick" row={editorsPick} hint={editorsPick.editorsPick.note} copy={copy} pricingCopy={pricingCopy} locale={locale} quotes={quotes} settled={settled} /> : null}
               <PickCard kind="best" row={best} hint={copy.picks.bestHint} copy={copy} pricingCopy={pricingCopy} locale={locale} quotes={quotes} settled={settled} />
               <PickCard kind="bestValue" row={bestValue} hint={copy.picks.bestValueHint} copy={copy} pricingCopy={pricingCopy} locale={locale} quotes={quotes} settled={settled} sameAs={bestValue && best && bestValue.id === best.id ? "best" : null} />
               <PickCard kind="cheapestDecent" row={cheapestDecent} hint={fill(copy.picks.cheapestDecentHint, { gap: number(DECENT_GAP) })} copy={copy} pricingCopy={pricingCopy} locale={locale} quotes={quotes} settled={settled} sameAs={cheapestDecent && bestValue && cheapestDecent.id === bestValue.id ? "bestValue" : cheapestDecent && best && cheapestDecent.id === best.id ? "best" : null} />
@@ -195,11 +204,14 @@ export default function BenchmarksStudio({ locale = "en" }) {
                     {sortedRows.map((row) => {
                       const price = describePriceCell(row, quotes[row.id], copy, pricingCopy, locale);
                       const value = formatValue(row.value, locale);
-                      const picked = [best, bestValue, cheapestDecent].some((pick) => pick?.id === row.id);
+                      const picked = [editorsPick, best, bestValue, cheapestDecent].some((pick) => pick?.id === row.id);
                       return (
                         <tr key={row.id} data-model={row.id} className={`border-b border-white/[0.05] last:border-b-0 ${picked ? "bg-primary/[0.04]" : "hover:bg-white/[0.02]"}`}>
                           <td className="max-w-[320px] px-3 py-2 align-middle">
-                            <div className="truncate font-medium text-white/90" title={row.name}>{row.name}</div>
+                            <div className="flex min-w-0 items-center gap-1.5 font-medium text-white/90">
+                              <span className="truncate" title={row.name}>{row.name}</span>
+                              {editorsPick && editorsPick.id === row.id ? <span title={editorsPickTitle} aria-label={editorsPickTitle} role="img" data-editors-pick={row.id} className="inline-flex shrink-0 text-primary"><IconStarFilled size={11} aria-hidden="true" /></span> : null}
+                            </div>
                             <div className="truncate font-mono text-[10.5px] text-white/30">{row.id}{row.decent ? <span className="ml-1.5 font-sans text-[10px] font-medium uppercase tracking-wide text-emerald-300/60">{copy.decent}</span> : null}</div>
                           </td>
                           <td className="px-3 py-2 text-right align-middle text-[12px] text-white/55">{row.providerLabel || <span className="text-white/25">—</span>}</td>

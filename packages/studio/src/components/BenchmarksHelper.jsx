@@ -11,13 +11,13 @@
 // generates anything.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IconArrowRight, IconCheck, IconChartBar, IconChevronDown, IconCoins, IconTag, IconTrophy, IconX } from "@tabler/icons-react";
+import { IconArrowRight, IconCheck, IconChartBar, IconChevronDown, IconCoins, IconStarFilled, IconTag, IconTrophy, IconX } from "@tabler/icons-react";
 import { priceOf, rankEntries } from "../benchmarks.js";
 import {
   STUDIO_MODE_EVENT, benchmarksHref, getStudioMode, helperCategoryFor, helperEntries, helperRows, loadHelperOpen, saveHelperOpen,
 } from "../benchmarksHelper.js";
 import { providerName, routeFor } from "../providers/pricing.js";
-import { describePriceCell, fill, quotesSettled, useCategoryQuotes } from "./benchmarks/shared.jsx";
+import { describePriceCell, editorsPickTitle, fill, quotesSettled, useCategoryQuotes } from "./benchmarks/shared.jsx";
 import { resolveCopy } from "../i18nUtils";
 import en from "../messages/en/benchmarksHelper.json";
 import zh from "../messages/zh/benchmarksHelper.json";
@@ -61,19 +61,21 @@ function KindMarks({ kinds, benchmarksCopy, className = "" }) {
   );
 }
 
-// One row of the rail: rank, name, score bar, price and pick marks, Elo.
-function RailRow({ item, index, used, price, copy, benchmarksCopy, width, onUse }) {
+// One row of the rail: rank (or the editor's star), name, score bar, price
+// and pick marks, Elo.
+function RailRow({ item, rank, starTitle = "", used, price, copy, benchmarksCopy, width, onUse }) {
+  const pinned = Boolean(starTitle);
   return (
-    <li data-helper-model={item.row.id}>
+    <li data-helper-model={item.row.id} data-editors-pick={pinned ? "true" : undefined}>
       <button
         type="button"
         onClick={() => onUse(item.row.id)}
-        title={fill(copy.useTitle, { model: item.row.name })}
+        title={pinned ? `${starTitle} — ${fill(copy.useTitle, { model: item.row.name })}` : fill(copy.useTitle, { model: item.row.name })}
         data-helper-use={item.row.id}
         className="group grid w-full grid-cols-[26px_minmax(0,1fr)_auto] items-center gap-x-2.5 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-white/[0.05] focus:outline-none focus-visible:bg-white/[0.05]"
       >
-        <span className={`text-[20px] font-semibold leading-none tabular-nums ${used ? "text-emerald-300" : "text-white/20 group-hover:text-primary"}`}>
-          {used ? <IconCheck size={18} stroke={2.25} aria-hidden="true" /> : index + 1}
+        <span className={`flex items-center text-[20px] font-semibold leading-none tabular-nums ${used ? "text-emerald-300" : pinned ? "text-primary" : "text-white/20 group-hover:text-primary"}`}>
+          {used ? <IconCheck size={18} stroke={2.25} aria-hidden="true" /> : pinned ? <IconStarFilled size={16} aria-hidden="true" /> : rank}
         </span>
         <span className="min-w-0">
           <span className="block truncate text-[13.5px] font-medium leading-5 text-white/90">{item.row.name}</span>
@@ -124,7 +126,7 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
     const provider = quote && quote.kind !== "noProvider" ? quote.provider : routeFor(entry.endpoint)?.provider;
     return { ...entry, price: settled ? priceOf(quote) : null, providerLabel: provider ? providerName(provider) : "" };
   })), [entries, quotes, settled]);
-  const { picks, more } = useMemo(() => helperRows(ranking), [ranking]);
+  const { editorsPick, picks, more } = useMemo(() => helperRows(ranking, undefined, { categoryId }), [ranking, categoryId]);
 
   // The card takes focus only when the visitor just opened it, so Escape
   // works at once; switching tabs never steals focus from the prompt.
@@ -191,8 +193,10 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
   // Picks by score, then the "More" rows continue the numbering.
   const ranked = [...picks].sort((a, b) => b.row.score - a.row.score);
   const rows = showMore ? [...ranked, ...more.map((row) => ({ row, kinds: [] }))] : ranked;
+  // The editor's pick is pinned above the ranked rows, with a star for a rank.
+  const starTitle = editorsPick ? editorsPickTitle(categoryId, locale) : "";
   // The score bar is relative to the leader: 400 Elo below it is the floor.
-  const top = rows[0]?.row.score ?? 0;
+  const top = Math.max(rows[0]?.row.score ?? 0, editorsPick?.row.score ?? 0);
   const floor = top - 400;
   const width = (score) => `${Math.round(30 + 70 * Math.max(0, Math.min(1, (score - floor) / (top - floor || 1))))}%`;
 
@@ -223,10 +227,13 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
         </button>
       </header>
 
-      {rows.length > 0 ? (
+      {rows.length > 0 || editorsPick ? (
         <ol className="px-2 pb-1">
+          {editorsPick ? (
+            <RailRow item={editorsPick} rank={null} starTitle={starTitle} used={usedId === editorsPick.row.id} price={priceFor(editorsPick.row)} copy={copy} benchmarksCopy={benchmarksCopy} width={width(editorsPick.row.score)} onUse={onUse} />
+          ) : null}
           {rows.map((item, index) => (
-            <RailRow key={item.row.id} item={item} index={index} used={usedId === item.row.id} price={priceFor(item.row)} copy={copy} benchmarksCopy={benchmarksCopy} width={width(item.row.score)} onUse={onUse} />
+            <RailRow key={item.row.id} item={item} rank={index + 1} used={usedId === item.row.id} price={priceFor(item.row)} copy={copy} benchmarksCopy={benchmarksCopy} width={width(item.row.score)} onUse={onUse} />
           ))}
         </ol>
       ) : (

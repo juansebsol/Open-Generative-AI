@@ -4,6 +4,7 @@
 // module is pure so the ranking can be unit-tested without a browser.
 
 import { BENCHMARKS, BENCHMARKS_UPDATED, DECENT_GAP, SOURCES, VALUE_FLOOR_GAP } from './providers/catalog/benchmarks.js';
+import { EDITORS_PICKS, getEditorsPick } from './providers/catalog/editorsPicks.js';
 import { audioModels, i2iModels, i2vModels, t2iModels, t2vModels, threeDModels } from './models.js';
 import { vectorTextModels } from './vectorModels.js';
 
@@ -143,6 +144,44 @@ export function rankEntries(entries) {
   return { topScore, decentFloor, valueFloor, rows, picks: { best, bestValue, cheapestDecent } };
 }
 
+// ── Editor's picks (catalog/editorsPicks.js) ────────────────────────────────
+
+/** True when `modelId` is the editor's pick of the category. */
+export function isEditorsPick(categoryId, modelId) {
+  const pick = getEditorsPick(categoryId);
+  return Boolean(pick && modelId && pick.modelId === modelId);
+}
+
+/**
+ * The editor's pick of a category as one of the given rows (ranked rows or
+ * category entries), with the pick's `note` and `asOf` attached as
+ * `editorsPick`. Null when the category has no pick or the model is not
+ * among the rows (not in the catalog, or filtered out). The computed picks
+ * are untouched: this is a fourth, separate recommendation.
+ * @param {string} categoryId
+ * @param {Array<{ id: string }>} rows
+ */
+export function editorsPickRow(categoryId, rows) {
+  const pick = getEditorsPick(categoryId);
+  if (!pick) return null;
+  const row = (rows || []).find((entry) => entry.id === pick.modelId);
+  return row ? { ...row, editorsPick: { note: pick.note, asOf: pick.asOf } } : null;
+}
+
+/**
+ * The model a page of this category selects for a visitor with no saved
+ * choice: the editor's pick when it is one of `models`, else the first.
+ * @param {string|null} categoryId
+ * @param {Array<{ id: string }>} models
+ * @returns {string} a model id, or '' when there are no models
+ */
+export function defaultModelId(categoryId, models) {
+  const list = models || [];
+  const pick = categoryId ? getEditorsPick(categoryId) : null;
+  if (pick && list.some((model) => model.id === pick.modelId)) return pick.modelId;
+  return list[0]?.id || '';
+}
+
 /** Comparator for the table: unscored or unpriced rows always sort last. */
 export function compareRows(key, direction) {
   const sign = direction === 'asc' ? 1 : -1;
@@ -160,4 +199,4 @@ export function compareRows(key, direction) {
   };
 }
 
-export { BENCHMARKS_UPDATED, DECENT_GAP, SOURCES, VALUE_FLOOR_GAP };
+export { BENCHMARKS_UPDATED, DECENT_GAP, EDITORS_PICKS, SOURCES, VALUE_FLOOR_GAP, getEditorsPick };
