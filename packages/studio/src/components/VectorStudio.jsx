@@ -1116,7 +1116,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
           ]}
           caption={<VectorCaption entry={viewer} copy={copy} locale={locale} facts={(entry, dims) => [...vectorFacts(entry, dims), whenFact(entry)]} />}
         >
-          <div className="h-[min(86vh,calc(95vw-10rem))] w-[min(86vh,calc(95vw-10rem))] overflow-hidden rounded-2xl shadow-2xl">
+          <div className="h-[min(86vh,calc(100vw-9rem))] w-[min(86vh,calc(100vw-9rem))] overflow-hidden rounded-2xl shadow-2xl md:h-[min(86vh,calc(100vw-12rem))] md:w-[min(86vh,calc(100vw-12rem))]">
             <Preview entry={viewer} tone={tone} />
           </div>
         </Lightbox>

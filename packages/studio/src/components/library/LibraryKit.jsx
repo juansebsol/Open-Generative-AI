@@ -106,7 +106,7 @@ export function useImageSize(url) {
 
 /**
  * The full-screen viewer. `tools` is a list of { key, label, icon, onSelect,
- * danger?, active?, node? } drawn as a rail down the left edge, the same
+ * danger?, active?, node? } drawn as a rail down the right edge, the same
  * buttons the card shows on hover; `caption` sits under the media.
  */
 export function Lightbox({ onClose, tools = [], caption = null, closeLabel = "Close", children }) {
@@ -128,31 +128,40 @@ export function Lightbox({ onClose, tools = [], caption = null, closeLabel = "Cl
         <IconX size={20} stroke={2} aria-hidden="true" />
       </button>
 
-      {list.length > 0 && (
-        <div className="absolute left-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 md:left-6" onClick={(event) => event.stopPropagation()} role="toolbar" aria-orientation="vertical">
-          {list.map((tool, index) => tool.node ? (
-            <span key={tool.key} className="oga-enter contents" style={{ "--i": index }}>{tool.node}</span>
-          ) : (
-            <button
-              key={tool.key}
-              type="button"
-              title={tool.label}
-              aria-label={tool.label}
-              aria-pressed={tool.active === undefined ? undefined : tool.active}
-              onClick={(event) => { event.stopPropagation(); tool.onSelect?.(); }}
-              style={{ "--i": index }}
-              className={`oga-enter ${tool.danger ? TOOL_DANGER_CLASS : TOOL_CLASS} ${tool.active ? "!bg-primary !text-black" : ""}`}
-            >
-              {tool.icon}
-              <span className="pointer-events-none absolute left-full top-1/2 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-black/80 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover/tool:opacity-100 md:block">{tool.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Three columns: an empty left gutter, the result, and the right
+          gutter holding the rail right next to the result (a small gap keeps
+          it off the edge). Equal gutters keep the result centred. */}
+      <div className="flex h-full w-full items-stretch">
+        <div className="min-w-[4.5rem] flex-1 md:min-w-[6rem]" aria-hidden="true" />
 
-      <div className="oga-dialog-in flex max-h-[95vh] max-w-[95vw] flex-col items-center gap-3 pl-14 pr-14 md:pl-20 md:pr-20" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
-        {children}
-        {caption && <div className="max-w-[min(90vw,720px)] text-center text-[12px] text-white/60">{caption}</div>}
+        <div className="oga-dialog-in flex min-w-0 shrink flex-col items-center justify-center gap-3 self-center" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
+          {children}
+          {caption && <div className="max-w-[min(90vw,720px)] text-center text-[12px] text-white/60">{caption}</div>}
+        </div>
+
+        <div className="flex min-w-[4.5rem] flex-1 items-center justify-start pl-3 md:min-w-[6rem] md:pl-4">
+          {list.length > 0 && (
+            <div className="flex flex-col gap-2" onClick={(event) => event.stopPropagation()} role="toolbar" aria-orientation="vertical">
+              {list.map((tool, index) => tool.node ? (
+                <span key={tool.key} className="oga-enter contents" style={{ "--i": index }}>{tool.node}</span>
+              ) : (
+                <button
+                  key={tool.key}
+                  type="button"
+                  title={tool.label}
+                  aria-label={tool.label}
+                  aria-pressed={tool.active === undefined ? undefined : tool.active}
+                  onClick={(event) => { event.stopPropagation(); tool.onSelect?.(); }}
+                  style={{ "--i": index }}
+                  className={`oga-enter ${tool.danger ? TOOL_DANGER_CLASS : TOOL_CLASS} ${tool.active ? "!bg-primary !text-black" : ""}`}
+                >
+                  {tool.icon}
+                  <span className="pointer-events-none absolute right-full top-1/2 z-10 mr-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-black/80 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover/tool:opacity-100 md:block">{tool.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

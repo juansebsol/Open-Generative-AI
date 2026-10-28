@@ -1792,7 +1792,7 @@ export default function ImageStudio({
           <img
             src={fullscreen.entry.url}
             alt={copy.fullscreen.previewAlt}
-            className="max-h-[86vh] max-w-full rounded-2xl object-contain shadow-2xl"
+            className="max-h-[86vh] max-w-[calc(100vw-9rem)] rounded-2xl object-contain shadow-2xl md:max-w-[calc(100vw-12rem)]"
           />
         </Lightbox>
       )}
