@@ -182,6 +182,28 @@ export function defaultModelId(categoryId, models) {
   return list[0]?.id || '';
 }
 
+/**
+ * Which model a page opens on. The editor's pick wins over a choice the
+ * visitor saved before the pick existed or under a different pick; once
+ * they have seen the pick (`pickSeen` is its id), their own saved choice
+ * persists until the pick changes again. A pick that is not on the page
+ * (`modelIds`) is skipped without marking it seen, so it applies the day it
+ * is offered.
+ * @param {{ categoryId: string|null, modelIds: string[], savedModelId?: string|null, pickSeen?: string|null }} input
+ *   `pickSeen` is the pick id the page last applied (editorsPickSeen.js)
+ * @returns {{ modelId: string|null, pickSeen: string|null, source: 'pick'|'saved'|'default' }}
+ */
+export function resolveInitialModel({ categoryId, modelIds, savedModelId = null, pickSeen = null }) {
+  const ids = modelIds || [];
+  const pick = categoryId ? getEditorsPick(categoryId) : null;
+  const pickId = pick && ids.includes(pick.modelId) ? pick.modelId : null;
+  const saved = savedModelId && ids.includes(savedModelId) ? savedModelId : null;
+  if (pickId && pickSeen !== pickId) return { modelId: pickId, pickSeen: pickId, source: 'pick' };
+  if (saved) return { modelId: saved, pickSeen, source: 'saved' };
+  if (pickId) return { modelId: pickId, pickSeen: pickId, source: 'pick' };
+  return { modelId: ids[0] || null, pickSeen, source: 'default' };
+}
+
 /** Comparator for the table: unscored or unpriced rows always sort last. */
 export function compareRows(key, direction) {
   const sign = direction === 'asc' ? 1 : -1;

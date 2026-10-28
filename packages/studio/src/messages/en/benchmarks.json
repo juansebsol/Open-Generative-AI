@@ -19,8 +19,8 @@
     "bestHint": "Highest score on the leaderboard.",
     "bestValueHint": "Most quality above the floor per dollar.",
     "cheapestDecentHint": "Lowest price among models within {gap} Elo of the leader.",
-    "editorsPick": "Editor's pick",
-    "editorsPickHint": "Openstudio's own pick, independent of the scores."
+    "editorsPick": "Editor's choice",
+    "editorsPickHint": "Openstudio's own choice, independent of the scores."
   },
   "open": "Open in {studio}",
   "studios": {
@@ -61,5 +61,5 @@
   "sourcesTitle": "Sources",
   "decent": "decent",
   "sameAs": "Same model as {pick}",
-  "editorsPickTitle": "Editor's pick · {note}"
+  "editorsPickTitle": "Editor's choice · {note}"
 }

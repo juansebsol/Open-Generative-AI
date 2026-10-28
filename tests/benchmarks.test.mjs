@@ -150,3 +150,29 @@ test("every editor's pick names a model of its category with a note and a date",
     assert.match(pick.asOf, /^\d{4}-\d{2}-\d{2}$/);
   }
 });
+
+test("the editor's choice wins over a choice saved before it existed, then the new choice persists", async () => {
+  const { resolveInitialModel } = await import('../packages/studio/src/benchmarks.js');
+  const modelIds = ['recraft-v4-1-text-to-vector', 'svg-gemini-4-argon', 'svg-gpt-6-1-sol'];
+  // A stale choice (saved under no pick) is replaced by the pick, which is marked seen.
+  const first = resolveInitialModel({ categoryId: 'vector', modelIds, savedModelId: 'recraft-v4-1-text-to-vector', pickSeen: null });
+  assert.deepEqual(first, { modelId: 'svg-gemini-4-argon', pickSeen: 'svg-gemini-4-argon', source: 'pick' });
+  // Having seen the pick, the visitor's next choice persists.
+  const next = resolveInitialModel({ categoryId: 'vector', modelIds, savedModelId: 'svg-gpt-6-1-sol', pickSeen: first.pickSeen });
+  assert.deepEqual(next, { modelId: 'svg-gpt-6-1-sol', pickSeen: 'svg-gemini-4-argon', source: 'saved' });
+  // A choice saved under an older pick is replaced once the pick changes.
+  const changed = resolveInitialModel({ categoryId: 'vector', modelIds, savedModelId: 'svg-gpt-6-1-sol', pickSeen: 'some-older-pick' });
+  assert.equal(changed.source, 'pick');
+  // No saved choice and the pick already seen still opens on the pick.
+  assert.equal(resolveInitialModel({ categoryId: 'vector', modelIds, savedModelId: null, pickSeen: 'svg-gemini-4-argon' }).modelId, 'svg-gemini-4-argon');
+});
+
+test("a pick that is not on the page falls back to the saved choice or the first model, unmarked", async () => {
+  const { resolveInitialModel } = await import('../packages/studio/src/benchmarks.js');
+  const offPage = resolveInitialModel({ categoryId: 'vector', modelIds: ['recraft-v4-1-text-to-vector', 'ideogram-vector-text-to-vector'], savedModelId: 'ideogram-vector-text-to-vector', pickSeen: null });
+  assert.deepEqual(offPage, { modelId: 'ideogram-vector-text-to-vector', pickSeen: null, source: 'saved' });
+  assert.deepEqual(resolveInitialModel({ categoryId: 'vector', modelIds: ['recraft-v4-1-text-to-vector'], savedModelId: 'gone', pickSeen: null }), { modelId: 'recraft-v4-1-text-to-vector', pickSeen: null, source: 'default' });
+  assert.deepEqual(resolveInitialModel({ categoryId: 'text-to-image', modelIds: ['a', 'b'], savedModelId: 'b', pickSeen: null }), { modelId: 'b', pickSeen: null, source: 'saved' });
+  assert.deepEqual(resolveInitialModel({ categoryId: null, modelIds: ['a', 'b'] }), { modelId: 'a', pickSeen: null, source: 'default' });
+  assert.deepEqual(resolveInitialModel({ categoryId: 'vector', modelIds: [] }), { modelId: null, pickSeen: null, source: 'default' });
+});

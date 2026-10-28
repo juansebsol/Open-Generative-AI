@@ -46,6 +46,7 @@ import en from "../messages/en/vectorStudio.json";
 import zh from "../messages/zh/vectorStudio.json";
 import { resolveCopy } from "../i18nUtils";
 import { defaultModelId } from "../benchmarks.js";
+import { useEditorsPickPreselect } from "./benchmarks/shared.jsx";
 
 // Three pages share this component, like the 3D pages share ThreeDStudio:
 // Text to Logo and Icon Set generate SVGs from a prompt (Recraft and
@@ -395,6 +396,18 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     window.addEventListener("oga:open-studio", preselect);
     return () => window.removeEventListener("oga:open-studio", preselect);
   }, [page, models]);
+
+  // The editor's choice of the vector category opens the page until the
+  // visitor has seen it; a choice they make after that persists.
+  useEditorsPickPreselect({
+    page: `vector-${page}`,
+    read: () => {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null")?.modelId || null; } catch { saved = null; }
+      return { categoryId: isVectorize ? null : "vector", modelIds: models.map((model) => model.id), savedModelId: saved };
+    },
+    apply: (wanted) => setModelId(wanted),
+  });
 
   // Uploads: the image to trace (on this page, or sent to Vectorize from
   // another page), or Ideogram references.

@@ -61,22 +61,25 @@ function KindMarks({ kinds, benchmarksCopy, className = "" }) {
   );
 }
 
-// One row of the rail: rank (or the editor's star), name, score bar, price
-// and pick marks, Elo.
+// One row of the rail: rank, name, score bar, price and pick marks, Elo.
+// `rank` null is the editor's choice row under its own heading: no rank
+// column. `starTitle` adds the editor's star to the marks of the chart row.
 function RailRow({ item, rank, starTitle = "", used, price, copy, benchmarksCopy, width, onUse }) {
-  const pinned = Boolean(starTitle);
+  const chosen = rank === null;
   return (
-    <li data-helper-model={item.row.id} data-editors-pick={pinned ? "true" : undefined}>
+    <li data-helper-model={item.row.id} data-editors-pick={chosen ? "choice" : starTitle ? "chart" : undefined}>
       <button
         type="button"
         onClick={() => onUse(item.row.id)}
-        title={pinned ? `${starTitle} — ${fill(copy.useTitle, { model: item.row.name })}` : fill(copy.useTitle, { model: item.row.name })}
+        title={fill(copy.useTitle, { model: item.row.name })}
         data-helper-use={item.row.id}
-        className="group grid w-full grid-cols-[26px_minmax(0,1fr)_auto] items-center gap-x-2.5 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-white/[0.05] focus:outline-none focus-visible:bg-white/[0.05]"
+        className={`group grid w-full items-center gap-x-2.5 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-white/[0.05] focus:outline-none focus-visible:bg-white/[0.05] ${chosen ? "grid-cols-[minmax(0,1fr)_auto]" : "grid-cols-[26px_minmax(0,1fr)_auto]"}`}
       >
-        <span className={`flex items-center text-[20px] font-semibold leading-none tabular-nums ${used ? "text-emerald-300" : pinned ? "text-primary" : "text-white/20 group-hover:text-primary"}`}>
-          {used ? <IconCheck size={18} stroke={2.25} aria-hidden="true" /> : pinned ? <IconStarFilled size={16} aria-hidden="true" /> : rank}
-        </span>
+        {chosen ? null : (
+          <span className={`flex items-center text-[20px] font-semibold leading-none tabular-nums ${used ? "text-emerald-300" : "text-white/20 group-hover:text-primary"}`}>
+            {used ? <IconCheck size={18} stroke={2.25} aria-hidden="true" /> : rank}
+          </span>
+        )}
         <span className="min-w-0">
           <span className="block truncate text-[13.5px] font-medium leading-5 text-white/90">{item.row.name}</span>
           <span className="mt-1.5 block h-[3px] w-full overflow-hidden rounded-full bg-white/[0.06]">
@@ -85,6 +88,7 @@ function RailRow({ item, rank, starTitle = "", used, price, copy, benchmarksCopy
           <span className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[11px] leading-4 text-white/45">
             <span className={`shrink-0 whitespace-nowrap ${price?.tone === "warn" ? "text-amber-300/80" : "text-white/60"}`} title={price?.title}>{used ? copy.used : price?.label || ""}</span>
             {item.kinds.length > 0 ? <KindMarks kinds={item.kinds} benchmarksCopy={benchmarksCopy} className="text-primary/70" /> : null}
+            {starTitle ? <span title={starTitle} aria-label={starTitle} role="img" className="inline-flex shrink-0 text-primary"><IconStarFilled size={11} aria-hidden="true" /></span> : null}
           </span>
         </span>
         <span className="text-right">
@@ -193,7 +197,8 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
   // Picks by score, then the "More" rows continue the numbering.
   const ranked = [...picks].sort((a, b) => b.row.score - a.row.score);
   const rows = showMore ? [...ranked, ...more.map((row) => ({ row, kinds: [] }))] : ranked;
-  // The editor's pick is pinned above the ranked rows, with a star for a rank.
+  // The editor's choice has its own section above the chart; in the chart
+  // it keeps its numbered place, marked with the star.
   const starTitle = editorsPick ? editorsPickTitle(categoryId, locale) : "";
   // The score bar is relative to the leader: 400 Elo below it is the floor.
   const top = Math.max(rows[0]?.row.score ?? 0, editorsPick?.row.score ?? 0);
@@ -227,13 +232,22 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
         </button>
       </header>
 
-      {rows.length > 0 || editorsPick ? (
-        <ol className="px-2 pb-1">
-          {editorsPick ? (
-            <RailRow item={editorsPick} rank={null} starTitle={starTitle} used={usedId === editorsPick.row.id} price={priceFor(editorsPick.row)} copy={copy} benchmarksCopy={benchmarksCopy} width={width(editorsPick.row.score)} onUse={onUse} />
-          ) : null}
+      {editorsPick ? (
+        <div className="px-2" data-helper-editors-choice={editorsPick.row.id}>
+          <p className="flex items-center gap-1.5 px-2 pb-0.5 pt-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/80" title={starTitle}>
+            <IconStarFilled size={10} aria-hidden="true" />
+            {copy.editorsChoice}
+          </p>
+          <ul>
+            <RailRow item={{ row: editorsPick.row, kinds: [] }} rank={null} used={usedId === editorsPick.row.id} price={priceFor(editorsPick.row)} copy={copy} benchmarksCopy={benchmarksCopy} width={width(editorsPick.row.score)} onUse={onUse} />
+          </ul>
+          <div role="separator" className="mx-2 mt-1 border-t border-white/[0.08]" />
+        </div>
+      ) : null}
+      {rows.length > 0 ? (
+        <ol className={`px-2 pb-1 ${editorsPick ? "pt-1" : ""}`}>
           {rows.map((item, index) => (
-            <RailRow key={item.row.id} item={item} rank={index + 1} used={usedId === item.row.id} price={priceFor(item.row)} copy={copy} benchmarksCopy={benchmarksCopy} width={width(item.row.score)} onUse={onUse} />
+            <RailRow key={item.row.id} item={item} rank={index + 1} starTitle={editorsPick && editorsPick.row.id === item.row.id ? starTitle : ""} used={usedId === item.row.id} price={priceFor(item.row)} copy={copy} benchmarksCopy={benchmarksCopy} width={width(item.row.score)} onUse={onUse} />
           ))}
         </ol>
       ) : (

@@ -96,7 +96,7 @@ import {
   PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
 import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
-import { EditorsPickStar } from "./benchmarks/shared.jsx";
+import { EditorsPickStar, useEditorsPickPreselect } from "./benchmarks/shared.jsx";
 import usePromptMenu from "./prompt/usePromptMenu.js";
 import en from "../messages/en/videoStudio.json";
 import zh from "../messages/zh/videoStudio.json";
@@ -1903,6 +1903,26 @@ export default function VideoStudio({
   useEffect(() => {
     announceStudioMode("video", currentFamilyMode);
   }, [currentFamilyMode]);
+
+  // The editor's choice of the mode the page opens in, applied through the
+  // picker's own path so family, sizes and workflow follow; it wins over a
+  // choice saved before the pick existed. No board scores video to video.
+  useEditorsPickPreselect({
+    page: "video",
+    read: () => {
+      let data = null;
+      try { data = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null"); } catch { data = null; }
+      const mode = data?.v2vMode ? "v2v" : data?.imageMode ? "i2v" : "t2v";
+      const categoryId = mode === "t2v" ? "text-to-video" : mode === "i2v" ? "image-to-video" : null;
+      const modelIds = [...videoModelCatalog.variantById.entries()].filter(([, variant]) => variant.mode === mode).map(([id]) => id);
+      return { categoryId, modelIds, savedModelId: data?.selectedModel || null };
+    },
+    apply: (wanted) => {
+      const entry = videoModelPickerEntryByVariantId.get(wanted);
+      const variant = videoModelCatalog.variantById.get(wanted);
+      if (entry && variant) handleModelSelect(entry, variant.mode);
+    },
+  });
 
   const handleWorkflowSelect = useCallback((workflowId) => {
     if (getGroupedVideoConfiguration(selectedModel)) {

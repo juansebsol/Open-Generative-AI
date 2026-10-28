@@ -19,8 +19,8 @@
     "bestHint": "排行榜上分数最高。",
     "bestValueHint": "每美元获得的超出底线的质量最多。",
     "cheapestDecentHint": "与榜首差距在 {gap} Elo 以内的模型中价格最低。",
-    "editorsPick": "编辑推荐",
-    "editorsPickHint": "Openstudio 自己的推荐，与分数无关。"
+    "editorsPick": "编辑之选",
+    "editorsPickHint": "Openstudio 自己的选择，与分数无关。"
   },
   "open": "在{studio}中打开",
   "studios": {
@@ -61,5 +61,5 @@
   "sourcesTitle": "数据来源",
   "decent": "够用",
   "sameAs": "与“{pick}”为同一模型",
-  "editorsPickTitle": "编辑推荐 · {note}"
+  "editorsPickTitle": "编辑之选 · {note}"
 }

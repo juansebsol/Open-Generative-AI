@@ -9,5 +9,6 @@
   "pricing": "计价中…",
   "eyebrow": "模型评测",
   "showMore": "还有 {count} 个",
-  "openBenchmarks": "打开模型评测"
+  "openBenchmarks": "打开模型评测",
+  "editorsChoice": "编辑之选"
 }

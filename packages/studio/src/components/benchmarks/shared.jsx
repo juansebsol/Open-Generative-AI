@@ -4,9 +4,10 @@
 // hook and the price and score cells, so both show the same numbers in the
 // same words.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconStarFilled } from "@tabler/icons-react";
-import { benchmarkPayload, getEditorsPick, isEditorsPick } from "../../benchmarks.js";
+import { benchmarkPayload, getEditorsPick, isEditorsPick, resolveInitialModel } from "../../benchmarks.js";
+import { loadPickSeen, savePickSeen } from "../../editorsPickSeen.js";
 import { resolveCopy } from "../../i18nUtils";
 import benchmarksEn from "../../messages/en/benchmarks.json";
 import benchmarksZh from "../../messages/zh/benchmarks.json";
@@ -135,6 +136,37 @@ export function EditorsPickStar({ categoryId, modelId, locale = "en", size = 11,
       <IconStarFilled size={size} aria-hidden="true" />
     </span>
   );
+}
+
+/**
+ * Opens a page on its category's editor's pick, once per mount, after the
+ * page has restored its saved state (call it after that effect): the pick
+ * wins over a choice saved before it existed, and the page remembers having
+ * applied it so the visitor's next choice persists (resolveInitialModel).
+ * `read()` returns what the page saved, fresh from storage; `apply(modelId)`
+ * selects the model through the same path a visitor's pick takes, so any
+ * derived state (mode, family, sizes) follows.
+ * @param {{ page: string, read: () => { categoryId: string|null, modelIds: string[], savedModelId?: string|null }, apply: (modelId: string) => void }} options
+ */
+export function useEditorsPickPreselect({ page, read, apply }) {
+  const latest = useRef({ read, apply });
+  latest.current = { read, apply };
+  // The decision is made once per page and mount and kept in a ref, so a
+  // re-run of the effects (React's development double-invoke re-runs the
+  // page's restore effect too) applies the same model again instead of
+  // reading the marker it has just written and letting the stale choice win.
+  const decided = useRef(null);
+  useEffect(() => {
+    if (!page) return;
+    if (decided.current?.page !== page) {
+      const { categoryId, modelIds, savedModelId } = latest.current.read() || {};
+      const seen = loadPickSeen(page);
+      const resolved = resolveInitialModel({ categoryId: categoryId || null, modelIds: modelIds || [], savedModelId: savedModelId || null, pickSeen: seen });
+      if (resolved.pickSeen !== seen) savePickSeen(page, resolved.pickSeen);
+      decided.current = { page, modelId: resolved.source === "pick" ? resolved.modelId : null };
+    }
+    if (decided.current.modelId) latest.current.apply(decided.current.modelId);
+  }, [page]);
 }
 
 export const formatValue = (value, locale) => {

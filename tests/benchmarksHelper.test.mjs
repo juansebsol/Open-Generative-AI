@@ -127,23 +127,38 @@ test('See all links to the Benchmarks page with the category preselected', () =>
   assert.equal(helper.benchmarksHref('/studio/benchmarks', null), '/studio/benchmarks');
 });
 
-test("the editor's pick is pinned first in the bubble and never listed twice", () => {
+test("the editor's choice has its own entry and keeps its numbered place in the chart", () => {
   const ranking = rankEntries([row('svg-gpt-6-1-sol', 1437, 0.02), row('svg-claude-sonnet-5-5', 1392, 0.02), row('svg-gemini-4-argon', 1318, 0.01), row('svg-claude-haiku-5-5', 1247, 0.001), row('recraft-v4-1-text-to-vector', 998, 0.08)]);
   const { editorsPick, picks, more } = helper.helperRows(ranking, 10, { categoryId: 'vector' });
   assert.equal(editorsPick.row.id, 'svg-gemini-4-argon');
-  assert.equal(editorsPick.row.editorsPick.note.length > 0, true);
-  const ids = [...picks.map((item) => item.row.id), ...more.map((item) => item.id)];
-  assert.ok(!ids.includes('svg-gemini-4-argon'), 'the pinned model is left out of the ranked rows');
-  assert.equal(picks[0].row.id, 'svg-gpt-6-1-sol', 'best quality still leads the ranked rows');
-  assert.equal(new Set(ids).size, ids.length);
-  // A pick that also wins a computed pick keeps its labels on the pinned row.
+  assert.ok(editorsPick.row.editorsPick.note.length > 0);
+  const chart = [...picks.map((item) => item.row.id), ...more.map((item) => item.id)];
+  assert.ok(chart.includes('svg-gemini-4-argon'), 'the chart stays complete');
+  assert.equal(picks[0].row.id, 'svg-gpt-6-1-sol', 'best quality still leads the chart');
+  assert.equal(new Set(chart).size, chart.length, 'no model twice in the chart');
+  // A choice that also wins a computed pick keeps its labels in the chart.
   const small = rankEntries([row('svg-gemini-4-argon', 1318, 0.01), row('recraft-v4-1-text-to-vector', 998, 0.08)]);
-  const pinned = helper.helperRows(small, 10, { categoryId: 'vector' });
-  assert.deepEqual(pinned.editorsPick.kinds, ['best', 'bestValue', 'cheapestDecent']);
-  assert.deepEqual(pinned.picks, []);
-  assert.deepEqual(pinned.more.map((item) => item.id), ['recraft-v4-1-text-to-vector']);
-  // No category, or one without a pick: nothing is pinned and the rows are as before.
+  const chosen = helper.helperRows(small, 10, { categoryId: 'vector' });
+  assert.deepEqual(chosen.editorsPick.kinds, ['best', 'bestValue', 'cheapestDecent']);
+  assert.deepEqual(chosen.picks.map((item) => [item.row.id, item.kinds]), [['svg-gemini-4-argon', ['best', 'bestValue', 'cheapestDecent']]]);
+  assert.deepEqual(chosen.more.map((item) => item.id), ['recraft-v4-1-text-to-vector']);
+  // No category, or one without a choice: no entry and the chart is as before.
   assert.equal(helper.helperRows(ranking, 10).editorsPick, null);
   assert.equal(helper.helperRows(ranking, 10, { categoryId: 'text-to-image' }).editorsPick, null);
-  assert.equal(helper.helperRows(ranking, 10, { categoryId: 'text-to-image' }).picks.length, helper.helperRows(ranking, 10).picks.length);
+  assert.deepEqual(helper.helperRows(ranking, 10, { categoryId: 'text-to-image' }).picks, helper.helperRows(ranking, 10).picks);
+});
+
+test('a page remembers which editor\'s choice it applied, per page', async () => {
+  const seen = await import('../packages/studio/src/editorsPickSeen.js');
+  stored.clear();
+  assert.equal(seen.loadPickSeen('vector-logo'), null);
+  seen.savePickSeen('vector-logo', 'svg-gemini-4-argon');
+  seen.savePickSeen('image', 'nano-banana-2-1');
+  assert.equal(seen.loadPickSeen('vector-logo'), 'svg-gemini-4-argon');
+  assert.equal(seen.loadPickSeen('image'), 'nano-banana-2-1');
+  assert.equal(seen.loadPickSeen('video'), null);
+  seen.savePickSeen('image', null);
+  assert.equal(seen.loadPickSeen('image'), null);
+  stored.set(seen.PICK_SEEN_STORAGE_KEY, 'not json');
+  assert.equal(seen.loadPickSeen('vector-logo'), null, 'a broken value is ignored');
 });

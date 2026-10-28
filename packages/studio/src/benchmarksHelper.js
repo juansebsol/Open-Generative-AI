@@ -57,19 +57,19 @@ export function helperEntries(tabId, mode) {
 const PICK_KINDS = ['best', 'bestValue', 'cheapestDecent'];
 
 /**
- * Rows for the bubble from a ranking (see rankEntries): the editor's pick of
- * the category pinned first (when it has one and the model is among the
- * rows), then the computed picks, one row per distinct model with every
- * label it earned, then the next best scored models that are neither for
- * the "More" section. A model appears once: the editor's pick keeps the pick
- * labels it also earned, and is left out of the ranked rows.
+ * Rows for the bubble from a ranking (see rankEntries): the editor's choice
+ * of the category (its own section above the chart, when the category has
+ * one and the model is among the rows), then the chart: the computed picks,
+ * one row per distinct model with every label it earned, then the next best
+ * scored models for the "More" section. The chart is complete on its own,
+ * so the editor's choice also keeps its numbered place in it.
  * @param {{ picks: object, rows: object[] }} ranking
  * @param {number} [moreCount]
- * @param {{ categoryId?: string|null }} [options]  category whose editor's pick to pin
+ * @param {{ categoryId?: string|null }} [options]  category whose editor's choice to show
  * @returns {{ editorsPick: { row: object, kinds: string[] }|null, picks: Array<{ row: object, kinds: string[] }>, more: object[] }}
  */
 export function helperRows({ picks, rows }, moreCount = MORE_COUNT, { categoryId = null } = {}) {
-  const pinnedRow = categoryId ? editorsPickRow(categoryId, rows) : null;
+  const chosenRow = categoryId ? editorsPickRow(categoryId, rows) : null;
   const picked = [];
   for (const kind of PICK_KINDS) {
     const row = picks?.[kind];
@@ -78,14 +78,13 @@ export function helperRows({ picks, rows }, moreCount = MORE_COUNT, { categoryId
     if (existing) existing.kinds.push(kind);
     else picked.push({ row, kinds: [kind] });
   }
-  const editorsPick = pinnedRow ? { row: pinnedRow, kinds: picked.find((item) => item.row.id === pinnedRow.id)?.kinds || [] } : null;
-  const listed = pinnedRow ? picked.filter((item) => item.row.id !== pinnedRow.id) : picked;
-  const taken = new Set([...listed.map((item) => item.row.id), ...(pinnedRow ? [pinnedRow.id] : [])]);
+  const editorsPick = chosenRow ? { row: chosenRow, kinds: picked.find((item) => item.row.id === chosenRow.id)?.kinds || [] } : null;
+  const pickedIds = new Set(picked.map((item) => item.row.id));
   const more = (rows || [])
-    .filter((row) => Number.isFinite(row.score) && !taken.has(row.id))
+    .filter((row) => Number.isFinite(row.score) && !pickedIds.has(row.id))
     .sort((a, b) => b.score - a.score || (a.price ?? Infinity) - (b.price ?? Infinity))
     .slice(0, moreCount);
-  return { editorsPick, picks: listed, more };
+  return { editorsPick, picks: picked, more };
 }
 
 // ── Per-visitor open state ──────────────────────────────────────────────────

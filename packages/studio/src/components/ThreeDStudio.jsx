@@ -33,6 +33,7 @@ import StudioEmptyState from "./StudioEmptyState.jsx";
 import en from "../messages/en/threeDStudio.json";
 import zh from "../messages/zh/threeDStudio.json";
 import { resolveCopy } from "../i18nUtils";
+import { useEditorsPickPreselect } from "./benchmarks/shared.jsx";
 
 // Five pages share this component: Text to 3D and Image to 3D generate a
 // mesh; Retexture, Rig and animate, and Mesh tools work on an existing one.
@@ -283,6 +284,24 @@ export default function ThreeDStudio({ page = "text", onGenerationStart, onGener
     window.addEventListener("oga:open-studio", onOpen);
     return () => window.removeEventListener("oga:open-studio", onOpen);
   }, [page, families]);
+
+  // The editor's choice of the 3D category opens the generator pages on its
+  // family until the visitor has seen it (the tool pages have no picker).
+  useEditorsPickPreselect({
+    page: `three-d-${page}`,
+    read: () => {
+      let savedFamily = null;
+      try { savedFamily = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null")?.familyId || null; } catch { savedFamily = null; }
+      const onPage = GENERATORS.filter((model) => (mode === "text" ? model.kind === "text" : model.kind !== "text") && families.some((entry) => entry.id === model.family));
+      // The page saves a family, not a model: the first model of that family stands for it.
+      const savedModelId = onPage.find((model) => model.family === savedFamily)?.id || null;
+      return { categoryId: isTool ? null : "three-d", modelIds: onPage.map((model) => model.id), savedModelId };
+    },
+    apply: (wanted) => {
+      const model = GENERATORS.find((entry) => entry.id === wanted);
+      if (model && families.some((entry) => entry.id === model.family)) setFamilyId(model.family);
+    },
+  });
 
   // Per-page persistence (the library persists itself).
   useEffect(() => {

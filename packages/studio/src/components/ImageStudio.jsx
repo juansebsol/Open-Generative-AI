@@ -61,7 +61,7 @@ import {
   PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
 import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
-import { EditorsPickStar } from "./benchmarks/shared.jsx";
+import { EditorsPickStar, useEditorsPickPreselect } from "./benchmarks/shared.jsx";
 import en from "../messages/en/imageStudio.json";
 import zh from "../messages/zh/imageStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -1165,6 +1165,27 @@ export default function ImageStudio({
   useEffect(() => {
     announceStudioMode("image", imageMode ? "edit" : "text");
   }, [imageMode]);
+
+  // The editor's choice of the mode the page opens in (editing when a
+  // reference image was saved) is applied through the picker's own path, so
+  // family, sizes and parameters follow; it wins over a choice saved before
+  // the pick existed, and the page remembers having applied it.
+  useEditorsPickPreselect({
+    page: "image",
+    read: () => {
+      let data = null;
+      try { data = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null"); } catch { data = null; }
+      const editing = Boolean(data?.imageMode || data?.uploadedImageUrls?.length);
+      const mode = editing ? "i2i" : "t2i";
+      const modelIds = [...imageModelCatalog.variantById.entries()].filter(([, variant]) => variant.mode === mode).map(([id]) => id);
+      return { categoryId: editing ? "image-editing" : "text-to-image", modelIds, savedModelId: data?.selectedModelId || null };
+    },
+    apply: (wanted) => {
+      const variant = imageModelCatalog.variantById.get(wanted);
+      const family = imageModelCatalog.familyByVariantId.get(wanted);
+      if (variant && family) applyUserSelectedVariant(variant, variant.mode, family);
+    },
+  });
 
   // ── Textarea auto-resize ─────────────────────────────────────────────────
   // ── Upload picker callbacks ──────────────────────────────────────────────

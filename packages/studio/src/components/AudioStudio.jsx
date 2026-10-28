@@ -11,6 +11,7 @@ import zh from "../messages/zh/audioStudio.json";
 import { resolveCopy } from "../i18nUtils";
 import { announceStudioMode } from "../benchmarksHelper.js";
 import { audioCategoryOf, defaultModelId } from "../benchmarks.js";
+import { useEditorsPickPreselect } from "./benchmarks/shared.jsx";
 
 // ---------------------------------------------------------------------------
 // Upload button states
@@ -651,6 +652,19 @@ export default function AudioStudio({
   useEffect(() => {
     announceStudioMode("audio", audioCategoryOf(selectedModel) === "music" ? "music" : "speech");
   }, [selectedModel]);
+
+  // The editor's choice of the tool the page opens on (speech unless the
+  // saved model is a music model) wins over a choice saved before it existed.
+  useEditorsPickPreselect({
+    page: "audio",
+    read: () => {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null")?.selectedModelId || null; } catch { saved = null; }
+      const categoryId = audioCategoryOf(getAudioModelById(saved)) || "text-to-speech";
+      return { categoryId, modelIds: audioModels.filter((model) => audioCategoryOf(model) === categoryId).map((model) => model.id), savedModelId: saved };
+    },
+    apply: (wanted) => setSelectedModelId(wanted),
+  });
 
   // ── Persistence: Load ────────────────────────────────────────────────────
   useEffect(() => {
