@@ -21,7 +21,7 @@ An open-source, **bring-your-own-key** studio for AI images, video, audio and li
 | Marketing | Product ad videos from product and avatar images |
 | Audio | Text-to-speech, sound effects and music |
 | 3D | Text to 3D and Image to 3D (Meshy 7.1, Tripo, Hunyuan 3D 3.1, Rodin 2.5, Trellis 2, sketch input), plus Retexture, Rig and animate, and Mesh tools (remesh, split into parts, smart topology) on a shared model library with a built-in viewer |
-| Vector | Text to Logo (Recraft 4.1, Recraft 4.1 Pro, Ideogram Vector) with brand palettes, Icon Set (one style, many icons, exported as an SVG sprite or a zip), Vectorize (Image2SVG, Recraft Vectorize, Ideogram image-to-vector) with a before/after view, and a free in-browser export kit (optimised SVG, PNG, PDF, favicon.ico, app icon set) |
+| Vector | Three pages on a shared SVG library: Text to Logo (Recraft 4.1, Recraft 4.1 Pro, Ideogram Vector) with brand palettes, Icon Set (one style, many icons, exported as an SVG sprite or a zip) and Vectorize (Image2SVG, Recraft Vectorize, Ideogram image-to-vector) with a before/after view, plus a free in-browser export kit (optimised SVG, PNG, PDF, favicon.ico, app icon set) |
 
 ## Providers
 

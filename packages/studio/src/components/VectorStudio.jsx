@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
-  IconAdjustments, IconArrowsExchange, IconDownload, IconFileExport, IconFileZip, IconIcons, IconMaximize, IconMoon, IconPalette, IconPhotoPlus,
-  IconPhotoUp, IconSun, IconSvg, IconTrash, IconUpload, IconVectorBezier2, IconVectorSpline, IconX,
+  IconAdjustments, IconArrowsExchange, IconDownload, IconFileExport, IconFileZip, IconMaximize, IconMoon, IconPalette, IconPhotoPlus,
+  IconPhotoUp, IconSun, IconSvg, IconTrash, IconUpload, IconX,
 } from "@tabler/icons-react";
 import { generateVector, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
@@ -14,10 +14,10 @@ import { isEndpointAvailable } from "../providers/client.js";
 import { getProvider } from "../providers/directProviders.js";
 import { subscribeProviderSettings } from "../providers/keys.js";
 import { fetchMediaBlob, saveLocalBlob } from "../providers/mediaStore.js";
-import { addEntry, addPending, getEmptyLibrary, getLibrary, removeEntry, removePending, removeSet, subscribeLibrary, takeHandoff, updatePending } from "../vectorLibrary.js";
+import { addEntry, addPending, getEmptyLibrary, getLibrary, removeEntry, removePending, removeSet, sendToVector, subscribeLibrary, takeHandoff, updatePending } from "../vectorLibrary.js";
 import { sanitizeSvg } from "../vector/svgSanitize.js";
 import { buildSprite, iconFileName } from "../vector/svgSprite.js";
-import { planIconSet, parseIconNames, MAX_ICONS } from "../vector/iconSetPlanner.js";
+import { planIconSet, MAX_ICONS } from "../vector/iconSetPlanner.js";
 import { optimizeSvg, optimizeStats } from "../vector/svgOptimize.js";
 import { buildZip } from "../vector/zip.js";
 import { classifyVectorOutput, describeVectorOutputs } from "../vector/outputs.js";
@@ -35,8 +35,6 @@ import {
   PromptMenuList,
   PromptPopover,
   PromptPopoverHeader,
-  PromptSegmentedControl,
-  PromptSegmentOption,
   PromptTextarea,
   promptControlClassName,
   promptMediaButtonClassName,
@@ -47,17 +45,20 @@ import en from "../messages/en/vectorStudio.json";
 import zh from "../messages/zh/vectorStudio.json";
 import { resolveCopy } from "../i18nUtils";
 
-// One studio, three tools on a rail: Text to Logo and Icon Set generate
-// SVGs from a prompt (Recraft, Ideogram); Vectorize traces a raster. Every
-// result lands in one library (vectorLibrary.js) as a sanitised SVG, and
-// the Export kit turns any of them into PNG, PDF, favicon or app icons in
-// the browser for free. Later tools (Logo Rescue, Sketch to Vector, the
-// Vibe Motion and 3D bridges) plug into the same rail and library.
+// Three pages share this component, like the 3D pages share ThreeDStudio:
+// Text to Logo and Icon Set generate SVGs from a prompt (Recraft,
+// Ideogram); Vectorize traces a raster. Every page shows the same library
+// (vectorLibrary.js), results are sanitised SVGs, and the Export kit turns
+// any of them into PNG, PDF, favicon or app icons in the browser for free.
+// Later pages (Logo Rescue, Sketch to Vector, the Vibe Motion and 3D
+// bridges) add an entry here and a tab in the shell.
 
-export const VECTOR_TOOLS = ["logo", "icons", "vectorize"];
-const TOOL_ICONS = { logo: IconVectorBezier2, icons: IconIcons, vectorize: IconVectorSpline };
+export const VECTOR_PAGES = {
+  logo: { kind: "text" },
+  icons: { kind: "text" },
+  vectorize: { kind: "vectorize" },
+};
 
-const PERSIST_KEY = "oga_vector_studio_v1";
 const IMAGE_STUDIO_KEY = "hg_image_studio_persistent";
 const THUMBNAIL_SIZE = 256;
 const LOGO_CONCURRENCY = 4;
@@ -151,7 +152,7 @@ function ToneToggle({ tone, onChange, copy }) {
   );
 }
 
-function ExportKitDialog({ entry, copy, locale, onClose, onVectorize }) {
+function ExportKitDialog({ entry, copy, onClose, onVectorize }) {
   const svg = useSvgText(entry.kind === "svg" ? entry.url : null);
   const optimised = useMemo(() => (svg ? optimizeSvg(svg) : null), [svg]);
   const stats = useMemo(() => (svg && optimised ? optimizeStats(svg, optimised) : null), [svg, optimised]);
@@ -219,24 +220,24 @@ function useLibrary() {
   return useSyncExternalStore(subscribeLibrary, getLibrary, getEmptyLibrary);
 }
 
-export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGenerationComplete, onGenerationError, droppedFiles, onFilesHandled, locale = "en" }) {
+export default function VectorStudio({ page = "logo", onGenerationStart, onGenerationEnd, onGenerationComplete, onGenerationError, droppedFiles, onFilesHandled, locale = "en" }) {
   const copy = resolveCopy(en, zh, locale);
+  const pageCopy = copy.pages[page] || copy.pages.logo;
+  const config = VECTOR_PAGES[page] || VECTOR_PAGES.logo;
+  const isVectorize = config.kind === "vectorize";
+  const isIcons = page === "icons";
+  const PERSIST_KEY = `oga_vector_${page}_v1`;
   const library = useLibrary();
+  const models = isVectorize ? vectorizeModels : vectorTextModels;
 
-  const [tool, setTool] = useState("logo");
-  const [prompt, setPrompt] = useState("");
-  const [logoModelId, setLogoModelId] = useState(vectorTextModels[0]?.id || "");
-  const [logoOptions, setLogoOptions] = useState({});
+  const [modelId, setModelId] = useState(models[0]?.id || "");
+  const [options, setOptions] = useState({});
+  const [prompt, setPrompt] = useState(""); // the logo prompt, or the icon style
+  const [iconNames, setIconNames] = useState("");
   const [candidates, setCandidates] = useState(1);
   const [references, setReferences] = useState([]);
   const [paletteId, setPaletteId] = useState("none");
   const [customPalette, setCustomPalette] = useState({ colors: ["#2563eb", "#111827"], background: "#ffffff" });
-  const [iconStyle, setIconStyle] = useState("");
-  const [iconNames, setIconNames] = useState("");
-  const [iconModelId, setIconModelId] = useState(vectorTextModels[0]?.id || "");
-  const [iconOptions, setIconOptions] = useState({});
-  const [vectorizeModelId, setVectorizeModelId] = useState(vectorizeModels[0]?.id || "");
-  const [traceOptions, setTraceOptions] = useState({});
   const [source, setSource] = useState(null); // { url, name, fromId }
   const [tone, setTone] = useState("light");
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -246,6 +247,7 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
   const [exporting, setExporting] = useState(null);
   const [compareId, setCompareId] = useState(null);
   const [uploading, setUploading] = useState(null);
+  const [dragging, setDragging] = useState(false);
   const [providerReady, setProviderReady] = useState(null);
   const [libraryImages, setLibraryImages] = useState([]);
   const fileInputRef = useRef(null);
@@ -253,30 +255,26 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
   const textareaRef = useRef(null);
   const hasRestored = useRef(false);
 
-  const toolCopy = copy.tools[tool] || copy.tools.logo;
-  const logoModel = vectorTextModels.find((model) => model.id === logoModelId) || vectorTextModels[0] || null;
-  const iconModel = vectorTextModels.find((model) => model.id === iconModelId) || vectorTextModels[0] || null;
-  const vectorizeModel = vectorizeModels.find((model) => model.id === vectorizeModelId) || vectorizeModels[0] || null;
-  const selectedModel = tool === "logo" ? logoModel : tool === "icons" ? iconModel : vectorizeModel;
+  const selectedModel = models.find((model) => model.id === modelId) || models[0] || null;
   const palette = paletteId === "custom" ? customPalette : PALETTES.find((entry) => entry.id === paletteId) || PALETTES[0];
   const paletteSummary = normalizePalette(palette);
-  const maxCandidates = logoModel?.maxCandidates || 1;
-  const plan = useMemo(() => planIconSet({ names: iconNames, style: iconStyle, paletteWords: iconModel?.palette ? "" : paletteToPromptWords(palette) }), [iconNames, iconStyle, iconModel, palette]);
+  const maxCandidates = selectedModel?.maxCandidates || 1;
+  const plan = useMemo(() => planIconSet({ names: iconNames, style: prompt, paletteWords: selectedModel?.palette ? "" : paletteToPromptWords(palette) }), [iconNames, prompt, selectedModel, palette]);
   const iconCount = plan.count;
 
   // Option defaults follow the selected model; values that still apply are kept.
-  const syncOptions = (model, setter) => setter((previous) => {
-    const next = vectorModelDefaults(model);
-    for (const key of Object.keys(next)) {
-      const input = model.inputs[key];
-      if (previous[key] === undefined) continue;
-      if (input.enum ? input.enum.includes(previous[key]) : typeof previous[key] === typeof next[key]) next[key] = previous[key];
-    }
-    return next;
-  });
-  useEffect(() => { if (logoModel) syncOptions(logoModel, setLogoOptions); }, [logoModel]);
-  useEffect(() => { if (iconModel) syncOptions(iconModel, setIconOptions); }, [iconModel]);
-  useEffect(() => { if (vectorizeModel) syncOptions(vectorizeModel, setTraceOptions); }, [vectorizeModel]);
+  useEffect(() => {
+    if (!selectedModel) return;
+    setOptions((previous) => {
+      const next = vectorModelDefaults(selectedModel);
+      for (const key of Object.keys(next)) {
+        const input = selectedModel.inputs[key];
+        if (previous[key] === undefined) continue;
+        if (input.enum ? input.enum.includes(previous[key]) : typeof previous[key] === typeof next[key]) next[key] = previous[key];
+      }
+      return next;
+    });
+  }, [selectedModel]);
   useEffect(() => { setCandidates((value) => Math.min(value, maxCandidates)); }, [maxCandidates]);
 
   useEffect(() => {
@@ -296,24 +294,18 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
     window.dispatchEvent(new CustomEvent("oga:provider-setup-needed", { detail: { providers } }));
   };
 
-  // Persistence (the library persists itself).
+  // Per-page persistence (the library persists itself).
   useEffect(() => {
     try {
       const data = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null");
       if (data) {
-        if (VECTOR_TOOLS.includes(data.tool)) setTool(data.tool);
+        if (models.some((model) => model.id === data.modelId)) setModelId(data.modelId);
+        if (data.options && typeof data.options === "object") setOptions(data.options);
         if (typeof data.prompt === "string") setPrompt(data.prompt);
-        if (vectorTextModels.some((model) => model.id === data.logoModelId)) setLogoModelId(data.logoModelId);
-        if (vectorTextModels.some((model) => model.id === data.iconModelId)) setIconModelId(data.iconModelId);
-        if (vectorizeModels.some((model) => model.id === data.vectorizeModelId)) setVectorizeModelId(data.vectorizeModelId);
-        if (data.logoOptions && typeof data.logoOptions === "object") setLogoOptions(data.logoOptions);
-        if (data.iconOptions && typeof data.iconOptions === "object") setIconOptions(data.iconOptions);
-        if (data.traceOptions && typeof data.traceOptions === "object") setTraceOptions(data.traceOptions);
+        if (typeof data.iconNames === "string") setIconNames(data.iconNames);
         if (Number.isFinite(data.candidates)) setCandidates(Math.max(1, Math.min(8, data.candidates)));
         if (PALETTES.some((entry) => entry.id === data.paletteId)) setPaletteId(data.paletteId);
         if (data.customPalette?.colors) setCustomPalette({ colors: data.customPalette.colors.slice(0, MAX_PALETTE_COLORS), background: data.customPalette.background || "#ffffff" });
-        if (typeof data.iconStyle === "string") setIconStyle(data.iconStyle);
-        if (typeof data.iconNames === "string") setIconNames(data.iconNames);
         if (data.source && typeof data.source.url === "string") setSource(data.source);
         if (Array.isArray(data.references)) setReferences(data.references.filter((item) => typeof item?.url === "string"));
         if (data.tone === "dark" || data.tone === "light") setTone(data.tone);
@@ -323,33 +315,44 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
     } finally {
       hasRestored.current = true;
     }
-  }, []);
+  }, [PERSIST_KEY, models]);
 
   useEffect(() => {
     if (!hasRestored.current) return undefined;
     const timer = setTimeout(() => {
       try {
-        localStorage.setItem(PERSIST_KEY, JSON.stringify({ tool, prompt, logoModelId, iconModelId, vectorizeModelId, logoOptions, iconOptions, traceOptions, candidates, paletteId, customPalette, iconStyle, iconNames, source, references, tone }));
+        localStorage.setItem(PERSIST_KEY, JSON.stringify({ modelId, options, prompt, iconNames, candidates, paletteId, customPalette, source, references, tone }));
       } catch (error) {
         console.warn("[VectorStudio] could not save state", error);
       }
     }, 400);
     return () => clearTimeout(timer);
-  }, [tool, prompt, logoModelId, iconModelId, vectorizeModelId, logoOptions, iconOptions, traceOptions, candidates, paletteId, customPalette, iconStyle, iconNames, source, references, tone]);
+  }, [PERSIST_KEY, modelId, options, prompt, iconNames, candidates, paletteId, customPalette, source, references, tone]);
 
-  // A raster sent here from another tool or studio.
+  // A raster sent to Vectorize from another page or studio.
   useEffect(() => {
-    if (!library.handoffs.vectorize) return;
+    if (!isVectorize || !library.handoffs.vectorize) return;
     const handoff = takeHandoff("vectorize");
     if (!handoff?.source) return;
     setSource(handoff.source);
-    setTool("vectorize");
     setOpenDropdown(null);
     setViewer(null);
-  }, [library.handoffs]);
+  }, [library.handoffs, isVectorize]);
 
-  // Uploads: the image to trace, or Ideogram references.
-  const uploadSource = useCallback(async (file) => {
+  // The Benchmarks page opens a page with a model preselected.
+  useEffect(() => {
+    const preselect = (event) => {
+      const { tabId, modelId: wanted } = event.detail || {};
+      if (tabId !== `vector-${page}` || !wanted) return;
+      if (models.some((model) => model.id === wanted)) setModelId(wanted);
+    };
+    window.addEventListener("oga:open-studio", preselect);
+    return () => window.removeEventListener("oga:open-studio", preselect);
+  }, [page, models]);
+
+  // Uploads: the image to trace (on this page, or sent to Vectorize from
+  // another page), or Ideogram references.
+  const uploadSource = useCallback(async (file, { send = false } = {}) => {
     if (!isImageFile(file)) {
       toast.error(copy.errors.notImage);
       return;
@@ -357,8 +360,9 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
     setUploading({ progress: 0 });
     try {
       const url = await uploadFile(file, (progress) => setUploading({ progress }));
-      setSource({ url, name: file.name, fromId: null });
-      setTool("vectorize");
+      const next = { url, name: file.name, fromId: null };
+      if (send) sendToVector("vectorize", { source: next });
+      else setSource(next);
     } catch (error) {
       toast.error(fill(copy.errors.uploadFailed, { message: formatErrorMessage(error, "") }));
     } finally {
@@ -367,7 +371,7 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
   }, [copy]);
 
   const uploadReferences = useCallback(async (fileList) => {
-    const max = logoModel?.references?.max || 0;
+    const max = selectedModel?.references?.max || 0;
     const files = Array.from(fileList || []).filter(isImageFile).slice(0, Math.max(0, max - references.length));
     if (files.length === 0) return;
     setUploading({ progress: 0 });
@@ -380,16 +384,17 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
       }
     }
     setUploading(null);
-  }, [copy, logoModel, references.length]);
+  }, [copy, selectedModel, references.length]);
 
   useEffect(() => {
     if (!droppedFiles?.length) return;
     const images = droppedFiles.filter(isImageFile);
     if (images.length === 0) toast.error(copy.errors.notImage);
-    else if (tool === "logo" && logoModel?.references) uploadReferences(images);
-    else uploadSource(images[0]);
+    else if (isVectorize) uploadSource(images[0]);
+    else if (selectedModel?.references) uploadReferences(images);
+    else uploadSource(images[0], { send: true });
     onFilesHandled?.();
-  }, [droppedFiles, onFilesHandled, tool, logoModel, uploadReferences, uploadSource, copy]);
+  }, [droppedFiles, onFilesHandled, isVectorize, selectedModel, uploadReferences, uploadSource, copy]);
 
   useEffect(() => {
     if (openDropdown === "library") setLibraryImages(readImageStudioImages());
@@ -473,17 +478,17 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
       textareaRef.current?.focus();
       return toast.error(copy.errors.needPrompt);
     }
-    const words = logoModel.palette ? "" : paletteToPromptWords(palette);
-    const payload = { model: logoModel.id, prompt: words ? `${text}, ${words}` : text, ...logoOptions, ...(logoModel.palette ? paletteToRecraft(palette) : {}) };
-    if (logoModel.references && references.length) payload[logoModel.references.field] = references.map((item) => item.url);
-    const runs = logoModel.candidates === "runs" ? candidates : 1;
-    if (logoModel.candidates === "num_images") payload.num_images = candidates;
-    const meta = { tool: "logo", prompt: text, name: "", ...modelMeta(logoModel), setId: null };
-    return runJobs({ jobs: Array.from({ length: runs }, () => ({ payload, meta })), label: logoModel.name, promptText: text, concurrency: LOGO_CONCURRENCY });
+    const words = selectedModel.palette ? "" : paletteToPromptWords(palette);
+    const payload = { model: selectedModel.id, prompt: words ? `${text}, ${words}` : text, ...options, ...(selectedModel.palette ? paletteToRecraft(palette) : {}) };
+    if (selectedModel.references && references.length) payload[selectedModel.references.field] = references.map((item) => item.url);
+    const runs = selectedModel.candidates === "runs" ? candidates : 1;
+    if (selectedModel.candidates === "num_images") payload.num_images = candidates;
+    const meta = { page: "logo", prompt: text, name: "", ...modelMeta(selectedModel), setId: null };
+    return runJobs({ jobs: Array.from({ length: runs }, () => ({ payload, meta })), label: selectedModel.name, promptText: text, concurrency: LOGO_CONCURRENCY });
   };
 
   const generateIcons = async () => {
-    if (!iconStyle.trim()) {
+    if (!prompt.trim()) {
       textareaRef.current?.focus();
       return toast.error(copy.errors.needStyle);
     }
@@ -491,38 +496,39 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
     const setId = newId();
     const names = plan.runs.map((run) => run.name);
     const setName = `${names.slice(0, 3).join(", ")}${names.length > 3 ? "…" : ""}`;
-    const shape = iconModel.candidates === "num_images" ? { aspect_ratio: "1:1", num_images: 1 } : { image_size: "square_hd" };
-    const paletteInput = iconModel.palette ? paletteToRecraft(palette) : {};
+    const shape = selectedModel.candidates === "num_images" ? { aspect_ratio: "1:1", num_images: 1 } : { image_size: "square_hd" };
+    const paletteInput = selectedModel.palette ? paletteToRecraft(palette) : {};
     const jobs = plan.runs.map((run) => ({
-      payload: { model: iconModel.id, prompt: run.prompt, ...iconOptions, ...shape, ...paletteInput },
-      meta: { tool: "icons", prompt: run.prompt, name: run.name, ...modelMeta(iconModel), setId, setName },
+      payload: { model: selectedModel.id, prompt: run.prompt, ...(options.quality ? { quality: options.quality } : {}), ...shape, ...paletteInput },
+      meta: { page: "icons", prompt: run.prompt, name: run.name, ...modelMeta(selectedModel), setId, setName },
     }));
-    return runJobs({ jobs, label: iconModel.name, promptText: iconStyle.trim(), concurrency: ICON_CONCURRENCY });
+    return runJobs({ jobs, label: selectedModel.name, promptText: prompt.trim(), concurrency: ICON_CONCURRENCY });
   };
 
   const generateVectorize = async () => {
     if (!source) return toast.error(copy.errors.needImage);
-    const payload = { model: vectorizeModel.id, image_url: source.url, ...traceOptions };
-    const meta = { tool: "vectorize", prompt: vectorizeModel.name, name: source.name || "", ...modelMeta(vectorizeModel), setId: null, sourceUrl: source.url, sourceName: source.name || "", sourceId: source.fromId || null };
-    const made = await runJobs({ jobs: [{ payload, meta }], label: vectorizeModel.name, promptText: source.name || "", concurrency: 1 });
+    const payload = { model: selectedModel.id, image_url: source.url, ...options };
+    const meta = { page: "vectorize", prompt: selectedModel.name, name: source.name || "", ...modelMeta(selectedModel), setId: null, sourceUrl: source.url, sourceName: source.name || "", sourceId: source.fromId || null };
+    const made = await runJobs({ jobs: [{ payload, meta }], label: selectedModel.name, promptText: source.name || "", concurrency: 1 });
     if (made[0]) setCompareId(made[0].id);
   };
 
   const handleGenerate = async () => {
     if (!selectedModel) return;
     if (!providerReady) return openProviderSettings();
-    if (tool === "logo") return generateLogo();
-    if (tool === "icons") return generateIcons();
-    return generateVectorize();
+    if (isVectorize) return generateVectorize();
+    if (isIcons) return generateIcons();
+    return generateLogo();
   };
 
   // Library actions
   const sendToVectorize = (entry) => {
-    setSource({ url: entry.url, name: entry.name || entry.prompt || "image", fromId: entry.id });
-    setTool("vectorize");
+    const next = { url: entry.url, name: entry.name || entry.prompt || "image", fromId: entry.id };
     setOpenDropdown(null);
     setViewer(null);
     setExporting(null);
+    if (isVectorize) setSource(next);
+    else sendToVector("vectorize", { source: next });
   };
   const downloadSvg = async (entry) => {
     const name = `${slug(entry.name || entry.prompt) || "vector"}-${String(entry.id).slice(-6)}`;
@@ -581,43 +587,30 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
     }
     return list;
   }, [library.entries]);
-  const compareEntry = tool === "vectorize" ? library.entries.find((entry) => entry.id === compareId && entry.sourceUrl) || library.entries.find((entry) => entry.tool === "vectorize" && entry.sourceUrl) || null : null;
+  const compareEntry = isVectorize ? library.entries.find((entry) => entry.id === compareId && entry.sourceUrl) || library.entries.find((entry) => entry.sourceUrl) || null : null;
   const hasGallery = library.entries.length > 0 || library.pending.length > 0;
-  const starters = (toolCopy.starters || []).map((starter) => ({ label: starter.label, prompt: starter.prompt }));
+  const starters = (pageCopy.starters || []).map((starter) => ({ label: starter.label, prompt: starter.prompt }));
   const onStarter = (text) => {
-    if (tool === "icons") setIconStyle(text);
-    else setPrompt(text);
+    setPrompt(text);
     textareaRef.current?.focus();
   };
 
   // Controls
-  const setOption = (key, value) => {
-    if (tool === "logo") setLogoOptions((previous) => ({ ...previous, [key]: value }));
-    else if (tool === "icons") setIconOptions((previous) => ({ ...previous, [key]: value }));
-    else setTraceOptions((previous) => ({ ...previous, [key]: value }));
-  };
-  const options = tool === "logo" ? logoOptions : tool === "icons" ? iconOptions : traceOptions;
-  const inputs = Object.entries(selectedModel?.inputs || {}).filter(([key]) => tool !== "icons" || key === "quality");
-  const enumInputs = inputs.filter(([, input]) => Array.isArray(input.enum) && !input.advanced);
+  const setOption = (key, value) => setOptions((previous) => ({ ...previous, [key]: value }));
+  const inputs = Object.entries(selectedModel?.inputs || {}).filter(([key]) => !isIcons || key === "quality");
   const numericInputs = inputs.filter(([, input]) => !Array.isArray(input.enum) && (input.type === "integer" || input.type === "number"));
   const advancedInputs = inputs.filter(([, input]) => input.advanced);
   const visibleNumeric = showAdvanced ? numericInputs : numericInputs.filter(([, input]) => !input.advanced);
-  const visibleEnums = showAdvanced ? inputs.filter(([, input]) => Array.isArray(input.enum)) : enumInputs;
+  const visibleEnums = inputs.filter(([, input]) => Array.isArray(input.enum) && (showAdvanced || !input.advanced));
   const optionLabel = (input, value) => input.optionLabels?.[value] ?? String(value);
-  const pricePayload = tool === "logo"
-    ? { ...logoOptions, ...(logoModel?.candidates === "num_images" ? { num_images: candidates } : {}) }
-    : tool === "icons" ? { ...iconOptions, ...(iconModel?.candidates === "num_images" ? { aspect_ratio: "1:1", num_images: 1 } : { image_size: "square_hd" }) } : traceOptions;
-  const priceRuns = tool === "logo" ? (logoModel?.candidates === "runs" ? candidates : 1) : tool === "icons" ? Math.max(1, iconCount) : 1;
-  const pickerModels = tool === "vectorize" ? vectorizeModels : vectorTextModels;
-  const pickerPayload = (model) => (tool === "vectorize" ? {} : tool === "icons" ? { ...iconOptions, ...(model.candidates === "num_images" ? { aspect_ratio: "1:1" } : { image_size: "square_hd" }) } : { ...logoOptions, ...(model.candidates === "num_images" ? { num_images: candidates } : {}) });
-  const choosePickerModel = (model) => {
-    if (tool === "logo") setLogoModelId(model.id);
-    else if (tool === "icons") setIconModelId(model.id);
-    else setVectorizeModelId(model.id);
-    setOpenDropdown(null);
-  };
+  const shapeFor = (model) => (model.candidates === "num_images" ? { aspect_ratio: "1:1", num_images: 1 } : { image_size: "square_hd" });
+  const pricePayload = isVectorize
+    ? options
+    : isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(selectedModel || {}) } : { ...options, ...(selectedModel?.candidates === "num_images" ? { num_images: candidates } : {}) };
+  const priceRuns = isIcons ? Math.max(1, iconCount) : selectedModel?.candidates === "runs" ? candidates : 1;
+  const pickerPayload = (model) => (isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(model) } : { ...options, ...(model.candidates === "num_images" ? { num_images: candidates } : {}) });
   const toggle = (id) => setOpenDropdown(openDropdown === id ? null : id);
-  const actionLabel = tool === "icons" ? fill(copy.icons.generate, { count: number(iconCount, locale) }) : tool === "vectorize" ? copy.vectorize.apply : copy.buttons.generate;
+  const actionLabel = isIcons ? fill(copy.icons.generate, { count: number(iconCount, locale) }) : isVectorize ? copy.vectorize.apply : copy.buttons.generate;
 
   const paletteSwatches = (entry, size = "h-3.5 w-3.5") => (
     <span className="flex items-center -space-x-1">
@@ -639,7 +632,7 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
   );
 
   const card = (entry, { compact = false } = {}) => (
-    <div key={entry.id} data-vector-entry={entry.kind} className={`group relative aspect-square overflow-hidden rounded-2xl border bg-[#0e0e11] ${compareId === entry.id && tool === "vectorize" ? "border-primary/60" : "border-white/[0.08]"}`} onClick={() => entry.sourceUrl && setCompareId(entry.id)} role={entry.sourceUrl ? "button" : undefined} tabIndex={entry.sourceUrl ? 0 : undefined}>
+    <div key={entry.id} data-vector-entry={entry.kind} className={`group relative aspect-square overflow-hidden rounded-2xl border bg-[#0e0e11] ${compareId === entry.id && isVectorize ? "border-primary/60" : "border-white/[0.08]"}`} onClick={() => entry.sourceUrl && setCompareId(entry.id)} role={entry.sourceUrl ? "button" : undefined} tabIndex={entry.sourceUrl ? 0 : undefined}>
       <Preview entry={entry} tone={tone} />
       {entry.kind === "raster" && <span className="absolute left-2 top-2 rounded-md bg-amber-400/90 px-1.5 py-0.5 text-[10px] font-semibold text-black" title={copy.vectorize.rasterNote}>{copy.gallery.raster}</span>}
       {!compact && (
@@ -650,6 +643,105 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
       )}
       {compact && <div className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-[#09090b]/90 to-transparent px-2 pb-1.5 pt-6 text-[11px] text-white/85">{entry.name}</div>}
       {cardActions(entry)}
+    </div>
+  );
+
+  // Vectorize: the image, the tracer and its knobs live in one panel in the
+  // page body, so the choice is in plain sight rather than behind a picker.
+  const dropHandlers = {
+    onDragOver: (event) => { event.preventDefault(); setDragging(true); },
+    onDragLeave: () => setDragging(false),
+    onDrop: (event) => { event.preventDefault(); event.stopPropagation(); setDragging(false); uploadSource(event.dataTransfer.files?.[0]); },
+  };
+  const vectorizePanel = isVectorize && (
+    <div className="mx-auto w-full max-w-5xl rounded-2xl border border-white/[0.08] bg-[#0e0e11] p-4" data-vector-panel="vectorize">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+        <div className={`relative flex min-h-[260px] flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed p-4 text-center transition-colors ${dragging ? "border-primary/70 bg-primary/[0.06]" : "border-white/15"}`} style={source ? CHECKER[tone] : undefined} {...dropHandlers}>
+          {source ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={source.url} alt="" className="max-h-[320px] w-full object-contain" />
+              <div className="absolute left-2 top-2 max-w-[70%] truncate rounded-md bg-black/70 px-2 py-1 text-[11.5px] text-white">{source.name}</div>
+              <button type="button" onClick={() => setSource(null)} aria-label={copy.vectorize.clear} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-black/70 text-white hover:bg-white/20"><IconX size={15} stroke={1.75} aria-hidden="true" /></button>
+            </>
+          ) : (
+            <>
+              <IconPhotoUp size={30} stroke={1.5} className="text-white/35" aria-hidden="true" />
+              <div className="mt-3 text-[14px] font-medium text-white/85">{copy.vectorize.dropTitle}</div>
+              <div className="mt-1 max-w-[32ch] text-[12.5px] text-white/45">{copy.vectorize.dropHint}</div>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-10 items-center gap-2 rounded-[10px] bg-primary px-4 text-[13px] font-semibold text-[#04202a] hover:brightness-110 disabled:opacity-60">
+                  {uploading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#04202a]/30 border-t-[#04202a]" aria-hidden="true" /> : <IconUpload size={15} stroke={1.75} aria-hidden="true" />}
+                  {copy.vectorize.upload}
+                </button>
+                <div className="relative">
+                  <button type="button" onClick={() => toggle("library")} className="flex h-10 items-center gap-2 rounded-[10px] border border-white/[0.12] px-4 text-[13px] text-white/75 hover:border-white/30 hover:text-white">
+                    <IconPhotoUp size={15} stroke={1.75} aria-hidden="true" />{copy.vectorize.fromLibrary}
+                  </button>
+                  {openDropdown === "library" && (
+                    <PromptPopover className="w-[360px]" positionClassName="absolute left-0 top-full mt-2 z-30">
+                      <PromptPopoverHeader>{copy.vectorize.libraryTitle}</PromptPopoverHeader>
+                      {libraryImages.length === 0 ? (
+                        <p className="px-2 py-3 text-left text-[12.5px] text-white/45">{copy.vectorize.libraryEmpty}</p>
+                      ) : (
+                        <div className="grid max-h-[280px] grid-cols-4 gap-1.5 overflow-y-auto p-1">
+                          {libraryImages.slice(0, 40).map((image, index) => (
+                            <button key={`${image.url}-${index}`} type="button" title={image.name} onClick={() => { setSource({ url: image.url, name: image.name, fromId: null }); setOpenDropdown(null); }} className="aspect-square overflow-hidden rounded-lg border border-white/[0.08] hover:border-primary/60">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={image.url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </PromptPopover>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+          <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(event) => { uploadSource(event.target.files?.[0]); event.target.value = ""; }} />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/40">{copy.controls.tier}</div>
+          <div className="flex flex-col gap-1.5" role="radiogroup" aria-label={copy.controls.tier}>
+            {models.map((model) => (
+              <button key={model.id} type="button" role="radio" aria-checked={model.id === selectedModel?.id} onClick={() => { setModelId(model.id); setShowAdvanced(false); }} onMouseEnter={() => setHoveredId(model.id)} onMouseLeave={() => setHoveredId((current) => (current === model.id ? null : current))} className={`flex items-start justify-between gap-3 rounded-[10px] border px-3 py-2 text-left transition-colors ${model.id === selectedModel?.id ? "border-primary/50 bg-primary/[0.08]" : "border-white/[0.08] hover:border-white/20"}`}>
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-medium text-white/90">{model.name} <span className="font-normal text-white/40">· {model.provider_name}</span></span>
+                  <span className="mt-0.5 block text-[11.5px] leading-snug text-white/45">{model.description}</span>
+                </span>
+                <PriceHint locale={locale} endpoint={model.endpoint} payload={{}} hovered={hoveredId === model.id || model.id === selectedModel?.id} className="mt-0.5" />
+              </button>
+            ))}
+          </div>
+          {(visibleEnums.length > 0 || visibleNumeric.length > 0) && (
+            <div className="grid grid-cols-1 gap-3 border-t border-white/[0.08] pt-3 sm:grid-cols-2">
+              {visibleEnums.map(([key, input]) => (
+                <div key={key} className="flex flex-col gap-1 text-[12px] text-white/70" title={input.description || ""}>
+                  <span>{input.title}</span>
+                  <div className="inline-flex items-center gap-0.5 rounded-[10px] border border-white/[0.07] bg-white/[0.04] p-0.5">
+                    {input.enum.map((value) => (
+                      <button key={String(value)} type="button" aria-pressed={(options[key] ?? input.default) === value} onClick={() => setOption(key, value)} className={`min-h-7 flex-1 rounded-lg px-2 py-1 text-xs font-medium ${(options[key] ?? input.default) === value ? "bg-white/[0.1] text-white" : "text-white/45 hover:text-white/75"}`}>{optionLabel(input, value)}</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {visibleNumeric.map(([key, input]) => (
+                <label key={key} className="flex flex-col gap-1 text-[12px] text-white/70" title={input.description || ""}>
+                  <span className="flex items-center justify-between"><span>{input.title}</span><span className="tabular-nums text-white/45">{options[key] ?? input.default}</span></span>
+                  <input type="range" min={input.minimum ?? 0} max={input.maximum ?? 100} step={input.type === "integer" ? 1 : 0.1} value={options[key] ?? input.default} onChange={(event) => setOption(key, Number(event.target.value))} className="w-full accent-[#22d3ee]" />
+                </label>
+              ))}
+            </div>
+          )}
+          {advancedInputs.length > 0 && (
+            <button type="button" onClick={() => setShowAdvanced((value) => !value)} aria-expanded={showAdvanced} className="self-start text-[12px] text-white/50 hover:text-white" title={copy.controls.advancedHint}>
+              {showAdvanced ? copy.controls.less : fill(copy.controls.more, { count: advancedInputs.length })}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 
@@ -665,9 +757,20 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
         </div>
       )}
 
-      <div className="flex-1 w-full overflow-y-auto custom-scrollbar pb-72 pt-4 px-4 md:px-8">
-        {hasGallery ? (
+      <div className="flex-1 w-full overflow-y-auto custom-scrollbar pb-64 pt-4 px-4 md:px-8">
+        {hasGallery || isVectorize ? (
           <div className="mx-auto max-w-6xl pt-12">
+            {isVectorize && (
+              <div className="mb-6">
+                {!hasGallery && (
+                  <div className="mx-auto mb-6 max-w-5xl">
+                    <h1 className="text-[28px] md:text-[34px] font-semibold tracking-[-0.025em] leading-[1.1] text-white/[0.92]">{pageCopy.heading} <em className="not-italic text-primary whitespace-nowrap">{pageCopy.accent}</em></h1>
+                    <p className="mt-3 max-w-[60ch] text-[15px] leading-relaxed text-white/55">{pageCopy.subtitle}</p>
+                  </div>
+                )}
+                {vectorizePanel}
+              </div>
+            )}
             {compareEntry && (
               <div className="mb-6 rounded-2xl border border-white/[0.08] bg-[#0e0e11] p-3">
                 <div className="mb-2 flex items-center justify-between px-1">
@@ -690,41 +793,45 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
                 </div>
               </div>
             )}
-            <div className="mb-3 flex items-center justify-between px-1">
-              <div className="text-[12px] font-medium uppercase tracking-[0.08em] text-white/40">{fill(copy.gallery.library, { count: library.entries.length })}</div>
-              <ToneToggle tone={tone} onChange={setTone} copy={copy} />
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {library.pending.map((run) => (
-                <div key={run.id} className="aspect-square rounded-2xl border border-white/[0.08] bg-[#0e0e11] flex flex-col items-center justify-center gap-3 text-center p-6">
-                  <span className="h-7 w-7 animate-spin rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
-                  <div className="text-[14px] font-medium text-white/85">{fill(copy.gallery.pendingTitle, { model: run.label })}</div>
-                  <div className="text-[12px] text-white/45">{run.total > 1 ? fill(copy.gallery.pendingProgress, { done: run.done, total: run.total }) : copy.gallery.pendingHint}</div>
+            {hasGallery && (
+              <>
+                <div className="mb-3 flex items-center justify-between px-1">
+                  <div className="text-[12px] font-medium uppercase tracking-[0.08em] text-white/40">{fill(copy.gallery.library, { count: library.entries.length })}</div>
+                  <ToneToggle tone={tone} onChange={setTone} copy={copy} />
                 </div>
-              ))}
-              {groups.map((group) => (group.type === "single" ? card(group.entry) : (
-                <div key={group.setId} className="col-span-full rounded-2xl border border-white/[0.08] bg-[#0e0e11] p-3">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
-                    <div className="min-w-0">
-                      <div className="truncate text-[13px] font-medium text-white/90">{group.entries[0].setName || fill(copy.icons.set, { count: group.entries.length })}</div>
-                      <div className="text-[11.5px] text-white/45">{fill(copy.icons.set, { count: group.entries.length })} · {group.entries[0].modelName}</div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {library.pending.map((run) => (
+                    <div key={run.id} className="aspect-square rounded-2xl border border-white/[0.08] bg-[#0e0e11] flex flex-col items-center justify-center gap-3 text-center p-6">
+                      <span className="h-7 w-7 animate-spin rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
+                      <div className="text-[14px] font-medium text-white/85">{fill(copy.gallery.pendingTitle, { model: run.label })}</div>
+                      <div className="text-[12px] text-white/45">{run.total > 1 ? fill(copy.gallery.pendingProgress, { done: run.done, total: run.total }) : copy.gallery.pendingHint}</div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => exportSet(group, "sprite")} className="flex h-8 items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 text-[12px] font-medium text-white hover:bg-white/[0.12]"><IconSvg size={14} stroke={1.75} aria-hidden="true" />{copy.icons.sprite}</button>
-                      <button type="button" onClick={() => exportSet(group, "zip")} className="flex h-8 items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 text-[12px] font-medium text-white hover:bg-white/[0.12]"><IconFileZip size={14} stroke={1.75} aria-hidden="true" />{copy.icons.zip}</button>
-                      <button type="button" title={copy.icons.deleteSet} aria-label={copy.icons.deleteSet} onClick={() => deleteSet(group.setId)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-red-300 hover:bg-red-500 hover:text-white"><IconTrash size={14} stroke={1.75} aria-hidden="true" /></button>
+                  ))}
+                  {groups.map((group) => (group.type === "single" ? card(group.entry) : (
+                    <div key={group.setId} className="col-span-full rounded-2xl border border-white/[0.08] bg-[#0e0e11] p-3">
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
+                        <div className="min-w-0">
+                          <div className="truncate text-[13px] font-medium text-white/90">{group.entries[0].setName || fill(copy.icons.set, { count: group.entries.length })}</div>
+                          <div className="text-[11.5px] text-white/45">{fill(copy.icons.set, { count: group.entries.length })} · {group.entries[0].modelName}</div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button type="button" onClick={() => exportSet(group, "sprite")} className="flex h-8 items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 text-[12px] font-medium text-white hover:bg-white/[0.12]"><IconSvg size={14} stroke={1.75} aria-hidden="true" />{copy.icons.sprite}</button>
+                          <button type="button" onClick={() => exportSet(group, "zip")} className="flex h-8 items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 text-[12px] font-medium text-white hover:bg-white/[0.12]"><IconFileZip size={14} stroke={1.75} aria-hidden="true" />{copy.icons.zip}</button>
+                          <button type="button" title={copy.icons.deleteSet} aria-label={copy.icons.deleteSet} onClick={() => deleteSet(group.setId)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-red-300 hover:bg-red-500 hover:text-white"><IconTrash size={14} stroke={1.75} aria-hidden="true" /></button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+                        {group.entries.map((entry) => card(entry, { compact: true }))}
+                      </div>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-                    {group.entries.map((entry) => card(entry, { compact: true }))}
-                  </div>
+                  )))}
                 </div>
-              )))}
-            </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="h-full w-full animate-fade-in-up">
-            <StudioEmptyState heading={toolCopy.heading} accent={toolCopy.accent} subtitle={toolCopy.subtitle} starters={starters} onStarter={onStarter} showcase={null} />
+            <StudioEmptyState heading={pageCopy.heading} accent={pageCopy.accent} subtitle={pageCopy.subtitle} starters={starters} onStarter={onStarter} showcase={null} />
           </div>
         )}
       </div>
@@ -743,73 +850,30 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
         </div>
       )}
 
-      {exporting && <ExportKitDialog entry={exporting} copy={copy} locale={locale} onClose={() => setExporting(null)} onVectorize={sendToVectorize} />}
+      {exporting && <ExportKitDialog entry={exporting} copy={copy} onClose={() => setExporting(null)} onVectorize={sendToVectorize} />}
 
       <PromptComposer>
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
-          <PromptSegmentedControl aria-label={copy.rail.label}>
-            {VECTOR_TOOLS.map((id) => {
-              const Icon = TOOL_ICONS[id];
-              return (
-                <PromptSegmentOption key={id} selected={tool === id} onClick={() => { setTool(id); setOpenDropdown(null); setShowAdvanced(false); }} data-vector-tool={id}>
-                  <Icon size={14} stroke={1.75} aria-hidden="true" />
-                  {copy.tools[id].label}
-                </PromptSegmentOption>
-              );
-            })}
-          </PromptSegmentedControl>
-          {tool === "icons" && (
-            <span className={`text-[12px] ${plan.truncated ? "text-amber-300/90" : "text-white/45"}`}>
-              {iconCount === 0 ? copy.icons.none : plan.truncated ? fill(copy.icons.truncated, { max: MAX_ICONS }) : iconCount === 1 ? copy.icons.countOne : fill(copy.icons.count, { count: number(iconCount, locale) })}
-            </span>
-          )}
-        </div>
-
         <div className="flex items-start gap-2 px-1">
-          {tool === "vectorize" && (
-            <div className="flex items-center gap-2">
+          {isVectorize && (
+            <>
               {source ? (
-                <div className="flex h-10 items-center gap-2 rounded-full border border-primary/30 bg-primary/[0.08] pl-1 pr-3">
+                <div className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-primary/30 bg-primary/[0.08] pl-1 pr-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={source.url} alt="" className="h-8 w-8 rounded-full object-cover" />
                   <span className="max-w-[200px] truncate text-[12.5px] text-white/85">{source.name}</span>
                   <button type="button" onClick={() => setSource(null)} aria-label={copy.vectorize.clear} className="text-white/40 hover:text-white"><IconX size={14} stroke={2} aria-hidden="true" /></button>
                 </div>
               ) : (
-                <>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-10 items-center gap-2 rounded-full border border-dashed border-white/20 px-3.5 whitespace-nowrap text-[12.5px] text-white/60 hover:border-white/40 hover:text-white">
-                    {uploading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconUpload size={15} stroke={1.75} aria-hidden="true" />}
-                    {copy.vectorize.upload}
-                  </button>
-                  <div className="relative">
-                    <button type="button" onClick={() => toggle("library")} className="flex h-10 items-center gap-2 rounded-full border border-white/[0.12] px-3.5 whitespace-nowrap text-[12.5px] text-white/60 hover:border-white/40 hover:text-white">
-                      <IconPhotoUp size={15} stroke={1.75} aria-hidden="true" />{copy.vectorize.fromLibrary}
-                    </button>
-                    {openDropdown === "library" && (
-                      <PromptPopover className="w-[360px]">
-                        <PromptPopoverHeader>{copy.vectorize.libraryTitle}</PromptPopoverHeader>
-                        {libraryImages.length === 0 ? (
-                          <p className="px-2 py-3 text-[12.5px] text-white/45">{copy.vectorize.libraryEmpty}</p>
-                        ) : (
-                          <div className="grid max-h-[280px] grid-cols-4 gap-1.5 overflow-y-auto p-1">
-                            {libraryImages.slice(0, 40).map((image, index) => (
-                              <button key={`${image.url}-${index}`} type="button" title={image.name} onClick={() => { setSource({ url: image.url, name: image.name, fromId: null }); setOpenDropdown(null); }} className="aspect-square overflow-hidden rounded-lg border border-white/[0.08] hover:border-primary/60">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={image.url} alt="" className="h-full w-full object-cover" loading="lazy" />
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </PromptPopover>
-                    )}
-                  </div>
-                </>
+                <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-dashed border-white/20 px-3.5 whitespace-nowrap text-[12.5px] text-white/60 hover:border-white/40 hover:text-white">
+                  {uploading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconUpload size={15} stroke={1.75} aria-hidden="true" />}
+                  {copy.vectorize.upload}
+                </button>
               )}
-              <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(event) => { uploadSource(event.target.files?.[0]); event.target.value = ""; }} />
-            </div>
+              <p className="flex-1 px-1.5 pt-2.5 text-[13.5px] text-white/40">{source ? fill(copy.vectorize.readyHint, { model: selectedModel?.name || "" }) : pageCopy.placeholder}</p>
+            </>
           )}
 
-          {tool === "logo" && logoModel?.references && (
+          {page === "logo" && selectedModel?.references && (
             <div className="flex items-center gap-2 flex-wrap">
               {references.map((image, index) => (
                 <div key={image.url} className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10">
@@ -818,8 +882,8 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
                   <button type="button" onClick={() => setReferences((previous) => previous.filter((_, i) => i !== index))} aria-label={copy.controls.removeReference} className="absolute inset-0 flex items-center justify-center bg-black/60 text-white opacity-0 hover:opacity-100"><IconX size={14} stroke={2} aria-hidden="true" /></button>
                 </div>
               ))}
-              {references.length < logoModel.references.max && (
-                <button type="button" onClick={() => referenceInputRef.current?.click()} disabled={Boolean(uploading)} title={fill(copy.controls.addReference, { max: logoModel.references.max })} className={promptMediaButtonClassName()}>
+              {references.length < selectedModel.references.max && (
+                <button type="button" onClick={() => referenceInputRef.current?.click()} disabled={Boolean(uploading)} title={fill(copy.controls.addReference, { max: selectedModel.references.max })} className={promptMediaButtonClassName()}>
                   {uploading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconPhotoPlus size={16} stroke={1.75} className="text-white/60" aria-hidden="true" />}
                 </button>
               )}
@@ -827,34 +891,36 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
             </div>
           )}
 
-          {tool === "logo" && <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder={toolCopy.placeholder} />}
-          {tool === "icons" && (
+          {page === "logo" && <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder={pageCopy.placeholder} />}
+          {isIcons && (
             <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
-              <PromptTextarea ref={textareaRef} value={iconStyle} onChange={(event) => setIconStyle(event.target.value)} placeholder={toolCopy.placeholder} className="flex-1" />
-              <textarea value={iconNames} onChange={(event) => setIconNames(event.target.value)} placeholder={toolCopy.namesPlaceholder} rows={3} spellCheck={false} aria-label={copy.icons.none} className="max-h-[150px] min-h-[76px] w-full resize-y rounded-[10px] border border-white/[0.08] bg-white/[0.03] px-3 py-2 font-mono text-[12.5px] text-white/85 placeholder:text-white/30 focus:border-white/20 focus:outline-none sm:w-[220px]" />
+              <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder={pageCopy.placeholder} className="flex-1" />
+              <div className="flex w-full flex-col gap-1 sm:w-[220px]">
+                <textarea value={iconNames} onChange={(event) => setIconNames(event.target.value)} placeholder={pageCopy.namesPlaceholder} rows={3} spellCheck={false} aria-label={copy.icons.none} className="max-h-[150px] min-h-[76px] w-full resize-y rounded-[10px] border border-white/[0.08] bg-white/[0.03] px-3 py-2 font-mono text-[12.5px] text-white/85 placeholder:text-white/30 focus:border-white/20 focus:outline-none" />
+                <span className={`px-1 text-[11.5px] ${plan.truncated ? "text-amber-300/90" : "text-white/45"}`}>
+                  {iconCount === 0 ? copy.icons.none : plan.truncated ? fill(copy.icons.truncated, { max: MAX_ICONS }) : iconCount === 1 ? copy.icons.countOne : fill(copy.icons.count, { count: number(iconCount, locale) })}
+                </span>
+              </div>
             </div>
-          )}
-          {tool === "vectorize" && (
-            <p className="flex-1 px-1.5 pt-2.5 text-[13.5px] text-white/40">{source ? `${vectorizeModel?.name || ""} · ${vectorizeModel?.description || ""}` : toolCopy.placeholder}</p>
           )}
         </div>
 
         <PromptFooter>
           <PromptControls>
-            {pickerModels.length > 0 && (
+            {!isVectorize && models.length > 0 && (
               <div className="relative">
                 <button type="button" onClick={() => toggle("model")} className={promptControlClassName({ active: openDropdown === "model" })}>
-                  <span className="text-[11px] text-white/40">{tool === "vectorize" ? copy.controls.tier : copy.controls.model}</span>
+                  <span className="text-[11px] text-white/40">{copy.controls.model}</span>
                   <span className={PROMPT_CONTROL_LABEL_CLASS}>{selectedModel?.name}</span>
                   <PromptChevronIcon />
                 </button>
                 {openDropdown === "model" && (
                   <PromptPopover className="w-[360px]">
-                    <PromptPopoverHeader>{tool === "vectorize" ? copy.controls.tier : copy.controls.model}</PromptPopoverHeader>
+                    <PromptPopoverHeader>{copy.controls.model}</PromptPopoverHeader>
                     <PromptMenuList>
-                      {pickerModels.map((model) => (
+                      {models.map((model) => (
                         <div key={model.id} onMouseEnter={() => setHoveredId(model.id)} onMouseLeave={() => setHoveredId((current) => (current === model.id ? null : current))} className="flex items-center gap-2">
-                          <PromptMenuItem selected={model.id === selectedModel?.id} description={model.description} wrapDescription onClick={() => choosePickerModel(model)} className="flex-1">
+                          <PromptMenuItem selected={model.id === selectedModel?.id} description={model.description} wrapDescription onClick={() => { setModelId(model.id); setOpenDropdown(null); }} className="flex-1">
                             {model.name} <span className="text-white/40">· {model.provider_name}</span>
                           </PromptMenuItem>
                           <PriceHint locale={locale} endpoint={model.endpoint} payload={pickerPayload(model)} hovered={hoveredId === model.id} className="pr-2" />
@@ -866,7 +932,14 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
               </div>
             )}
 
-            {tool !== "vectorize" && (
+            {isVectorize && selectedModel && (
+              <span className={promptControlClassName({ active: false })} title={selectedModel.description}>
+                <span className="text-[11px] text-white/40">{copy.controls.tier}</span>
+                <span className={PROMPT_CONTROL_LABEL_CLASS}>{selectedModel.name}</span>
+              </span>
+            )}
+
+            {!isVectorize && (
               <div className="relative">
                 <button type="button" onClick={() => toggle("palette")} className={promptControlClassName({ active: openDropdown === "palette" })} title={copy.palette.hint}>
                   <IconPalette size={14} stroke={1.75} aria-hidden="true" />
@@ -909,7 +982,7 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
               </div>
             )}
 
-            {tool === "logo" && maxCandidates > 1 && (
+            {page === "logo" && maxCandidates > 1 && (
               <div className="relative">
                 <button type="button" onClick={() => toggle("candidates")} className={promptControlClassName({ active: openDropdown === "candidates" })} title={copy.controls.candidatesTitle}>
                   <span className="text-[11px] text-white/40">{copy.controls.candidates}</span>
@@ -929,7 +1002,7 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
               </div>
             )}
 
-            {visibleEnums.map(([key, input]) => (
+            {!isVectorize && visibleEnums.map(([key, input]) => (
               <div key={key} className="relative">
                 <button type="button" onClick={() => toggle(key)} className={promptControlClassName({ active: openDropdown === key })} title={input.description || input.title}>
                   <span className="text-[11px] text-white/40">{input.title}</span>
@@ -949,31 +1022,9 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
               </div>
             ))}
 
-            {visibleNumeric.length > 0 && (
-              <div className="relative">
-                <button type="button" onClick={() => toggle("tracing")} className={promptControlClassName({ active: openDropdown === "tracing" })}>
-                  <IconAdjustments size={14} stroke={1.75} aria-hidden="true" />
-                  <span className={PROMPT_CONTROL_LABEL_CLASS}>{copy.controls.tracing}</span>
-                  <PromptChevronIcon />
-                </button>
-                {openDropdown === "tracing" && (
-                  <PromptPopover className="w-[300px]">
-                    <PromptPopoverHeader>{copy.controls.tracing}</PromptPopoverHeader>
-                    <div className="flex flex-col gap-3 px-2 pb-1">
-                      {visibleNumeric.map(([key, input]) => (
-                        <label key={key} className="flex flex-col gap-1 text-[12px] text-white/70" title={input.description || ""}>
-                          <span className="flex items-center justify-between"><span>{input.title}</span><span className="tabular-nums text-white/45">{options[key] ?? input.default}</span></span>
-                          <input type="range" min={input.minimum ?? 0} max={input.maximum ?? 100} step={input.type === "integer" ? 1 : 0.1} value={options[key] ?? input.default} onChange={(event) => setOption(key, Number(event.target.value))} className="w-full accent-[#22d3ee]" />
-                        </label>
-                      ))}
-                    </div>
-                  </PromptPopover>
-                )}
-              </div>
-            )}
-
-            {advancedInputs.length > 0 && (
+            {!isVectorize && advancedInputs.length > 0 && (
               <button type="button" onClick={() => setShowAdvanced((value) => !value)} aria-expanded={showAdvanced} className={promptControlClassName({ active: showAdvanced })} title={copy.controls.advancedHint}>
+                <IconAdjustments size={14} stroke={1.75} aria-hidden="true" />
                 <span className={PROMPT_CONTROL_LABEL_CLASS}>{showAdvanced ? copy.controls.less : fill(copy.controls.more, { count: advancedInputs.length })}</span>
               </button>
             )}
@@ -981,7 +1032,7 @@ export default function VectorStudio({ onGenerationStart, onGenerationEnd, onGen
 
           <PromptActionGroup>
             <PriceChip locale={locale} endpoint={selectedModel?.endpoint} enabled={Boolean(selectedModel)} payload={pricePayload} runs={priceRuns} />
-            <PromptAction onClick={handleGenerate} disabled={Boolean(uploading) || !selectedModel} data-vector-action={tool} className="whitespace-nowrap">
+            <PromptAction onClick={handleGenerate} disabled={Boolean(uploading) || !selectedModel} data-vector-action={page} className="whitespace-nowrap">
               {actionLabel}
             </PromptAction>
           </PromptActionGroup>

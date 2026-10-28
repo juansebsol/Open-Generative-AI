@@ -19,7 +19,7 @@ Context for contributors and coding agents. User-facing docs are in [README.md](
 - `local/`: ComfyUI and sd-server connectors that run in the browser against the visitor's own machine.
 - `mediaStore.js` + `public/oga-media-sw.js`: every output and upload is copied into IndexedDB (`oga-media`) and referenced as `/oga-media/<id>.<ext>`. `runEndpoint` resolves those back to a provider URL (stored link if < 6 days old, else a fresh upload) before calling `/api/generate`. Unreferenced files are deleted a day after creation (`removeUnusedMedia`, run by the shell).
 
-- Vector studio (`components/VectorStudio.jsx`): its catalog is `vectorModels.js` (routed by `catalog/routes/vector.json`), results live in `vectorLibrary.js`, and `vector/` holds the pure helpers (SVG sanitiser, sprite builder, icon-set planner, optimiser, zip/ico/pdf writers, output classifier) plus the browser export kit.
+- Vector pages (`components/VectorStudio.jsx`, one component for the `vector-logo`, `vector-icons` and `vector-vectorize` tabs, like the 3D pages): the catalog is `vectorModels.js` (routed by `catalog/routes/vector.json`), results live in `vectorLibrary.js`, and `vector/` holds the pure helpers (SVG sanitiser, sprite builder, icon-set planner, optimiser, zip/ico/pdf writers, output classifier) plus the browser export kit.
 
 ## Conventions
 

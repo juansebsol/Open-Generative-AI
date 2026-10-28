@@ -1,5 +1,5 @@
-// The Vector studio's result library, shared by its tools (Text to Logo,
-// Icon Set, Vectorize). Entries point at files saved in this browser
+// The Vector pages' result library, shared by Text to Logo, Icon Set and
+// Vectorize. Entries point at files saved in this browser
 // (mediaStore) as image/svg+xml, with a PNG thumbnail for raster
 // consumers. "Send to" queues a result for another tool, or for another
 // studio later (the Logo Rescue and Vector to 3D bridges hook in here).
@@ -53,7 +53,7 @@ export function getEmptyLibrary() {
 }
 
 /**
- * @param {{ id: string, url: string, kind: 'svg'|'raster', tool: string, thumbnail?: string|null, prompt?: string, name?: string,
+ * @param {{ id: string, url: string, kind: 'svg'|'raster', page: string, thumbnail?: string|null, prompt?: string, name?: string,
  *   model?: string, modelName?: string, vendor?: string, setId?: string|null, setName?: string|null, sourceUrl?: string|null, timestamp: string }} entry
  */
 export function addEntry(entry) {
@@ -108,23 +108,23 @@ export function removePending(id) {
 }
 
 /**
- * Queues a source for one of the studio's tools and asks the shell to open
- * the Vector tab. Other studios can call this too (Image Studio sending a
- * raster to Vectorize, the Draw modal sending a sketch later).
+ * Queues a source for one of the Vector pages and asks the shell to open
+ * that page's tab (`vector-<page>`). Other studios can call this too (Image
+ * Studio sending a raster to Vectorize, the Draw modal sending a sketch later).
  */
-export function sendToVector(tool, payload) {
-  state = { ...state, handoffs: { ...state.handoffs, [tool]: payload } };
+export function sendToVector(page, payload) {
+  state = { ...state, handoffs: { ...state.handoffs, [page]: payload } };
   emit();
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('oga:open-studio', { detail: { tabId: 'vector' } }));
+    window.dispatchEvent(new CustomEvent('oga:open-studio', { detail: { tabId: `vector-${page}` } }));
   }
 }
 
-/** Returns and clears what was sent to a tool, or null. */
-export function takeHandoff(tool) {
-  const payload = state.handoffs[tool];
+/** Returns and clears what was sent to a page, or null. */
+export function takeHandoff(page) {
+  const payload = state.handoffs[page];
   if (!payload) return null;
-  state = { ...state, handoffs: { ...state.handoffs, [tool]: null } };
+  state = { ...state, handoffs: { ...state.handoffs, [page]: null } };
   return payload;
 }
 

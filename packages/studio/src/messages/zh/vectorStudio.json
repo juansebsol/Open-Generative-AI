@@ -1,7 +1,7 @@
 {
-  "tools": {
+  "pages": {
     "logo": {
-      "label": "文本生成徽标",
+      "title": "文本生成徽标",
       "heading": "描述一个标志，得到",
       "accent": "可编辑的 SVG",
       "subtitle": "Recraft 和 Ideogram 直接绘制真正的矢量：图层、路径和干净的几何形状，可在 Figma 或 Illustrator 中打开。选择品牌配色，生成几个候选，再免费导出为 PNG、PDF、favicon 或应用图标。",
@@ -13,7 +13,7 @@
       ]
     },
     "icons": {
-      "label": "图标集",
+      "title": "图标集",
       "heading": "一种风格，一整套",
       "accent": "图标",
       "subtitle": "风格只写一次，然后逐行列出需要的图标。每个名称都用同样的风格词和配色生成，整套可导出为 SVG 雪碧图或单文件压缩包。",
@@ -26,14 +26,13 @@
       ]
     },
     "vectorize": {
-      "label": "矢量化",
+      "title": "矢量化",
       "heading": "把任意图片描摹成",
       "accent": "干净的 SVG",
-      "subtitle": "上传 PNG、JPG 或 WebP，或从图像工作室选择结果。Image2SVG 以极低成本描摹几何形状，Recraft 保持形状平滑可编辑，Ideogram 则把图片重绘为矢量艺术。",
-      "placeholder": "添加图片，选择描摹器，然后矢量化。"
+      "subtitle": "拖入 PNG、JPG 或 WebP，或从图像工作室选择结果。Image2SVG 以极低成本描摹几何形状，Recraft 保持形状平滑可编辑，Ideogram 则把图片重绘为矢量艺术。原图和 SVG 会并排显示。",
+      "placeholder": "在上方添加图片，选择描摹器，然后矢量化。"
     }
   },
-  "rail": { "label": "工具" },
   "controls": {
     "model": "模型",
     "tier": "描摹器",
@@ -43,7 +42,6 @@
     "more": "更多（{count}）",
     "less": "收起",
     "advancedHint": "显示不常用的描摹参数",
-    "tracing": "描摹",
     "references": "参考图",
     "addReference": "最多添加 {max} 张参考图",
     "removeReference": "移除参考图"
@@ -69,11 +67,14 @@
     "partial": "{total} 个图标中有 {failed} 个失败：{message}"
   },
   "vectorize": {
+    "dropTitle": "把图片拖到这里",
+    "dropHint": "PNG、JPG 或 WebP。扁平插画、徽标和截图的描摹效果最好。",
     "upload": "上传图片",
     "fromLibrary": "来自图像工作室",
     "libraryTitle": "最近的图片",
     "libraryEmpty": "还没有图片。先在图像工作室生成或上传一张，或在此上传。",
     "clear": "清除图片",
+    "readyHint": "{model} 将描摹上方的图片。",
     "source": "原图",
     "result": "SVG",
     "compare": "前后对比",
@@ -88,8 +89,7 @@
     "download": "下载 SVG",
     "fullscreen": "放大查看",
     "delete": "删除",
-    "close": "关闭",
-    "useSource": "用作原图"
+    "close": "关闭"
   },
   "export": {
     "title": "导出套件",

@@ -7,7 +7,7 @@ import {
   PROVIDERS, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
-  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2
+  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline
 } from '@tabler/icons-react';
 import ProvidersModal from './ProvidersModal';
 import CommandPalette from './CommandPalette';
@@ -36,7 +36,9 @@ const TABS = [
   { id: 'three-d-retexture', label: 'Retexture', icon: IconBrush },
   { id: 'three-d-rig', label: 'Rig and animate', icon: IconBone },
   { id: 'three-d-mesh', label: 'Mesh tools', icon: IconTopologyStar3 },
-  { id: 'vector', label: 'Vector Studio', icon: IconVectorBezier2 },
+  { id: 'vector-logo', label: 'Text to Logo', icon: IconVectorBezier2 },
+  { id: 'vector-icons', label: 'Icon Set', icon: IconIcons },
+  { id: 'vector-vectorize', label: 'Vectorize', icon: IconVectorSpline },
   { id: 'agents', label: 'Agents', icon: IconRobot },
   { id: 'workflows', label: 'Workflows', icon: IconSitemap },
   { id: 'benchmarks', label: 'Benchmarks', icon: IconChartBar },
@@ -47,7 +49,7 @@ const NAVIGATION_CATEGORIES = [
   { id: 'video', label: 'Video', tabIds: ['video', 'clipping', 'motion-control', 'lipsync', 'body-swap', 'marketing', 'vibe-motion'] },
   { id: 'audio', label: 'Audio', tabIds: ['audio'] },
   { id: '3d', label: '3D', tabIds: ['three-d-text', 'three-d-image', 'three-d-retexture', 'three-d-rig', 'three-d-mesh'] },
-  { id: 'vector', label: 'Vector', tabIds: ['vector'] },
+  { id: 'vector', label: 'Vector', tabIds: ['vector-logo', 'vector-icons', 'vector-vectorize'] },
   { id: 'agents-automation', label: 'Automation', tabIds: ['agents', 'workflows'] },
   // A single page, so the nav shows it as a plain link instead of a menu.
   { id: 'benchmarks', label: 'Benchmarks', tabIds: ['benchmarks'], link: true },
@@ -55,6 +57,8 @@ const NAVIGATION_CATEGORIES = [
 
 // The 3D pages share one component; each tab passes its page id.
 const THREE_D_TABS = TABS.map((tab) => tab.id).filter((id) => id.startsWith('three-d-'));
+// The Vector pages share one component the same way.
+const VECTOR_TABS = TABS.map((tab) => tab.id).filter((id) => id.startsWith('vector-'));
 const AVAILABLE_TAB_IDS = new Set(TABS.map((tab) => tab.id).filter(isStudioAvailable));
 const VISIBLE_CATEGORIES = NAVIGATION_CATEGORIES
   .map((category) => ({ ...category, tabIds: category.tabIds.filter((id) => AVAILABLE_TAB_IDS.has(id)) }))
@@ -650,11 +654,11 @@ export default function StandaloneShell({ locale = 'en' }) {
             <ThreeDStudio page={tabId.slice('three-d-'.length)} locale={locale} droppedFiles={activeTab === tabId ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback(tabId)} onGenerationEnd={makeGenerationEndCallback(tabId)} onGenerationComplete={makeSuccessCallback(tabId)} onGenerationError={makeErrorCallback(tabId)} />
           </div>
         ))}
-        {AVAILABLE_TAB_IDS.has('vector') && (
-          <div className={activeTab === 'vector' ? "h-full w-full" : "hidden"}>
-            <VectorStudio locale={locale} droppedFiles={activeTab === 'vector' ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('vector')} onGenerationEnd={makeGenerationEndCallback('vector')} onGenerationComplete={makeSuccessCallback('vector')} onGenerationError={makeErrorCallback('vector')} />
+        {VECTOR_TABS.filter((tabId) => AVAILABLE_TAB_IDS.has(tabId)).map((tabId) => (
+          <div key={tabId} className={activeTab === tabId ? "h-full w-full" : "hidden"}>
+            <VectorStudio page={tabId.slice('vector-'.length)} locale={locale} droppedFiles={activeTab === tabId ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback(tabId)} onGenerationEnd={makeGenerationEndCallback(tabId)} onGenerationComplete={makeSuccessCallback(tabId)} onGenerationError={makeErrorCallback(tabId)} />
           </div>
-        )}
+        ))}
         {AVAILABLE_TAB_IDS.has('workflows') && (
           <div className={activeTab === 'workflows' ? "h-full w-full" : "hidden"}>
             <WorkflowStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('workflows')} onGenerationEnd={makeGenerationEndCallback('workflows')} onGenerationComplete={makeSuccessCallback('workflows')} onGenerationError={makeErrorCallback('workflows')} />

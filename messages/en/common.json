@@ -20,7 +20,9 @@
     "three-d-retexture": "Retexture",
     "three-d-rig": "Rig and animate",
     "three-d-mesh": "Mesh tools",
-    "vector": "Vector Studio",
+    "vector-logo": "Text to Logo",
+    "vector-icons": "Icon Set",
+    "vector-vectorize": "Vectorize",
     "benchmarks": "Benchmarks"
   },
   "categories": {
@@ -167,6 +169,8 @@
     "three-d-retexture": "New materials for any model, by prompt or reference image",
     "three-d-rig": "Skeleton and animation for humanoid models",
     "three-d-mesh": "Remesh, split into parts and clean topology",
-    "vector": "Logos, icon sets and image tracing as editable SVG"
+    "vector-logo": "Editable SVG logo marks from a prompt, with brand palettes",
+    "vector-icons": "One style, many icons, exported as a sprite or zip",
+    "vector-vectorize": "Trace a PNG, JPG or WebP into a clean SVG"
   }
 }

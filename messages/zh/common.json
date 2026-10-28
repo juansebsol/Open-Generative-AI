@@ -20,7 +20,9 @@
     "three-d-retexture": "重新贴图",
     "three-d-rig": "绑定骨骼与动画",
     "three-d-mesh": "网格工具",
-    "vector": "矢量工作室",
+    "vector-logo": "文本生成徽标",
+    "vector-icons": "图标集",
+    "vector-vectorize": "矢量化",
     "benchmarks": "模型评测"
   },
   "categories": {
@@ -167,6 +169,8 @@
     "three-d-retexture": "通过提示词或参考图为任意模型换材质",
     "three-d-rig": "为人形模型添加骨骼和动画",
     "three-d-mesh": "重建网格、拆分部件与整理拓扑",
-    "vector": "徽标、图标集与图像描摹，输出可编辑 SVG"
+    "vector-logo": "由提示词生成可编辑的 SVG 徽标，支持品牌配色",
+    "vector-icons": "一种风格生成多个图标，导出为雪碧图或压缩包",
+    "vector-vectorize": "把 PNG、JPG 或 WebP 描摹成干净的 SVG"
   }
 }

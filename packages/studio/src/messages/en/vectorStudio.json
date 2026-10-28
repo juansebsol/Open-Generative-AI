@@ -1,22 +1,22 @@
 {
-  "tools": {
+  "pages": {
     "logo": {
-      "label": "Text to Logo",
+      "title": "Text to Logo",
       "heading": "Describe a mark, get an",
       "accent": "editable SVG",
       "subtitle": "Recraft and Ideogram draw real vectors: layers, paths and clean geometry that open in Figma or Illustrator. Pick a brand palette, ask for a few candidates, then export the one you like as PNG, PDF, favicon or app icons for free.",
       "placeholder": "Describe the logo: subject, style and mood, for example a minimal fox head mark, geometric, two colours",
       "starters": [
         { "label": "Geometric fox head mark", "prompt": "Minimal geometric fox head logo mark, flat vector, two colours, negative space, no text" },
-        { "label": "Coffee roaster wordmark badge", "prompt": "Circular badge logo for a coffee roaster, a single coffee bean in the centre, thin line details, vintage but clean, no text" },
+        { "label": "Coffee roaster badge", "prompt": "Circular badge logo for a coffee roaster, a single coffee bean in the centre, thin line details, vintage but clean, no text" },
         { "label": "Soft rounded app icon", "prompt": "Friendly app icon of a paper plane, rounded shapes, flat colour, subtle gradient, centered on a plain background" }
       ]
     },
     "icons": {
-      "label": "Icon Set",
+      "title": "Icon Set",
       "heading": "One style, a whole",
       "accent": "icon set",
-      "subtitle": "Write the style once and list the icons you need, one per line. Every name runs with the same style words and palette, and the set exports as an SVG sprite or a zip of single files.",
+      "subtitle": "Write the style once and list the icons you need, one per line. Every name runs with the same style words and palette, and the finished set exports as an SVG sprite or a zip of single files.",
       "placeholder": "Style for every icon, for example thin line icons, 2px stroke, rounded corners, single colour",
       "namesPlaceholder": "home\nsearch\nsettings\nuser\nbell",
       "starters": [
@@ -26,14 +26,13 @@
       ]
     },
     "vectorize": {
-      "label": "Vectorize",
+      "title": "Vectorize",
       "heading": "Trace any image into a",
       "accent": "clean SVG",
-      "subtitle": "Upload a PNG, JPG or WebP, or pick a result from Image Studio. Image2SVG traces geometry for a fraction of a cent, Recraft keeps shapes smooth and editable, Ideogram redraws the image as vector art.",
-      "placeholder": "Add an image, choose a tracer, then vectorize."
+      "subtitle": "Drop in a PNG, JPG or WebP, or pick a result from Image Studio. Image2SVG traces geometry for a fraction of a cent, Recraft keeps shapes smooth and editable, Ideogram redraws the picture as vector art. You get the original and the SVG side by side.",
+      "placeholder": "Add an image above, choose a tracer, then vectorize."
     }
   },
-  "rail": { "label": "Tool" },
   "controls": {
     "model": "Model",
     "tier": "Tracer",
@@ -43,7 +42,6 @@
     "more": "More ({count})",
     "less": "Less",
     "advancedHint": "Show the less common tracing knobs",
-    "tracing": "Tracing",
     "references": "References",
     "addReference": "Add up to {max} reference images",
     "removeReference": "Remove reference"
@@ -69,11 +67,14 @@
     "partial": "{failed} of {total} icons failed: {message}"
   },
   "vectorize": {
+    "dropTitle": "Drop an image here",
+    "dropHint": "PNG, JPG or WebP. Flat art, logos and screenshots trace best.",
     "upload": "Upload image",
     "fromLibrary": "From Image Studio",
     "libraryTitle": "Recent images",
     "libraryEmpty": "No images yet. Generate or upload one in Image Studio, or upload here.",
     "clear": "Clear image",
+    "readyHint": "{model} will trace the image above.",
     "source": "Source",
     "result": "SVG",
     "compare": "Before and after",
@@ -88,8 +89,7 @@
     "download": "Download SVG",
     "fullscreen": "View larger",
     "delete": "Delete",
-    "close": "Close",
-    "useSource": "Use as source"
+    "close": "Close"
   },
   "export": {
     "title": "Export kit",
