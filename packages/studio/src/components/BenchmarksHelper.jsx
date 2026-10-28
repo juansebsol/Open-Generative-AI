@@ -47,17 +47,21 @@ function selectModel(tabId, modelId) {
   window.dispatchEvent(new CustomEvent("oga:open-studio", { detail: { tabId, modelId } }));
 }
 
-function KindLabel({ kinds, benchmarksCopy, className = "" }) {
-  const Icon = KIND_ICON[kinds[0]] || IconTrophy;
+// The pick marks (best quality, best value, cheapest decent) are icons
+// only, named in the tooltip, so the price beside them always has room.
+function KindMarks({ kinds, benchmarksCopy, className = "" }) {
+  const label = kinds.map((kind) => benchmarksCopy.picks[kind]).join(" · ");
   return (
-    <span className={`inline-flex items-center gap-1 ${className}`}>
-      <Icon size={11} stroke={2} aria-hidden="true" />
-      <span>{kinds.map((kind) => benchmarksCopy.picks[kind]).join(" · ")}</span>
+    <span className={`inline-flex shrink-0 items-center gap-1 ${className}`} title={label} aria-label={label} role="img">
+      {kinds.map((kind) => {
+        const Icon = KIND_ICON[kind] || IconTrophy;
+        return <Icon key={kind} size={11} stroke={2} aria-hidden="true" />;
+      })}
     </span>
   );
 }
 
-// One row of the rail: rank, name, score bar, pick label and price, Elo.
+// One row of the rail: rank, name, score bar, price and pick marks, Elo.
 function RailRow({ item, index, used, price, copy, benchmarksCopy, width, onUse }) {
   return (
     <li data-helper-model={item.row.id}>
@@ -77,9 +81,8 @@ function RailRow({ item, index, used, price, copy, benchmarksCopy, width, onUse 
             <span className="block h-full rounded-full bg-primary/70 transition-[width]" style={{ width }} />
           </span>
           <span className="mt-1.5 flex min-w-0 items-center gap-1.5 text-[11px] leading-4 text-white/45">
-            {item.kinds.length > 0 ? <KindLabel kinds={item.kinds} benchmarksCopy={benchmarksCopy} className="shrink-0 text-primary/80" /> : null}
-            {item.kinds.length > 0 ? <span aria-hidden="true" className="opacity-50">·</span> : null}
-            <span className={`truncate ${price?.tone === "warn" ? "text-amber-300/80" : "text-white/60"}`} title={price?.title}>{used ? copy.used : price?.label || ""}</span>
+            <span className={`shrink-0 whitespace-nowrap ${price?.tone === "warn" ? "text-amber-300/80" : "text-white/60"}`} title={price?.title}>{used ? copy.used : price?.label || ""}</span>
+            {item.kinds.length > 0 ? <KindMarks kinds={item.kinds} benchmarksCopy={benchmarksCopy} className="text-primary/70" /> : null}
           </span>
         </span>
         <span className="text-right">
