@@ -575,7 +575,7 @@ export default function VibeMotionStudio({
         )}
 
         {activeVersion || isGenerating ? (
-          <div className="w-full pt-4 space-y-4 animate-fade-in-up">
+          <div className="w-full pt-4 space-y-4 oga-enter">
             {/* Stage */}
             <div className="flex flex-col items-center gap-3">
               <div
@@ -777,7 +777,7 @@ export default function VibeMotionStudio({
             )}
           </div>
         ) : (
-          <div className="h-full w-full animate-fade-in-up">
+          <div className="h-full w-full">
             <StudioEmptyState heading={copy.hero.titleLine1} accent={copy.hero.titleLine2} subtitle={copy.hero.subtitle} starters={examples.map((example) => ({ label: example, prompt: example }))} onStarter={setPrompt} showcase={null} />
           </div>
         )}

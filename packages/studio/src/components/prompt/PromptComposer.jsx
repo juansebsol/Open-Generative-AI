@@ -8,9 +8,10 @@ import {
   useLayoutEffect,
   useRef,
 } from "react";
+import { ghostExit } from "../motion/index.js";
 
 const DEFAULT_POSITION_CLASS =
-  "absolute bottom-4 w-full max-w-[95%] lg:max-w-4xl z-30 animate-fade-in-up";
+  "absolute bottom-4 w-full max-w-[95%] lg:max-w-4xl z-30 oga-enter-bar";
 
 const DEFAULT_PANEL_CLASS =
   "w-full bg-[#111114] rounded-2xl border border-white/[0.12] p-3.5 flex flex-col gap-2.5 shadow-[0_24px_60px_rgba(0,0,0,0.45)]";
@@ -35,6 +36,9 @@ const MEDIA_CONTROL_LAYOUT_CLASS =
 
 const DEFAULT_POPOVER_POSITION_CLASS =
   "absolute bottom-[calc(100%+12px)] left-0 z-50";
+
+const POPOVER_ENTER_CLASS = "oga-pop-in";
+const POPOVER_EXIT_CLASS = "oga-pop-out";
 
 const DEFAULT_POPOVER_CLASS =
   "rounded-[14px] p-2 shadow-[0_20px_60px_rgba(0,0,0,0.55)] border border-white/[0.12] bg-[#111114] min-w-[160px] max-h-[40vh] overflow-y-auto custom-scrollbar";
@@ -161,6 +165,22 @@ export function PromptQualityIcon({ className = "" }) {
   );
 }
 
+// The box the popover will occupy once its entrance has finished: the
+// animation scales it from its anchor, so a reading taken while it plays
+// would be a few percent short on the far side.
+function measureSettled(element) {
+  const animations = typeof element.getAnimations === "function" ? element.getAnimations() : [];
+  const seeks = animations.map((animation) => {
+    const time = animation.currentTime;
+    const end = animation.effect?.getComputedTiming?.().endTime;
+    if (typeof end === "number" && Number.isFinite(end)) animation.currentTime = end;
+    return [animation, time];
+  });
+  const bounds = element.getBoundingClientRect();
+  seeks.forEach(([animation, time]) => { if (time !== null) animation.currentTime = time; });
+  return bounds;
+}
+
 export const PromptPopover = forwardRef(function PromptPopover(
   {
     children,
@@ -174,6 +194,12 @@ export const PromptPopover = forwardRef(function PromptPopover(
 ) {
   const popoverRef = useRef(null);
   useImperativeHandle(ref, () => popoverRef.current);
+  // Ease out before leaving: callers unmount the popover when it closes, so
+  // the exit plays on a ghost of it (see ghostExit).
+  useLayoutEffect(() => {
+    const popover = popoverRef.current;
+    return () => ghostExit(popover, POPOVER_EXIT_CLASS, [POPOVER_ENTER_CLASS]);
+  }, []);
   useLayoutEffect(() => {
     if (!fitViewport) return;
     const position = () => {
@@ -195,7 +221,7 @@ export const PromptPopover = forwardRef(function PromptPopover(
         }
         if (clipsY) top = Math.max(top, bounds.top + 16);
       }
-      const bounds = popover.getBoundingClientRect();
+      const bounds = measureSettled(popover);
       const shift = Math.max(left - bounds.left, Math.min(0, right - bounds.right));
       popover.style.translate = `${shift}px 0`;
       if (bounds.top < top) popover.style.height = `${Math.max(0, bounds.bottom - top)}px`;
@@ -215,6 +241,7 @@ export const PromptPopover = forwardRef(function PromptPopover(
       ref={popoverRef}
       className={joinClasses(
         positionClassName,
+        POPOVER_ENTER_CLASS,
         DEFAULT_POPOVER_CLASS,
         solid ? "bg-[#0c0c0f]" : "bg-[#0c0c0f]/95",
         className,
@@ -342,7 +369,7 @@ export function PromptComposer({
   className = "",
   panelClassName = "",
   positionClassName = DEFAULT_POSITION_CLASS,
-  style = { animationDelay: "0.2s" },
+  style,
 }) {
   return (
     <div className={joinClasses(positionClassName, className)} style={style}>

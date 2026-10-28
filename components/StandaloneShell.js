@@ -523,7 +523,7 @@ export default function StandaloneShell({ locale = 'en' }) {
                 {isOpen && (
                   <div
                     role="menu"
-                    className={`absolute left-1/2 top-[calc(100%+10px)] -translate-x-1/2 rounded-[14px] border border-white/[0.12] bg-[#111114] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)] animate-fade-in-up ${wide ? 'w-[560px] grid grid-cols-2 gap-0.5' : 'w-[300px]'}`}
+                    className={`absolute left-1/2 top-[calc(100%+10px)] -translate-x-1/2 rounded-[14px] border border-white/[0.12] bg-[#111114] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)] oga-pop-in oga-origin-top ${wide ? 'w-[560px] grid grid-cols-2 gap-0.5' : 'w-[300px]'}`}
                     style={{ animationDuration: '160ms' }}
                   >
                     {category.tabIds.map((tabId) => renderStudioLink(tabId))}

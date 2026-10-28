@@ -146,12 +146,12 @@ export default function BenchmarksStudio({ locale = "en" }) {
   return (
     <div className="h-full w-full overflow-y-auto bg-app-bg text-white">
       <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-4 py-8 sm:px-6">
-        <header className="flex flex-col gap-2">
+        <header className="oga-enter flex flex-col gap-2">
           <h1 className="text-[22px] font-semibold tracking-[-0.01em]">{copy.title}</h1>
           <p className="max-w-[760px] text-[13.5px] leading-relaxed text-white/50">{copy.subtitle}</p>
         </header>
 
-        <nav aria-label={copy.title} className="-mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+        <nav aria-label={copy.title} style={{ "--i": 1 }} className="oga-enter -mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
           {categories.map((category) => {
             const active = category.id === categoryId;
             return (
@@ -169,17 +169,17 @@ export default function BenchmarksStudio({ locale = "en" }) {
         </nav>
 
         {entries.length === 0 ? (
-          <p className="rounded-[14px] border border-dashed border-white/[0.08] px-4 py-6 text-center text-[13px] text-white/45">{copy.empty}</p>
+          <p key={categoryId} style={{ "--i": 2 }} className="oga-enter rounded-[14px] border border-dashed border-white/[0.08] px-4 py-6 text-center text-[13px] text-white/45">{copy.empty}</p>
         ) : (
           <>
-            <div className={`grid gap-3 ${editorsPick ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
+            <div key={categoryId} style={{ "--i": 2 }} className={`oga-enter grid gap-3 ${editorsPick ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
               {editorsPick ? <PickCard kind="editorsPick" row={editorsPick} hint={editorsPick.editorsPick.note} copy={copy} pricingCopy={pricingCopy} locale={locale} quotes={quotes} settled={settled} /> : null}
               <PickCard kind="best" row={best} hint={copy.picks.bestHint} copy={copy} pricingCopy={pricingCopy} locale={locale} quotes={quotes} settled={settled} />
               <PickCard kind="bestValue" row={bestValue} hint={copy.picks.bestValueHint} copy={copy} pricingCopy={pricingCopy} locale={locale} quotes={quotes} settled={settled} sameAs={bestValue && best && bestValue.id === best.id ? "best" : null} />
               <PickCard kind="cheapestDecent" row={cheapestDecent} hint={fill(copy.picks.cheapestDecentHint, { gap: number(DECENT_GAP) })} copy={copy} pricingCopy={pricingCopy} locale={locale} quotes={quotes} settled={settled} sameAs={cheapestDecent && bestValue && cheapestDecent.id === bestValue.id ? "bestValue" : cheapestDecent && best && cheapestDecent.id === best.id ? "best" : null} />
             </div>
 
-            <div className="overflow-hidden rounded-[14px] border border-white/[0.08] bg-[#0e0e11]">
+            <div key={`table-${categoryId}`} style={{ "--i": 3 }} className="oga-enter overflow-hidden rounded-[14px] border border-white/[0.08] bg-[#0e0e11]">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px] border-collapse text-left text-[12.5px]">
                   <thead>
@@ -233,7 +233,7 @@ export default function BenchmarksStudio({ locale = "en" }) {
               </div>
             </div>
 
-            <footer className="flex flex-col gap-2 text-[12px] leading-relaxed text-white/40">
+            <footer style={{ "--i": 4 }} className="oga-enter-fade flex flex-col gap-2 text-[12px] leading-relaxed text-white/40">
               {decentNote ? <p>{decentNote}</p> : null}
               {categoryId === "text-to-speech" ? <p>{fill(copy.perCharacters, { count: number(TTS_SAMPLE_CHARACTERS) })}</p> : null}
               {categoryId === "vector" ? <p>{fill(copy.svgPrompt, { count: number(SVG_PROMPT_CHARACTERS) })}</p> : null}

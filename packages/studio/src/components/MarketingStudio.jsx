@@ -398,7 +398,7 @@ export default function MarketingStudio({
       {/* ── MAIN CONTENT AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
         {history.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 animate-fade-in-up">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 oga-enter-fade">
             {history.map(entry => (
               <div
                 key={entry.id}
@@ -484,7 +484,7 @@ export default function MarketingStudio({
             ))}
           </div>
         ) : (
-          <div className="h-full w-full animate-fade-in-up">
+          <div className="h-full w-full">
             <StudioEmptyState heading={copy.empty.titleLine1} accent={copy.empty.titleLine2} subtitle={copy.empty.subtitle} starters={copy.empty.starters} onStarter={setPrompt} showcase="video" copy={copy.empty} />
           </div>
         )}

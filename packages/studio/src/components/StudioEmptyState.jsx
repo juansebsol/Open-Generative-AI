@@ -86,18 +86,19 @@ export default function StudioEmptyState({ heading, accent, subtitle, starters =
   return (
     <div className={`h-full w-full ${withWall ? "grid grid-cols-1 md:grid-cols-[5fr_7fr] md:grid-rows-[minmax(0,1fr)] md:items-center gap-6 md:gap-12 px-6 md:px-14" : "flex items-center px-6 md:px-16"} mx-auto max-w-[1280px] py-6`}>
       <div className="min-w-0 max-w-[460px]">
-        <h1 className="text-[28px] md:text-[36px] font-semibold tracking-[-0.025em] leading-[1.1] text-white/[0.92]">
+        <h1 className="oga-enter text-[28px] md:text-[36px] font-semibold tracking-[-0.025em] leading-[1.1] text-white/[0.92]">
           {heading} <em className="not-italic text-primary whitespace-nowrap">{accent}</em>
         </h1>
-        {subtitle && <p className="mt-3.5 max-w-[40ch] text-[15px] leading-relaxed text-white/55">{subtitle}</p>}
+        {subtitle && <p className="oga-enter mt-3.5 max-w-[40ch] text-[15px] leading-relaxed text-white/55" style={{ "--i": 1 }}>{subtitle}</p>}
         {starters.length > 0 && (
           <nav className="mt-6 max-w-[420px]">
-            {starters.map((starter) => (
+            {starters.map((starter, index) => (
               <button
                 key={starter.prompt}
                 type="button"
                 onClick={() => onStarter?.(starter.prompt)}
-                className="group flex w-full items-center justify-between gap-4 border-t border-white/[0.08] py-3 text-left text-[14px] leading-snug text-white/70 transition-colors last:border-b hover:text-white"
+                style={{ "--i": index + 2 }}
+                className="oga-enter group flex w-full items-center justify-between gap-4 border-t border-white/[0.08] py-3 text-left text-[14px] leading-snug text-white/70 transition-colors last:border-b hover:text-white"
               >
                 <span>{starter.label}</span>
                 <IconArrowRight size={14} stroke={1.75} className="shrink-0 text-white/35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
@@ -107,7 +108,7 @@ export default function StudioEmptyState({ heading, accent, subtitle, starters =
         )}
       </div>
       {withWall && (
-        <div className="hidden md:block h-full min-h-0">
+        <div className="oga-enter-fade hidden md:block h-full min-h-0" style={{ "--i": 2 }}>
           <ShowcaseWall kind={showcase} onPick={onStarter} copy={copy} />
         </div>
       )}

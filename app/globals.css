@@ -71,3 +71,102 @@ code, kbd, pre, .font-mono {
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up { animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* Benchmarks helper: the card slides in from its corner, its rows follow in
+   a short stagger, and it slides back out before the corner button pops in. */
+@keyframes oga-helper-in {
+  from { opacity: 0; transform: translate3d(24px, -6px, 0) scale(0.96); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes oga-helper-out {
+  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  to   { opacity: 0; transform: translate3d(28px, -4px, 0) scale(0.96); }
+}
+@keyframes oga-helper-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  60%  { opacity: 1; transform: scale(1.08); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.oga-helper-in { animation: oga-helper-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: top right; }
+.oga-helper-out { animation: oga-helper-out 0.24s cubic-bezier(0.4, 0, 1, 1) both; transform-origin: top right; pointer-events: none; }
+.oga-helper-row { animation: fade-in-up 0.38s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(90ms + var(--i, 0) * 45ms); }
+.oga-helper-pop { animation: oga-helper-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .oga-helper-in, .oga-helper-out, .oga-helper-row, .oga-helper-pop { animation: none; }
+  .oga-helper-out { opacity: 0; }
+}
+
+/* ── Motion system ──────────────────────────────────────────────────────
+   One easing family for the whole app: entrances ease out on
+   cubic-bezier(0.16, 1, 0.3, 1), exits ease in on cubic-bezier(0.4, 0, 1, 1).
+   Only opacity and transform are animated, so nothing shifts layout. The
+   shell hides inactive tabs with display:none, and a CSS animation restarts
+   when its element is displayed again, so every .oga-enter-* class replays
+   on its own when the visitor switches to that tab. Stagger with --i (the
+   element's index, capped at 10 steps) and tune with --oga-delay/--oga-step.
+   The React side lives in packages/studio/src/components/motion/. */
+:root {
+  --oga-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --oga-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --oga-enter-duration: 0.42s;
+  --oga-exit-duration: 0.2s;
+  --oga-step: 45ms;
+}
+@keyframes oga-enter-up {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes oga-enter-bar {
+  from { opacity: 0; transform: translate3d(0, 20px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes oga-enter-card {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.975); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes oga-enter-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes oga-pop-in {
+  from { opacity: 0; transform: translate3d(0, 6px, 0) scale(0.96); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes oga-pop-out {
+  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  to   { opacity: 0; transform: translate3d(0, 4px, 0) scale(0.97); }
+}
+@keyframes oga-dialog-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.97); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+.oga-enter, .oga-enter-bar, .oga-enter-card, .oga-enter-fade {
+  animation-duration: var(--oga-enter-duration);
+  animation-timing-function: var(--oga-ease-out);
+  animation-fill-mode: both;
+  animation-delay: calc(var(--oga-delay, 0ms) + min(var(--i, 0), 10) * var(--oga-step));
+}
+.oga-enter { animation-name: oga-enter-up; }
+.oga-enter-fade { animation-name: oga-enter-fade; }
+.oga-enter-card { animation-name: oga-enter-card; animation-duration: 0.4s; }
+/* The prompt bar: a longer slide from the bottom, after the hero has landed. */
+.oga-enter-bar { animation-name: oga-enter-bar; animation-duration: 0.5s; --oga-delay: 180ms; }
+/* Popovers grow out of their anchor (bottom left: the pickers open upward
+   from the prompt bar); .oga-origin-* moves the anchor. The exit class is
+   applied by PromptPopover to a ghost of the closed menu. */
+.oga-pop-in { animation: oga-pop-in 0.26s var(--oga-ease-out) both; transform-origin: bottom left; }
+.oga-pop-out { animation: oga-pop-out var(--oga-exit-duration) var(--oga-ease-in) both; transform-origin: bottom left; pointer-events: none; }
+.oga-origin-top { transform-origin: top center; }
+.oga-origin-top-right { transform-origin: top right; }
+.oga-origin-bottom-right { transform-origin: bottom right; }
+/* Dialogs: the backdrop fades, the panel settles in. */
+.oga-backdrop-in { animation: oga-enter-fade 0.24s ease-out both; }
+.oga-dialog-in { animation: oga-dialog-in 0.3s var(--oga-ease-out) both; }
+@media (prefers-reduced-motion: reduce) {
+  .oga-enter, .oga-enter-bar, .oga-enter-card, .oga-enter-fade, .oga-pop-in, .oga-dialog-in, .animate-fade-in-up {
+    animation: oga-enter-fade 0.18s ease-out both;
+    animation-delay: 0ms;
+  }
+  .oga-pop-out { animation: none; opacity: 0; }
+  .oga-backdrop-in { animation: none; }
+}

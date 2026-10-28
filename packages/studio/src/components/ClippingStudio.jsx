@@ -446,7 +446,7 @@ export default function ClippingStudio({
         )}
 
         {hasGallery ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 animate-fade-in-up">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 oga-enter-fade">
             {pending.map((run) => (
               <div
                 key={run.id}
@@ -567,7 +567,7 @@ export default function ClippingStudio({
             ))}
           </div>
         ) : (
-          <div className="h-full w-full animate-fade-in-up">
+          <div className="h-full w-full">
             <StudioEmptyState heading={copy.hero.titleLine1} accent={copy.hero.titleLine2} subtitle={copy.hero.subtitle} showcase="video" />
           </div>
         )}

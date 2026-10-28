@@ -30,6 +30,7 @@ import {
 } from "./prompt/PromptComposer.jsx";
 import PriceChip from "./prompt/PriceChip.jsx";
 import StudioEmptyState from "./StudioEmptyState.jsx";
+import { Entrance } from "./motion/index.js";
 import en from "../messages/en/threeDStudio.json";
 import zh from "../messages/zh/threeDStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -574,14 +575,14 @@ export default function ThreeDStudio({ page = "text", onGenerationStart, onGener
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {library.pending.map((run) => (
-                <div key={run.id} className="aspect-square rounded-2xl border border-white/[0.08] bg-[#0e0e11] flex flex-col items-center justify-center gap-3 text-center p-6">
+                <Entrance once variant="card" key={run.id} className="aspect-square rounded-2xl border border-white/[0.08] bg-[#0e0e11] flex flex-col items-center justify-center gap-3 text-center p-6">
                   <span className="h-7 w-7 animate-spin rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
                   <div className="text-[14px] font-medium text-white/85">{fill(copy.gallery.pendingTitle, { model: run.label })}</div>
                   <div className="text-[12px] text-white/45">{copy.gallery.pendingHint}</div>
-                </div>
+                </Entrance>
               ))}
-              {library.entries.map((entry) => (
-                <div key={entry.id} className={`group relative aspect-square overflow-hidden rounded-2xl border bg-[#0e0e11] ${source?.fromId === entry.id ? "border-primary/60" : "border-white/[0.08]"}`}>
+              {library.entries.map((entry, index) => (
+                <Entrance once variant="card" index={index} key={entry.id} className={`group relative aspect-square overflow-hidden rounded-2xl border bg-[#0e0e11] ${source?.fromId === entry.id ? "border-primary/60" : "border-white/[0.08]"}`}>
                   {VIEWABLE.test(entry.url)
                     ? <ModelView src={entry.url} poster={entry.thumbnail} className="h-full w-full" />
                     : (
@@ -595,12 +596,12 @@ export default function ThreeDStudio({ page = "text", onGenerationStart, onGener
                     <div className="text-[11.5px] text-white/45">{entry.modelName}{entry.vendor ? ` · ${entry.vendor}` : ""}</div>
                   </div>
                   {cardActions(entry)}
-                </div>
+                </Entrance>
               ))}
             </div>
           </div>
         ) : (
-          <div className="h-full w-full animate-fade-in-up">
+          <div className="h-full w-full">
             <StudioEmptyState heading={pageCopy.heading} accent={pageCopy.accent} subtitle={pageCopy.subtitle} starters={starters} onStarter={(text) => { setPrompt(text); textareaRef.current?.focus(); }} showcase={null} />
           </div>
         )}

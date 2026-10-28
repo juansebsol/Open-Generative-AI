@@ -103,6 +103,7 @@ import zh from "../messages/zh/videoStudio.json";
 import { resolveCopy } from "../i18nUtils";
 import { announceStudioMode } from "../benchmarksHelper.js";
 import StudioEmptyState from "./StudioEmptyState.jsx";
+import { Entrance } from "./motion/index.js";
 
 async function downloadFile(url, filename) {
   try {
@@ -2407,10 +2408,13 @@ export default function VideoStudio({
       {/* ── CENTRAL GALLERY AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
         {history.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 animate-fade-in-up">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 oga-enter-fade">
             {history.map((entry, idx) => {
               return (
-                <div
+                <Entrance
+                  once
+                  variant="card"
+                  index={idx}
                   key={entry.id || idx}
                   className="relative group rounded-lg overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col cursor-pointer"
                   onClick={() => setFullscreenUrl(entry.url)}
@@ -2594,12 +2598,12 @@ export default function VideoStudio({
                       </div>
                     </div>
                   </div>
-                </div>
+                </Entrance>
               );
             })}
           </div>
         ) : (
-          <div className="h-full w-full animate-fade-in-up">
+          <div className="h-full w-full">
             <StudioEmptyState heading={copy.empty.heading} accent={selectedPickerEntry?.groupedVideo ? selectedPickerLabel : selectedFamily.name} subtitle={groupedConfiguration ? getVideoModeDescription(selectedVariant.model, selectedWorkflowId, groupCopy) : copy.empty.subtitle} starters={copy.empty.starters} onStarter={setPrompt} showcase="video" copy={copy.empty} />
           </div>
         )}

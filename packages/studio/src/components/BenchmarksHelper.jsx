@@ -27,6 +27,7 @@ import pricingEn from "../messages/en/pricing.json";
 import pricingZh from "../messages/zh/pricing.json";
 
 const AUTO_HIDE_MS = 10_000;
+const OUT_MS = 240; // matches .oga-helper-out in app/globals.css
 const USED_MS = 1500;
 const KIND_ICON = { best: IconTrophy, bestValue: IconCoins, cheapestDecent: IconTag };
 
@@ -68,7 +69,7 @@ function KindMarks({ kinds, benchmarksCopy, className = "" }) {
 function RailRow({ item, rank, starTitle = "", used, price, copy, benchmarksCopy, width, onUse }) {
   const chosen = rank === null;
   return (
-    <li data-helper-model={item.row.id} data-editors-pick={chosen ? "choice" : starTitle ? "chart" : undefined}>
+    <li data-helper-model={item.row.id} data-editors-pick={chosen ? "choice" : starTitle ? "chart" : undefined} className="oga-helper-row" style={{ "--i": chosen ? 0 : rank ?? 0 }}>
       <button
         type="button"
         onClick={() => onUse(item.row.id)}
@@ -123,6 +124,9 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
   const [autoHidden, setAutoHidden] = useState(false);
   const [held, setHeld] = useState(false);
   const [pinned, setPinned] = useState(false);
+  // The card stays mounted for the slide-out before the button takes over.
+  const [leaving, setLeaving] = useState(false);
+  const wasShown = useRef(false);
   const cardRef = useRef(null);
   const reopenRef = useRef(null);
   const focusOnOpen = useRef(false);
@@ -163,6 +167,19 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
   }, [tabId, categoryId]);
 
   useEffect(() => {
+    const was = wasShown.current;
+    wasShown.current = shown;
+    if (shown) {
+      setLeaving(false);
+      return undefined;
+    }
+    if (!was) return undefined;
+    setLeaving(true);
+    const timer = setTimeout(() => setLeaving(false), OUT_MS);
+    return () => clearTimeout(timer);
+  }, [shown]);
+
+  useEffect(() => {
     if (!open || autoHidden || held || pinned) return undefined;
     const timer = setTimeout(() => setAutoHidden(true), AUTO_HIDE_MS);
     return () => clearTimeout(timer);
@@ -194,7 +211,7 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
     window.dispatchEvent(new CustomEvent("oga:open-studio", { detail: { tabId: "benchmarks", categoryId } }));
   };
 
-  if (!shown) {
+  if (!shown && !leaving) {
     return (
       <button
         ref={reopenRef}
@@ -204,7 +221,7 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
         aria-label={copy.reopen}
         data-benchmarks-helper="closed"
         data-category={categoryId}
-        className="fixed right-4 top-[68px] z-[95] flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.12] bg-[#121215] text-white/60 shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-colors hover:border-primary/40 hover:text-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+        className="oga-helper-pop fixed right-4 top-[68px] z-[95] flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.12] bg-[#121215] text-white/60 shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-colors hover:border-primary/40 hover:text-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
       >
         <IconChartBar size={16} stroke={1.75} aria-hidden="true" />
       </button>
@@ -239,11 +256,11 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
       onMouseLeave={() => setHeld(false)}
       onFocus={() => setHeld(true)}
       onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setHeld(false); }}
-      data-benchmarks-helper="open"
+      data-benchmarks-helper={leaving ? "leaving" : "open"}
       data-pinned={pinned ? "true" : "false"}
       data-category={categoryId}
       data-settled={settled ? "true" : "false"}
-      className="fixed right-4 top-[68px] z-[95] flex max-h-[calc(100vh-88px)] w-[288px] max-w-[calc(100vw-32px)] flex-col overflow-y-auto rounded-2xl border border-white/[0.1] bg-[#121215]/95 text-white shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-md focus:outline-none"
+      className={`${leaving ? "oga-helper-out" : "oga-helper-in"} fixed right-4 top-[68px] z-[95] flex max-h-[calc(100vh-88px)] w-[288px] max-w-[calc(100vw-32px)] flex-col overflow-y-auto rounded-2xl border border-white/[0.1] bg-[#121215]/95 text-white shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-md focus:outline-none`}
     >
       <header className="flex items-start justify-between gap-2 px-4 pb-1 pt-3.5">
         <div className="min-w-0">

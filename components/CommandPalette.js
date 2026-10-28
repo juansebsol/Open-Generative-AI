@@ -62,7 +62,7 @@ export default function CommandPalette({ open, onClose, items, copy }) {
 
   return (
     <div
-      className="fixed inset-0 z-[300] flex items-start justify-center bg-black/55 px-4 pt-[12vh] backdrop-blur-[2px]"
+      className="oga-backdrop-in fixed inset-0 z-[300] flex items-start justify-center bg-black/55 px-4 pt-[12vh] backdrop-blur-[2px]"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
       role="presentation"
     >
@@ -70,7 +70,7 @@ export default function CommandPalette({ open, onClose, items, copy }) {
         role="dialog"
         aria-modal="true"
         aria-label={copy.placeholder}
-        className="w-full max-w-[560px] overflow-hidden rounded-[14px] border border-white/[0.12] bg-[#111114] shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
+        className="oga-dialog-in oga-origin-top w-full max-w-[560px] overflow-hidden rounded-[14px] border border-white/[0.12] bg-[#111114] shadow-[0_30px_80px_rgba(0,0,0,0.6)]"
       >
         <div className="flex items-center gap-3 border-b border-white/[0.07] px-4">
           <IconSearch size={16} stroke={1.75} className="shrink-0 text-white/40" aria-hidden="true" />

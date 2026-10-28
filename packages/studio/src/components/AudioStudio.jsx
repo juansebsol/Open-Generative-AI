@@ -7,6 +7,7 @@ import { formatErrorMessage } from "../utils/formatError.js";
 import { audioModels, getAudioModelById } from "../models.js";
 import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/audioStudio.json";
+import { Entrance } from "./motion/index.js";
 import zh from "../messages/zh/audioStudio.json";
 import { resolveCopy } from "../i18nUtils";
 import { announceStudioMode } from "../benchmarksHelper.js";
@@ -1156,7 +1157,7 @@ export default function AudioStudio({
 
             {/* 3. Empty State (no audio, not loading, no error) */}
             {view === "input" && !isGenerating && !generateError && (
-              <div className="flex flex-col items-center gap-6 max-w-md text-center p-8 bg-zinc-900/40 border border-zinc-800 rounded backdrop-blur-sm relative group animate-fade-in-up">
+              <div className="flex flex-col items-center gap-6 max-w-md text-center p-8 bg-zinc-900/40 border border-zinc-800 rounded backdrop-blur-sm relative group oga-enter">
                 {/* Glow behind the icon */}
                 <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full opacity-25 group-hover:opacity-40 transition-opacity duration-1000 pointer-events-none" />
                 <div className="w-20 h-20 bg-zinc-900 border border-zinc-705 rounded flex items-center justify-center shadow-inner relative z-10 transition-transform duration-500 group-hover:scale-105">
@@ -1173,7 +1174,7 @@ export default function AudioStudio({
 
             {/* 4. Active Result Player Display */}
             {view === "result" && activeResultUrl && !isGenerating && !generateError && (
-              <div className="w-full max-w-2xl animate-fade-in-up space-y-4">
+              <div className="w-full max-w-2xl oga-enter space-y-4">
                 <div className="flex items-center justify-between px-1">
                   <button
                     onClick={handleNew}
@@ -1198,13 +1199,16 @@ export default function AudioStudio({
 
           {/* ─── BOTTOM HISTORY FOOTER ─── */}
           {history.length > 0 && (
-            <div className="border-t border-zinc-900 pt-6 w-full animate-fade-in-up">
+            <div className="border-t border-zinc-900 pt-6 w-full oga-enter-fade" style={{ "--i": 2 }}>
               <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider mb-4 px-1">
                 {copy.history.heading.replace('{count}', history.length)}
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {history.map((entry, idx) => (
-                  <div
+                  <Entrance
+                    once
+                    variant="card"
+                    index={idx}
                     key={entry.id || idx}
                     onClick={() => handleSelectHistory(entry, idx)}
                     className={`p-3.5 bg-zinc-900 border rounded cursor-pointer transition-all flex flex-col justify-between h-28 border-zinc-700/80 hover:bg-zinc-850 hover:border-zinc-500 ${
@@ -1228,7 +1232,7 @@ export default function AudioStudio({
                     <p className="text-[11px] font-semibold text-white line-clamp-2 leading-tight">
                       {entry.title || entry.prompt || copy.history.untitled}
                     </p>
-                  </div>
+                  </Entrance>
                 ))}
               </div>
             </div>

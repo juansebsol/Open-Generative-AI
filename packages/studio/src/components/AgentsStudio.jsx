@@ -1232,7 +1232,7 @@ export default function AgentsStudio({
   return (
     <div ref={rootRef} className="w-full h-full flex bg-app-bg text-white overflow-hidden relative">
       {/* Sidebar (desktop) */}
-      <aside className="hidden lg:flex w-[300px] border-r border-zinc-900 bg-zinc-950/40 backdrop-blur-lg flex-shrink-0 flex-col">{sidebar}</aside>
+      <aside className="oga-enter-fade hidden lg:flex w-[300px] border-r border-zinc-900 bg-zinc-950/40 backdrop-blur-lg flex-shrink-0 flex-col">{sidebar}</aside>
 
       {/* Sidebar (mobile drawer) */}
       {mobileMenu && (
@@ -1252,7 +1252,7 @@ export default function AgentsStudio({
 
       {/* Chat */}
       <main className="flex-1 min-w-0 flex flex-col">
-        <header className="flex items-center gap-3 px-4 lg:px-6 py-3 border-b border-zinc-900 bg-zinc-950/30">
+        <header className="oga-enter flex items-center gap-3 px-4 lg:px-6 py-3 border-b border-zinc-900 bg-zinc-950/30">
           <button type="button" onClick={() => setMobileMenu(true)} className="lg:hidden p-2 -ml-2 text-zinc-300 hover:text-white" title={copy.sidebar.openMenu}>
             <MenuIcon size={18} />
           </button>
@@ -1271,7 +1271,7 @@ export default function AgentsStudio({
           </button>
         </header>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto custom-scrollbar">
+        <div ref={scrollRef} style={{ "--i": 1 }} className="oga-enter flex-1 overflow-y-auto custom-scrollbar">
           <div className="max-w-3xl mx-auto px-4 lg:px-6 py-6 space-y-6">
             {!chatReady && loaded && (
               <div className="rounded-xl border border-primary/25 bg-primary/5 p-5 flex flex-col sm:flex-row gap-4 sm:items-center">

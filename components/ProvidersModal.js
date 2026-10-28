@@ -316,8 +316,8 @@ export default function ProvidersModal({ onClose, locale = 'en' }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="providers-title">
-      <div className="w-full max-w-2xl max-h-[90vh] flex flex-col bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl">
+    <div className="oga-backdrop-in fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="providers-title">
+      <div className="oga-dialog-in w-full max-w-2xl max-h-[90vh] flex flex-col bg-[#0a0a0a] border border-white/10 rounded-xl shadow-2xl">
         <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
           <h2 id="providers-title" className="text-white font-bold text-lg">{copy.title}</h2>
           <p className="text-white/45 text-[13px] mt-1">{copy.subtitle}</p>

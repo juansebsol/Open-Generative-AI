@@ -76,6 +76,8 @@ Every studio page that has a model picker shows a small **Benchmarks helper** ca
 
 The bubble follows what the page is doing: Image shows text-to-image picks until a reference image is loaded, then image-editing picks; Video shows text-to-video or image-to-video picks (none for video to video); Audio shows speech or music picks depending on the selected tool; Text to 3D and Image to 3D show the 3D models that run on that page; Text to Logo and Icon Set show the vector picks. Pages without a model picker (Vibe Motion, Agents, Workflows) and Vectorize (no public board scores tracers) show no bubble. Prices and "needs a key" states come from the same batched `/api/price` quotes as the Benchmarks page and refresh when you change provider keys.
 
+Pages slide into place: the hero, its example prompts and the prompt bar step in when a studio opens or you switch to it, new results settle into the grid as they arrive, and pickers ease open and closed; with reduced motion turned on in the system settings, everything fades instead.
+
 ## Quick start
 
 Requires Node.js 20.9 or newer.

@@ -67,6 +67,7 @@ import zh from "../messages/zh/imageStudio.json";
 import { resolveCopy } from "../i18nUtils";
 import { announceStudioMode } from "../benchmarksHelper.js";
 import StudioEmptyState from "./StudioEmptyState.jsx";
+import { Entrance } from "./motion/index.js";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -1403,9 +1404,12 @@ export default function ImageStudio({
       {/* ── CENTRAL GALLERY AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
         {history.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full pt-4 animate-fade-in-up">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full pt-4 oga-enter-fade">
             {history.map((entry, idx) => (
-              <div
+              <Entrance
+                once
+                variant="card"
+                index={idx}
                 key={entry.id || idx}
                 className="relative group rounded-lg overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col cursor-pointer"
                 onClick={() => setFullscreenUrl(entry.url)}
@@ -1512,11 +1516,11 @@ export default function ImageStudio({
                     </div>
                   </div>
                 </div>
-              </div>
+              </Entrance>
             ))}
           </div>
         ) : (
-          <div className="h-full w-full animate-fade-in-up">
+          <div className="h-full w-full">
             <StudioEmptyState heading={copy.emptyState.heading} accent={selectedModelDisplayName} subtitle={copy.emptyState.subtitle} starters={copy.emptyState.starters} onStarter={setPrompt} showcase="image" copy={copy.emptyState} />
           </div>
         )}

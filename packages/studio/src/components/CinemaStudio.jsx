@@ -852,7 +852,7 @@ export default function CinemaStudio({
       {/* ── CENTRAL GALLERY AREA ── */}
       <div className="flex-1 w-full max-w-7xl mx-auto overflow-y-auto custom-scrollbar pb-40 lg:pb-32 px-2">
         {history.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 animate-fade-in-up">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4 oga-enter-fade">
             {history.map((entry, idx) => (
               <div
                 key={entry.timestamp ?? idx}
@@ -1028,7 +1028,7 @@ export default function CinemaStudio({
             ))}
           </div>
         ) : (
-          <div className="h-full w-full animate-fade-in-up">
+          <div className="h-full w-full">
             <StudioEmptyState heading={copy.empty.kicker} accent={copy.empty.title} subtitle={copy.empty.description} starters={copy.empty.starters} onStarter={(prompt) => setSettings((prev) => ({ ...prev, prompt }))} showcase="image" copy={copy.empty} />
           </div>
         )}
@@ -1036,8 +1036,7 @@ export default function CinemaStudio({
 
       {/* ── BOTTOM PROMPT BAR ── */}
       <PromptComposer
-        positionClassName="absolute bottom-4 left-4 right-4 md:left-0 md:right-0 md:mx-auto md:max-w-[95%] lg:max-w-4xl z-30 transition-all duration-700 animate-fade-in-up"
-        style={null}
+        positionClassName="absolute bottom-4 left-4 right-4 md:left-0 md:right-0 md:mx-auto md:max-w-[95%] lg:max-w-4xl z-30 transition-all duration-700 oga-enter-bar"
       >
           {/* Upper Row: Image Upload & Textarea */}
           <div className="flex items-start gap-4 w-full px-1">

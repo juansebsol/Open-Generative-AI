@@ -603,7 +603,7 @@ function WorkflowStudioInner({
   return (
     <WorkflowContext.Provider value={contextValue}>
       <div ref={rootRef} className="relative flex h-full w-full overflow-hidden bg-[#030303] text-white">
-        <aside className="hidden w-72 shrink-0 border-r border-white/[0.06] lg:flex">
+        <aside className="oga-enter-fade hidden w-72 shrink-0 border-r border-white/[0.06] lg:flex">
           <WorkflowLibrary {...libraryProps} />
         </aside>
         {libraryOpen && (
@@ -615,7 +615,7 @@ function WorkflowStudioInner({
           </div>
         )}
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div style={{ "--i": 1 }} className="oga-enter-fade flex min-w-0 flex-1 flex-col">
           <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.06] bg-[#070708] px-3 py-2">
             <button type="button" className={`${TOOLBAR_BUTTON} lg:hidden`} onClick={() => setLibraryOpen(true)} aria-label={copy.toolbar.library}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">

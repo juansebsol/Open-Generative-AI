@@ -42,6 +42,7 @@ import {
 import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
 import ModelRailPicker from "./prompt/ModelRailPicker.jsx";
 import StudioEmptyState from "./StudioEmptyState.jsx";
+import { Entrance } from "./motion/index.js";
 import en from "../messages/en/vectorStudio.json";
 import zh from "../messages/zh/vectorStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -760,8 +761,8 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     </div>
   );
 
-  const card = (entry, { compact = false } = {}) => (
-    <div key={entry.id} data-vector-entry={entry.kind} className={`group relative aspect-square overflow-hidden rounded-2xl border bg-[#0e0e11] ${compareId === entry.id && isVectorize ? "border-primary/60" : "border-white/[0.08]"}`} onClick={() => entry.sourceUrl && setCompareId(entry.id)} role={entry.sourceUrl ? "button" : undefined} tabIndex={entry.sourceUrl ? 0 : undefined}>
+  const card = (entry, { compact = false, index = 0 } = {}) => (
+    <Entrance once variant="card" index={index} key={entry.id} data-vector-entry={entry.kind} className={`group relative aspect-square overflow-hidden rounded-2xl border bg-[#0e0e11] ${compareId === entry.id && isVectorize ? "border-primary/60" : "border-white/[0.08]"}`} onClick={() => entry.sourceUrl && setCompareId(entry.id)} role={entry.sourceUrl ? "button" : undefined} tabIndex={entry.sourceUrl ? 0 : undefined}>
       <Preview entry={entry} tone={tone} />
       {entry.kind === "raster" && <span className="absolute left-2 top-2 rounded-md bg-amber-400/90 px-1.5 py-0.5 text-[10px] font-semibold text-black" title={copy.vectorize.rasterNote}>{copy.gallery.raster}</span>}
       {entry.kind === "svg" && entry.chat && (
@@ -778,7 +779,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
       )}
       {compact && <div className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-[#09090b]/90 to-transparent px-2 pb-1.5 pt-6 text-[11px] text-white/85">{entry.name}</div>}
       {cardActions(entry)}
-    </div>
+    </Entrance>
   );
 
   // Vectorize: the image, the tracer and its knobs live in one panel in the
@@ -936,14 +937,14 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {library.pending.map((run) => (
-                    <div key={run.id} className="aspect-square rounded-2xl border border-white/[0.08] bg-[#0e0e11] flex flex-col items-center justify-center gap-3 text-center p-6">
+                    <Entrance once variant="card" key={run.id} className="aspect-square rounded-2xl border border-white/[0.08] bg-[#0e0e11] flex flex-col items-center justify-center gap-3 text-center p-6">
                       <span className="h-7 w-7 animate-spin rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
                       <div className="text-[14px] font-medium text-white/85">{fill(copy.gallery.pendingTitle, { model: run.label })}</div>
                       <div className="text-[12px] text-white/45">{run.total > 1 ? fill(copy.gallery.pendingProgress, { done: run.done, total: run.total }) : copy.gallery.pendingHint}</div>
-                    </div>
+                    </Entrance>
                   ))}
-                  {groups.map((group) => (group.type === "single" ? card(group.entry) : (
-                    <div key={group.setId} className="col-span-full rounded-2xl border border-white/[0.08] bg-[#0e0e11] p-3">
+                  {groups.map((group, groupIndex) => (group.type === "single" ? card(group.entry, { index: groupIndex }) : (
+                    <Entrance once variant="card" index={groupIndex} key={group.setId} className="col-span-full rounded-2xl border border-white/[0.08] bg-[#0e0e11] p-3">
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
                         <div className="min-w-0">
                           <div className="truncate text-[13px] font-medium text-white/90">{group.entries[0].setName || fill(copy.icons.set, { count: group.entries.length })}</div>
@@ -956,16 +957,16 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
                         </div>
                       </div>
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-                        {group.entries.map((entry) => card(entry, { compact: true }))}
+                        {group.entries.map((entry, index) => card(entry, { compact: true, index }))}
                       </div>
-                    </div>
+                    </Entrance>
                   )))}
                 </div>
               </>
             )}
           </div>
         ) : (
-          <div className="h-full w-full animate-fade-in-up">
+          <div className="h-full w-full">
             <StudioEmptyState heading={pageCopy.heading} accent={pageCopy.accent} subtitle={pageCopy.subtitle} starters={starters} onStarter={onStarter} showcase={null} />
           </div>
         )}
