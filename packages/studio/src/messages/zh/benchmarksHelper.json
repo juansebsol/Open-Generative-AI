@@ -1,14 +1,13 @@
 {
   "title": "{category}推荐",
-  "subtitle": "来自模型评测页，按你的密钥计价。",
   "reopen": "显示模型评测推荐",
   "close": "隐藏推荐",
-  "use": "使用",
   "useTitle": "在本页选择 {model}",
   "used": "已选择",
-  "seeAll": "查看全部",
-  "more": "更多",
   "less": "收起",
   "noneHint": "添加提供商密钥后即可查看价格和推荐。",
-  "pricing": "计价中…"
+  "pricing": "计价中…",
+  "eyebrow": "模型评测",
+  "showMore": "还有 {count} 个",
+  "openBenchmarks": "打开模型评测"
 }

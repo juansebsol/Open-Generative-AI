@@ -758,7 +758,7 @@ export default function StandaloneShell({ locale = 'en' }) {
           Top right, under the header: every studio keeps its prompt bar and
           the notification stack at the bottom, so the two never collide. */}
       {AVAILABLE_TAB_IDS.has('benchmarks') && !isMobileOpen && (
-        <div className="fixed right-4 top-[68px] z-[95] flex max-w-[calc(100vw-32px)] flex-col items-end" data-testid="benchmarks-helper">
+        <div data-testid="benchmarks-helper">
           <BenchmarksHelper tabId={activeTab} locale={locale} benchmarksPath={studioPath('benchmarks')} />
         </div>
       )}
