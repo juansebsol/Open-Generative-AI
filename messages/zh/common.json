@@ -49,9 +49,8 @@
     "providers": "服务提供商",
     "noProviderBanner": "添加服务商密钥即可开始生成",
     "search": "搜索工作室",
-    "keysCount": "{count} 个密钥",
-    "oneKey": "1 个密钥",
-    "addKey": "添加密钥"
+    "settingsConnected": "设置 · 已连接 {count} 个",
+    "settingsNoKey": "设置 · 尚未添加服务商密钥"
   },
   "notifications": {
     "generating": "正在生成",
@@ -64,11 +63,6 @@
     "ariaLabel": "生成活动与通知"
   },
   "providersModal": {
-    "title": "服务提供商",
-    "subtitle": "使用您自己的密钥。只要配置了提供该模型的服务商，模型就会出现。",
-    "privacy": "密钥只保存在此浏览器中。每次请求只会把所需的密钥发送到本站服务器，再转发给服务商，服务器不会存储或记录密钥。",
-    "cloudSection": "云端服务商",
-    "localSection": "本地引擎（在您的电脑上运行）",
     "localHint": "本地引擎由浏览器直接调用。Chrome 首次可能会请求允许访问本地网络。",
     "getKey": "获取密钥",
     "chatModel": "对话模型（可选）",
@@ -99,7 +93,6 @@
     "moveUp": "上移",
     "moveDown": "下移",
     "orderHint": "当多个服务商提供同一模型时，使用排在最前且已配置密钥的服务商。",
-    "done": "完成",
     "localSetup": {
       "useDefault": "使用 {url}",
       "testConnection": "测试连接",
@@ -129,17 +122,7 @@
     "balanceCharacters": "本周期剩余 {remaining} / {limit} 字符",
     "balanceUnavailable": "{provider} 不提供 API 密钥的余额信息，请在其控制台查看用量。",
     "viewUsage": "查看用量",
-    "spentMonth": "本月：{amount} · {runs}",
-    "spentMonthCharacters": "本月：{characters} 个字符 · {runs}",
-    "spentEstimated": "预估",
-    "spentNone": "本月尚无运行",
-    "spendHint": "花费由此浏览器根据每次运行的报价统计；若服务商返回实际费用则以其为准。最终以服务商账单为准。",
-    "spendReset": "重置花费",
-    "spendResetConfirm": "清除此浏览器中的花费统计？",
-    "runsOne": "1 次运行",
-    "runs": "{runs} 次运行",
     "library": {
-      "title": "素材库",
       "hint": "你创作的一切都保存在此浏览器中。素材库文件会把全部内容，包括每张图片、视频、音频、模型和矢量及其历史，打包成一个 .openstudio 文件，可以保存在任何地方，再导回这里或另一个浏览器。",
       "stats": "{files} 个文件 · 本浏览器中 {size}",
       "statsEmpty": "此浏览器中还没有保存内容",
@@ -162,18 +145,22 @@
       "importSkipped": "清单中有 {count} 个文件在压缩包里缺失。",
       "importFailed": "导入失败：{message}",
       "importHint": "导入只会添加此浏览器中没有的内容，不会删除任何东西。",
-      "pickFile": "选择 .openstudio 文件"
-    }
+      "pickFile": "选择 .openstudio 文件",
+      "storage": "此浏览器中",
+      "file": "素材库文件"
+    },
+    "apiKey": "API 密钥"
   },
   "palette": {
     "placeholder": "跳转到工作室或操作",
     "noResults": "没有匹配项",
     "open": "打开",
     "actions": "操作",
-    "openProviders": "打开服务提供商",
     "addKey": "添加服务商密钥",
     "exportLibrary": "导出素材库…",
-    "importLibrary": "导入素材库…"
+    "importLibrary": "导入素材库…",
+    "openSettings": "打开设置",
+    "language": "切换语言…"
   },
   "tabDescriptions": {
     "benchmarks": "按任务查看最佳、性价比最高与最便宜够用的模型及价格",
@@ -200,5 +187,95 @@
     "vector-logo": "由提示词生成可编辑的 SVG 徽标，支持品牌配色",
     "vector-icons": "一种风格生成多个图标，导出为雪碧图或压缩包",
     "vector-vectorize": "把 PNG、JPG 或 WebP 描摹成干净的 SVG"
+  },
+  "settings": {
+    "title": "设置",
+    "close": "关闭设置",
+    "footer": "这里的一切都只保存在此浏览器中。除每次运行所需的请求外，不会向任何地方发送数据。",
+    "status": {
+      "connected": "已连接 {count} 个",
+      "none": "尚无密钥"
+    },
+    "sections": {
+      "general": {
+        "label": "通用",
+        "description": "语言、快捷键与版本信息。"
+      },
+      "providers": {
+        "label": "服务提供商",
+        "description": "使用你自己的密钥。连接了能提供某个模型的服务商后，该模型即会出现。"
+      },
+      "local": {
+        "label": "本地引擎",
+        "description": "运行在你自己电脑上的引擎，由浏览器直接调用。"
+      },
+      "usage": {
+        "label": "用量",
+        "description": "本月此浏览器向各服务商发送的用量。"
+      },
+      "watermark": {
+        "label": "水印",
+        "description": "在任意结果上“添加水印”时使用的默认文字和 Logo。"
+      },
+      "library": {
+        "label": "素材库",
+        "description": "你创作的一切都保存在此浏览器中。可备份为一个文件，也可随时导回。"
+      }
+    },
+    "general": {
+      "interface": "界面",
+      "language": "语言",
+      "languageHint": "工作室将以所选语言在当前页面重新加载。",
+      "shortcuts": "键盘快捷键",
+      "shortcutPalette": "跳转到工作室或操作",
+      "shortcutClose": "关闭对话框或菜单",
+      "shortcutPick": "在列表中移动并选择",
+      "about": "关于",
+      "version": "Openstudio {version}",
+      "aboutHint": "开源、自托管，使用你自己的密钥。",
+      "github": "GitHub 源码",
+      "privacyTitle": "隐私",
+      "privacy": "密钥只保存在此浏览器中。每次请求只把所需的密钥发送到本站服务器，由其转发给服务商，不会存储或记录。"
+    },
+    "usage": {
+      "month": "本月",
+      "provider": "服务商",
+      "runs": "运行次数",
+      "spent": "花费",
+      "total": "合计",
+      "estimated": "部分为估算",
+      "characters": "{count} 个字符",
+      "empty": "本月尚无运行记录。",
+      "hint": "按每次运行的报价（或服务商返回的实际费用）在此浏览器中累计。以服务商的账单为准。",
+      "reset": "重置计数",
+      "resetConfirm": "清除此浏览器中的花费计数？"
+    },
+    "watermark": {
+      "preview": "水印预览",
+      "empty": "添加文字或 Logo 后在此预览。",
+      "defaults": "默认值",
+      "hint": "更改即保存。在结果上“添加水印”时以此为起点，仍可为单个文件单独调整。",
+      "reset": "恢复默认",
+      "text": "文字",
+      "textPlaceholder": "© 你的名字",
+      "logo": "Logo",
+      "logoHint": "带透明背景的 PNG 效果最好。只保存在此浏览器中。",
+      "uploadLogo": "上传 Logo",
+      "replaceLogo": "更换 Logo",
+      "removeLogo": "移除 Logo",
+      "position": "位置",
+      "positions": {
+        "bottom-right": "右下",
+        "bottom-left": "左下",
+        "top-right": "右上",
+        "top-left": "左上",
+        "center": "居中",
+        "tile": "平铺"
+      },
+      "size": "大小",
+      "sizeHint": "相对于较短边的比例。",
+      "opacity": "不透明度",
+      "color": "文字颜色"
+    }
   }
 }

@@ -23,3 +23,4 @@ export * from './generation.js';
 export * from './providers/index.js';
 export { isStudioAvailable } from './studioAvailability.js';
 export { exportLibrary, importLibrary, inspectLibrary, libraryStats, libraryFileName, formatBytes as formatLibraryBytes, LIBRARY_EXTENSION } from './library/libraryFile.js';
+export { DEFAULT_WATERMARK, WATERMARK_POSITIONS, drawWatermark, loadImage, loadWatermarkSettings, saveWatermarkSettings } from './watermark.js';

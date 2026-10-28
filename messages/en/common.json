@@ -49,9 +49,8 @@
     "providers": "Providers",
     "noProviderBanner": "Add a provider key to start generating",
     "search": "Search studios",
-    "keysCount": "{count} keys",
-    "oneKey": "1 key",
-    "addKey": "Add a key"
+    "settingsConnected": "Settings · {count} connected",
+    "settingsNoKey": "Settings · no provider key yet"
   },
   "notifications": {
     "generating": "is generating",
@@ -64,11 +63,6 @@
     "ariaLabel": "Generation activity and notifications"
   },
   "providersModal": {
-    "title": "Providers",
-    "subtitle": "Bring your own keys. Models appear as soon as a provider that serves them is set up.",
-    "privacy": "Keys stay in this browser. Each request sends only the key it needs to this site's server, which forwards it to the provider and never stores or logs it.",
-    "cloudSection": "Cloud providers",
-    "localSection": "Local engines (run on your computer)",
     "localHint": "Local engines are called straight from your browser. Chrome may ask to allow local network access the first time.",
     "getKey": "Get a key",
     "chatModel": "Chat model (optional)",
@@ -99,7 +93,6 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "orderHint": "When several providers serve the same model, the highest one with a key is used.",
-    "done": "Done",
     "localSetup": {
       "useDefault": "Use {url}",
       "testConnection": "Test connection",
@@ -129,17 +122,7 @@
     "balanceCharacters": "{remaining} of {limit} characters left this period",
     "balanceUnavailable": "{provider} doesn't report a balance for API keys. Check your usage on their dashboard.",
     "viewUsage": "View usage",
-    "spentMonth": "This month: {amount} · {runs}",
-    "spentMonthCharacters": "This month: {characters} characters · {runs}",
-    "spentEstimated": "estimated",
-    "spentNone": "No runs this month",
-    "spendHint": "Spend is counted in this browser from each run's price quote, or the provider's reported charge when it sends one. Your provider's bill is what counts.",
-    "spendReset": "Reset spend",
-    "spendResetConfirm": "Clear the spend counters in this browser?",
-    "runsOne": "1 run",
-    "runs": "{runs} runs",
     "library": {
-      "title": "Library",
       "hint": "Everything you make is saved in this browser. A library file packs all of it, every image, video, sound, model and vector with its history, into one .openstudio file you can keep anywhere and bring back here, or into another browser.",
       "stats": "{files} files · {size} in this browser",
       "statsEmpty": "Nothing saved in this browser yet",
@@ -162,18 +145,22 @@
       "importSkipped": "{count} files in the manifest were missing from the archive.",
       "importFailed": "Import failed: {message}",
       "importHint": "Importing adds what the file has that this browser does not. Nothing here is deleted.",
-      "pickFile": "Choose a .openstudio file"
-    }
+      "pickFile": "Choose a .openstudio file",
+      "storage": "In this browser",
+      "file": "Library file"
+    },
+    "apiKey": "API key"
   },
   "palette": {
     "placeholder": "Jump to a studio or action",
     "noResults": "Nothing matches",
     "open": "Open",
     "actions": "Actions",
-    "openProviders": "Open providers",
     "addKey": "Add a provider key",
     "exportLibrary": "Export library…",
-    "importLibrary": "Import library…"
+    "importLibrary": "Import library…",
+    "openSettings": "Open settings",
+    "language": "Change language…"
   },
   "tabDescriptions": {
     "benchmarks": "Best, best-value and cheapest-decent models per task, with prices",
@@ -200,5 +187,95 @@
     "vector-logo": "Editable SVG logo marks from a prompt, with brand palettes",
     "vector-icons": "One style, many icons, exported as a sprite or zip",
     "vector-vectorize": "Trace a PNG, JPG or WebP into a clean SVG"
+  },
+  "settings": {
+    "title": "Settings",
+    "close": "Close settings",
+    "footer": "Everything here stays in this browser. Nothing is sent anywhere except the request each run needs.",
+    "status": {
+      "connected": "{count} connected",
+      "none": "No key yet"
+    },
+    "sections": {
+      "general": {
+        "label": "General",
+        "description": "Language, shortcuts and this build."
+      },
+      "providers": {
+        "label": "Providers",
+        "description": "Bring your own keys. A model appears as soon as a provider that serves it is connected."
+      },
+      "local": {
+        "label": "Local engines",
+        "description": "Engines running on your own computer, called straight from the browser."
+      },
+      "usage": {
+        "label": "Usage",
+        "description": "What this browser has sent to each provider this month."
+      },
+      "watermark": {
+        "label": "Watermark",
+        "description": "The default text and logo that Add watermark starts from on any result."
+      },
+      "library": {
+        "label": "Library",
+        "description": "Everything you make stays in this browser. Back it up as one file, or bring one back."
+      }
+    },
+    "general": {
+      "interface": "Interface",
+      "language": "Language",
+      "languageHint": "The studio reloads in the chosen language, on the page you are on.",
+      "shortcuts": "Keyboard shortcuts",
+      "shortcutPalette": "Jump to a studio or action",
+      "shortcutClose": "Close a dialog or menu",
+      "shortcutPick": "Move through a list and pick",
+      "about": "About",
+      "version": "Openstudio {version}",
+      "aboutHint": "Open source, self-hosted, bring your own keys.",
+      "github": "Source on GitHub",
+      "privacyTitle": "Privacy",
+      "privacy": "Keys stay in this browser. Each request sends only the key it needs to this site's server, which forwards it to the provider and never stores or logs it."
+    },
+    "usage": {
+      "month": "This month",
+      "provider": "Provider",
+      "runs": "Runs",
+      "spent": "Spent",
+      "total": "Total",
+      "estimated": "some estimated",
+      "characters": "{count} characters",
+      "empty": "No runs this month.",
+      "hint": "Counted in this browser from each run's price quote, or the provider's reported charge when it sends one. Your provider's bill is what counts.",
+      "reset": "Reset counters",
+      "resetConfirm": "Clear the spend counters in this browser?"
+    },
+    "watermark": {
+      "preview": "Watermark preview",
+      "empty": "Add text or a logo to see it here.",
+      "defaults": "Defaults",
+      "hint": "Saved as you change them. Add watermark on a result starts from these and can still change them for that one file.",
+      "reset": "Reset to defaults",
+      "text": "Text",
+      "textPlaceholder": "© Your name",
+      "logo": "Logo",
+      "logoHint": "PNG with transparency works best. Kept in this browser.",
+      "uploadLogo": "Upload logo",
+      "replaceLogo": "Replace logo",
+      "removeLogo": "Remove logo",
+      "position": "Position",
+      "positions": {
+        "bottom-right": "Bottom right",
+        "bottom-left": "Bottom left",
+        "top-right": "Top right",
+        "top-left": "Top left",
+        "center": "Center",
+        "tile": "Tiled across"
+      },
+      "size": "Size",
+      "sizeHint": "As a share of the shorter side.",
+      "opacity": "Opacity",
+      "color": "Text color"
+    }
   }
 }

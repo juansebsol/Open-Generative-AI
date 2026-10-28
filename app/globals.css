@@ -55,6 +55,10 @@ code, kbd, pre, .font-mono {
   scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
 
+/* No scrollbar at all: the Settings section strip on a phone. */
+.oga-scroll-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.oga-scroll-hide::-webkit-scrollbar { display: none; }
+
 /* Showcase wall in the studio empty states */
 @keyframes oga-drift-up { to { transform: translateY(-50%); } }
 @keyframes oga-drift-down { from { transform: translateY(-50%); } to { transform: translateY(0); } }

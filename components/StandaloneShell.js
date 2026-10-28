@@ -7,9 +7,9 @@ import {
   PROVIDERS, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
-  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen
+  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconLanguage, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen
 } from '@tabler/icons-react';
-import ProvidersModal from './ProvidersModal';
+import SettingsDialog from './settings/SettingsDialog';
 import CommandPalette from './CommandPalette';
 import Logo from './Logo';
 import { getCommonCopy, getLocaleConfig, localizeStudioPath } from '@/lib/locales';
@@ -138,8 +138,10 @@ export default function StandaloneShell({ locale = 'en' }) {
   const [providerCount, setProviderCount] = useState(0);
   const [activeTab, setActiveTab] = useState(getInitialTab());
 
-  const [showSettings, setShowSettings] = useState(false);
-  const [libraryAction, setLibraryAction] = useState(null); // 'export' | 'import', from the palette
+  // The Settings dialog: which section it opens on and, for the library,
+  // an action to start right away ('export' | 'import').
+  const [settingsOpen, setSettingsOpen] = useState(null); // { section, action } | null
+  const openSettings = useCallback((section = 'general', action = null) => setSettingsOpen({ section, action }), []);
   const [hasMounted, setHasMounted] = useState(false);
 
   // Top navigation: one open category menu at a time, a mobile sheet, the palette.
@@ -326,11 +328,12 @@ export default function StandaloneShell({ locale = 'en' }) {
       hint: copy.palette.open,
       onSelect: () => handleTabChange(tabId),
     }))),
-    { id: 'providers', group: copy.palette.actions, label: copy.palette.openProviders, icon: IconSettings, onSelect: () => setShowSettings(true) },
-    { id: 'add-key', group: copy.palette.actions, label: copy.palette.addKey, icon: IconKey, onSelect: () => setShowSettings(true) },
-    { id: 'export-library', group: copy.palette.actions, label: copy.palette.exportLibrary, icon: IconDownload, onSelect: () => { setLibraryAction('export'); setShowSettings(true); } },
-    { id: 'import-library', group: copy.palette.actions, label: copy.palette.importLibrary, icon: IconFolderOpen, onSelect: () => { setLibraryAction('import'); setShowSettings(true); } },
-  ], [categoryLabel, copy.palette, handleTabChange, tabDescription, tabLabel]);
+    { id: 'settings', group: copy.palette.actions, label: copy.palette.openSettings, icon: IconSettings, onSelect: () => openSettings('general') },
+    { id: 'add-key', group: copy.palette.actions, label: copy.palette.addKey, icon: IconKey, onSelect: () => openSettings('providers') },
+    { id: 'language', group: copy.palette.actions, label: copy.palette.language, icon: IconLanguage, onSelect: () => openSettings('general') },
+    { id: 'export-library', group: copy.palette.actions, label: copy.palette.exportLibrary, icon: IconDownload, onSelect: () => openSettings('library', 'export') },
+    { id: 'import-library', group: copy.palette.actions, label: copy.palette.importLibrary, icon: IconFolderOpen, onSelect: () => openSettings('library', 'import') },
+  ], [categoryLabel, copy.palette, handleTabChange, openSettings, tabDescription, tabLabel]);
 
   // Generated media is saved in this browser and served by a service worker.
   useEffect(() => {
@@ -348,15 +351,15 @@ export default function StandaloneShell({ locale = 'en' }) {
       setProviderCount(countConfiguredProviders());
     };
     sync();
-    if (!hasAnyProvider()) setShowSettings(true);
+    if (!hasAnyProvider()) openSettings('providers');
     const unsubscribe = subscribeProviderSettings(sync);
-    const openSettings = () => setShowSettings(true);
-    window.addEventListener('oga:provider-setup-needed', openSettings);
+    const openProviders = () => openSettings('providers');
+    window.addEventListener('oga:provider-setup-needed', openProviders);
     return () => {
       unsubscribe();
-      window.removeEventListener('oga:provider-setup-needed', openSettings);
+      window.removeEventListener('oga:provider-setup-needed', openProviders);
     };
-  }, []);
+  }, [openSettings]);
 
   // Studios hand work to each other (a 3D result sent to Retexture) by
   // asking the shell to open a tab.
@@ -439,9 +442,9 @@ export default function StandaloneShell({ locale = 'en' }) {
     );
   };
 
-  const keysLabel = providerCount === 0
-    ? copy.shell.addKey
-    : providerCount === 1 ? copy.shell.oneKey : copy.shell.keysCount.replace('{count}', providerCount);
+  const settingsLabel = hasProvider
+    ? copy.shell.settingsConnected.replace('{count}', providerCount)
+    : copy.shell.settingsNoKey;
 
   return (
     <div
@@ -548,15 +551,22 @@ export default function StandaloneShell({ locale = 'en' }) {
             <span className="hidden flex-1 text-left sm:inline">{copy.shell.search}</span>
             <kbd className="hidden rounded-[5px] border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[11px] text-white/35 sm:inline">⌘K</kbd>
           </button>
+          {/* Settings: a gear with a status dot, green once a provider is
+              connected, red until then. */}
           <button
             type="button"
-            onClick={() => setShowSettings(true)}
-            className={`flex h-[34px] items-center gap-2 rounded-[10px] border px-3 text-[13px] font-medium transition-colors ${hasProvider ? 'border-white/[0.07] text-white/60 hover:border-white/[0.12] hover:text-white' : 'border-amber-400/30 bg-amber-400/10 text-amber-200 hover:bg-amber-400/15'}`}
-            aria-label={copy.shell.providers}
+            onClick={() => openSettings(hasProvider ? 'general' : 'providers')}
+            className={`relative flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border transition-colors ${hasProvider ? 'border-white/[0.07] bg-white/[0.03] text-white/60 hover:border-white/[0.12] hover:text-white' : 'border-red-500/30 bg-red-500/10 text-red-200 hover:bg-red-500/15 hover:text-white'}`}
+            aria-label={settingsLabel}
+            title={settingsLabel}
+            data-settings-button
+            data-settings-status={hasProvider ? 'connected' : 'none'}
           >
-            <span className={`h-[7px] w-[7px] rounded-full ${hasProvider ? 'bg-emerald-400' : 'bg-amber-400'}`} aria-hidden="true" />
-            <span className="hidden sm:inline">{keysLabel}</span>
-            <IconChevronDown size={14} stroke={1.75} className="hidden text-white/35 sm:inline" aria-hidden="true" />
+            <IconSettings size={17} stroke={1.75} aria-hidden="true" />
+            <span className="absolute -right-[3px] -top-[3px] flex h-[11px] w-[11px]" aria-hidden="true">
+              {!hasProvider && <span className="absolute inset-0 animate-ping rounded-full bg-red-500/60" />}
+              <span className={`relative h-full w-full rounded-full ring-2 ring-panel-bg ${hasProvider ? 'bg-emerald-400' : 'bg-red-500'}`} />
+            </span>
           </button>
         </div>
       </header>
@@ -782,7 +792,15 @@ export default function StandaloneShell({ locale = 'en' }) {
       `}</style>
 
       <CommandPalette open={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} items={paletteItems} copy={copy.palette} />
-      {showSettings && <ProvidersModal locale={locale} libraryAction={libraryAction} onClose={() => { setShowSettings(false); setLibraryAction(null); }} />}
+      {settingsOpen && (
+        <SettingsDialog
+          locale={locale}
+          section={settingsOpen.section}
+          libraryAction={settingsOpen.action}
+          languagePath={(code) => localizeStudioPath(code, activeTab)}
+          onClose={() => setSettingsOpen(null)}
+        />
+      )}
     </div>
   );
 }
