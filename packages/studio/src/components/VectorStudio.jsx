@@ -40,7 +40,7 @@ import {
   promptMediaButtonClassName,
 } from "./prompt/PromptComposer.jsx";
 import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
-import ModelCardPicker from "./prompt/ModelCardPicker.jsx";
+import ModelRailPicker from "./prompt/ModelRailPicker.jsx";
 import StudioEmptyState from "./StudioEmptyState.jsx";
 import en from "../messages/en/vectorStudio.json";
 import zh from "../messages/zh/vectorStudio.json";
@@ -713,12 +713,12 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
       : isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(selectedModel || {}) } : { ...options, ...(selectedModel?.candidates === "num_images" ? { num_images: candidates } : {}) };
   const priceRuns = isIcons ? Math.max(1, iconCount) : selectedModel?.candidates === "runs" ? candidates : 1;
   const pickerPayload = (model) => (model.kind === "chat" ? chatPayload() : isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(model) } : { ...options, ...(model.candidates === "num_images" ? { num_images: candidates } : {}) });
-  // The card picker's groups: models drawn by a vector model, and chat
-  // models writing the markup. Scores and picks come from the Benchmarks
-  // "vector" category, prices from the same payload the chip quotes.
+  // The rail picker's groups: models drawn by a vector model (cyan) and
+  // chat models writing the markup (violet). The Elo on each row comes from
+  // the Benchmarks "vector" category, prices from the chip's own payload.
   const pickerGroups = useMemo(() => [
-    { id: "vector", label: copy.picker.vectorGroup, hint: copy.picker.vectorHint, models: models.filter((model) => model.kind !== "chat") },
-    { id: "chat", label: copy.picker.chatGroup, hint: copy.picker.chatHint, models: models.filter((model) => model.kind === "chat") },
+    { id: "vector", label: copy.picker.vectorSection, railLabel: copy.picker.vectorRail, tone: "cyan", mono: "VM", models: models.filter((model) => model.kind !== "chat") },
+    { id: "chat", label: copy.picker.chatSection, railLabel: copy.picker.chatRail, tone: "violet", mono: "AI", models: models.filter((model) => model.kind === "chat") },
   ].filter((group) => group.models.length > 0), [models, copy.picker]);
   const toggle = (id) => setOpenDropdown(openDropdown === id ? null : id);
   const actionLabel = isIcons ? fill(copy.icons.generate, { count: number(iconCount, locale) }) : isVectorize ? copy.vectorize.apply : copy.buttons.generate;
@@ -1038,7 +1038,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
                   <span className={PROMPT_CONTROL_LABEL_CLASS}>{selectedModel?.name}</span>
                   <PromptChevronIcon />
                 </button>
-                <ModelCardPicker
+                <ModelRailPicker
                   open={openDropdown === "model"}
                   onClose={() => setOpenDropdown(null)}
                   groups={pickerGroups}
@@ -1046,9 +1046,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
                   onSelect={(model) => setModelId(model.id)}
                   pricePayload={pickerPayload}
                   benchmarksCategory="vector"
-                  allHint={copy.picker.allHint}
                   locale={locale}
-                  benchmarksPath={locale === "en" ? "/studio/benchmarks" : `/${locale}/studio/benchmarks`}
                 />
               </div>
             )}

@@ -1,13 +1,12 @@
 {
   "label": "Model",
   "all": "All",
-  "search": "Search",
+  "searchPlaceholder": "Search models…",
   "searchTitle": "Filter models by name or provider",
-  "noMatch": "No model matches “{query}”.",
+  "noModelsFound": "No models found",
   "unscored": "Unscored",
   "elo": "{score} Elo",
   "scoreTitle": "{score} Elo on {source}, read {date}.",
   "unscoredTitle": "This model is on no public leaderboard.",
-  "openBenchmarks": "Open Benchmarks",
-  "selected": "Selected"
+  "rail": "Filter by kind or vendor"
 }

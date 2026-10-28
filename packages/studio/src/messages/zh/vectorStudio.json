@@ -65,11 +65,10 @@
     "removeReference": "移除参考图"
   },
   "picker": {
-    "vectorGroup": "矢量模型",
-    "chatGroup": "对话模型",
-    "allHint": "矢量模型擅长更丰富的插画；对话模型为图标、几何标志和字标写出更干净的路径，价格只是零头。",
-    "vectorHint": "矢量模型负责“画”：更丰富的插画、明暗和分层 SVG。想要更便宜、更干净的路径，请切换到对话模型。",
-    "chatHint": "对话模型把 SVG 当代码来写：为图标、几何标志和字标生成干净的路径，价格只是零头。想要更丰富的插画，请切换到矢量模型。"
+    "vectorRail": "矢量模型",
+    "chatRail": "对话模型",
+    "vectorSection": "由矢量模型绘制",
+    "chatSection": "由对话模型编写"
   },
   "palette": {
     "title": "品牌配色",

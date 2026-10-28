@@ -65,11 +65,10 @@
     "removeReference": "Remove reference"
   },
   "picker": {
-    "vectorGroup": "Vector models",
-    "chatGroup": "Chat models",
-    "allHint": "Vector models draw richer illustration; chat models write cleaner paths for icons, geometric marks and wordmarks at a fraction of the price.",
-    "vectorHint": "Vector models draw the picture: richer illustration, shading and layered SVGs. Switch to Chat models for cheaper, cleaner paths.",
-    "chatHint": "Chat models write the SVG as code: clean paths for icons, geometric marks and wordmarks at a fraction of the price. Switch to Vector models for richer illustration."
+    "vectorRail": "Vector models",
+    "chatRail": "Chat models",
+    "vectorSection": "Drawn by a vector model",
+    "chatSection": "Written by a chat model"
   },
   "palette": {
     "title": "Brand palette",
