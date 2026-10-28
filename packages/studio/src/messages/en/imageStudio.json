@@ -33,7 +33,10 @@
     "deleteConfirm": "Are you sure you want to delete this generated item?",
     "noPrompt": "No prompt provided",
     "modelFallback": "Image Studio",
-    "watermark": "Watermark"
+    "watermark": "Watermark",
+    "resolution": "Resolution",
+    "cost": "Estimated cost of this run",
+    "created": "Created"
   },
   "emptyState": {
     "heading": "Start creating with",
@@ -76,7 +79,8 @@
     "generationFailed": "Image generation failed"
   },
   "fullscreen": {
-    "previewAlt": "Fullscreen Preview"
+    "previewAlt": "Fullscreen Preview",
+    "close": "Close"
   },
   "watermark": {
     "title": "Add watermark",

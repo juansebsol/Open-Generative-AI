@@ -151,7 +151,12 @@
     "raster": "PNG",
     "chat": "代码生成",
     "chatNote": "由语言模型编写的 SVG 标记。用“微调”一句话修改它。",
-    "fromImage": "矢量化图片"
+    "fromImage": "矢量化图片",
+    "vendor": "供应商",
+    "size": "画布尺寸",
+    "weight": "文件大小",
+    "cost": "本结果的预估费用",
+    "created": "创建时间"
   },
   "confirm": {
     "deleteItem": "从素材库删除这个结果？",

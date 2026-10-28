@@ -151,7 +151,12 @@
     "raster": "PNG",
     "chat": "Code-written",
     "chatNote": "SVG markup written by a language model. Use Refine to change it with a sentence.",
-    "fromImage": "Vectorized image"
+    "fromImage": "Vectorized image",
+    "vendor": "Provider",
+    "size": "Canvas size",
+    "weight": "File size",
+    "cost": "Estimated cost of this result",
+    "created": "Created"
   },
   "confirm": {
     "deleteItem": "Delete this result from the library?",

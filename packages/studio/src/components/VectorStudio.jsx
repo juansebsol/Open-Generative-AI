@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
-  IconAdjustments, IconArrowsExchange, IconDownload, IconFileExport, IconFileZip, IconMaximize, IconMoon, IconPalette, IconPhotoPlus,
+  IconAdjustments, IconArrowsExchange, IconDownload, IconFileExport, IconFileZip, IconMoon, IconPalette, IconPhotoPlus,
   IconPhotoUp, IconSun, IconSvg, IconTrash, IconUpload, IconWand, IconX,
 } from "@tabler/icons-react";
 import { generateVector, uploadFile } from "../generation.js";
@@ -15,7 +15,7 @@ import { getProvider } from "../providers/directProviders.js";
 import { subscribeProviderSettings } from "../providers/keys.js";
 import { fetchMediaBlob, saveLocalBlob } from "../providers/mediaStore.js";
 import { addEntry, addPending, getEmptyLibrary, getLibrary, removeEntry, removePending, removeSet, sendToVector, subscribeLibrary, takeHandoff, updatePending } from "../vectorLibrary.js";
-import { sanitizeSvg } from "../vector/svgSanitize.js";
+import { sanitizeSvg, svgDimensions } from "../vector/svgSanitize.js";
 import { buildSprite, iconFileName } from "../vector/svgSprite.js";
 import { planIconSet, MAX_ICONS } from "../vector/iconSetPlanner.js";
 import { optimizeSvg, optimizeStats } from "../vector/svgOptimize.js";
@@ -48,6 +48,9 @@ import zh from "../messages/zh/vectorStudio.json";
 import { resolveCopy } from "../i18nUtils";
 import { defaultModelId } from "../benchmarks.js";
 import { useEditorsPickPreselect } from "./benchmarks/shared.jsx";
+import { GenerationCopyButtons } from "./MobileGenerationActions.jsx";
+import { quoteRun } from "../providers/pricing.js";
+import { LibraryActions, LibraryDetails, Lightbox, formatCost, formatSize, formatWhen } from "./library/LibraryKit.jsx";
 
 // Three pages share this component, like the 3D pages share ThreeDStudio:
 // Text to Logo and Icon Set generate SVGs from a prompt (Recraft and
@@ -141,12 +144,113 @@ function SvgView({ url, svg, className = "" }) {
   return <div className={`oga-svg-fit ${className}`} dangerouslySetInnerHTML={{ __html: markup }} />;
 }
 
-function Preview({ entry, tone, className = "" }) {
+// Whether a result has see-through pixels: its thumbnail (a PNG of the
+// SVG, or the raster itself) is drawn small and its edges sampled. Results
+// with a solid background are shown plain, like Image Studio shows images;
+// only transparent ones get the checkerboard, so you can tell.
+const transparencyCache = new Map();
+async function readTransparency(url) {
+  const blob = await fetchMediaBlob(url);
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error("Could not decode the thumbnail."));
+      element.src = objectUrl;
+    });
+    const size = 48;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    context.drawImage(image, 0, 0, size, size);
+    const pixels = context.getImageData(0, 0, size, size).data;
+    let clear = 0;
+    let sampled = 0;
+    for (let y = 0; y < size; y += 1) {
+      for (let x = 0; x < size; x += 1) {
+        const edge = x < 3 || y < 3 || x >= size - 3 || y >= size - 3;
+        if (!edge && (x + y) % 7 !== 0) continue;
+        sampled += 1;
+        if (pixels[(y * size + x) * 4 + 3] < 250) clear += 1;
+      }
+    }
+    return clear / Math.max(1, sampled) > 0.02;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+function useTransparency(entry) {
+  const url = entry?.thumbnail || entry?.url || null;
+  const [transparent, setTransparent] = useState(() => (url && transparencyCache.has(url) ? transparencyCache.get(url) : null));
+  useEffect(() => {
+    if (!url) return undefined;
+    if (transparencyCache.has(url)) {
+      setTransparent(transparencyCache.get(url));
+      return undefined;
+    }
+    let cancelled = false;
+    readTransparency(url)
+      .catch(() => false)
+      .then((value) => {
+        transparencyCache.set(url, value);
+        if (!cancelled) setTransparent(value);
+      });
+    return () => { cancelled = true; };
+  }, [url]);
+  return transparent;
+}
+
+function Preview({ entry, tone, className = "", fit = "contain" }) {
+  const transparent = useTransparency(entry);
+  // Solid results fill the frame edge to edge; transparent ones sit on the
+  // checkerboard with a little room, the way a logo is usually shown.
+  const style = transparent ? CHECKER[tone] : { backgroundColor: tone === "dark" ? "#0a0a0a" : "#ffffff" };
   if (entry.kind === "raster") {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={entry.url} alt="" className={`h-full w-full object-contain ${className}`} style={CHECKER[tone]} />;
+    return <img src={entry.url} alt="" className={`h-full w-full ${fit === "cover" && !transparent ? "object-cover" : "object-contain"} ${transparent ? "p-[4%]" : ""} ${className}`} style={style} />;
   }
-  return <div className={`h-full w-full p-[6%] ${className}`} style={CHECKER[tone]}><SvgView url={entry.url} className="h-full w-full" /></div>;
+  return <div className={`h-full w-full ${transparent ? "p-[6%]" : ""} ${className}`} style={style}><SvgView url={entry.url} className="h-full w-full" /></div>;
+}
+
+// Size and weight of a result, for the card's details strip.
+function useVectorFacts(entry) {
+  const svg = useSvgText(entry?.kind === "svg" ? entry.url : null);
+  return useMemo(() => {
+    if (!entry) return null;
+    if (entry.kind === "svg") {
+      if (!svg) return { size: null, bytes: entry.bytes || svg?.length || null };
+      const { viewBox, width, height } = svgDimensions(svg);
+      return { size: formatSize(width || viewBox[2], height || viewBox[3]), bytes: entry.bytes || svg.length };
+    }
+    return { size: null, bytes: entry.bytes || null };
+  }, [entry, svg]);
+}
+
+function VectorDetails({ entry, copy, locale, facts, trailing }) {
+  const dims = useVectorFacts(entry);
+  return (
+    <LibraryDetails
+      prompt={entry.refinement ? `${copy.refine.badge} · ${entry.refinement}` : entry.prompt || entry.name}
+      fallback={copy.gallery.fromImage}
+      model={entry.modelName}
+      facts={facts(entry, dims)}
+      trailing={trailing}
+    />
+  );
+}
+
+function VectorCaption({ entry, copy, locale, facts }) {
+  const dims = useVectorFacts(entry);
+  const values = facts(entry, dims).filter((fact) => fact && fact.value).map((fact) => fact.value);
+  const text = entry.refinement || entry.prompt || entry.name;
+  return (
+    <>
+      {text && <span className="line-clamp-2 text-white/80">{text}</span>}
+      <span className="mt-1 block text-white/45">{[entry.modelName, ...values].filter(Boolean).join(" · ")}</span>
+    </>
+  );
 }
 
 function ToneToggle({ tone, onChange, copy }) {
@@ -498,10 +602,20 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
   // { payload, meta } for a provider endpoint or { chat, meta } for a chat
   // model writing the SVG (chat = runSvgChat's input, sanitised server-side
   // and again here before it is filed).
-  const runJobs = async ({ jobs, label, promptText, concurrency }) => {
+  const runJobs = async ({ jobs, label, promptText, concurrency, cost = null }) => {
     const runId = newId();
     addPending({ id: runId, label, prompt: promptText, done: 0, total: jobs.length });
     onGenerationStart?.();
+    // What one file is expected to cost, kept on the entry for the library.
+    const costQuote = cost
+      ? quoteRun(cost.endpoint, cost.payload)
+        .then((quote) => {
+          if (quote?.kind === "free") return { amount: 0 };
+          if (typeof quote?.amount !== "number") return null;
+          return { amount: Math.round((quote.amount / Math.max(1, cost.files || 1)) * 10000) / 10000, currency: quote.currency || "USD" };
+        })
+        .catch(() => null)
+      : Promise.resolve(null);
     const errors = [];
     const made = [];
     let done = 0;
@@ -520,8 +634,9 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
             if (outputs.length === 0) throw new Error(copy.errors.noOutput);
             for (const output of outputs) files.push(await materialize(output));
           }
+          const fileCost = await costQuote;
           for (const file of files) {
-            const entry = { id: newId(), ...file, ...job.meta, timestamp: new Date().toISOString() };
+            const entry = { id: newId(), ...file, ...job.meta, cost: fileCost, timestamp: new Date().toISOString() };
             addEntry(entry);
             made.push(entry);
           }
@@ -558,7 +673,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
       // One call per candidate: the model writes a whole SVG each time.
       const chat = { model: selectedModel.id, prompt: text, page: "logo", palette: paletteSummary };
       const meta = { page: "logo", prompt: text, name: "", ...modelMeta(selectedModel), setId: null, palette: paletteSummary };
-      return runJobs({ jobs: Array.from({ length: candidates }, () => ({ chat, meta })), label: selectedModel.name, promptText: text, concurrency: LOGO_CONCURRENCY });
+      return runJobs({ jobs: Array.from({ length: candidates }, () => ({ chat, meta })), label: selectedModel.name, promptText: text, concurrency: LOGO_CONCURRENCY, cost: { endpoint: selectedModel.endpoint, payload: pricePayload } });
     }
     const words = selectedModel.palette ? "" : paletteToPromptWords(palette);
     const payload = { model: selectedModel.id, prompt: words ? `${text}, ${words}` : text, ...options, ...(selectedModel.palette ? paletteToRecraft(palette) : {}) };
@@ -566,7 +681,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     const runs = selectedModel.candidates === "runs" ? candidates : 1;
     if (selectedModel.candidates === "num_images") payload.num_images = candidates;
     const meta = { page: "logo", prompt: text, name: "", ...modelMeta(selectedModel), setId: null };
-    return runJobs({ jobs: Array.from({ length: runs }, () => ({ payload, meta })), label: selectedModel.name, promptText: text, concurrency: LOGO_CONCURRENCY });
+    return runJobs({ jobs: Array.from({ length: runs }, () => ({ payload, meta })), label: selectedModel.name, promptText: text, concurrency: LOGO_CONCURRENCY, cost: { endpoint: selectedModel.endpoint, payload: pricePayload, files: payload.num_images || 1 } });
   };
 
   const generateIcons = async () => {
@@ -584,7 +699,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
         chat: { model: selectedModel.id, prompt: run.prompt, page: "icons", palette: paletteSummary },
         meta: { page: "icons", prompt: run.prompt, name: run.name, ...modelMeta(selectedModel), setId, setName, palette: paletteSummary },
       }));
-      return runJobs({ jobs, label: selectedModel.name, promptText: prompt.trim(), concurrency: ICON_CONCURRENCY });
+      return runJobs({ jobs, label: selectedModel.name, promptText: prompt.trim(), concurrency: ICON_CONCURRENCY, cost: { endpoint: selectedModel.endpoint, payload: pricePayload } });
     }
     const shape = selectedModel.candidates === "num_images" ? { aspect_ratio: "1:1", num_images: 1 } : { image_size: "square_hd" };
     const paletteInput = selectedModel.palette ? paletteToRecraft(palette) : {};
@@ -592,14 +707,14 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
       payload: { model: selectedModel.id, prompt: run.prompt, ...(options.quality ? { quality: options.quality } : {}), ...shape, ...paletteInput },
       meta: { page: "icons", prompt: run.prompt, name: run.name, ...modelMeta(selectedModel), setId, setName },
     }));
-    return runJobs({ jobs, label: selectedModel.name, promptText: prompt.trim(), concurrency: ICON_CONCURRENCY });
+    return runJobs({ jobs, label: selectedModel.name, promptText: prompt.trim(), concurrency: ICON_CONCURRENCY, cost: { endpoint: selectedModel.endpoint, payload: jobs[0]?.payload || pricePayload } });
   };
 
   const generateVectorize = async () => {
     if (!source) return toast.error(copy.errors.needImage);
     const payload = { model: selectedModel.id, image_url: source.url, ...options };
     const meta = { page: "vectorize", prompt: selectedModel.name, name: source.name || "", ...modelMeta(selectedModel), setId: null, sourceUrl: source.url, sourceName: source.name || "", sourceId: source.fromId || null };
-    const made = await runJobs({ jobs: [{ payload, meta }], label: selectedModel.name, promptText: source.name || "", concurrency: 1 });
+    const made = await runJobs({ jobs: [{ payload, meta }], label: selectedModel.name, promptText: source.name || "", concurrency: 1, cost: { endpoint: selectedModel.endpoint, payload: pricePayload } });
     if (made[0]) setCompareId(made[0].id);
   };
 
@@ -634,7 +749,7 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     setRefining(null);
     const meta = { page: entry.page, prompt: entry.prompt, name: entry.name || "", ...modelMeta(model), setId: null, palette: entry.palette || null, parentId: entry.id, refinement: instruction };
     const chat = { model: model.id, page: entry.page === "icons" ? "icons" : "logo", palette: entry.palette || null, refine: { svg, instruction } };
-    await runJobs({ jobs: [{ chat, meta }], label: model.name, promptText: instruction, concurrency: 1 });
+    await runJobs({ jobs: [{ chat, meta }], label: model.name, promptText: instruction, concurrency: 1, cost: { endpoint: model.endpoint, payload: { num_images: 1, prompt_characters: Math.ceil(instruction.length / 100) * 100, source_characters: Math.ceil(svg.length / 500) * 500 } } });
   };
 
   // Library actions
@@ -746,24 +861,32 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
     </span>
   );
 
-  const cardActions = (entry) => (
-    <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-      {entry.kind === "raster" && (
-        <button type="button" onClick={() => sendToVectorize(entry)} className="flex h-8 items-center gap-1.5 rounded-lg bg-primary px-2.5 text-[12px] font-semibold text-[#04202a] hover:brightness-110"><IconArrowsExchange size={14} stroke={1.75} aria-hidden="true" />{copy.vectorize.sendHere}</button>
-      )}
-      {entry.kind === "svg" && refineModelFor(entry) && (
-        <button type="button" title={copy.refine.hint} onClick={() => openRefine(entry)} data-vector-refine-action className="flex h-8 items-center gap-1.5 rounded-lg bg-primary px-2.5 text-[12px] font-semibold text-[#04202a] hover:brightness-110"><IconWand size={14} stroke={1.75} aria-hidden="true" />{copy.refine.action}</button>
-      )}
-      <button type="button" title={copy.buttons.export} aria-label={copy.buttons.export} onClick={() => setExporting(entry)} className="flex h-8 items-center gap-1.5 rounded-lg bg-black/60 px-2.5 text-[12px] font-medium text-white hover:bg-white/20"><IconFileExport size={14} stroke={1.75} aria-hidden="true" />{copy.buttons.export}</button>
-      <button type="button" title={copy.buttons.download} aria-label={copy.buttons.download} onClick={() => downloadSvg(entry)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-white/20"><IconDownload size={15} stroke={1.75} aria-hidden="true" /></button>
-      <button type="button" title={copy.buttons.fullscreen} aria-label={copy.buttons.fullscreen} onClick={() => setViewer(entry)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-white/20"><IconMaximize size={15} stroke={1.75} aria-hidden="true" /></button>
-      <button type="button" title={copy.buttons.delete} aria-label={copy.buttons.delete} onClick={() => deleteEntry(entry.id)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-red-300 hover:bg-red-500 hover:text-white"><IconTrash size={15} stroke={1.75} aria-hidden="true" /></button>
-    </div>
-  );
+  // The same tools on a card's hover column ("sm") and the viewer's rail ("lg").
+  const vectorActions = (entry, size = "sm") => {
+    const iconSize = size === "lg" ? 18 : 15;
+    return [
+      entry.prompt && entry.page !== "vectorize" ? { key: "copy", node: <GenerationCopyButtons prompt={entry.prompt} imageUrl={null} onCopyError={onGenerationError} size={size} /> } : null,
+      entry.kind === "raster" ? { key: "vectorize", label: copy.vectorize.sendHere, icon: <IconArrowsExchange size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => sendToVectorize(entry) } : null,
+      entry.kind === "svg" && refineModelFor(entry) ? { key: "refine", label: copy.refine.action, icon: <IconWand size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => openRefine(entry) } : null,
+      { key: "export", label: copy.buttons.export, icon: <IconFileExport size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => { setViewer(null); setExporting(entry); } },
+      { key: "download", label: copy.buttons.download, icon: <IconDownload size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => downloadSvg(entry) },
+      { key: "delete", label: copy.buttons.delete, danger: true, icon: <IconTrash size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => deleteEntry(entry.id) },
+    ];
+  };
+  const vectorFacts = (entry, dims) => [
+    { key: "vendor", value: entry.vendor, title: copy.gallery.vendor },
+    { key: "size", value: dims?.size, title: copy.gallery.size },
+    { key: "bytes", value: dims?.bytes ? formatBytes(dims.bytes) : null, title: copy.gallery.weight },
+    { key: "cost", value: formatCost(entry.cost, locale), title: copy.gallery.cost },
+  ];
+  const whenFact = (entry) => ({ value: formatWhen(entry.timestamp, locale), title: copy.gallery.created });
+  const openViewer = (entry) => {
+    if (entry.sourceUrl && isVectorize) setCompareId(entry.id);
+    setViewer(entry);
+  };
 
-  const card = (entry, { compact = false, index = 0 } = {}) => (
-    <Entrance once variant="card" index={index} key={entry.id} data-vector-entry={entry.kind} className={`group relative aspect-square overflow-hidden rounded-2xl border bg-[#0e0e11] ${compareId === entry.id && isVectorize ? "border-primary/60" : "border-white/[0.08]"}`} onClick={() => entry.sourceUrl && setCompareId(entry.id)} role={entry.sourceUrl ? "button" : undefined} tabIndex={entry.sourceUrl ? 0 : undefined}>
-      <Preview entry={entry} tone={tone} />
+  const badges = (entry) => (
+    <>
       {entry.kind === "raster" && <span className="absolute left-2 top-2 rounded-md bg-amber-400/90 px-1.5 py-0.5 text-[10px] font-semibold text-black" title={copy.vectorize.rasterNote}>{copy.gallery.raster}</span>}
       {entry.kind === "svg" && entry.chat && (
         <span className="absolute left-2 top-2 flex items-center gap-1">
@@ -771,14 +894,24 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
           {entry.refinement && <span className="rounded-md bg-primary/90 px-1.5 py-0.5 text-[10px] font-semibold text-[#04202a]" title={entry.refinement}>{copy.refine.badge}</span>}
         </span>
       )}
-      {!compact && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#09090b]/95 to-transparent p-3 pt-10">
-          <div className="truncate text-[13px] font-medium text-white/90">{entry.refinement || entry.name || entry.prompt || copy.gallery.fromImage}</div>
-          <div className="truncate text-[11.5px] text-white/45">{entry.refinement ? `${copy.refine.badge} · ` : ""}{entry.modelName}{entry.vendor ? ` · ${entry.vendor}` : ""}</div>
-        </div>
-      )}
-      {compact && <div className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-[#09090b]/90 to-transparent px-2 pb-1.5 pt-6 text-[11px] text-white/85">{entry.name}</div>}
-      {cardActions(entry)}
+    </>
+  );
+
+  // A library card reads like Image Studio's: the result, the hover column
+  // of tools, then the prompt and its facts. Clicking opens the viewer.
+  const card = (entry, { compact = false, index = 0 } = {}) => compact ? (
+    <Entrance once variant="card" index={index} key={entry.id} data-vector-entry={entry.kind} className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-[#0a0a0a] transition-all duration-300 hover:border-primary/50" onClick={() => openViewer(entry)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter") openViewer(entry); }}>
+      <Preview entry={entry} tone={tone} />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-[#09090b]/90 to-transparent px-2 pb-1.5 pt-6 text-[11px] text-white/85">{entry.name}</div>
+    </Entrance>
+  ) : (
+    <Entrance once variant="card" index={index} key={entry.id} data-vector-entry={entry.kind} className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-[#0a0a0a] shadow-xl transition-all duration-300 hover:border-primary/50 ${compareId === entry.id && isVectorize ? "border-primary/60" : "border-white/10"}`} onClick={() => openViewer(entry)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter") openViewer(entry); }}>
+      <div className="relative aspect-square w-full transition-opacity hover:opacity-80">
+        <Preview entry={entry} tone={tone} />
+        {badges(entry)}
+      </div>
+      <LibraryActions actions={vectorActions(entry, "sm")} />
+      <VectorDetails entry={entry} copy={copy} locale={locale} facts={vectorFacts} trailing={whenFact(entry)} />
     </Entrance>
   );
 
@@ -935,16 +1068,16 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
                   <div className="text-[12px] font-medium uppercase tracking-[0.08em] text-white/40">{fill(copy.gallery.library, { count: library.entries.length })}</div>
                   <ToneToggle tone={tone} onChange={setTone} copy={copy} />
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {library.pending.map((run) => (
-                    <Entrance once variant="card" key={run.id} className="aspect-square rounded-2xl border border-white/[0.08] bg-[#0e0e11] flex flex-col items-center justify-center gap-3 text-center p-6">
+                    <Entrance once variant="card" key={run.id} className="aspect-square rounded-lg border border-white/10 bg-[#0a0a0a] flex flex-col items-center justify-center gap-3 text-center p-6">
                       <span className="h-7 w-7 animate-spin rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
                       <div className="text-[14px] font-medium text-white/85">{fill(copy.gallery.pendingTitle, { model: run.label })}</div>
                       <div className="text-[12px] text-white/45">{run.total > 1 ? fill(copy.gallery.pendingProgress, { done: run.done, total: run.total }) : copy.gallery.pendingHint}</div>
                     </Entrance>
                   ))}
                   {groups.map((group, groupIndex) => (group.type === "single" ? card(group.entry, { index: groupIndex }) : (
-                    <Entrance once variant="card" index={groupIndex} key={group.setId} className="col-span-full rounded-2xl border border-white/[0.08] bg-[#0e0e11] p-3">
+                    <Entrance once variant="card" index={groupIndex} key={group.setId} className="col-span-full rounded-lg border border-white/10 bg-[#0a0a0a] p-3">
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
                         <div className="min-w-0">
                           <div className="truncate text-[13px] font-medium text-white/90">{group.entries[0].setName || fill(copy.icons.set, { count: group.entries.length })}</div>
@@ -973,20 +1106,20 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
       </div>
 
       {viewer && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 p-4" onClick={() => setViewer(null)} role="presentation">
-          <div className="relative h-[min(80vh,900px)] w-[min(90vw,1100px)] overflow-hidden rounded-2xl border border-white/[0.12] bg-[#0e0e11]" onClick={(event) => event.stopPropagation()} role="presentation">
+        <Lightbox
+          onClose={() => setViewer(null)}
+          closeLabel={copy.buttons.close}
+          tools={[
+            ...vectorActions(viewer, "lg").filter((tool) => tool && tool.key !== "delete"),
+            { key: "tone", label: copy.preview.toggle, icon: tone === "light" ? <IconMoon size={18} stroke={2} aria-hidden="true" /> : <IconSun size={18} stroke={2} aria-hidden="true" />, onSelect: () => setTone(tone === "light" ? "dark" : "light") },
+            ...vectorActions(viewer, "lg").filter((tool) => tool && tool.key === "delete"),
+          ]}
+          caption={<VectorCaption entry={viewer} copy={copy} locale={locale} facts={(entry, dims) => [...vectorFacts(entry, dims), whenFact(entry)]} />}
+        >
+          <div className="h-[min(86vh,calc(95vw-10rem))] w-[min(86vh,calc(95vw-10rem))] overflow-hidden rounded-2xl shadow-2xl">
             <Preview entry={viewer} tone={tone} />
-            <button type="button" onClick={() => setViewer(null)} aria-label={copy.buttons.close} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-lg bg-black/60 text-white hover:bg-white/20"><IconX size={16} stroke={1.75} aria-hidden="true" /></button>
-            <div className="absolute bottom-3 left-3 flex items-center gap-2">
-              <span className="max-w-[50vw] truncate rounded-lg bg-black/60 px-3 py-1.5 text-[12px] text-white/80">{viewer.name || viewer.prompt || viewer.modelName}</span>
-              <ToneToggle tone={tone} onChange={setTone} copy={copy} />
-              {viewer.kind === "svg" && refineModelFor(viewer) && (
-                <button type="button" onClick={() => openRefine(viewer)} className="flex items-center gap-1.5 rounded-lg bg-white/[0.1] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-white/20"><IconWand size={14} stroke={1.75} aria-hidden="true" />{copy.refine.action}</button>
-              )}
-              <button type="button" onClick={() => { setExporting(viewer); setViewer(null); }} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-[12px] font-semibold text-[#04202a]"><IconFileExport size={14} stroke={1.75} aria-hidden="true" />{copy.buttons.export}</button>
-            </div>
           </div>
-        </div>
+        </Lightbox>
       )}
 
       {exporting && <ExportKitDialog entry={exporting} copy={copy} onClose={() => setExporting(null)} onVectorize={sendToVectorize} />}

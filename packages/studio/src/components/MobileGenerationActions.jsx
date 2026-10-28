@@ -135,8 +135,13 @@ export function GenerationCopyButtons({
   prompt,
   imageUrl,
   onCopyError,
+  size = "sm",
 }) {
   const [copiedKind, setCopiedKind] = useState(null);
+  // "sm" is the card's hover column, "lg" the full-screen viewer's rail.
+  const buttonClass = size === "lg"
+    ? "flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.08] backdrop-blur-md transition-all hover:bg-[#22d3ee] hover:text-black"
+    : "flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/60 backdrop-blur-md transition-all hover:bg-[#22d3ee] hover:text-black";
 
   const runCopy = async (event, kind) => {
     event.stopPropagation();
@@ -171,7 +176,7 @@ export function GenerationCopyButtons({
           title={copiedKind === "text" ? "Prompt copied" : "Copy prompt"}
           aria-label={copiedKind === "text" ? "Prompt copied" : "Copy prompt"}
           onClick={(event) => runCopy(event, "text")}
-          className={`flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/60 backdrop-blur-md transition-all hover:bg-[#22d3ee] hover:text-black ${
+          className={`${buttonClass} ${
             copiedKind === "text" ? "text-[#22d3ee]" : "text-white"
           }`}
         >
@@ -188,7 +193,7 @@ export function GenerationCopyButtons({
           title={copiedKind === "image" ? "Image copied" : "Copy image"}
           aria-label={copiedKind === "image" ? "Image copied" : "Copy image"}
           onClick={(event) => runCopy(event, "image")}
-          className={`flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/60 backdrop-blur-md transition-all hover:bg-[#22d3ee] hover:text-black ${
+          className={`${buttonClass} ${
             copiedKind === "image" ? "text-[#22d3ee]" : "text-white"
           }`}
         >

@@ -33,7 +33,10 @@
     "deleteConfirm": "确定要删除这个生成的项目吗？",
     "noPrompt": "未提供提示词",
     "modelFallback": "图像工作室",
-    "watermark": "水印"
+    "watermark": "水印",
+    "resolution": "分辨率",
+    "cost": "本次运行的预估费用",
+    "created": "创建时间"
   },
   "emptyState": {
     "heading": "开始使用",
@@ -76,7 +79,8 @@
     "generationFailed": "图像生成失败"
   },
   "fullscreen": {
-    "previewAlt": "全屏预览"
+    "previewAlt": "全屏预览",
+    "close": "关闭"
   },
   "watermark": {
     "title": "添加水印",

@@ -61,6 +61,9 @@ import {
   PromptActionGroup,
 } from "./prompt/PromptComposer.jsx";
 import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
+import { quoteRun } from "../providers/pricing.js";
+import { IconDownload, IconTrash, IconTypography } from "@tabler/icons-react";
+import { LibraryActions, LibraryDetails, Lightbox, formatCost, formatSize, formatWhen, useImageSize } from "./library/LibraryKit.jsx";
 import { EditorsPickStar, useEditorsPickPreselect } from "./benchmarks/shared.jsx";
 import en from "../messages/en/imageStudio.json";
 import zh from "../messages/zh/imageStudio.json";
@@ -86,6 +89,40 @@ async function downloadImage(url, filename) {
   } catch {
     window.open(url, "_blank");
   }
+}
+
+// What a library entry is: its model, pixel size, cost and when it was made.
+function imageFacts(entry, size, copy, locale) {
+  return [
+    { key: "ar", value: entry.aspect_ratio, title: copy.popovers.aspectRatio },
+    { key: "size", value: formatSize(size?.width, size?.height) || entry.resolution, title: copy.gallery.resolution },
+    { key: "cost", value: formatCost(entry.cost, locale), title: copy.gallery.cost },
+  ];
+}
+const whenFact = (entry, copy, locale) => ({ value: formatWhen(entry.timestamp, locale), title: copy.gallery.created });
+
+function ImageDetails({ entry, copy, locale }) {
+  const size = useImageSize(entry.url);
+  return (
+    <LibraryDetails
+      prompt={entry.prompt}
+      fallback={copy.gallery.noPrompt}
+      model={entry.model?.replace("-", " ") || copy.gallery.modelFallback}
+      facts={imageFacts(entry, size, copy, locale)}
+      trailing={whenFact(entry, copy, locale)}
+    />
+  );
+}
+
+function ImageCaption({ entry, copy, locale }) {
+  const size = useImageSize(entry.url);
+  const facts = [...imageFacts(entry, size, copy, locale), whenFact(entry, copy, locale)].filter((fact) => fact.value).map((fact) => fact.value);
+  return (
+    <>
+      {entry.prompt && <span className="line-clamp-2 text-white/80">{entry.prompt}</span>}
+      <span className="mt-1 block text-white/45">{[entry.model?.replace("-", " ") || copy.gallery.modelFallback, ...facts].join(" · ")}</span>
+    </>
+  );
 }
 
 // ─── UploadButton (inline picker) ───────────────────────────────────────────
@@ -912,7 +949,7 @@ export default function ImageStudio({
   const [dropdownOpen, setDropdownOpen] = useState(null); // 'model' | 'ar' | 'quality' | null
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);
-  const [fullscreenUrl, setFullscreenUrl] = useState(null);
+  const [fullscreen, setFullscreen] = useState(null); // { entry, idx }
   const [isDrawModalOpen, setIsDrawModalOpen] = useState(false);
 
   // ── Canvas / history state ──────────────────────────────────────────────
@@ -1306,6 +1343,11 @@ export default function ImageStudio({
     setGenerating(true);
     setGenerateError(null);
 
+    // What one run is expected to cost, kept on the entry for the library.
+    const costQuote = quoteRun(selectedVariant?.model?.endpoint || selectedModelId, pricePayload)
+      .then((quote) => (typeof quote?.amount === "number" ? { amount: quote.amount, currency: quote.currency || "USD" } : quote?.kind === "free" ? { amount: 0 } : null))
+      .catch(() => null);
+
     try {
       const results = await Promise.all(
         Array.from({ length: batchSize }).map(async () => {
@@ -1348,6 +1390,7 @@ export default function ImageStudio({
         })
       );
 
+      const cost = await costQuote;
       results.forEach((res) => {
         if (res && res.url) {
           const entry = {
@@ -1356,6 +1399,8 @@ export default function ImageStudio({
             prompt: prompt.trim(),
             model: selectedModelId,
             aspect_ratio: selectedAr,
+            resolution: currentQualityField && selectedQuality ? String(selectedQuality) : null,
+            cost,
             timestamp: new Date().toISOString(),
           };
           addToHistory(entry);
@@ -1385,6 +1430,27 @@ export default function ImageStudio({
         ? copy.promptBar.placeholderI2I
         : copy.promptBar.placeholderT2I;
 
+  // The same tools on a card's hover column ("sm") and the viewer's rail ("lg").
+  const imageActions = (entry, idx, size) => {
+    const iconSize = size === "lg" ? 18 : 15;
+    return [
+      { key: "copy", node: <GenerationCopyButtons prompt={entry.prompt} imageUrl={entry.url} onCopyError={onGenerationError} size={size} /> },
+      { key: "watermark", label: copy.gallery.watermark, icon: <IconTypography size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => setWatermarkEntry(entry) },
+      { key: "download", label: copy.gallery.download, icon: <IconDownload size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => downloadImage(entry.url, `openstudio-${entry.id || idx}.jpg`) },
+      {
+        key: "delete",
+        label: copy.gallery.delete,
+        danger: true,
+        icon: <IconTrash size={iconSize} stroke={2} aria-hidden="true" />,
+        onSelect: () => {
+          if (!confirm(copy.gallery.deleteConfirm)) return;
+          handleDeleteEntry(idx);
+          setFullscreen((current) => (current?.entry === entry ? null : current));
+        },
+      },
+    ];
+  };
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-app-bg relative p-4 md:p-6 overflow-hidden">
@@ -1412,7 +1478,7 @@ export default function ImageStudio({
                 index={idx}
                 key={entry.id || idx}
                 className="relative group rounded-lg overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-xl hover:border-primary/50 transition-all duration-300 flex flex-col cursor-pointer"
-                onClick={() => setFullscreenUrl(entry.url)}
+                onClick={() => setFullscreen({ entry, idx })}
               >
                 <img
                   src={entry.url}
@@ -1420,59 +1486,7 @@ export default function ImageStudio({
                   className="w-full aspect-square object-cover bg-black/40 hover:opacity-80 transition-opacity"
                 />
 
-                {/* Overlay actions */}
-                <div className="absolute top-2 right-2 hidden md:flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <GenerationCopyButtons
-                    prompt={entry.prompt}
-                    imageUrl={entry.url}
-                    onCopyError={onGenerationError}
-                  />
-                  <button
-                    type="button"
-                    title={copy.gallery.watermark}
-                    aria-label={copy.gallery.watermark}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setWatermarkEntry(entry);
-                    }}
-                    className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 20h16" /><path d="M7 16l3.5-9h3L17 16" /><path d="M8.5 12.5h7" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    title={copy.gallery.download}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      downloadImage(entry.url, `openstudio-${entry.id || idx}.jpg`);
-                    }}
-                    className="p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-primary hover:text-black transition-all border border-white/10"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    title={copy.gallery.delete}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm(copy.gallery.deleteConfirm)) {
-                        handleDeleteEntry(idx);
-                      }
-                    }}
-                    className="p-2 bg-black/60 backdrop-blur-md rounded-full text-red-400 hover:bg-red-500 hover:text-white transition-all border border-white/10"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                      <line x1="10" y1="11" x2="10" y2="17" />
-                      <line x1="14" y1="11" x2="14" y2="17" />
-                    </svg>
-                  </button>
-                </div>
+                <LibraryActions actions={imageActions(entry, idx, "sm")} />
                 <MobileGenerationActions
                   prompt={entry.prompt}
                   imageUrl={entry.url}
@@ -1502,20 +1516,7 @@ export default function ImageStudio({
                   ]}
                 />
 
-                {/* Prompt & Details */}
-                <div className="p-3 bg-black/80 backdrop-blur-sm border-t border-white/5 flex-1 flex flex-col justify-between gap-2">
-                  <p className="text-white/70 text-xs line-clamp-3 leading-relaxed" title={entry.prompt}>
-                    {entry.prompt || copy.gallery.noPrompt}
-                  </p>
-                  <div className="flex items-center justify-between mt-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-primary px-2 py-0.5 bg-primary/10 rounded border border-primary/20 capitalize">
-                        {entry.model?.replace("-", " ") || copy.gallery.modelFallback}
-                      </span>
-                      <span className="text-[10px] text-white/40">{entry.aspect_ratio}</span>
-                    </div>
-                  </div>
-                </div>
+                <ImageDetails entry={entry} copy={copy} locale={locale} />
               </Entrance>
             ))}
           </div>
@@ -1785,32 +1786,15 @@ export default function ImageStudio({
           </PromptFooter>
       </PromptComposer>
 
-      {/* ── FULLSCREEN IMAGE MODAL ── */}
-      {fullscreenUrl && (
-        <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-fade-in"
-          onClick={() => setFullscreenUrl(null)}
-        >
-          <button
-            type="button"
-            className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors border border-white/10"
-            onClick={(e) => {
-              e.stopPropagation();
-              setFullscreenUrl(null);
-            }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+      {/* ── FULL-SCREEN VIEWER ── */}
+      {fullscreen && (
+        <Lightbox onClose={() => setFullscreen(null)} closeLabel={copy.fullscreen.close} tools={imageActions(fullscreen.entry, fullscreen.idx, "lg")} caption={<ImageCaption entry={fullscreen.entry} copy={copy} locale={locale} />}>
           <img
-            src={fullscreenUrl}
+            src={fullscreen.entry.url}
             alt={copy.fullscreen.previewAlt}
-            className="max-w-[95vw] max-h-[95vh] rounded-2xl shadow-2xl object-contain animate-scale-up" 
-            onClick={(e) => e.stopPropagation()}
+            className="max-h-[86vh] max-w-full rounded-2xl object-contain shadow-2xl"
           />
-        </div>
+        </Lightbox>
       )}
 
       {/* ── DRAW CANVAS MODAL ── */}
