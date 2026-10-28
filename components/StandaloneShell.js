@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio, ThreeDStudio,
+  ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio, ThreeDStudio, VectorStudio, BenchmarksStudio,
   PROVIDERS, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
-  IconAlertCircle, IconAperture, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3
+  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2
 } from '@tabler/icons-react';
 import ProvidersModal from './ProvidersModal';
 import CommandPalette from './CommandPalette';
@@ -36,8 +36,10 @@ const TABS = [
   { id: 'three-d-retexture', label: 'Retexture', icon: IconBrush },
   { id: 'three-d-rig', label: 'Rig and animate', icon: IconBone },
   { id: 'three-d-mesh', label: 'Mesh tools', icon: IconTopologyStar3 },
+  { id: 'vector', label: 'Vector Studio', icon: IconVectorBezier2 },
   { id: 'agents', label: 'Agents', icon: IconRobot },
   { id: 'workflows', label: 'Workflows', icon: IconSitemap },
+  { id: 'benchmarks', label: 'Benchmarks', icon: IconChartBar },
 ];
 
 const NAVIGATION_CATEGORIES = [
@@ -45,7 +47,10 @@ const NAVIGATION_CATEGORIES = [
   { id: 'video', label: 'Video', tabIds: ['video', 'clipping', 'motion-control', 'lipsync', 'body-swap', 'marketing', 'vibe-motion'] },
   { id: 'audio', label: 'Audio', tabIds: ['audio'] },
   { id: '3d', label: '3D', tabIds: ['three-d-text', 'three-d-image', 'three-d-retexture', 'three-d-rig', 'three-d-mesh'] },
+  { id: 'vector', label: 'Vector', tabIds: ['vector'] },
   { id: 'agents-automation', label: 'Automation', tabIds: ['agents', 'workflows'] },
+  // A single page, so the nav shows it as a plain link instead of a menu.
+  { id: 'benchmarks', label: 'Benchmarks', tabIds: ['benchmarks'], link: true },
 ];
 
 // The 3D pages share one component; each tab passes its page id.
@@ -478,6 +483,21 @@ export default function StandaloneShell({ locale = 'en' }) {
             const isOpen = openMenuId === category.id;
             const isActive = activeCategory?.id === category.id;
             const wide = category.tabIds.length > 4;
+            if (category.link) {
+              const tabId = category.tabIds[0];
+              return (
+                <a
+                  key={category.id}
+                  href={studioPath(tabId)}
+                  onClick={(event) => handleNavigationItemClick(event, tabId)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`relative flex h-[34px] items-center rounded-[10px] px-3 text-[13.5px] font-medium transition-colors hover:bg-white/[0.06] ${isActive ? 'text-white' : 'text-white/55 hover:text-white'}`}
+                >
+                  {categoryLabel(category.id)}
+                  {isActive && <span className="absolute inset-x-3 -bottom-[11px] h-0.5 rounded-full bg-primary" aria-hidden="true" />}
+                </a>
+              );
+            }
             return (
               <div
                 key={category.id}
@@ -630,9 +650,19 @@ export default function StandaloneShell({ locale = 'en' }) {
             <ThreeDStudio page={tabId.slice('three-d-'.length)} locale={locale} droppedFiles={activeTab === tabId ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback(tabId)} onGenerationEnd={makeGenerationEndCallback(tabId)} onGenerationComplete={makeSuccessCallback(tabId)} onGenerationError={makeErrorCallback(tabId)} />
           </div>
         ))}
+        {AVAILABLE_TAB_IDS.has('vector') && (
+          <div className={activeTab === 'vector' ? "h-full w-full" : "hidden"}>
+            <VectorStudio locale={locale} droppedFiles={activeTab === 'vector' ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('vector')} onGenerationEnd={makeGenerationEndCallback('vector')} onGenerationComplete={makeSuccessCallback('vector')} onGenerationError={makeErrorCallback('vector')} />
+          </div>
+        )}
         {AVAILABLE_TAB_IDS.has('workflows') && (
           <div className={activeTab === 'workflows' ? "h-full w-full" : "hidden"}>
             <WorkflowStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('workflows')} onGenerationEnd={makeGenerationEndCallback('workflows')} onGenerationComplete={makeSuccessCallback('workflows')} onGenerationError={makeErrorCallback('workflows')} />
+          </div>
+        )}
+        {AVAILABLE_TAB_IDS.has('benchmarks') && (
+          <div className={activeTab === 'benchmarks' ? "h-full w-full" : "hidden"}>
+            <BenchmarksStudio locale={locale} />
           </div>
         )}
       </div>

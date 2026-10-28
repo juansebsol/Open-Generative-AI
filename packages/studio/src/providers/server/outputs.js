@@ -2,7 +2,7 @@
 // ({images:[{url}]}, {video:{url}}, {data:{outputs:[...]}}, ...).
 
 const EXTENSION_TYPES = [
-  [/\.(png|jpe?g|webp|gif|bmp|avif|heic)(\?|$)/i, 'image'],
+  [/\.(png|jpe?g|webp|gif|bmp|avif|heic|svgz?)(\?|$)/i, 'image'],
   [/\.(mp4|webm|mov|m4v|mkv)(\?|$)/i, 'video'],
   [/\.(mp3|wav|m4a|ogg|flac|aac|opus)(\?|$)/i, 'audio'],
   [/\.(glb|gltf|obj|fbx|usdz|stl|ply|splat|spz)(\?|$)/i, 'model'],

@@ -30,8 +30,9 @@ const { getAuxiliaryImageInputs } = await import(pathToFileURL(path.join(STUDIO_
 const { DIRECT_PROVIDERS } = await import(pathToFileURL(path.join(STUDIO_SRC, 'providers/directProviders.js')));
 const { applyPromptPresets } = await import(pathToFileURL(path.join(STUDIO_SRC, 'imageEffects.js')));
 const catalog = await import(pathToFileURL(path.join(STUDIO_SRC, 'models.js')));
+const vectorCatalog = await import(pathToFileURL(path.join(STUDIO_SRC, 'vectorModels.js')));
 
-const MODEL_LISTS = ['t2iModels', 'i2iModels', 't2vModels', 'i2vModels', 'v2vModels', 'lipsyncModels', 'audioModels', 'recastModels', 'motionControlModels', 'threeDModels'];
+const MODEL_LISTS = ['t2iModels', 'i2iModels', 't2vModels', 'i2vModels', 'v2vModels', 'lipsyncModels', 'audioModels', 'recastModels', 'motionControlModels', 'threeDModels', 'vectorModels'];
 const SAMPLE = {
   image: 'https://example.com/sample.png',
   video: 'https://example.com/sample.mp4',
@@ -132,6 +133,7 @@ function samplePayload(model, listName) {
     ensure('video_url', 'video');
     ensure('images_list', 'image', true);
   }
+  if (listName === 'vectorModels' && model.kind === 'vectorize') ensure('image_url', 'image');
   // Required free-text inputs (voice ids, names) have no default to sample.
   for (const field of model.required || []) {
     if (payload[field] === undefined && model.inputs?.[field]?.type === 'string') payload[field] = 'sample';
@@ -170,7 +172,7 @@ for (const [endpoint, special] of Object.entries(SPECIAL_ENDPOINTS)) {
   seen.set(endpoint, { model: { name: special.name, inputs: {} }, listName: 'special', payload: special.payload });
 }
 for (const listName of MODEL_LISTS) {
-  for (const model of catalog.ALL_MODEL_LISTS?.[listName] || catalog[listName] || []) {
+  for (const model of (listName === 'vectorModels' ? vectorCatalog.ALL_vectorModels : catalog.ALL_MODEL_LISTS?.[listName] || catalog[listName]) || []) {
     const endpoint = model.endpoint || model.id;
     if (!seen.has(endpoint)) seen.set(endpoint, { model, listName });
   }

@@ -11,6 +11,7 @@ import { buildSupplementalInputPayload } from './modelParameters.js';
 import { getGroupedVideoConfiguration } from './groupedVideoModels.js';
 import { applyPromptPresets } from './imageEffects.js';
 import { applyCharacterMentions } from './characters.js';
+import { getVectorModelById } from './vectorModels.js';
 
 // Studio entry points. Each builds a payload in the shared studio vocabulary
 // and hands it to the provider runner, which picks fal / WaveSpeed / a direct
@@ -274,6 +275,18 @@ export async function generateThreeD(params) {
         if (!['model', 'onRequestId'].includes(key) && value !== undefined && value !== null && value !== '') payload[key] = value;
     }
     return submitAndPoll(endpoint, payload, params.onRequestId, 900);
+}
+
+// Vector studio: SVG generators and tracers (vectorModels.js). The studio
+// classifies and sanitises the returned files itself (vector/outputs.js).
+export async function generateVector(params) {
+    const modelInfo = getVectorModelById(params.model);
+    const endpoint = modelInfo?.endpoint || params.model;
+    const payload = {};
+    for (const [key, value] of Object.entries(params)) {
+        if (!['model', 'onRequestId'].includes(key) && value !== undefined && value !== null && value !== '') payload[key] = value;
+    }
+    return submitAndPoll(endpoint, payload, params.onRequestId, 300);
 }
 
 export function uploadFile(file, onProgress) {

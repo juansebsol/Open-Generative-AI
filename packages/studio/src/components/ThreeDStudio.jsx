@@ -272,6 +272,18 @@ export default function ThreeDStudio({ page = "text", onGenerationStart, onGener
     window.dispatchEvent(new CustomEvent("oga:provider-setup-needed", { detail: { providers } }));
   };
 
+  // The Benchmarks page opens a 3D page with a model family preselected.
+  useEffect(() => {
+    const onOpen = (event) => {
+      const { tabId, modelId } = event.detail || {};
+      if (tabId !== `three-d-${page}` || !modelId) return;
+      const model = GENERATORS.find((entry) => entry.id === modelId);
+      if (model && families.some((entry) => entry.id === model.family)) setFamilyId(model.family);
+    };
+    window.addEventListener("oga:open-studio", onOpen);
+    return () => window.removeEventListener("oga:open-studio", onOpen);
+  }, [page, families]);
+
   // Per-page persistence (the library persists itself).
   useEffect(() => {
     try {

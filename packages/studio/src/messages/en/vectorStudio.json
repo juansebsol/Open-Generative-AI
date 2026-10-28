@@ -1,0 +1,134 @@
+{
+  "tools": {
+    "logo": {
+      "label": "Text to Logo",
+      "heading": "Describe a mark, get an",
+      "accent": "editable SVG",
+      "subtitle": "Recraft and Ideogram draw real vectors: layers, paths and clean geometry that open in Figma or Illustrator. Pick a brand palette, ask for a few candidates, then export the one you like as PNG, PDF, favicon or app icons for free.",
+      "placeholder": "Describe the logo: subject, style and mood, for example a minimal fox head mark, geometric, two colours",
+      "starters": [
+        { "label": "Geometric fox head mark", "prompt": "Minimal geometric fox head logo mark, flat vector, two colours, negative space, no text" },
+        { "label": "Coffee roaster wordmark badge", "prompt": "Circular badge logo for a coffee roaster, a single coffee bean in the centre, thin line details, vintage but clean, no text" },
+        { "label": "Soft rounded app icon", "prompt": "Friendly app icon of a paper plane, rounded shapes, flat colour, subtle gradient, centered on a plain background" }
+      ]
+    },
+    "icons": {
+      "label": "Icon Set",
+      "heading": "One style, a whole",
+      "accent": "icon set",
+      "subtitle": "Write the style once and list the icons you need, one per line. Every name runs with the same style words and palette, and the set exports as an SVG sprite or a zip of single files.",
+      "placeholder": "Style for every icon, for example thin line icons, 2px stroke, rounded corners, single colour",
+      "namesPlaceholder": "home\nsearch\nsettings\nuser\nbell",
+      "starters": [
+        { "label": "Thin line, rounded", "prompt": "Thin line icon, 2px stroke, rounded corners and caps, single colour, 24px grid" },
+        { "label": "Filled duotone", "prompt": "Filled duotone icon, bold simple shapes, two tones of one colour, soft corners" },
+        { "label": "Hand-drawn marker", "prompt": "Hand-drawn marker icon, slightly uneven lines, playful, monochrome" }
+      ]
+    },
+    "vectorize": {
+      "label": "Vectorize",
+      "heading": "Trace any image into a",
+      "accent": "clean SVG",
+      "subtitle": "Upload a PNG, JPG or WebP, or pick a result from Image Studio. Image2SVG traces geometry for a fraction of a cent, Recraft keeps shapes smooth and editable, Ideogram redraws the image as vector art.",
+      "placeholder": "Add an image, choose a tracer, then vectorize."
+    }
+  },
+  "rail": { "label": "Tool" },
+  "controls": {
+    "model": "Model",
+    "tier": "Tracer",
+    "palette": "Palette",
+    "candidates": "Results",
+    "candidatesTitle": "How many results to generate",
+    "more": "More ({count})",
+    "less": "Less",
+    "advancedHint": "Show the less common tracing knobs",
+    "tracing": "Tracing",
+    "references": "References",
+    "addReference": "Add up to {max} reference images",
+    "removeReference": "Remove reference"
+  },
+  "palette": {
+    "title": "Brand palette",
+    "hint": "Recraft takes these colours directly. Other models get them written into the prompt.",
+    "custom": "Custom colours",
+    "background": "Background",
+    "addColor": "Add colour",
+    "remove": "Remove colour"
+  },
+  "icons": {
+    "count": "{count} icons",
+    "countOne": "1 icon",
+    "none": "Add icon names, one per line",
+    "truncated": "Only the first {max} names will run",
+    "generate": "Generate {count} icons",
+    "set": "Icon set · {count}",
+    "sprite": "SVG sprite",
+    "zip": "ZIP of SVGs",
+    "deleteSet": "Delete set",
+    "partial": "{failed} of {total} icons failed: {message}"
+  },
+  "vectorize": {
+    "upload": "Upload image",
+    "fromLibrary": "From Image Studio",
+    "libraryTitle": "Recent images",
+    "libraryEmpty": "No images yet. Generate or upload one in Image Studio, or upload here.",
+    "clear": "Clear image",
+    "source": "Source",
+    "result": "SVG",
+    "compare": "Before and after",
+    "apply": "Vectorize",
+    "sendHere": "Vectorize",
+    "rasterNote": "The provider returned a PNG instead of an SVG. Send it to Vectorize to trace it."
+  },
+  "preview": { "light": "Light", "dark": "Dark", "toggle": "Preview background" },
+  "buttons": {
+    "generate": "Generate",
+    "export": "Export kit",
+    "download": "Download SVG",
+    "fullscreen": "View larger",
+    "delete": "Delete",
+    "close": "Close",
+    "useSource": "Use as source"
+  },
+  "export": {
+    "title": "Export kit",
+    "free": "Free · runs in this browser, no API calls",
+    "optimised": "Optimised to {to} from {from} ({percent}% smaller)",
+    "svg": "SVG (optimised)",
+    "svgOriginal": "SVG (as generated)",
+    "png": "PNG {size}",
+    "pdf": "PDF",
+    "favicon": "favicon.ico",
+    "appIcons": "App icon set (.zip)",
+    "appIconsHint": "iOS, Android and web sizes with a manifest",
+    "working": "Preparing…",
+    "failed": "Export failed: {message}",
+    "rasterOnly": "This result is a PNG. Vectorize it first to export it as SVG."
+  },
+  "gallery": {
+    "library": "Library · {count} results",
+    "pendingTitle": "Working with {model}",
+    "pendingProgress": "{done} of {total} done",
+    "pendingHint": "Usually under a minute. You can keep working.",
+    "raster": "PNG",
+    "fromImage": "Vectorized image"
+  },
+  "confirm": { "deleteItem": "Delete this result from the library?", "deleteSet": "Delete the whole icon set?" },
+  "providers": {
+    "needKey": "Vector models run on {providers}. Add a key in Settings → Providers to start.",
+    "openSettings": "Open Providers",
+    "or": "or"
+  },
+  "errors": {
+    "notImage": "Only PNG, JPG or WebP images can be vectorized.",
+    "uploadFailed": "Upload failed: {message}",
+    "needPrompt": "Describe the logo first.",
+    "needStyle": "Describe the icon style first.",
+    "needNames": "Add at least one icon name.",
+    "needImage": "Add an image to vectorize first.",
+    "noOutput": "The provider returned no file.",
+    "badSvg": "The provider returned a file that is not a valid SVG.",
+    "generationFailed": "Vector generation failed."
+  }
+}

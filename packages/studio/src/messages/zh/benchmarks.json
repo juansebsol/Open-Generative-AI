@@ -1,0 +1,58 @@
+{
+  "title": "模型评测",
+  "subtitle": "每类任务各选三款：质量最好的、性价比最高的，以及价格最低但仍然够用的。质量分数来自公开的盲测投票排行榜；价格是使用你的密钥以默认参数运行一次的费用。",
+  "updated": "分数读取于 {date}。",
+  "categories": {
+    "text-to-image": "文生图",
+    "image-editing": "图像编辑",
+    "text-to-video": "文生视频",
+    "image-to-video": "图生视频",
+    "text-to-speech": "语音",
+    "music": "音乐",
+    "three-d": "3D"
+  },
+  "picks": {
+    "best": "质量最佳",
+    "bestValue": "性价比最高",
+    "cheapestDecent": "够用且最便宜",
+    "bestHint": "排行榜上分数最高。",
+    "bestValueHint": "每美元获得的超出底线的质量最多。",
+    "cheapestDecentHint": "与榜首差距在 {gap} Elo 以内的模型中价格最低。"
+  },
+  "open": "在{studio}中打开",
+  "studios": {
+    "image": "图像工作室",
+    "video": "视频工作室",
+    "audio": "音频工作室",
+    "three-d-text": "文本生成 3D",
+    "three-d-image": "图像生成 3D"
+  },
+  "columns": {
+    "model": "模型",
+    "provider": "运行于",
+    "price": "单次价格",
+    "score": "分数",
+    "value": "性价比"
+  },
+  "sortBy": "按{column}排序",
+  "score": "{score} Elo",
+  "scoreTitle": "{name} 在 {source} 上的分数，读取于 {date}。",
+  "unscored": "未评分",
+  "unscoredTitle": "没有公开排行榜收录此模型，因此未参与排名。",
+  "noPrice": "无单次价格",
+  "noPriceTitle": "服务商按单位而非按次计价，因此没有性价比分数。",
+  "needsKey": "需要密钥",
+  "needsKeyTitle": "你已配置密钥的服务商都不提供此模型，且没有公开标价。可用于 {providers}。",
+  "listPrice": "标价",
+  "listPriceTitle": "尚未配置提供此模型的服务商密钥；此为 {provider} 的公开标价。",
+  "pricing": "正在询价…",
+  "priceError": "无法获取价格",
+  "perCharacters": "语音按 {count} 个字符的样本计价。",
+  "none": "暂无可选",
+  "noneHint": "此类别中没有同时具备分数和价格的模型。添加服务商密钥后即可看到价格。",
+  "empty": "此类别中没有受支持服务商提供的模型。",
+  "decentNote": "“够用”指与榜首差距在 {gap} Elo 以内（{floor} 分及以上）。性价比只计算高于 {valueFloor} Elo（低于榜首 {valueGap} 分）的质量，再除以一次默认运行的价格。",
+  "sourcesTitle": "数据来源",
+  "decent": "够用",
+  "sameAs": "与“{pick}”为同一模型"
+}

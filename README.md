@@ -21,6 +21,7 @@ An open-source, **bring-your-own-key** studio for AI images, video, audio and li
 | Marketing | Product ad videos from product and avatar images |
 | Audio | Text-to-speech, sound effects and music |
 | 3D | Text to 3D and Image to 3D (Meshy 7.1, Tripo, Hunyuan 3D 3.1, Rodin 2.5, Trellis 2, sketch input), plus Retexture, Rig and animate, and Mesh tools (remesh, split into parts, smart topology) on a shared model library with a built-in viewer |
+| Vector | Text to Logo (Recraft 4.1, Recraft 4.1 Pro, Ideogram Vector) with brand palettes, Icon Set (one style, many icons, exported as an SVG sprite or a zip), Vectorize (Image2SVG, Recraft Vectorize, Ideogram image-to-vector) with a before/after view, and a free in-browser export kit (optimised SVG, PNG, PDF, favicon.ico, app icon set) |
 
 ## Providers
 
@@ -56,6 +57,16 @@ Local engines are called **straight from your browser** to your machine, never t
 - **sd.cpp server** (or any OpenAI-compatible `/v1/images/generations` server): enter its URL, e.g. `http://127.0.0.1:1234`.
 
 Chrome asks once to allow local network access for the site. An HTTPS site can reach `http://localhost` and `http://127.0.0.1`, but not plain-http LAN addresses. To use a GPU box elsewhere on your network, serve it over HTTPS (Tailscale, Caddy) or run this app on that network.
+
+## Benchmarks
+
+**Benchmarks** in the top navigation (`/studio/benchmarks`) answers one question per kind of job: which model is the best, which is the best for the money, and which is the cheapest one that is still decent. It covers text to image, image editing, text to video, image to video, speech, music and 3D, and each pick has a button that opens the right studio with that model selected.
+
+- **Scores** are curated in `packages/studio/src/providers/catalog/benchmarks.js`, keyed by catalog model id. Each entry records the Elo read from a public blind-vote leaderboard (Artificial Analysis image, video, speech and music arenas; Top3D for 3D), the leaderboard row it came from, and the date it was read. A model that no public board lists is shown as unscored rather than guessed.
+- **Prices** are the same quotes as the price chip: fal and WaveSpeed through their pricing APIs with your key, Google, OpenAI and ElevenLabs from the published table. Each model is priced on its default inputs (speech on a 500-character sample), in one `/api/price` batch per provider so fal's pricing API is asked for up to 50 endpoints per call. When none of your keyed providers serves a model, the page shows its published list price if it has one, otherwise "Needs a key".
+- **Decent** means within `DECENT_GAP` (200) Elo of the category leader. **Value** is quality per dollar, counting only quality above a floor `VALUE_FLOOR_GAP` (300) Elo below the leader, so a weak model does not win just by being cheap. Both constants are explained in the catalog file.
+
+To update the scores, open each source linked in the file header, change the numbers and `BENCHMARKS_UPDATED`, and add new catalog models by their id. `npm test` checks that every scored id exists in the catalog and cites a known source.
 
 ## Quick start
 
@@ -130,6 +141,7 @@ studio component ─▶ generation.js (builds a payload in one shared vocabulary
 | `app/api/` | `generate`, `jobs`, `uploads` and `media` route handlers |
 | `packages/studio/src/providers/mediaStore.js`, `public/oga-media-sw.js` | Saves results and uploads in the browser and serves them at `/oga-media/…` |
 | `components/StandaloneShell.js`, `components/ProvidersModal.js` | App shell and provider settings |
+| `packages/studio/src/benchmarks.js`, `packages/studio/src/providers/catalog/benchmarks.js` | Benchmarks ranking and the curated leaderboard scores |
 
 ### Adding or fixing a model route
 

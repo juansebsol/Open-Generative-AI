@@ -635,6 +635,16 @@ export default function AudioStudio({
     setParams(initial);
   }, [selectedModelId]); // Only reset when model ID changes
 
+  // The Benchmarks page opens this studio with a model preselected.
+  useEffect(() => {
+    const onOpen = (event) => {
+      const { tabId, modelId } = event.detail || {};
+      if (tabId === "audio" && getAudioModelById(modelId)) setSelectedModelId(modelId);
+    };
+    window.addEventListener("oga:open-studio", onOpen);
+    return () => window.removeEventListener("oga:open-studio", onOpen);
+  }, []);
+
   // ── Persistence: Load ────────────────────────────────────────────────────
   useEffect(() => {
     try {

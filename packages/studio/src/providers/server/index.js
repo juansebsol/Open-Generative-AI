@@ -15,7 +15,7 @@ import * as openrouter from './adapters/openrouter.js';
 import * as elevenlabs from './adapters/elevenlabs.js';
 export { chatCompletion, CHAT_PROVIDER_IDS } from './chat.js';
 export { getBalance, BALANCE_PROVIDER_IDS } from './balance.js';
-export { getPrice, PRICE_PROVIDER_IDS } from './pricing.js';
+export { getPrice, getPrices, PRICE_PROVIDER_IDS } from './pricing.js';
 
 const ADAPTERS = { fal, wavespeed, google, openai, openrouter, elevenlabs };
 

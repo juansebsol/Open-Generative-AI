@@ -1145,6 +1145,19 @@ export default function ImageStudio({
     applySelectedVariant(variant, mode, family);
   }, [applySelectedVariant]);
 
+  // The Benchmarks page opens this studio with a model preselected.
+  useEffect(() => {
+    const onOpen = (event) => {
+      const { tabId, modelId } = event.detail || {};
+      if (tabId !== "image" || !modelId) return;
+      const variant = imageModelCatalog.variantById.get(modelId);
+      const family = imageModelCatalog.familyByVariantId.get(modelId);
+      if (variant && family) applyUserSelectedVariant(variant, variant.mode, family);
+    };
+    window.addEventListener("oga:open-studio", onOpen);
+    return () => window.removeEventListener("oga:open-studio", onOpen);
+  }, [applyUserSelectedVariant]);
+
   // ── Textarea auto-resize ─────────────────────────────────────────────────
   // ── Upload picker callbacks ──────────────────────────────────────────────
   const handleUploadSelect = useCallback(

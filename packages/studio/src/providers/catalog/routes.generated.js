@@ -3469,6 +3469,44 @@ export const ROUTE_GROUPS = {
    }
   ]
  },
+ "vector": {
+  "recraft-v4-1-text-to-vector": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/recraft/v4.1/text-to-vector"
+   }
+  ],
+  "recraft-v4-1-pro-text-to-vector": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/recraft/v4.1/pro/text-to-vector"
+   }
+  ],
+  "ideogram-vector-text-to-vector": [
+   {
+    "provider": "fal",
+    "endpoint": "ideogram/vector/text-to-vector"
+   }
+  ],
+  "ideogram-vector-image-to-vector": [
+   {
+    "provider": "fal",
+    "endpoint": "ideogram/vector/image-to-vector"
+   }
+  ],
+  "recraft-vectorize": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/recraft/vectorize"
+   }
+  ],
+  "image2svg": [
+   {
+    "provider": "fal",
+    "endpoint": "fal-ai/image2svg"
+   }
+  ]
+ },
  "video-effects": {
   "pixverse-v5.5-effects": [
    {

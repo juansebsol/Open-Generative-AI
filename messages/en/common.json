@@ -19,14 +19,18 @@
     "three-d-image": "Image to 3D",
     "three-d-retexture": "Retexture",
     "three-d-rig": "Rig and animate",
-    "three-d-mesh": "Mesh tools"
+    "three-d-mesh": "Mesh tools",
+    "vector": "Vector Studio",
+    "benchmarks": "Benchmarks"
   },
   "categories": {
     "images": "Images",
     "video": "Video",
     "audio": "Audio",
     "agents-automation": "Automation",
-    "3d": "3D"
+    "3d": "3D",
+    "vector": "Vector",
+    "benchmarks": "Benchmarks"
   },
   "shell": {
     "brand": "Openstudio",
@@ -142,6 +146,7 @@
     "addKey": "Add a provider key"
   },
   "tabDescriptions": {
+    "benchmarks": "Best, best-value and cheapest-decent models per task, with prices",
     "image": "Text to image and editing, up to 14 references",
     "layers": "Separate layers, upscale, remove backgrounds",
     "cinema": "Photoreal shots with lens and camera control",
@@ -161,6 +166,7 @@
     "three-d-image": "Photo, multi-view or sketch to a 3D model",
     "three-d-retexture": "New materials for any model, by prompt or reference image",
     "three-d-rig": "Skeleton and animation for humanoid models",
-    "three-d-mesh": "Remesh, split into parts and clean topology"
+    "three-d-mesh": "Remesh, split into parts and clean topology",
+    "vector": "Logos, icon sets and image tracing as editable SVG"
   }
 }

@@ -15,6 +15,7 @@ import {
   v2vModels,
 } from './models.js';
 import { hasRoute } from './providers/catalog/index.js';
+import { vectorModels } from './vectorModels.js';
 
 function endpointForModelId(id) {
   for (const models of Object.values(ALL_MODEL_LISTS)) {
@@ -51,6 +52,7 @@ const STUDIO_REQUIREMENTS = {
   'three-d-retexture': () => threeDModels.some((model) => model.toolLabel === 'retexture'),
   'three-d-rig': () => threeDModels.some((model) => model.toolLabel === 'rig'),
   'three-d-mesh': () => threeDModels.some((model) => ['remesh', 'segment', 'topology'].includes(model.toolLabel)),
+  vector: () => vectorModels.length > 0,
   workflows: () => [t2iModels, i2iModels, t2vModels, i2vModels, v2vModels, audioModels, lipsyncModels].some((models) => models.length > 0),
 };
 

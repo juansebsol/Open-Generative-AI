@@ -19,14 +19,18 @@
     "three-d-image": "图像生成 3D",
     "three-d-retexture": "重新贴图",
     "three-d-rig": "绑定骨骼与动画",
-    "three-d-mesh": "网格工具"
+    "three-d-mesh": "网格工具",
+    "vector": "矢量工作室",
+    "benchmarks": "模型评测"
   },
   "categories": {
     "images": "图像",
     "video": "视频",
     "audio": "音频",
     "agents-automation": "智能体与自动化",
-    "3d": "3D"
+    "3d": "3D",
+    "vector": "矢量",
+    "benchmarks": "模型评测"
   },
   "shell": {
     "brand": "Openstudio",
@@ -142,6 +146,7 @@
     "addKey": "添加服务商密钥"
   },
   "tabDescriptions": {
+    "benchmarks": "按任务查看最佳、性价比最高与最便宜够用的模型及价格",
     "image": "文生图与图像编辑，最多 14 张参考图",
     "layers": "分离图层、放大、去除背景",
     "cinema": "带镜头与相机控制的写实画面",
@@ -161,6 +166,7 @@
     "three-d-image": "照片、多视角或草图生成 3D 模型",
     "three-d-retexture": "通过提示词或参考图为任意模型换材质",
     "three-d-rig": "为人形模型添加骨骼和动画",
-    "three-d-mesh": "重建网格、拆分部件与整理拓扑"
+    "three-d-mesh": "重建网格、拆分部件与整理拓扑",
+    "vector": "徽标、图标集与图像描摹，输出可编辑 SVG"
   }
 }

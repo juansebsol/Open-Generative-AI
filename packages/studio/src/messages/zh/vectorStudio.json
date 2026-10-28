@@ -1,0 +1,134 @@
+{
+  "tools": {
+    "logo": {
+      "label": "文本生成徽标",
+      "heading": "描述一个标志，得到",
+      "accent": "可编辑的 SVG",
+      "subtitle": "Recraft 和 Ideogram 直接绘制真正的矢量：图层、路径和干净的几何形状，可在 Figma 或 Illustrator 中打开。选择品牌配色，生成几个候选，再免费导出为 PNG、PDF、favicon 或应用图标。",
+      "placeholder": "描述徽标：主体、风格和气质，例如极简几何狐狸头标志，双色",
+      "starters": [
+        { "label": "几何狐狸头标志", "prompt": "极简几何狐狸头徽标，扁平矢量，双色，负空间，无文字" },
+        { "label": "咖啡烘焙圆形徽章", "prompt": "咖啡烘焙品牌的圆形徽章徽标，中央一颗咖啡豆，细线细节，复古而干净，无文字" },
+        { "label": "圆润的应用图标", "prompt": "友好的纸飞机应用图标，圆润形状，扁平色彩，细微渐变，居中于纯色背景" }
+      ]
+    },
+    "icons": {
+      "label": "图标集",
+      "heading": "一种风格，一整套",
+      "accent": "图标",
+      "subtitle": "风格只写一次，然后逐行列出需要的图标。每个名称都用同样的风格词和配色生成，整套可导出为 SVG 雪碧图或单文件压缩包。",
+      "placeholder": "所有图标共用的风格，例如细线图标，2px 描边，圆角，单色",
+      "namesPlaceholder": "首页\n搜索\n设置\n用户\n通知",
+      "starters": [
+        { "label": "细线圆角", "prompt": "细线图标，2px 描边，圆角圆头，单色，24px 网格" },
+        { "label": "填充双色", "prompt": "填充双色图标，粗壮简洁的形状，同一色相的两种色调，柔和圆角" },
+        { "label": "手绘马克笔", "prompt": "手绘马克笔图标，线条略不均匀，俏皮，单色" }
+      ]
+    },
+    "vectorize": {
+      "label": "矢量化",
+      "heading": "把任意图片描摹成",
+      "accent": "干净的 SVG",
+      "subtitle": "上传 PNG、JPG 或 WebP，或从图像工作室选择结果。Image2SVG 以极低成本描摹几何形状，Recraft 保持形状平滑可编辑，Ideogram 则把图片重绘为矢量艺术。",
+      "placeholder": "添加图片，选择描摹器，然后矢量化。"
+    }
+  },
+  "rail": { "label": "工具" },
+  "controls": {
+    "model": "模型",
+    "tier": "描摹器",
+    "palette": "配色",
+    "candidates": "结果数",
+    "candidatesTitle": "生成多少个结果",
+    "more": "更多（{count}）",
+    "less": "收起",
+    "advancedHint": "显示不常用的描摹参数",
+    "tracing": "描摹",
+    "references": "参考图",
+    "addReference": "最多添加 {max} 张参考图",
+    "removeReference": "移除参考图"
+  },
+  "palette": {
+    "title": "品牌配色",
+    "hint": "Recraft 直接接收这些颜色；其他模型会把它们写进提示词。",
+    "custom": "自定义颜色",
+    "background": "背景",
+    "addColor": "添加颜色",
+    "remove": "移除颜色"
+  },
+  "icons": {
+    "count": "{count} 个图标",
+    "countOne": "1 个图标",
+    "none": "逐行添加图标名称",
+    "truncated": "只会生成前 {max} 个名称",
+    "generate": "生成 {count} 个图标",
+    "set": "图标集 · {count}",
+    "sprite": "SVG 雪碧图",
+    "zip": "SVG 压缩包",
+    "deleteSet": "删除整套",
+    "partial": "{total} 个图标中有 {failed} 个失败：{message}"
+  },
+  "vectorize": {
+    "upload": "上传图片",
+    "fromLibrary": "来自图像工作室",
+    "libraryTitle": "最近的图片",
+    "libraryEmpty": "还没有图片。先在图像工作室生成或上传一张，或在此上传。",
+    "clear": "清除图片",
+    "source": "原图",
+    "result": "SVG",
+    "compare": "前后对比",
+    "apply": "矢量化",
+    "sendHere": "矢量化",
+    "rasterNote": "提供商返回的是 PNG 而不是 SVG。把它发送到矢量化进行描摹。"
+  },
+  "preview": { "light": "浅色", "dark": "深色", "toggle": "预览背景" },
+  "buttons": {
+    "generate": "生成",
+    "export": "导出套件",
+    "download": "下载 SVG",
+    "fullscreen": "放大查看",
+    "delete": "删除",
+    "close": "关闭",
+    "useSource": "用作原图"
+  },
+  "export": {
+    "title": "导出套件",
+    "free": "免费 · 在本浏览器中完成，不调用 API",
+    "optimised": "已优化：{from} → {to}（缩小 {percent}%）",
+    "svg": "SVG（已优化）",
+    "svgOriginal": "SVG（原始生成）",
+    "png": "PNG {size}",
+    "pdf": "PDF",
+    "favicon": "favicon.ico",
+    "appIcons": "应用图标集（.zip）",
+    "appIconsHint": "iOS、Android 和 Web 尺寸，附带 manifest",
+    "working": "准备中…",
+    "failed": "导出失败：{message}",
+    "rasterOnly": "这个结果是 PNG。先矢量化，才能导出为 SVG。"
+  },
+  "gallery": {
+    "library": "素材库 · {count} 个结果",
+    "pendingTitle": "正在使用 {model}",
+    "pendingProgress": "已完成 {done} / {total}",
+    "pendingHint": "通常不到一分钟。你可以继续其他操作。",
+    "raster": "PNG",
+    "fromImage": "矢量化图片"
+  },
+  "confirm": { "deleteItem": "从素材库删除这个结果？", "deleteSet": "删除整套图标？" },
+  "providers": {
+    "needKey": "矢量模型运行在 {providers}。在设置 → 提供商中添加密钥即可开始。",
+    "openSettings": "打开提供商",
+    "or": "或"
+  },
+  "errors": {
+    "notImage": "只能矢量化 PNG、JPG 或 WebP 图片。",
+    "uploadFailed": "上传失败：{message}",
+    "needPrompt": "请先描述徽标。",
+    "needStyle": "请先描述图标风格。",
+    "needNames": "至少添加一个图标名称。",
+    "needImage": "请先添加要矢量化的图片。",
+    "noOutput": "提供商没有返回文件。",
+    "badSvg": "提供商返回的文件不是有效的 SVG。",
+    "generationFailed": "矢量生成失败。"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "title": "Benchmarks",
+  "subtitle": "For each kind of job: the best model, the best model for the money, and the cheapest one that is still decent. Quality comes from public blind-vote leaderboards; prices are what a default run costs with your keys.",
+  "updated": "Scores read on {date}.",
+  "categories": {
+    "text-to-image": "Text to image",
+    "image-editing": "Image editing",
+    "text-to-video": "Text to video",
+    "image-to-video": "Image to video",
+    "text-to-speech": "Speech",
+    "music": "Music",
+    "three-d": "3D"
+  },
+  "picks": {
+    "best": "Best quality",
+    "bestValue": "Best value",
+    "cheapestDecent": "Cheapest decent",
+    "bestHint": "Highest score on the leaderboard.",
+    "bestValueHint": "Most quality above the floor per dollar.",
+    "cheapestDecentHint": "Lowest price among models within {gap} Elo of the leader."
+  },
+  "open": "Open in {studio}",
+  "studios": {
+    "image": "Image Studio",
+    "video": "Video Studio",
+    "audio": "Audio Studio",
+    "three-d-text": "Text to 3D",
+    "three-d-image": "Image to 3D"
+  },
+  "columns": {
+    "model": "Model",
+    "provider": "Runs on",
+    "price": "Price per run",
+    "score": "Score",
+    "value": "Value"
+  },
+  "sortBy": "Sort by {column}",
+  "score": "{score} Elo",
+  "scoreTitle": "{name} on {source}, read {date}.",
+  "unscored": "Unscored",
+  "unscoredTitle": "No public leaderboard lists this model, so it is not ranked.",
+  "noPrice": "No price",
+  "noPriceTitle": "The provider quotes this model per unit, not per run, so it has no value score.",
+  "needsKey": "Needs a key",
+  "needsKeyTitle": "None of your keyed providers serves this model and it has no published list price. Available on {providers}.",
+  "listPrice": "list",
+  "listPriceTitle": "No key for a provider that serves this model; this is {provider}'s published list price.",
+  "pricing": "Pricing…",
+  "priceError": "Price unavailable",
+  "perCharacters": "Speech is priced on a {count}-character sample.",
+  "none": "Nothing to pick yet",
+  "noneHint": "No model in this category has both a score and a price. Add a provider key to see prices.",
+  "empty": "No models in this category are served by a supported provider.",
+  "decentNote": "Decent means within {gap} Elo of the leader ({floor} or more). Value counts only quality above {valueFloor} Elo ({valueGap} below the leader) and divides it by the price of one default run.",
+  "sourcesTitle": "Sources",
+  "decent": "decent",
+  "sameAs": "Same model as {pick}"
+}

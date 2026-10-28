@@ -139,7 +139,7 @@ async function wavespeedPrice({ endpoint, key, route, payload }) {
 // ── fal: GET /v1/models/pricing, then multiply by what the run will use ──────
 
 async function falUnitPrice(endpoint, key) {
-  return cached(`fal:${keyFingerprint(key)}:${endpoint}`, refreshMs(), async () => {
+  return cached(falCacheKey(key, endpoint), refreshMs(), async () => {
     const body = await requestJson('fal', `https://api.fal.ai/v1/models/pricing?endpoint_id=${encodeURIComponent(endpoint)}`, {
       headers: { Authorization: `Key ${key}` },
       timeoutMs: TIMEOUT_MS,
@@ -148,6 +148,53 @@ async function falUnitPrice(endpoint, key) {
     if (!price || money(price.unit_price) === null) return null;
     return { unitPrice: Number(price.unit_price), unit: String(price.unit || ''), currency: price.currency || 'USD' };
   });
+}
+
+// fal's pricing API takes up to 50 endpoint ids per call and rate-limits
+// bursts, so a page that prices many models asks for them in chunks and
+// seeds the same per-endpoint cache that single quotes read.
+const FAL_BATCH = 50;
+const falCacheKey = (key, endpoint) => `fal:${keyFingerprint(key)}:${endpoint}`;
+const unitPriceFrom = (body, endpoint) => {
+  const price = (body?.prices || []).find((item) => String(item.endpoint_id).toLowerCase() === endpoint.toLowerCase());
+  if (!price || money(price.unit_price) === null) return null;
+  return { unitPrice: Number(price.unit_price), unit: String(price.unit || ''), currency: price.currency || 'USD' };
+};
+
+/**
+ * Fetches the unit prices of many fal endpoints in as few calls as possible
+ * and seeds the per-endpoint cache. Resolves to a Map of endpoint -> error
+ * for the endpoints whose chunk failed (a rate limit stops the batch early),
+ * so the caller can report them without asking fal again one by one.
+ */
+export async function primeFalPrices(endpoints, key) {
+  const failures = new Map();
+  const now = Date.now();
+  const wanted = [...new Set(endpoints)].filter((endpoint) => {
+    const hit = cache.get(falCacheKey(key, endpoint));
+    return !(hit && hit.until > now);
+  });
+  for (let start = 0; start < wanted.length; start += FAL_BATCH) {
+    const chunk = wanted.slice(start, start + FAL_BATCH);
+    const request = requestJson('fal', `https://api.fal.ai/v1/models/pricing?endpoint_id=${chunk.map(encodeURIComponent).join(',')}`, {
+      headers: { Authorization: `Key ${key}` },
+      timeoutMs: TIMEOUT_MS,
+    });
+    for (const endpoint of chunk) {
+      const cacheKey = falCacheKey(key, endpoint);
+      const value = request.then((body) => unitPriceFrom(body, endpoint));
+      // A failed chunk leaves nothing cached, so a later quote asks again.
+      value.catch(() => cache.delete(cacheKey));
+      cache.set(cacheKey, { value, until: Date.now() + refreshMs() });
+    }
+    try {
+      await request;
+    } catch (error) {
+      for (const endpoint of wanted.slice(start)) failures.set(endpoint, error);
+      break;
+    }
+  }
+  return failures;
 }
 
 // fal does not enumerate its unit names, so match them loosely.
@@ -339,4 +386,61 @@ export async function getPrice({ provider, endpoint, key, payload = {} }) {
     default: quote = tablePrice(provider, providerEndpoint, input, await liveRates());
   }
   return { provider, endpoint: providerEndpoint, estimated: true, ...quote };
+}
+
+const MAX_BATCH = 200;
+const BATCH_CONCURRENCY = 3;
+const inlineError = (error) => {
+  const status = error instanceof ProviderError || error instanceof MappingError
+    ? (error.status >= 400 && error.status < 600 ? error.status : 502)
+    : error?.status === 400 ? 400 : 500;
+  return { error: status === 500 ? 'Unexpected server error' : error.message, status };
+};
+
+/**
+ * Quotes many runs of one provider in one request: fal unit prices are
+ * fetched in batches first, then each quote is computed as getPrice would.
+ * A quote that fails is returned inline as { error, status } at its index,
+ * so one bad endpoint does not fail the batch.
+ * @param {{ provider: string, requests: Array<{ endpoint: string, payload?: object }>, key?: string }} args
+ */
+export async function getPrices({ provider, requests, key }) {
+  if (!PRICE_PROVIDER_IDS.includes(provider)) throw new ProviderError(`${provider} has no price lookup`, { status: 400 });
+  if (!Array.isArray(requests) || requests.length === 0 || requests.length > MAX_BATCH) {
+    throw new ProviderError(`requests must list 1 to ${MAX_BATCH} runs`, { status: 400 });
+  }
+  if (requests.some((item) => typeof item?.endpoint !== 'string' || !item.endpoint)) throw new ProviderError('every request needs an endpoint', { status: 400 });
+  let failed = new Map();
+  if (provider === 'fal') {
+    if (typeof key !== 'string' || key.trim().length < 8) throw new ProviderError('Add your fal API key in Settings → Providers.', { status: 401, provider });
+    // Models fal hosts at OpenAI's or Google's list price are quoted from the
+    // table and never asked of fal's API.
+    const endpoints = [];
+    for (const item of requests) {
+      const route = findRoute(item.endpoint, 'fal');
+      if (route && !findRoute(item.endpoint, 'openai') && !findRoute(item.endpoint, 'google')) endpoints.push(route.endpoint);
+    }
+    failed = await primeFalPrices(endpoints, key.trim());
+  }
+  const quotes = new Array(requests.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < requests.length) {
+      const index = next;
+      next += 1;
+      const { endpoint, payload } = requests[index];
+      const falEndpoint = provider === 'fal' ? (findRoute(endpoint, 'fal')?.endpoint || endpoint) : null;
+      if (falEndpoint && failed.has(falEndpoint)) {
+        quotes[index] = inlineError(failed.get(falEndpoint));
+        continue;
+      }
+      try {
+        quotes[index] = await getPrice({ provider, endpoint, key, payload: payload || {} });
+      } catch (error) {
+        quotes[index] = inlineError(error);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(BATCH_CONCURRENCY, requests.length) }, worker));
+  return quotes;
 }

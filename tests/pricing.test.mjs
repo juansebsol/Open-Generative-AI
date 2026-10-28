@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getPrice, tablePrice, falQuantity, liveRates, resetPriceCache, refreshMs } from '../packages/studio/src/providers/server/pricing.js';
+import { getPrice, getPrices, tablePrice, falQuantity, liveRates, resetPriceCache, refreshMs } from '../packages/studio/src/providers/server/pricing.js';
 import { openaiUsageCost, googleUsageCost, sumCosts } from '../packages/studio/src/providers/server/usage.js';
 import { PRICES } from '../packages/studio/src/providers/catalog/prices.js';
 import { mapInput } from '../packages/studio/src/providers/mapper.js';
@@ -178,4 +178,40 @@ test('lenient mapping reports missing required inputs instead of throwing', () =
   assert.deepEqual(input, { prompt: 'hi' });
   assert.deepEqual(missing, ['image']);
   assert.throws(() => mapInput({ prompt: 'hi' }, route, schema), /Missing required input: image/);
+});
+
+test('a batch asks fal for all its endpoints in one call and reports failures inline', async () => {
+  const url = 'https://api.fal.ai/v1/models/pricing?endpoint_id=fal-ai%2Fesrgan,fal-ai%2Fflux%2Fdev,fal-ai%2Fflux%2Fschnell';
+  const calls = mockFetch({
+    [url]: [200, { prices: [
+      { endpoint_id: 'fal-ai/esrgan', unit_price: 0.025, unit: 'image', currency: 'USD' },
+      { endpoint_id: 'fal-ai/flux/dev', unit_price: 0.025, unit: 'megapixel', currency: 'USD' },
+    ], next_cursor: null, has_more: false }],
+  });
+  const quotes = await getPrices({ provider: 'fal', key: KEY, requests: [
+    { endpoint: 'ai-image-upscale', payload: { num_images: 2 } },
+    { endpoint: 'flux-dev-image', payload: { width: 1024, height: 1024 } },
+    { endpoint: 'gpt-image-2-text-to-image', payload: { quality: 'medium', aspect_ratio: '1:1' } },
+    { endpoint: 'flux-schnell-image' },
+  ] });
+  assert.equal(calls.filter((call) => call.url.includes('fal.ai')).length, 1, 'one fal call for the whole batch');
+  assert.deepEqual([quotes[0].kind, quotes[0].amount], ['total', 0.05]);
+  assert.deepEqual([quotes[1].kind, quotes[1].unit], ['total', 'megapixel']);
+  assert.deepEqual([quotes[2].amount, quotes[2].listOf], [0.053, 'openai'], 'OpenAI models on fal come from the table without asking fal');
+  assert.equal(quotes[3].kind, 'unavailable', 'an endpoint fal left out of its answer is unavailable, not an error');
+  // The batch seeded the single-quote cache.
+  const single = await getPrice({ provider: 'fal', endpoint: 'ai-image-upscale', key: KEY, payload: { num_images: 1 } });
+  assert.equal(single.amount, 0.025);
+  assert.equal(calls.filter((call) => call.url.includes('fal.ai')).length, 1);
+});
+
+test('a rate-limited fal batch surfaces 429 on each quote instead of failing the request', async () => {
+  mockFetch({
+    'https://api.fal.ai/v1/models/pricing?endpoint_id=fal-ai%2Fesrgan': [429, { error: { type: 'rate_limited', message: 'Rate limit exceeded' } }],
+  });
+  const quotes = await getPrices({ provider: 'fal', key: KEY, requests: [{ endpoint: 'ai-image-upscale' }] });
+  assert.equal(quotes[0].status, 429);
+  assert.match(quotes[0].error, /429/);
+  await assert.rejects(getPrices({ provider: 'fal', key: '', requests: [{ endpoint: 'ai-image-upscale' }] }), /API key/);
+  await assert.rejects(getPrices({ provider: 'google', requests: [] }), /1 to/);
 });

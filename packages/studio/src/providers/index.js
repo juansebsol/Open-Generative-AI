@@ -17,6 +17,6 @@ export { getRoutes, hasRoute, routeProviders } from './catalog/index.js';
 export { runEndpoint, uploadMedia, isEndpointAvailable, pickRoute, ProviderSetupError } from './client.js';
 export { listCheckpoints } from './local/comfyui.js';
 export { registerMediaServiceWorker, removeUnusedMedia } from './mediaStore.js';
-export { quoteRun, routeFor, pricedInputs, describeQuote, formatMoney } from './pricing.js';
+export { quoteRun, quoteRuns, quoteListPrice, routeFor, pricedInputs, describeQuote, formatMoney } from './pricing.js';
 export { recordSpend, monthlySpend, subscribeSpend, getSpend, clearSpend } from './spend.js';
 export { chatComplete, chatJson, parseJsonReply, hasChatProvider, chatProvider, chatModelFor, CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, ChatSetupError } from './chat.js';

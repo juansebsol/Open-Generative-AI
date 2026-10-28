@@ -86,6 +86,117 @@ export async function quoteRun(endpoint, payload = {}, { full = false } = {}) {
   return request;
 }
 
+// Providers whose quotes are published list prices and need no key, in the
+// order the Benchmarks page prefers them when the visitor has no key at all.
+export const LIST_PRICE_PROVIDERS = ['google', 'openai', 'elevenlabs', 'openrouter'];
+
+const listPriceProvider = (endpoint) => {
+  const routes = getRoutes(endpoint);
+  return LIST_PRICE_PROVIDERS.find((candidate) => routes.some((route) => route.provider === candidate)) || null;
+};
+
+async function postQuotes(provider, requests, key) {
+  const response = await fetch('/api/price', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(key ? { 'x-provider-key': key } : {}) },
+    body: JSON.stringify({ provider, requests }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data?.error || `Price lookup failed (${response.status})`);
+    error.status = response.status;
+    throw error;
+  }
+  return Array.isArray(data?.quotes) ? data.quotes : [];
+}
+
+/**
+ * Quotes many runs at once: one request per provider, so fal's pricing API
+ * is asked for whole batches instead of one endpoint at a time. Results come
+ * back in the order of `items`; a run that could not be quoted is
+ * { kind: 'error', status, message } rather than a thrown error, so the rest
+ * of the batch still resolves. Quotes share quoteRun's cache.
+ * @param {Array<{ endpoint: string, payload?: object }>} items
+ * @param {{ listPrices?: boolean }} [options] also quote runs no keyed
+ *   provider serves from a published list price (marked `listOnly`)
+ */
+export async function quoteRuns(items, { listPrices = false } = {}) {
+  const results = new Array(items.length);
+  const groups = new Map();
+  const queue = (provider, index, endpoint, inputs, cacheKey, key, listOnly) => {
+    const hit = cache.get(cacheKey);
+    if (hit && hit.until > Date.now()) {
+      results[index] = hit.quote;
+      return;
+    }
+    if (!groups.has(provider)) groups.set(provider, { key, listOnly, batch: [] });
+    groups.get(provider).batch.push({ index, endpoint, inputs, cacheKey });
+  };
+  items.forEach((item, index) => {
+    const route = routeFor(item.endpoint);
+    const inputs = pricedInputs(item.payload || {});
+    if (!route) {
+      const providers = [...new Set(getRoutes(item.endpoint).map((candidate) => candidate.provider))];
+      results[index] = { kind: 'noProvider', endpoint: item.endpoint, providers };
+      const provider = listPrices ? listPriceProvider(item.endpoint) : null;
+      if (provider) queue(`list:${provider}`, index, item.endpoint, inputs, `list|${provider}|${item.endpoint}|${JSON.stringify(inputs)}`, '', true);
+      return;
+    }
+    if (getProvider(route.provider)?.kind === 'local') {
+      results[index] = { kind: 'free', provider: route.provider, endpoint: route.endpoint };
+      return;
+    }
+    queue(route.provider, index, item.endpoint, inputs, `${route.provider}|${item.endpoint}|${JSON.stringify(inputs)}`, getProviderKey(route.provider), false);
+  });
+  await Promise.all([...groups].map(async ([group, { key, listOnly, batch }]) => {
+    const provider = group.replace(/^list:/, '');
+    let quotes;
+    try {
+      quotes = await postQuotes(provider, batch.map(({ endpoint, inputs }) => ({ endpoint, payload: inputs })), key);
+    } catch (error) {
+      for (const item of batch) results[item.index] = { kind: 'error', status: error.status, message: error.message };
+      return;
+    }
+    batch.forEach((item, position) => {
+      const quote = quotes[position];
+      if (!quote || quote.error) {
+        results[item.index] = { kind: 'error', status: quote?.status, message: quote?.error || 'No quote returned' };
+        return;
+      }
+      const marked = listOnly ? { ...quote, listOnly: true } : quote;
+      cache.set(item.cacheKey, { quote: marked, until: Date.now() + CACHE_TTL_MS });
+      results[item.index] = marked;
+    });
+  }));
+  return results;
+}
+
+/**
+ * The published list price of an endpoint when none of the visitor's keyed
+ * providers serves it: Google, OpenAI and ElevenLabs quote from the price
+ * table and OpenRouter from its public model list, so no key is needed.
+ * Resolves to null when the endpoint has no list-price route. The quote is
+ * marked `listOnly` so the page can say it is not what a run would go through.
+ */
+export async function quoteListPrice(endpoint, payload = {}) {
+  const provider = listPriceProvider(endpoint);
+  if (!provider) return null;
+  const inputs = pricedInputs(payload);
+  const cacheKey = `list|${provider}|${endpoint}|${JSON.stringify(inputs)}`;
+  const hit = cache.get(cacheKey);
+  if (hit && hit.until > Date.now()) return hit.quote;
+  if (inflight.has(cacheKey)) return inflight.get(cacheKey);
+  const request = postQuote({ provider }, endpoint, inputs)
+    .then((quote) => {
+      const marked = { ...quote, listOnly: true };
+      cache.set(cacheKey, { quote: marked, until: Date.now() + CACHE_TTL_MS });
+      return marked;
+    })
+    .finally(() => inflight.delete(cacheKey));
+  inflight.set(cacheKey, request);
+  return request;
+}
+
 /** Formats an amount of money for the chip. */
 export function formatMoney(amount, currency = 'USD', locale = 'en') {
   const value = Number(amount) || 0;

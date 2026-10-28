@@ -1883,6 +1883,19 @@ export default function VideoStudio({
     ],
   );
 
+  // The Benchmarks page opens this studio with a model preselected.
+  useEffect(() => {
+    const onOpen = (event) => {
+      const { tabId, modelId } = event.detail || {};
+      if (tabId !== "video" || !modelId) return;
+      const entry = videoModelPickerEntryByVariantId.get(modelId);
+      const variant = videoModelCatalog.variantById.get(modelId);
+      if (entry && variant) handleModelSelect(entry, variant.mode);
+    };
+    window.addEventListener("oga:open-studio", onOpen);
+    return () => window.removeEventListener("oga:open-studio", onOpen);
+  }, [handleModelSelect]);
+
   const handleWorkflowSelect = useCallback((workflowId) => {
     if (getGroupedVideoConfiguration(selectedModel)) {
       handleGroupedSelection(getSelectionPlan({ workflowId }), selectedFamily, workflowId);
