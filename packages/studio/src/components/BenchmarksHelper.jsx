@@ -26,6 +26,7 @@ import benchmarksZh from "../messages/zh/benchmarks.json";
 import pricingEn from "../messages/en/pricing.json";
 import pricingZh from "../messages/zh/pricing.json";
 
+const AUTO_HIDE_MS = 10_000;
 const USED_MS = 1500;
 const KIND_ICON = { best: IconTrophy, bestValue: IconCoins, cheapestDecent: IconTag };
 
@@ -116,12 +117,19 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
   const [open, setOpen] = useState(() => loadHelperOpen({ narrow: typeof window !== "undefined" && window.matchMedia?.("(max-width: 639px)")?.matches === true }));
   const [showMore, setShowMore] = useState(false);
   const [usedId, setUsedId] = useState(null);
+  // The card shows itself for a few seconds on every page so the visitor
+  // notices the picks, then tucks away to the icon. Hovering or focusing it
+  // holds it open; reopening it by hand pins it until the page changes.
+  const [autoHidden, setAutoHidden] = useState(false);
+  const [held, setHeld] = useState(false);
+  const [pinned, setPinned] = useState(false);
   const cardRef = useRef(null);
   const reopenRef = useRef(null);
   const focusOnOpen = useRef(false);
 
   const visible = Boolean(categoryId) && entries.length > 0;
-  const quotes = useCategoryQuotes(entries, categoryId, { enabled: visible && open });
+  const shown = open && !autoHidden;
+  const quotes = useCategoryQuotes(entries, categoryId, { enabled: visible && shown });
   const settled = quotesSettled(entries, quotes);
 
   const ranking = useMemo(() => rankEntries(entries.map((entry) => {
@@ -147,10 +155,18 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
     return () => clearTimeout(timer);
   }, [usedId]);
 
-  // A new page starts with the "More" list collapsed.
+  // A new page starts with the "More" list collapsed and the card showing again.
   useEffect(() => {
     setShowMore(false);
+    setAutoHidden(false);
+    setPinned(false);
   }, [tabId, categoryId]);
+
+  useEffect(() => {
+    if (!open || autoHidden || held || pinned) return undefined;
+    const timer = setTimeout(() => setAutoHidden(true), AUTO_HIDE_MS);
+    return () => clearTimeout(timer);
+  }, [open, autoHidden, held, pinned, tabId, categoryId]);
 
   if (!visible) return null;
 
@@ -161,6 +177,8 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
   };
   const reopen = () => {
     focusOnOpen.current = true;
+    setAutoHidden(false);
+    setPinned(true);
     setOpen(true);
     saveHelperOpen(true);
   };
@@ -176,7 +194,7 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
     window.dispatchEvent(new CustomEvent("oga:open-studio", { detail: { tabId: "benchmarks", categoryId } }));
   };
 
-  if (!open) {
+  if (!shown) {
     return (
       <button
         ref={reopenRef}
@@ -217,7 +235,12 @@ export default function BenchmarksHelper({ tabId, locale = "en", benchmarksPath 
           close();
         }
       }}
+      onMouseEnter={() => setHeld(true)}
+      onMouseLeave={() => setHeld(false)}
+      onFocus={() => setHeld(true)}
+      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setHeld(false); }}
       data-benchmarks-helper="open"
+      data-pinned={pinned ? "true" : "false"}
       data-category={categoryId}
       data-settled={settled ? "true" : "false"}
       className="fixed right-4 top-[68px] z-[95] flex max-h-[calc(100vh-88px)] w-[288px] max-w-[calc(100vw-32px)] flex-col overflow-y-auto rounded-2xl border border-white/[0.1] bg-[#121215]/95 text-white shadow-[0_24px_60px_rgba(0,0,0,0.55)] backdrop-blur-md focus:outline-none"
