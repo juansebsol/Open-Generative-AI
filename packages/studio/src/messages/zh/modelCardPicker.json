@@ -1,0 +1,13 @@
+{
+  "label": "模型",
+  "all": "全部",
+  "search": "搜索",
+  "searchTitle": "按名称或提供商筛选模型",
+  "noMatch": "没有与“{query}”匹配的模型。",
+  "unscored": "未评分",
+  "elo": "{score} Elo",
+  "scoreTitle": "在 {source} 上得分 {score} Elo，读取于 {date}。",
+  "unscoredTitle": "这个模型不在任何公开排行榜上。",
+  "openBenchmarks": "打开模型评测",
+  "selected": "已选择"
+}

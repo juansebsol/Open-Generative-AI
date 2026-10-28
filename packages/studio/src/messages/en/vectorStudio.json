@@ -7,9 +7,18 @@
       "subtitle": "Recraft and Ideogram draw real vectors: layers, paths and clean geometry that open in Figma or Illustrator. Or let a chat model (Gemini, Claude, GPT) write the SVG by hand for a fraction of the price, then refine it with a sentence. Pick a brand palette, ask for a few candidates, then export the one you like as PNG, PDF, favicon or app icons for free.",
       "placeholder": "Describe the logo: subject, style and mood, for example a minimal fox head mark, geometric, two colours",
       "starters": [
-        { "label": "Geometric fox head mark", "prompt": "Minimal geometric fox head logo mark, flat vector, two colours, negative space, no text" },
-        { "label": "Coffee roaster badge", "prompt": "Circular badge logo for a coffee roaster, a single coffee bean in the centre, thin line details, vintage but clean, no text" },
-        { "label": "Soft rounded app icon", "prompt": "Friendly app icon of a paper plane, rounded shapes, flat colour, subtle gradient, centered on a plain background" }
+        {
+          "label": "Geometric fox head mark",
+          "prompt": "Minimal geometric fox head logo mark, flat vector, two colours, negative space, no text"
+        },
+        {
+          "label": "Coffee roaster badge",
+          "prompt": "Circular badge logo for a coffee roaster, a single coffee bean in the centre, thin line details, vintage but clean, no text"
+        },
+        {
+          "label": "Soft rounded app icon",
+          "prompt": "Friendly app icon of a paper plane, rounded shapes, flat colour, subtle gradient, centered on a plain background"
+        }
       ]
     },
     "icons": {
@@ -20,9 +29,18 @@
       "placeholder": "Style for every icon, for example thin line icons, 2px stroke, rounded corners, single colour",
       "namesPlaceholder": "home\nsearch\nsettings\nuser\nbell",
       "starters": [
-        { "label": "Thin line, rounded", "prompt": "Thin line icon, 2px stroke, rounded corners and caps, single colour, 24px grid" },
-        { "label": "Filled duotone", "prompt": "Filled duotone icon, bold simple shapes, two tones of one colour, soft corners" },
-        { "label": "Hand-drawn marker", "prompt": "Hand-drawn marker icon, slightly uneven lines, playful, monochrome" }
+        {
+          "label": "Thin line, rounded",
+          "prompt": "Thin line icon, 2px stroke, rounded corners and caps, single colour, 24px grid"
+        },
+        {
+          "label": "Filled duotone",
+          "prompt": "Filled duotone icon, bold simple shapes, two tones of one colour, soft corners"
+        },
+        {
+          "label": "Hand-drawn marker",
+          "prompt": "Hand-drawn marker icon, slightly uneven lines, playful, monochrome"
+        }
       ]
     },
     "vectorize": {
@@ -35,9 +53,6 @@
   },
   "controls": {
     "model": "Model",
-    "nativeGroup": "Drawn by a vector model",
-    "chatGroup": "Written by a chat model",
-    "modelHint": "Native vector models draw richer illustration; chat models write cleaner paths for icons, geometric marks and wordmarks, at a fraction of the price.",
     "tier": "Tracer",
     "palette": "Palette",
     "candidates": "Results",
@@ -48,6 +63,13 @@
     "references": "References",
     "addReference": "Add up to {max} reference images",
     "removeReference": "Remove reference"
+  },
+  "picker": {
+    "vectorGroup": "Vector models",
+    "chatGroup": "Chat models",
+    "allHint": "Vector models draw richer illustration; chat models write cleaner paths for icons, geometric marks and wordmarks at a fraction of the price.",
+    "vectorHint": "Vector models draw the picture: richer illustration, shading and layered SVGs. Switch to Chat models for cheaper, cleaner paths.",
+    "chatHint": "Chat models write the SVG as code: clean paths for icons, geometric marks and wordmarks at a fraction of the price. Switch to Vector models for richer illustration."
   },
   "palette": {
     "title": "Brand palette",
@@ -94,7 +116,11 @@
     "badge": "Refined",
     "needText": "Say what to change first."
   },
-  "preview": { "light": "Light", "dark": "Dark", "toggle": "Preview background" },
+  "preview": {
+    "light": "Light",
+    "dark": "Dark",
+    "toggle": "Preview background"
+  },
   "buttons": {
     "generate": "Generate",
     "export": "Export kit",
@@ -128,7 +154,10 @@
     "chatNote": "SVG markup written by a language model. Use Refine to change it with a sentence.",
     "fromImage": "Vectorized image"
   },
-  "confirm": { "deleteItem": "Delete this result from the library?", "deleteSet": "Delete the whole icon set?" },
+  "confirm": {
+    "deleteItem": "Delete this result from the library?",
+    "deleteSet": "Delete the whole icon set?"
+  },
   "providers": {
     "needKey": "Vector models run on {providers}. Add a key in Settings → Providers to start.",
     "openSettings": "Open Providers",

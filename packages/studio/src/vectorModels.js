@@ -112,7 +112,7 @@ export const ALL_vectorModels = [
   },
   chatModel({
     id: 'svg-gemini-4-argon',
-    name: 'Gemini 4 Argon · code-written SVG',
+    name: 'Gemini 4 Argon',
     provider: 'google',
     providerName: 'Google',
     vendor: 'gemini',
@@ -121,7 +121,7 @@ export const ALL_vectorModels = [
   }),
   chatModel({
     id: 'svg-gemini-3-8-flash',
-    name: 'Gemini 3.8 Flash · code-written SVG',
+    name: 'Gemini 3.8 Flash',
     provider: 'google',
     providerName: 'Google',
     vendor: 'gemini',
@@ -130,7 +130,7 @@ export const ALL_vectorModels = [
   }),
   chatModel({
     id: 'svg-claude-sonnet-5-5',
-    name: 'Claude Sonnet 5.5 · code-written SVG',
+    name: 'Claude Sonnet 5.5',
     provider: 'openrouter',
     providerName: 'Anthropic',
     vendor: 'claude',
@@ -139,7 +139,7 @@ export const ALL_vectorModels = [
   }),
   chatModel({
     id: 'svg-claude-haiku-5-5',
-    name: 'Claude Haiku 5.5 · code-written SVG',
+    name: 'Claude Haiku 5.5',
     provider: 'openrouter',
     providerName: 'Anthropic',
     vendor: 'claude',
@@ -148,7 +148,7 @@ export const ALL_vectorModels = [
   }),
   chatModel({
     id: 'svg-gpt-6-1-sol',
-    name: 'GPT-6.1 Sol · code-written SVG',
+    name: 'GPT-6.1 Sol',
     provider: 'openai',
     providerName: 'OpenAI',
     vendor: 'gpt',
@@ -157,7 +157,7 @@ export const ALL_vectorModels = [
   }),
   chatModel({
     id: 'svg-gpt-6-luna',
-    name: 'GPT-6 Luna · code-written SVG',
+    name: 'GPT-6 Luna',
     provider: 'openai',
     providerName: 'OpenAI',
     vendor: 'gpt',

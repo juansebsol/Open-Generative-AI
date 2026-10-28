@@ -40,6 +40,7 @@ import {
   promptMediaButtonClassName,
 } from "./prompt/PromptComposer.jsx";
 import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
+import ModelCardPicker from "./prompt/ModelCardPicker.jsx";
 import StudioEmptyState from "./StudioEmptyState.jsx";
 import en from "../messages/en/vectorStudio.json";
 import zh from "../messages/zh/vectorStudio.json";
@@ -712,10 +713,13 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
       : isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(selectedModel || {}) } : { ...options, ...(selectedModel?.candidates === "num_images" ? { num_images: candidates } : {}) };
   const priceRuns = isIcons ? Math.max(1, iconCount) : selectedModel?.candidates === "runs" ? candidates : 1;
   const pickerPayload = (model) => (model.kind === "chat" ? chatPayload() : isIcons ? { ...(options.quality ? { quality: options.quality } : {}), ...shapeFor(model) } : { ...options, ...(model.candidates === "num_images" ? { num_images: candidates } : {}) });
-  const pickerGroups = [
-    { key: "native", label: copy.controls.nativeGroup, items: models.filter((model) => model.kind !== "chat") },
-    { key: "chat", label: copy.controls.chatGroup, items: models.filter((model) => model.kind === "chat") },
-  ].filter((group) => group.items.length > 0);
+  // The card picker's groups: models drawn by a vector model, and chat
+  // models writing the markup. Scores and picks come from the Benchmarks
+  // "vector" category, prices from the same payload the chip quotes.
+  const pickerGroups = useMemo(() => [
+    { id: "vector", label: copy.picker.vectorGroup, hint: copy.picker.vectorHint, models: models.filter((model) => model.kind !== "chat") },
+    { id: "chat", label: copy.picker.chatGroup, hint: copy.picker.chatHint, models: models.filter((model) => model.kind === "chat") },
+  ].filter((group) => group.models.length > 0), [models, copy.picker]);
   const toggle = (id) => setOpenDropdown(openDropdown === id ? null : id);
   const actionLabel = isIcons ? fill(copy.icons.generate, { count: number(iconCount, locale) }) : isVectorize ? copy.vectorize.apply : copy.buttons.generate;
 
@@ -1034,27 +1038,18 @@ export default function VectorStudio({ page = "logo", onGenerationStart, onGener
                   <span className={PROMPT_CONTROL_LABEL_CLASS}>{selectedModel?.name}</span>
                   <PromptChevronIcon />
                 </button>
-                {openDropdown === "model" && (
-                  <PromptPopover className="w-[calc(100vw-2rem)] md:w-[480px] max-w-[calc(100vw-2rem)]">
-                    <PromptPopoverHeader>{copy.controls.model}</PromptPopoverHeader>
-                    <p className="px-2.5 pb-2 text-[11.5px] text-white/45">{copy.controls.modelHint}</p>
-                    {pickerGroups.map((group) => (
-                      <div key={group.key} data-vector-model-group={group.key}>
-                        <div className="px-2.5 pb-1 pt-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-white/35">{group.label}</div>
-                        <PromptMenuList>
-                          {group.items.map((model) => (
-                            <div key={model.id} onMouseEnter={() => setHoveredId(model.id)} onMouseLeave={() => setHoveredId((current) => (current === model.id ? null : current))} className="flex items-center gap-2">
-                              <PromptMenuItem selected={model.id === selectedModel?.id} description={model.description} wrapDescription title={model.note ? `${model.note} ${copy.controls.modelHint}` : copy.controls.modelHint} onClick={() => { setModelId(model.id); setOpenDropdown(null); }} className="min-w-0 flex-1">
-                                {model.name} <span className="text-white/40">· {model.provider_name}</span>
-                              </PromptMenuItem>
-                              <PriceHint locale={locale} endpoint={model.endpoint} payload={pickerPayload(model)} hovered={hoveredId === model.id} className="pr-2" />
-                            </div>
-                          ))}
-                        </PromptMenuList>
-                      </div>
-                    ))}
-                  </PromptPopover>
-                )}
+                <ModelCardPicker
+                  open={openDropdown === "model"}
+                  onClose={() => setOpenDropdown(null)}
+                  groups={pickerGroups}
+                  selectedId={selectedModel?.id}
+                  onSelect={(model) => setModelId(model.id)}
+                  pricePayload={pickerPayload}
+                  benchmarksCategory="vector"
+                  allHint={copy.picker.allHint}
+                  locale={locale}
+                  benchmarksPath={locale === "en" ? "/studio/benchmarks" : `/${locale}/studio/benchmarks`}
+                />
               </div>
             )}
 

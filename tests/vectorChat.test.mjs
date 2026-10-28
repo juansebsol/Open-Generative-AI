@@ -27,7 +27,7 @@ test('chat models sit in the text picker after the native ones, each with a rout
     assert.ok(isChatSvgEndpoint(model.endpoint), `${model.id} has no chat route`);
     assert.ok(getRoutes(model.endpoint).length > 0, `${model.id} is not in the route table`);
     assert.ok(PRICES.chat[model.id], `${model.id} has no rate in prices.js`);
-    assert.match(model.name, /code-written SVG/);
+    assert.doesNotMatch(model.name, /code-written/, 'the Chat models tab already says it');
     assert.match(model.note, /language model/);
     assert.equal(model.candidates, 'runs');
   }
