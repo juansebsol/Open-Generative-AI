@@ -25,8 +25,9 @@ test('each studio page maps to the Benchmarks category for what it does', () => 
   assert.equal(helper.helperCategoryFor('video', 't2v'), 'text-to-video');
   assert.equal(helper.helperCategoryFor('video', 'i2v'), 'image-to-video');
   assert.equal(helper.helperCategoryFor('video', 'v2v'), null, 'no board scores video to video');
-  assert.equal(helper.helperCategoryFor('audio', 'speech'), 'text-to-speech');
-  assert.equal(helper.helperCategoryFor('audio', 'music'), 'music');
+  assert.equal(helper.helperCategoryFor('audio-speech'), 'text-to-speech');
+  assert.equal(helper.helperCategoryFor('audio-dialogue'), 'text-to-speech');
+  assert.equal(helper.helperCategoryFor('audio-music'), 'music');
   assert.equal(helper.helperCategoryFor('three-d-text'), 'three-d');
   assert.equal(helper.helperCategoryFor('three-d-image'), 'three-d');
   assert.equal(helper.helperCategoryFor('vector-logo'), 'vector');
@@ -34,7 +35,7 @@ test('each studio page maps to the Benchmarks category for what it does', () => 
 });
 
 test('pages with no picker or no scored models show no bubble', () => {
-  for (const tabId of ['vector-vectorize', 'vibe-motion', 'agents', 'workflows', 'benchmarks', 'layers', 'three-d-rig', 'nope', undefined]) {
+  for (const tabId of ['vector-vectorize', 'audio-remix', 'vibe-motion', 'agents', 'workflows', 'benchmarks', 'layers', 'three-d-rig', 'nope', undefined]) {
     assert.equal(helper.helperCategoryFor(tabId), null, String(tabId));
     assert.deepEqual(helper.helperEntries(tabId), [], String(tabId));
   }
@@ -112,10 +113,10 @@ test('studios announce their mode with an event and the last mode per tab is kep
   events.length = 0;
   assert.equal(helper.getStudioMode('image'), undefined);
   helper.announceStudioMode('image', 'edit');
-  helper.announceStudioMode('audio', 'music');
+  helper.announceStudioMode('video', 'i2v');
   helper.announceStudioMode('image', 'text');
   assert.equal(helper.getStudioMode('image'), 'text');
-  assert.equal(helper.getStudioMode('audio'), 'music');
+  assert.equal(helper.getStudioMode('video'), 'i2v');
   assert.equal(events.length, 3);
   assert.equal(events[0].type, helper.STUDIO_MODE_EVENT);
   assert.deepEqual(events[0].detail, { tabId: 'image', mode: 'edit' });

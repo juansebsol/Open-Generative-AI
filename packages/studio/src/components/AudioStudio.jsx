@@ -1,1247 +1,1022 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import {
+  IconAdjustments, IconArrowsExchange, IconDownload, IconFileMusic, IconMicrophone, IconPlus, IconSearch, IconTrash, IconUpload, IconUserPlus, IconX,
+} from "@tabler/icons-react";
 import { generateAudio, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
-import { audioModels, getAudioModelById } from "../models.js";
+import { audioModels } from "../models.js";
+import { getRoutes } from "../providers/catalog/index.js";
+import { isEndpointAvailable } from "../providers/client.js";
+import { getProvider } from "../providers/directProviders.js";
+import { subscribeProviderSettings } from "../providers/keys.js";
+import { fetchMediaBlob } from "../providers/mediaStore.js";
+import { quoteRun } from "../providers/pricing.js";
+import {
+  addEntry, addPending, addVoice, getEmptyLibrary, getLibrary, removeEntry, removePending, removeVoice, sendToAudio, subscribeLibrary, takeHandoff, updateEntry,
+} from "../audioLibrary.js";
+import {
+  acceptsClonedVoices, audioModelsFor, carryOptions, carryScript, defaultOptions, defaultScript, dialoguePayload, dialogueShape, dialogueVoices,
+  entryTitle, enumOptions, formatDuration, isSoundEffect, layoutInputs, missingInput, musicPayload, numericRange, optionLabel, remixPayload,
+  scriptCharacters, scriptText, speechPayload, voiceCloneModel, voiceKey,
+} from "../audioPages.js";
+import {
+  PROMPT_CONTROL_LABEL_CLASS,
+  PromptAction,
+  PromptActionGroup,
+  PromptChevronIcon,
+  PromptComposer,
+  PromptControls,
+  PromptFooter,
+  PromptMenuItem,
+  PromptMenuList,
+  PromptPopover,
+  PromptPopoverHeader,
+  PromptTextarea,
+  promptControlClassName,
+} from "./prompt/PromptComposer.jsx";
 import PriceChip from "./prompt/PriceChip.jsx";
-import en from "../messages/en/audioStudio.json";
+import ModelRailPicker from "./prompt/ModelRailPicker.jsx";
+import StudioEmptyState from "./StudioEmptyState.jsx";
+import AudioPlayer, { stopAllAudio } from "./audio/AudioPlayer.jsx";
 import { Entrance } from "./motion/index.js";
+import en from "../messages/en/audioStudio.json";
 import zh from "../messages/zh/audioStudio.json";
 import { resolveCopy } from "../i18nUtils";
-import { announceStudioMode } from "../benchmarksHelper.js";
-import { audioCategoryOf, defaultModelId } from "../benchmarks.js";
+import { defaultModelId } from "../benchmarks.js";
 import { useEditorsPickPreselect } from "./benchmarks/shared.jsx";
+import { GenerationCopyButtons } from "./MobileGenerationActions.jsx";
+import { LibraryActions, LibraryDetails, Lightbox, formatCost, formatWhen } from "./library/LibraryKit.jsx";
 
-// ---------------------------------------------------------------------------
-// Upload button states
-// ---------------------------------------------------------------------------
-const UPLOAD_STATE = {
-  IDLE: "idle",
-  UPLOADING: "uploading",
-  READY: "ready",
-};
+// Four pages share this component, like the Vector pages share VectorStudio:
+// Text to Speech reads a text in one voice, Dialogue reads a script with a
+// cast, Music writes songs, instrumentals and sound effects, Remix restyles
+// or extends a track. Which model belongs where, and what each request looks
+// like, is decided in audioPages.js; every page shows the same library
+// (audioLibrary.js), and cloned voices live there too.
 
-// ---------------------------------------------------------------------------
-// SVG Icons
-// ---------------------------------------------------------------------------
-const PlayIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M8 5v14l11-7z" />
-  </svg>
-);
+export const AUDIO_PAGES = ["speech", "dialogue", "music", "remix"];
 
-const PauseIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-  </svg>
-);
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+const SEARCHABLE_FROM = 12;
+const MAX_LINES = 60;
+const MAX_SPEAKERS = 8;
 
-const VolumeIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-  </svg>
-);
+const isAudioFile = (file) => /^audio\/(mpeg|mp3|wav|x-wav|ogg|mp4|x-m4a|m4a|flac|aac|webm)$/i.test(file?.type || "") || /\.(mp3|wav|m4a|ogg|flac|aac)$/i.test(file?.name || "");
+const fill = (template, values) => String(template || "").replace(/\{(\w+)\}/g, (_, key) => values[key] ?? "");
+const slug = (text) => String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+const number = (value, locale) => new Intl.NumberFormat(locale).format(value);
+const VOICE_ID_OK = /^[A-Za-z][A-Za-z0-9_-]{7,}$/;
+const hasLetterAndDigit = (value) => /[A-Za-z]/.test(value) && /\d/.test(value);
+// The price chip debounces, but text changes every keystroke; quoting a
+// length rounded up to the next hundred keeps the quote still while typing.
+const padForPricing = (text) => (text.length ? text.padEnd(Math.ceil(text.length / 100) * 100, " ") : "");
 
-const VolumeMuteIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-    <line x1="23" y1="9" x2="17" y2="15" />
-    <line x1="17" y1="9" x2="23" y2="15" />
-  </svg>
-);
+function useLibrary() {
+  return useSyncExternalStore(subscribeLibrary, getLibrary, getEmptyLibrary);
+}
 
-const MusicIcon = ({ className = "text-[#22d3ee]" }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M9 18V5l12-2v13" />
-    <circle cx="6" cy="18" r="3" />
-    <circle cx="18" cy="16" r="3" />
-  </svg>
-);
-
-const TrashIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-    <polyline points="3 6 5 6 21 6" />
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-    <line x1="10" y1="11" x2="10" y2="17" />
-    <line x1="14" y1="11" x2="14" y2="17" />
-  </svg>
-);
-
-// ---------------------------------------------------------------------------
-// Single File Uploader Component
-// ---------------------------------------------------------------------------
-function AudioFileUploader({ label, value, onChange, copy = en }) {
-  const [uploadState, setUploadState] = useState(value ? UPLOAD_STATE.READY : UPLOAD_STATE.IDLE);
-  const [progress, setProgress] = useState(0);
-  const [fileName, setFileName] = useState(value ? value.split('/').pop().slice(-30) : "");
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef(null);
-  const dragCounterRef = useRef(0);
-
-  useEffect(() => {
-    if (!value) {
-      setUploadState(UPLOAD_STATE.IDLE);
-      setFileName("");
-      setProgress(0);
-    } else if (uploadState !== UPLOAD_STATE.READY) {
-      setUploadState(UPLOAD_STATE.READY);
-      setFileName(value.split('/').pop().slice(-30));
+// "Speaker 1: line" text (a starter, a paste) into a script: speakers in order of appearance.
+function parseScript(text, model) {
+  const base = defaultScript(model);
+  const voices = dialogueVoices(model);
+  const cast = [];
+  const lines = [];
+  for (const raw of String(text || "").split("\n")) {
+    const match = raw.match(/^\s*([^:]{1,40}):\s*(.+)$/);
+    if (!match) continue;
+    const name = match[1].trim();
+    let speaker = cast.find((member) => member.name === name);
+    if (!speaker) {
+      const index = cast.length;
+      speaker = { id: `Speaker ${index + 1}`, name, voice: base.cast[index]?.voice ?? voices[index % Math.max(1, voices.length)]?.value ?? "", profile: "" };
+      cast.push(speaker);
     }
-  }, [value]);
+    lines.push({ speaker: speaker.id, text: match[2].trim() });
+  }
+  return cast.length ? { cast, lines } : base;
+}
 
-  const handleUpload = async (files) => {
-    const file = files?.[0];
-    if (!file) return;
+const INPUT_CLASS = "h-9 w-full min-w-0 rounded-[9px] border border-white/[0.08] bg-black/40 px-3 text-[13px] text-white placeholder:text-white/30 focus:border-white/20 focus:outline-none";
+const CHEVRON = (size, inset) => ({
+  backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.45)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: `right ${inset}px center`,
+  backgroundSize: `${size}px`,
+});
+const CHEVRON_STYLE = CHEVRON(12, 10);
+const SMALL_CHEVRON_STYLE = CHEVRON(10, 8);
+const SELECT_CLASS = `${INPUT_CLASS} cursor-pointer appearance-none pr-8`;
+const SMALL_SELECT_CLASS = "h-8 max-w-[150px] shrink-0 cursor-pointer appearance-none truncate rounded-[8px] border border-white/[0.08] bg-white/[0.04] pl-2.5 pr-6 text-[12px] font-medium text-white/80 focus:border-white/20 focus:outline-none";
+const SIDE_TEXTAREA_CLASS = "w-full resize-y rounded-[10px] border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[12.5px] leading-relaxed text-white/85 placeholder:text-white/30 focus:border-white/20 focus:outline-none";
+const SMALL_BUTTON_CLASS = "flex h-8 items-center gap-1.5 rounded-lg bg-white/[0.06] px-2.5 text-[12px] font-medium text-white hover:bg-white/[0.12]";
+const TOGGLE_CLASS = (on) => `relative h-5 w-9 shrink-0 rounded-full transition-colors ${on ? "bg-primary" : "bg-white/15"}`;
+const TOGGLE_KNOB_CLASS = (on) => `absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${on ? "translate-x-[18px]" : "translate-x-0.5"}`;
 
-    if (file.size > 20 * 1024 * 1024) {
-      alert(copy.uploader.sizeLimitError);
-      return;
-    }
-
-    setUploadState(UPLOAD_STATE.UPLOADING);
-    setProgress(0);
-
-    try {
-      const url = await uploadFile(file, (pct) => {
-        setProgress(pct);
-      });
-      setFileName(file.name);
-      setUploadState(UPLOAD_STATE.READY);
-      onChange(url);
-    } catch (err) {
-      setUploadState(UPLOAD_STATE.IDLE);
-      alert(copy.uploader.uploadFailedError.replace('{message}', err.message));
-    } finally {
-      setProgress(0);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    handleUpload(Array.from(e.target.files || []));
-  };
-
-  const clearFile = (e) => {
-    e.stopPropagation();
-    onChange(null);
-  };
-
-  const handleDragEnter = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (uploadState !== UPLOAD_STATE.IDLE) return;
-    dragCounterRef.current += 1;
-    if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
-      setIsDragging(true);
-    }
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (uploadState !== UPLOAD_STATE.IDLE) return;
-    dragCounterRef.current -= 1;
-    if (dragCounterRef.current <= 0) {
-      dragCounterRef.current = 0;
-      setIsDragging(false);
-    }
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dragCounterRef.current = 0;
-    setIsDragging(false);
-    if (uploadState !== UPLOAD_STATE.IDLE) return;
-    const files = e.dataTransfer?.files;
-    if (files && files.length > 0) {
-      handleUpload(Array.from(files));
-    }
-  };
-
+function Toggle({ on, onChange, label }) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
-          {label}
-        </label>
-        {uploadState === UPLOAD_STATE.READY && (
-          <button
-            type="button"
-            onClick={clearFile}
-            className="text-xs font-bold text-red-400 hover:text-red-300 transition-colors uppercase tracking-wider flex items-center gap-1.5"
-          >
-            <TrashIcon /> {copy.uploader.clear}
-          </button>
-        )}
-      </div>
-
-      <div
-        onClick={() => uploadState === UPLOAD_STATE.IDLE && fileInputRef.current?.click()}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        className={`relative border rounded p-4 transition-all duration-300 flex items-center gap-3.5 cursor-pointer ${
-          isDragging
-            ? "border-primary bg-primary/15 shadow-[0_0_15px_rgba(34,211,238,0.15)]"
-            : uploadState === UPLOAD_STATE.READY
-            ? "border-primary/60 bg-primary/10 shadow-[0_0_15px_rgba(34,211,238,0.05)]"
-            : "border-zinc-700 bg-zinc-900 hover:bg-zinc-850 hover:border-primary/50"
-        }`}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="audio/*"
-          className="hidden"
-          onChange={handleInputChange}
-        />
-
-        {uploadState === UPLOAD_STATE.IDLE && (
-          <>
-            <div className="w-10 h-10 rounded bg-zinc-800 flex items-center justify-center text-zinc-200 border border-zinc-700/50">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-              </svg>
-            </div>
-            <div className="text-left">
-              <div className="text-xs font-bold text-white">{copy.uploader.uploadPrompt}</div>
-              <div className="text-[11px] text-zinc-300 font-medium mt-0.5">{copy.uploader.uploadHint}</div>
-            </div>
-          </>
-        )}
-
-        {uploadState === UPLOAD_STATE.UPLOADING && (
-          <div className="w-full flex items-center gap-4">
-            <div className="flex-1">
-              <div className="flex justify-between text-xs text-white/95 mb-1.5 font-bold">
-                <span>{copy.uploader.uploading}</span>
-                <span>{progress}%</span>
-              </div>
-              <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {uploadState === UPLOAD_STATE.READY && (
-          <>
-            <div className="w-10 h-10 rounded bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
-              <MusicIcon className="text-primary" />
-            </div>
-            <div className="text-left flex-1 min-w-0">
-              <div className="text-xs font-bold text-white truncate">{fileName}</div>
-              <div className="text-[11px] text-primary font-bold mt-0.5">{copy.uploader.ready}</div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+    <button type="button" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} className={TOGGLE_CLASS(on)}>
+      <span className={TOGGLE_KNOB_CLASS(on)} />
+    </button>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Premium Custom Audio Player with Waveform Animation
-// ---------------------------------------------------------------------------
-// Editor for list inputs whose items are objects (dialogue turns, speakers):
-// one row per item with a field per property.
-function ObjectListField({ label, description, schema, value, onChange, copy = en }) {
-  const rows = Array.isArray(value) ? value : [];
-  const properties = Object.entries(schema.items?.properties || {});
-  const emptyRow = () => Object.fromEntries(properties.map(([name, prop]) => [
-    name,
-    prop.default ?? (prop.enum ? (typeof prop.enum[0] === "object" ? prop.enum[0].value : prop.enum[0]) : ""),
-  ]));
-  const updateRow = (index, name, next) => onChange(rows.map((row, i) => (i === index ? { ...row, [name]: next } : row)));
-  const fieldClass = "w-full bg-zinc-950 border border-zinc-700 focus:border-primary/85 rounded px-2.5 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none";
-
+// A searchable list of choices in a popover: voices, languages, anything
+// longer than a short menu.
+function SearchList({ title, options, value, onSelect, searchPlaceholder, emptyLabel, head = null, className = "w-[320px]" }) {
+  const [query, setQuery] = useState("");
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const shown = words.length ? options.filter((option) => words.every((word) => `${option.label} ${option.value}`.toLowerCase().includes(word))) : options;
   return (
-    <div className="space-y-2">
-      <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">{label}</label>
-      {description && <span className="block text-[11px] text-zinc-400 leading-normal">{description}</span>}
-      <div className="space-y-2">
-        {rows.map((row, index) => (
-          <div key={index} className="relative bg-zinc-900 border border-zinc-700/80 rounded p-3 pr-9 space-y-2">
-            {properties.map(([name, prop]) => {
-              const current = row?.[name] ?? "";
-              const title = prop.title || name;
-              if (prop.enum) {
-                return (
-                  <select
-                    key={name}
-                    aria-label={title}
-                    value={current}
-                    onChange={(e) => updateRow(index, name, e.target.value)}
-                    className={fieldClass}
-                  >
-                    {!prop.enum.some((opt) => (typeof opt === "object" ? opt.value : opt) === current) && current !== "" && (
-                      <option value={current}>{current}</option>
-                    )}
-                    {prop.enum.map((opt) => {
-                      const optionValue = typeof opt === "object" ? opt.value : opt;
-                      return <option key={optionValue} value={optionValue}>{typeof opt === "object" ? (opt.label || opt.value) : opt}</option>;
-                    })}
-                  </select>
-                );
-              }
-              const multiline = name === "text";
-              const Field = multiline ? "textarea" : "input";
-              return (
-                <Field
-                  key={name}
-                  aria-label={title}
-                  value={current}
-                  placeholder={title}
-                  onChange={(e) => updateRow(index, name, e.target.value)}
-                  className={`${fieldClass} ${multiline ? "min-h-[56px] resize-y" : ""}`}
-                />
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => onChange(rows.filter((_, i) => i !== index))}
-              aria-label={copy.sidebar.removeRow}
-              title={copy.sidebar.removeRow}
-              className="absolute top-2 right-2 p-1 rounded text-zinc-400 hover:text-red-400 hover:bg-red-500/10"
-            >
-              <TrashIcon />
-            </button>
-          </div>
+    <PromptPopover className={className} fitViewport>
+      <PromptPopoverHeader>{title}</PromptPopoverHeader>
+      <label className="mb-1.5 flex h-[34px] items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 text-white/40 focus-within:border-primary/50">
+        <IconSearch size={13} stroke={2} aria-hidden="true" />
+        <input type="search" autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder={searchPlaceholder} aria-label={searchPlaceholder} className="h-full w-full min-w-0 bg-transparent text-xs text-white placeholder:text-white/35 focus:outline-none" />
+      </label>
+      {head}
+      <PromptMenuList className="max-h-[32vh] overflow-y-auto custom-scrollbar pr-1">
+        {shown.length === 0 && <div className="py-4 text-center text-xs text-white/30">{emptyLabel}</div>}
+        {shown.slice(0, 300).map((option) => (
+          <PromptMenuItem key={String(option.value)} selected={option.value === value} description={option.description} onClick={() => onSelect(option.value)}>{option.label}</PromptMenuItem>
         ))}
-      </div>
-      <button
-        type="button"
-        onClick={() => onChange([...rows, emptyRow()])}
-        className="w-full py-2 rounded border border-dashed border-zinc-700 text-xs font-bold text-zinc-300 hover:text-white hover:border-primary/60 transition-all"
-      >
-        + {copy.sidebar.addRow}
-      </button>
-    </div>
+      </PromptMenuList>
+    </PromptPopover>
   );
 }
 
-function PremiumAudioPlayer({ url, title, copy = en }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
-  const audioRef = useRef(null);
-  const progressBarRef = useRef(null);
-  const visualizerIntervalRef = useRef(null);
-  const [visualizerHeights, setVisualizerHeights] = useState(Array(18).fill(15));
-
-  // Reset player when URL changes
+// The dialog that clones a voice with MiniMax: a sample, a voice id, a
+// preview sentence. The preview goes into the library like any other track.
+function CloneVoiceDialog({ model, locale, copy, preset, onClose, onCloned, onGenerationError }) {
+  const [sample, setSample] = useState(preset?.source || null);
+  const [name, setName] = useState("");
+  const [preview, setPreview] = useState(copy.clone.previewPlaceholder);
+  const [noise, setNoise] = useState(false);
+  const [normalize, setNormalize] = useState(false);
+  const [uploading, setUploading] = useState(null);
+  const [working, setWorking] = useState(false);
+  const inputRef = useRef(null);
   useEffect(() => {
-    setIsPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
-    if (audioRef.current) {
-      audioRef.current.load();
-    }
-  }, [url]);
+    const onKey = (event) => { if (event.key === "Escape" && !working) onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, working]);
 
-  // Audio state event listeners
-  const onTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const onLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  };
-
-  const onAudioEnded = () => {
-    setIsPlaying(false);
-    setCurrentTime(0);
-  };
-
-  // Toggle playback
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true);
-      }).catch(err => {
-        console.error("Audio playback error:", err);
-      });
-    }
-  };
-
-  // Equalizer visualizer effect
-  useEffect(() => {
-    if (isPlaying) {
-      visualizerIntervalRef.current = setInterval(() => {
-        setVisualizerHeights(
-          Array(18).fill(0).map(() => Math.floor(Math.random() * 32) + 6)
-        );
-      }, 100);
-    } else {
-      if (visualizerIntervalRef.current) {
-        clearInterval(visualizerIntervalRef.current);
-      }
-      setVisualizerHeights(Array(18).fill(12));
-    }
-    return () => {
-      if (visualizerIntervalRef.current) clearInterval(visualizerIntervalRef.current);
-    };
-  }, [isPlaying]);
-
-  // Volume control
-  const handleVolumeChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setVolume(val);
-    if (audioRef.current) {
-      audioRef.current.volume = val;
-    }
-    if (val === 0) {
-      setIsMuted(true);
-    } else {
-      setIsMuted(false);
-    }
-  };
-
-  const toggleMute = () => {
-    if (!audioRef.current) return;
-    if (isMuted) {
-      audioRef.current.volume = volume;
-      setIsMuted(false);
-    } else {
-      audioRef.current.volume = 0;
-      setIsMuted(true);
-    }
-  };
-
-  // Scrubbing
-  const handleScrub = (e) => {
-    if (!audioRef.current || duration === 0) return;
-    const rect = progressBarRef.current.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
-    const seekTime = Math.min(Math.max(pos * duration, 0), duration);
-    audioRef.current.currentTime = seekTime;
-    setCurrentTime(seekTime);
-  };
-
-  // Helper formatting time
-  const formatTime = (time) => {
-    if (isNaN(time)) return "0:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
-
-  const downloadAudio = async () => {
+  const upload = async (file) => {
+    if (!isAudioFile(file)) return toast.error(copy.errors.notAudio);
+    if (file.size > MAX_UPLOAD_BYTES) return toast.error(copy.errors.tooLarge);
+    setUploading({ progress: 0 });
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = title ? `${title.replace(/\s+/g, '_')}.mp3` : "generated_audio.mp3";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch {
-      window.open(url, "_blank");
+      const url = await uploadFile(file, (progress) => setUploading({ progress }));
+      setSample({ url, name: file.name });
+    } catch (error) {
+      toast.error(fill(copy.errors.uploadFailed, { message: formatErrorMessage(error, "") }));
+    } finally {
+      setUploading(null);
+    }
+  };
+  const valid = VOICE_ID_OK.test(name) && hasLetterAndDigit(name);
+  const payload = { audio_url: sample?.url || "", custom_voice_id: name, prompt: preview.trim() || copy.clone.previewPlaceholder, model: model.inputs.model?.default, need_noise_reduction: noise, need_volume_normalization: normalize };
+  const run = async () => {
+    if (!sample) return toast.error(copy.clone.needSample);
+    if (!valid) return toast.error(copy.clone.badName);
+    setWorking(true);
+    try {
+      const result = await generateAudio({ ...payload, _modelId: model.id });
+      const voice = { id: name, name, family: "minimax", sampleUrl: sample.url, previewUrl: result?.url || null, timestamp: new Date().toISOString() };
+      addVoice(voice);
+      if (result?.url) {
+        addEntry({ id: newId(), url: result.url, page: "speech", kind: "clone", title: fill(copy.clone.previewTitle, { name }), prompt: payload.prompt, text: payload.prompt, model: model.id, modelName: model.name, vendor: model.provider_name || "", voice: name, cost: null, timestamp: new Date().toISOString() });
+      }
+      toast.success(fill(copy.clone.done, { name }));
+      onCloned(voice);
+    } catch (error) {
+      const message = fill(copy.clone.failed, { message: formatErrorMessage(error, "") });
+      if (onGenerationError) onGenerationError(message);
+      else toast.error(message);
+    } finally {
+      setWorking(false);
     }
   };
 
   return (
-    <div className="w-full bg-zinc-900 border border-zinc-700/80 rounded p-6 shadow-3xl space-y-6 backdrop-blur-md">
-      <audio
-        ref={audioRef}
-        src={url}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoadedMetadata}
-        onEnded={onAudioEnded}
-        preload="auto"
-      />
-
-      {/* Visualizer and Track Details */}
-      <div className="flex flex-col items-center justify-center py-6 relative rounded bg-black/60 overflow-hidden border border-zinc-800">
-        <div className="flex items-center gap-1.5 h-12 mb-4 justify-center">
-          {visualizerHeights.map((h, i) => (
-            <div
-              key={i}
-              className="w-1.5 rounded-full bg-gradient-to-t from-primary to-[#a855f7] transition-all duration-100"
-              style={{ height: `${h}px` }}
-            />
-          ))}
+    <div className="oga-backdrop-in fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget && !working) onClose(); }} role="presentation" data-clone-dialog>
+      <div className="oga-dialog-in w-full max-w-[520px] rounded-[18px] border border-white/[0.1] bg-[#0e0e11] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.6)]" role="dialog" aria-modal="true" aria-label={copy.clone.title}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-[17px] font-semibold text-white">{copy.clone.title}</h2>
+            <p className="mt-1 text-[12.5px] leading-relaxed text-white/50">{copy.clone.hint}</p>
+          </div>
+          <button type="button" onClick={onClose} disabled={working} aria-label={copy.buttons.close} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white/50 hover:bg-white/10 hover:text-white"><IconX size={16} stroke={2} aria-hidden="true" /></button>
         </div>
-        <div className="text-center px-4 max-w-full relative z-10">
-          <span className="text-xs font-black text-primary uppercase tracking-[0.2em] block mb-1">
-            {copy.player.nowPlaying}
-          </span>
-          <p className="text-white font-bold text-base truncate max-w-xs">{title || copy.player.defaultTitle}</p>
-        </div>
-      </div>
 
-      {/* Controls & Progress bar */}
-      <div className="space-y-4">
-        {/* Progress bar */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-zinc-200 w-10 text-right">
-            {formatTime(currentTime)}
-          </span>
-          
-          <div
-            ref={progressBarRef}
-            onClick={handleScrub}
-            className="flex-1 h-2 bg-zinc-700 hover:bg-zinc-650 rounded-full cursor-pointer relative group transition-colors"
-          >
-            <div 
-              className="absolute left-0 top-0 bottom-0 bg-primary rounded-full group-hover:bg-primary/95 transition-all"
-              style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
-            />
-            <div 
-              className="absolute w-3.5 h-3.5 bg-white rounded-full -top-[3px] shadow-glow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-              style={{ left: `calc(${(currentTime / (duration || 1)) * 100}% - 7px)` }}
-            />
+        <div className="mt-5 flex flex-col gap-4">
+          <div>
+            <div className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-white/40">{copy.clone.sample}</div>
+            {sample ? (
+              <div className="flex items-center gap-3 rounded-[10px] border border-primary/30 bg-primary/[0.06] px-3 py-2">
+                <IconFileMusic size={18} stroke={1.75} className="shrink-0 text-primary" aria-hidden="true" />
+                <span className="min-w-0 flex-1 truncate text-[13px] text-white/85">{sample.name}</span>
+                <button type="button" onClick={() => inputRef.current?.click()} className="text-[12px] text-white/60 hover:text-white">{copy.clone.replace}</button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => inputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-[76px] w-full flex-col items-center justify-center gap-1 rounded-[10px] border border-dashed border-white/20 text-white/60 hover:border-white/40 hover:text-white">
+                {uploading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconUpload size={18} stroke={1.75} aria-hidden="true" />}
+                <span className="text-[12.5px]">{copy.clone.upload}</span>
+                <span className="text-[11px] text-white/35">{copy.clone.sampleHint}</span>
+              </button>
+            )}
+            <input ref={inputRef} type="file" accept="audio/*,.mp3,.wav,.m4a" className="hidden" onChange={(event) => { if (event.target.files?.[0]) upload(event.target.files[0]); event.target.value = ""; }} />
           </div>
 
-          <span className="text-xs font-bold text-zinc-200 w-10 text-left">
-            {formatTime(duration)}
-          </span>
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.08em] text-white/40">{copy.clone.name}</span>
+            <input value={name} onChange={(event) => setName(event.target.value.trim())} placeholder={copy.clone.namePlaceholder} spellCheck={false} className={`${INPUT_CLASS} font-mono`} data-clone-name />
+            <span className={`mt-1 block text-[11px] ${name && !valid ? "text-amber-300/90" : "text-white/40"}`}>{copy.clone.nameHint}</span>
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.08em] text-white/40">{copy.clone.preview}</span>
+            <textarea value={preview} onChange={(event) => setPreview(event.target.value)} rows={2} className={SIDE_TEXTAREA_CLASS} />
+          </label>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center justify-between gap-3 rounded-[10px] border border-white/[0.08] px-3 py-2 text-[12.5px] text-white/75"><span>{copy.clone.noise}</span><Toggle on={noise} onChange={setNoise} label={copy.clone.noise} /></label>
+            <label className="flex items-center justify-between gap-3 rounded-[10px] border border-white/[0.08] px-3 py-2 text-[12.5px] text-white/75"><span>{copy.clone.normalize}</span><Toggle on={normalize} onChange={setNormalize} label={copy.clone.normalize} /></label>
+          </div>
         </div>
 
-        {/* Buttons */}
-        <div className="flex items-center justify-between pt-2">
-          {/* Volume Control */}
-          <div className="flex items-center gap-2 group/volume w-24">
-            <button
-              onClick={toggleMute}
-              className="p-2 bg-zinc-800/80 border border-zinc-700 hover:bg-zinc-700 rounded text-zinc-200 hover:text-white transition-all"
-              title={copy.player.muteUnmute}
-              type="button"
-            >
-              {isMuted ? <VolumeMuteIcon /> : <VolumeIcon />}
-            </button>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={isMuted ? 0 : volume}
-              onChange={handleVolumeChange}
-              className="w-16 h-1 bg-zinc-700 rounded appearance-none cursor-pointer accent-primary hover:bg-zinc-600 transition-all opacity-0 group-hover/volume:opacity-100"
-            />
-          </div>
-
-          {/* Main Play/Pause Button */}
-          <button
-            onClick={togglePlay}
-            className="w-12 h-12 bg-primary hover:bg-white text-black rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-glow"
-            title={isPlaying ? copy.player.pause : copy.player.play}
-            type="button"
-          >
-            {isPlaying ? <PauseIcon /> : <PlayIcon />}
-          </button>
-
-          {/* Download Button */}
-          <button
-            onClick={downloadAudio}
-            className="px-4 py-2 bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700 rounded text-xs font-bold text-white flex items-center gap-2 hover:border-primary/45 transition-all"
-            title={copy.player.download}
-            type="button"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-            </svg>
-            <span>{copy.player.save}</span>
-          </button>
+        <div className="mt-5 flex items-center justify-end gap-3">
+          <PriceChip locale={locale} endpoint={model.endpoint} enabled payload={payload} />
+          <PromptAction onClick={run} disabled={working || !sample} data-clone-apply>
+            {working && <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#04202a]/30 border-t-[#04202a]" aria-hidden="true" />}
+            {working ? copy.clone.working : copy.clone.apply}
+          </PromptAction>
         </div>
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Main Audio Studio Component
-// ---------------------------------------------------------------------------
-const PERSIST_KEY = "hg_audio_studio_persistent";
-
-export default function AudioStudio({
-  onGenerationStart,
-  onGenerationEnd,
-  onGenerationComplete,
-  onGenerationError,
-  droppedFiles,
-  onFilesHandled,
-  locale = "en",
-}) {
+export default function AudioStudio({ page = "speech", onGenerationStart, onGenerationEnd, onGenerationComplete, onGenerationError, droppedFiles, onFilesHandled, locale = "en" }) {
   const copy = resolveCopy(en, zh, locale);
-  // ── Mode & model state ──────────────────────────────────────────────────
-  const [selectedModelId, setSelectedModelId] = useState(() => defaultModelId("text-to-speech", audioModels));
-  const [params, setParams] = useState({});
-  const [openDropdown, setOpenDropdown] = useState(false);
-  const [openParamDropdown, setOpenParamDropdown] = useState(null);
-  const modelBtnRef = useRef(null);
-  const sidebarRef = useRef(null);
+  const pageCopy = copy.pages[page] || copy.pages.speech;
+  const tabId = `audio-${page}`;
+  const PERSIST_KEY = `oga_audio_${page}_v1`;
+  const library = useLibrary();
+  const models = useMemo(() => audioModelsFor(page, audioModels), [page]);
+  const cloneModel = useMemo(() => voiceCloneModel(audioModels), []);
+  const categoryId = page === "speech" || page === "dialogue" ? "text-to-speech" : "music";
 
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handler = (e) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-        setOpenDropdown(false);
-        setOpenParamDropdown(null);
-      }
-    };
-    window.addEventListener("click", handler);
-    return () => window.removeEventListener("click", handler);
-  }, []);
+  const [modelId, setModelId] = useState(() => defaultModelId(categoryId, page === "music" ? models.filter((model) => !isSoundEffect(model)) : models) || models[0]?.id || "");
+  const [options, setOptions] = useState({});
+  const [text, setText] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [lyrics, setLyrics] = useState("");
+  const [script, setScript] = useState(null);
+  const [scene, setScene] = useState({ scene: "", sample_context: "" });
+  const [extendAt, setExtendAt] = useState(0);
+  const [source, setSource] = useState(null); // { url, name, fromId }
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [editingSpeaker, setEditingSpeaker] = useState(null);
+  const [viewer, setViewer] = useState(null);
+  const [cloning, setCloning] = useState(null); // { source? } while the clone dialog is open
+  const [uploading, setUploading] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  const [providerReady, setProviderReady] = useState(null);
+  const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
+  const hasRestored = useRef(false);
 
-  // ── Generation state ──────────────────────────────────────────────────
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState(null);
-  const [activeResultUrl, setActiveResultUrl] = useState(null);
-  const [activeResultTitle, setActiveResultTitle] = useState("");
-  const [view, setView] = useState("input"); // 'input' | 'result'
+  const selectedModel = models.find((model) => model.id === modelId) || models[0] || null;
+  const layout = useMemo(() => layoutInputs(selectedModel), [selectedModel]);
+  const shape = dialogueShape(selectedModel);
+  const voiceField = voiceKey(selectedModel);
+  const clonable = page === "speech" && cloneModel && acceptsClonedVoices(selectedModel);
+  const instrumental = Boolean(options.is_instrumental || options.force_instrumental);
+  const instrumentalKey = selectedModel?.inputs?.is_instrumental ? "is_instrumental" : selectedModel?.inputs?.force_instrumental ? "force_instrumental" : null;
+  const wantsLyrics = Boolean(selectedModel?.inputs?.lyrics) && !instrumental;
 
-  // ── History state ────────────────────────────────────────────────────
-  const [internalHistory, setInternalHistory] = useState([]);
-  const history = internalHistory;
-  const [activeHistoryIdx, setActiveHistoryIdx] = useState(0);
-
-  const selectedModel = getAudioModelById(selectedModelId);
-
-  // ── Initialize params when model changes ──────────────────────────────
+  // Options and the script follow the model; what still applies is kept.
   useEffect(() => {
     if (!selectedModel) return;
-    const initial = {};
-    Object.entries(selectedModel.inputs || {}).forEach(([key, schema]) => {
-      // Don't overwrite parameters like vocal upload, list etc. if they are already in state
-      if (params[key] !== undefined) {
-        initial[key] = params[key];
-      } else if (schema.type === "array" && schema.items?.properties) {
-        // Start list editors with the model's example rows so they're usable at once.
-        initial[key] = schema.default ?? (Array.isArray(schema.examples?.[0]) ? schema.examples[0] : []);
-      } else {
-        initial[key] = schema.default !== undefined ? schema.default : "";
-      }
-    });
-    setParams(initial);
-  }, [selectedModelId]); // Only reset when model ID changes
+    setOptions((previous) => carryOptions(previous, selectedModel));
+    if (page === "dialogue") setScript((previous) => (previous ? carryScript(previous, selectedModel) : defaultScript(selectedModel)));
+  }, [selectedModel, page]);
 
-  // The Benchmarks page opens this studio with a model preselected.
   useEffect(() => {
-    const onOpen = (event) => {
-      const { tabId, modelId } = event.detail || {};
-      if (tabId === "audio" && getAudioModelById(modelId)) setSelectedModelId(modelId);
-    };
-    window.addEventListener("oga:open-studio", onOpen);
-    return () => window.removeEventListener("oga:open-studio", onOpen);
-  }, []);
-
-  // Tells the Benchmarks helper whether the selected tool is speech or music.
-  useEffect(() => {
-    announceStudioMode("audio", audioCategoryOf(selectedModel) === "music" ? "music" : "speech");
+    const sync = () => setProviderReady(Boolean(selectedModel) && isEndpointAvailable(selectedModel.endpoint));
+    sync();
+    return subscribeProviderSettings(sync);
   }, [selectedModel]);
 
-  // The editor's choice of the tool the page opens on (speech unless the
-  // saved model is a music model) wins over a choice saved before it existed.
-  useEditorsPickPreselect({
-    page: "audio",
-    read: () => {
-      let saved = null;
-      try { saved = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null")?.selectedModelId || null; } catch { saved = null; }
-      const categoryId = audioCategoryOf(getAudioModelById(saved)) || "text-to-speech";
-      return { categoryId, modelIds: audioModels.filter((model) => audioCategoryOf(model) === categoryId).map((model) => model.id), savedModelId: saved };
-    },
-    apply: (wanted) => setSelectedModelId(wanted),
-  });
+  const providersText = useMemo(() => {
+    const ids = [...new Set(models.flatMap((model) => getRoutes(model.endpoint).map((route) => route.provider)))];
+    const labels = ids.map((id) => getProvider(id)?.label || id);
+    return labels.length <= 1 ? labels[0] || "" : `${labels.slice(0, -1).join(", ")} ${copy.providers.or} ${labels[labels.length - 1]}`;
+  }, [models, copy.providers.or]);
 
-  // ── Persistence: Load ────────────────────────────────────────────────────
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(PERSIST_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        if (data.selectedModelId) setSelectedModelId(data.selectedModelId);
-        if (data.params) setParams(data.params);
-        if (data.internalHistory) setInternalHistory(data.internalHistory);
-        if (data.activeResultUrl) setActiveResultUrl(data.activeResultUrl);
-        if (data.activeResultTitle) setActiveResultTitle(data.activeResultTitle);
-        if (data.view) setView(data.view);
-      }
-    } catch (err) {
-      console.warn("Failed to load AudioStudio persistence:", err);
-    }
-  }, []);
-
-  // ── Persistence: Save ────────────────────────────────────────────────────
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        const state = {
-          selectedModelId,
-          params,
-          internalHistory,
-          activeResultUrl,
-          activeResultTitle,
-          view,
-        };
-        localStorage.setItem(PERSIST_KEY, JSON.stringify(state));
-      } catch (err) {
-        console.warn("Failed to save AudioStudio persistence:", err);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [selectedModelId, params, internalHistory, activeResultUrl, activeResultTitle, view]);
-
-  // ── Handle Dropped Files ────────────────────────────────────────────────
-  useEffect(() => {
-    if (droppedFiles && droppedFiles.length > 0) {
-      const audioFiles = droppedFiles.filter(f => f.type.startsWith('audio/'));
-      if (audioFiles.length > 0 && selectedModel) {
-        // Find the first audio input field in the current model
-        const firstAudioField = Object.entries(selectedModel.inputs || {}).find(
-          ([_, schema]) => schema.field === 'audio'
-        );
-
-        if (firstAudioField) {
-          const [key] = firstAudioField;
-          // Trigger file upload helper
-          uploadFile(audioFiles[0], () => {})
-            .then(url => {
-              setParams(prev => ({ ...prev, [key]: url }));
-            })
-            .catch(err => alert(copy.generate.droppedFileUploadError.replace('{message}', err.message)));
-        }
-      }
-      onFilesHandled?.();
-    }
-  }, [droppedFiles, onFilesHandled, selectedModel]);
-
-  // ── History helpers ─────────────────────────────────────────────────────
-  const addToInternalHistory = useCallback((entry) => {
-    setInternalHistory((prev) => [entry, ...prev].slice(0, 30));
-  }, []);
-
-  const handleSelectHistory = (entry, index) => {
-    setActiveResultUrl(entry.url);
-    setActiveResultTitle(entry.title || entry.prompt || copy.player.defaultTitle);
-    setActiveHistoryIdx(index);
-    setView("result");
+  const openProviderSettings = (model = selectedModel) => {
+    const providers = model ? [...new Set(getRoutes(model.endpoint).map((route) => route.provider))] : [];
+    window.dispatchEvent(new CustomEvent("oga:provider-setup-needed", { detail: { providers } }));
   };
 
-  const handleGenerate = async () => {
-    if (!selectedModel) return;
-
-    // Check required fields
-    if (selectedModel.required) {
-      for (const field of selectedModel.required) {
-        if (!params[field] || (Array.isArray(params[field]) && params[field].length === 0)) {
-          alert(copy.sidebar.requiredFieldError.replace('{field}', selectedModel.inputs?.[field]?.title || field));
-          return;
-        }
-      }
-    }
-
-    onGenerationStart?.();
-    setIsGenerating(true);
-    setGenerateError(null);
-
+  // Per-page persistence (the library persists itself).
+  useEffect(() => {
     try {
-      const audioParams = {
-        ...params,
-        _modelId: selectedModelId,
-      };
-
-      // Call generateAudio
-      const res = await generateAudio(audioParams);
-
-      if (!res?.url) {
-        throw new Error(copy.generate.noUrlError);
+      const data = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null");
+      if (data) {
+        if (models.some((model) => model.id === data.modelId)) setModelId(data.modelId);
+        if (data.options && typeof data.options === "object") setOptions(data.options);
+        if (typeof data.text === "string") setText(data.text);
+        if (typeof data.prompt === "string") setPrompt(data.prompt);
+        if (typeof data.lyrics === "string") setLyrics(data.lyrics);
+        if (data.script?.cast && data.script?.lines) setScript(data.script);
+        if (data.scene && typeof data.scene === "object") setScene({ scene: data.scene.scene || "", sample_context: data.scene.sample_context || "" });
+        if (Number.isFinite(data.extendAt)) setExtendAt(data.extendAt);
+        if (data.source && typeof data.source.url === "string") setSource(data.source);
       }
-
-      const title = params.title || params.prompt || `Generated ${selectedModel.name}`;
-      const entry = {
-        id: res.id || Date.now().toString(),
-        url: res.url,
-        title,
-        prompt: params.prompt || "",
-        model: selectedModelId,
-        timestamp: new Date().toISOString(),
-      };
-
-      addToInternalHistory(entry);
-
-      setActiveResultUrl(res.url);
-      setActiveResultTitle(title);
-      setView("result");
-      setActiveHistoryIdx(0);
-
-      if (onGenerationComplete) {
-        onGenerationComplete({
-          url: res.url,
-          model: selectedModelId,
-          prompt: params.prompt,
-          type: "audio",
-        });
-      }
-    } catch (e) {
-      console.error("[AudioStudio]", e);
-      const errMsg = formatErrorMessage(e, copy.generate.genericError);
-      if (onGenerationError) onGenerationError(errMsg);
-      else toast.error(errMsg);
+    } catch (error) {
+      console.warn("[AudioStudio] could not restore state", error);
     } finally {
-      setIsGenerating(false);
+      hasRestored.current = true;
+    }
+  }, [PERSIST_KEY, models]);
+
+  useEffect(() => {
+    if (!hasRestored.current) return undefined;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(PERSIST_KEY, JSON.stringify({ modelId, options, text, prompt, lyrics, script, scene, extendAt, source }));
+      } catch (error) {
+        console.warn("[AudioStudio] could not save state", error);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [PERSIST_KEY, modelId, options, text, prompt, lyrics, script, scene, extendAt, source]);
+
+  // A track sent to Remix from another page.
+  useEffect(() => {
+    if (page !== "remix" || !library.handoffs.remix) return;
+    const handoff = takeHandoff("remix");
+    if (!handoff?.source) return;
+    setSource(handoff.source);
+    setOpenDropdown(null);
+    setViewer(null);
+  }, [library.handoffs, page]);
+
+  // The Benchmarks page opens a page with a model preselected.
+  useEffect(() => {
+    const preselect = (event) => {
+      const { tabId: wantedTab, modelId: wanted } = event.detail || {};
+      if (wantedTab !== tabId || !wanted) return;
+      if (models.some((model) => model.id === wanted)) setModelId(wanted);
+    };
+    window.addEventListener("oga:open-studio", preselect);
+    return () => window.removeEventListener("oga:open-studio", preselect);
+  }, [tabId, models]);
+
+  useEditorsPickPreselect({
+    page: tabId,
+    read: () => {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null")?.modelId || null; } catch { saved = null; }
+      return { categoryId, modelIds: models.map((model) => model.id), savedModelId: saved };
+    },
+    apply: (wanted) => setModelId(wanted),
+  });
+
+  // The viewer closing stops playback; so does leaving the page.
+  useEffect(() => { if (!viewer) stopAllAudio(); }, [viewer]);
+
+  const uploadSource = useCallback(async (file, { send = false } = {}) => {
+    if (!isAudioFile(file)) return toast.error(copy.errors.notAudio);
+    if (file.size > MAX_UPLOAD_BYTES) return toast.error(copy.errors.tooLarge);
+    setUploading({ progress: 0 });
+    try {
+      const url = await uploadFile(file, (progress) => setUploading({ progress }));
+      const next = { url, name: file.name, fromId: null };
+      if (send) sendToAudio("remix", { source: next });
+      else setSource(next);
+    } catch (error) {
+      toast.error(fill(copy.errors.uploadFailed, { message: formatErrorMessage(error, "") }));
+    } finally {
+      setUploading(null);
+    }
+    return undefined;
+  }, [copy]);
+
+  useEffect(() => {
+    if (!droppedFiles?.length) return;
+    const audio = droppedFiles.filter(isAudioFile);
+    if (audio.length === 0) toast.error(copy.errors.notAudio);
+    else if (page === "remix") uploadSource(audio[0]);
+    else uploadSource(audio[0], { send: true });
+    onFilesHandled?.();
+  }, [droppedFiles, onFilesHandled, page, uploadSource, copy]);
+
+  const report = (error) => {
+    console.error("[AudioStudio]", error);
+    const message = formatErrorMessage(error, copy.errors.generationFailed);
+    if (onGenerationError) onGenerationError(message);
+    else toast.error(message);
+  };
+
+  // One run: the request goes out, the result is filed with its expected cost.
+  const run = async ({ payload, meta, promptText }) => {
+    const runId = newId();
+    addPending({ id: runId, label: selectedModel.name, prompt: promptText });
+    onGenerationStart?.();
+    const costQuote = quoteRun(selectedModel.endpoint, payload)
+      .then((quote) => {
+        if (quote?.kind === "free") return { amount: 0 };
+        if (typeof quote?.amount !== "number") return null;
+        return { amount: Math.round(quote.amount * 10000) / 10000, currency: quote.currency || "USD" };
+      })
+      .catch(() => null);
+    try {
+      const result = await generateAudio({ ...payload, _modelId: selectedModel.id });
+      const url = result?.url || result?.audio?.url || result?.audio_url || null;
+      if (!url) throw new Error(copy.errors.noOutput);
+      const entry = { id: newId(), url, remoteUrl: result.remoteUrl || null, page, ...meta, model: selectedModel.id, modelName: selectedModel.name, vendor: selectedModel.provider_name || "", cost: await costQuote, duration: Number.isFinite(result?.duration) ? result.duration : null, timestamp: new Date().toISOString() };
+      addEntry(entry);
+      onGenerationComplete?.({ url, model: selectedModel.id, prompt: promptText, type: "audio" });
+      return entry;
+    } catch (error) {
+      report(error);
+      return null;
+    } finally {
+      removePending(runId);
       onGenerationEnd?.();
     }
   };
 
-  const handleNew = () => {
-    setView("input");
-    setActiveResultUrl(null);
-    setActiveResultTitle("");
-    // Keep parameters to avoid having to reupload files if they wish to adjust details
+  const missingMessage = { model: copy.errors.generationFailed, text: copy.errors.needText, script: copy.errors.needScript, prompt: copy.errors.needPrompt, lyrics: copy.errors.needLyrics, source: copy.errors.needSource };
+
+  const handleGenerate = async () => {
+    if (!selectedModel) return;
+    if (!providerReady) return openProviderSettings();
+    const missing = missingInput(page, { model: selectedModel, text, script, prompt, lyrics, sourceUrl: source?.url || null, options });
+    if (missing) {
+      if (["text", "prompt"].includes(missing)) textareaRef.current?.focus();
+      return toast.error(missingMessage[missing]);
+    }
+    if (page === "speech") {
+      const voice = voiceField ? options[voiceField] : null;
+      return run({ payload: speechPayload(selectedModel, text.trim(), options), meta: { kind: "speech", title: "", prompt: text.trim(), text: text.trim(), voice: voice || null }, promptText: text.trim() });
+    }
+    if (page === "dialogue") {
+      const payload = dialoguePayload(selectedModel, script, { ...options, ...(shape === "cast" ? Object.fromEntries(Object.entries(scene).filter(([, value]) => value.trim())) : {}) });
+      const summary = scriptText(script);
+      return run({ payload, meta: { kind: "dialogue", title: "", prompt: summary, text: summary, voice: null, speakers: script.cast.filter((member) => script.lines.some((line) => line.speaker === member.id && line.text.trim())).map((member) => member.name) }, promptText: summary });
+    }
+    if (page === "music") {
+      const payload = musicPayload(selectedModel, { prompt, lyrics }, options);
+      return run({ payload, meta: { kind: isSoundEffect(selectedModel) ? "sfx" : "music", title: "", prompt: prompt.trim(), lyrics: payload.lyrics || "", voice: null }, promptText: prompt.trim() || lyrics.trim() });
+    }
+    const payload = remixPayload(selectedModel, { sourceUrl: source.url, prompt, lyrics, extendAtSeconds: extendAt }, options);
+    return run({ payload, meta: { kind: selectedModel.inputs?.extend_at ? "extend" : "remix", title: "", prompt: prompt.trim() || lyrics.trim(), lyrics: payload.lyrics || "", voice: null, sourceUrl: source.url, sourceName: source.name || "", sourceId: source.fromId || null }, promptText: prompt.trim() || lyrics.trim() || source.name || "" });
   };
 
-  return (
-    <div className="w-full h-full flex bg-app-bg text-white overflow-hidden relative">
-      
-      {/* ─── LEFT CONFIGURATION SIDEBAR ─── */}
-      <div ref={sidebarRef} className="w-full lg:w-[400px] border-r border-zinc-900 flex flex-col bg-zinc-950/40 backdrop-blur-lg flex-shrink-0 z-30">
-        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar space-y-6 pb-24">
-          
-          {/* Model Selector */}
-          <div className="space-y-2 relative">
-            <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider block">
-              {copy.sidebar.modelLabel}
-            </label>
-            <button
-              ref={modelBtnRef}
-              type="button"
-              onClick={() => setOpenDropdown(!openDropdown)}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded px-4 py-3.5 text-sm text-left font-bold text-white flex items-center justify-between hover:bg-zinc-850 hover:border-primary/50 transition-all"
-            >
-              <span>{selectedModel?.name ?? copy.sidebar.selectModel}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`transition-transform duration-200 ${openDropdown ? 'rotate-180' : ''}`}>
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
+  // Library actions
+  const sendToRemix = (entry) => {
+    const next = { url: entry.url, name: entryTitle(entry, entry.modelName) || "track", fromId: entry.id };
+    setViewer(null);
+    setOpenDropdown(null);
+    if (page === "remix") setSource(next);
+    else sendToAudio("remix", { source: next });
+  };
+  const download = async (entry) => {
+    try {
+      const blob = await fetchMediaBlob(entry.url);
+      const extension = blob.type.includes("wav") ? "wav" : blob.type.includes("ogg") ? "ogg" : blob.type.includes("flac") ? "flac" : "mp3";
+      const name = `${slug(entryTitle(entry, entry.modelName)) || "audio"}-${String(entry.id).slice(-6)}.${extension}`;
+      const href = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = href;
+      anchor.download = name;
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(href), 10000);
+    } catch (error) {
+      toast.error(fill(copy.errors.downloadFailed, { message: formatErrorMessage(error, "") }));
+    }
+  };
+  const deleteEntry = (id) => {
+    if (!confirm(copy.confirm.deleteItem)) return;
+    removeEntry(id);
+    if (viewer?.id === id) setViewer(null);
+  };
+  const forgetVoice = (voice) => {
+    if (!confirm(copy.confirm.deleteVoice)) return;
+    removeVoice(voice.id);
+    if (voiceField && options[voiceField] === voice.id) setOption(voiceField, selectedModel.inputs[voiceField].default);
+  };
 
-            {openDropdown && (
-              <div className="absolute left-0 right-0 mt-2 z-50 bg-[#161618] border border-zinc-700 rounded shadow-3xl max-h-60 overflow-y-auto custom-scrollbar p-1.5">
-                {audioModels.map((model) => (
-                  <button
-                    key={model.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedModelId(model.id);
-                      setOpenDropdown(false);
-                    }}
-                    className={`w-full text-left px-4 py-2.5 rounded text-xs font-bold transition-all flex flex-col gap-1.5 border ${
-                      model.id === selectedModelId ? "text-primary bg-primary/10 border-primary/20" : "text-zinc-200 border-transparent hover:bg-zinc-900 hover:text-white"
-                    }`}
-                  >
-                    <span>{model.name}</span>
-                    {model.description && (
-                      <span className="text-[10px] text-zinc-300 truncate max-w-[320px] font-normal">
-                        {model.description}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+  const hasGallery = library.entries.length > 0 || library.pending.length > 0;
+  const starters = (pageCopy.starters || []).map((starter) => ({ label: starter.label, prompt: starter.prompt }));
+  const onStarter = (value) => {
+    if (page === "speech") setText(value);
+    else if (page === "dialogue") setScript(parseScript(value, selectedModel));
+    else setPrompt(value);
+    textareaRef.current?.focus();
+  };
 
-          {/* Model Description */}
-          {selectedModel?.description && (
-            <div className="">
-              <span className="text-[10px] font-bold text-primary uppercase tracking-wider block mb-1.5">{copy.sidebar.descriptionLabel}</span>
-              <p className="text-zinc-400 text-xs leading-relaxed font-semibold">{selectedModel.description}</p>
-            </div>
-          )}
+  // Controls
+  const setOption = (key, value) => setOptions((previous) => ({ ...previous, [key]: value }));
+  const toggle = (id) => setOpenDropdown(openDropdown === id ? null : id);
+  const voices = useMemo(() => (voiceField && selectedModel ? enumOptions(selectedModel.inputs[voiceField]) : []), [selectedModel, voiceField]);
+  const cloned = clonable ? library.voices.filter((voice) => voice.family === "minimax") : [];
+  const voiceLabel = voiceField ? (cloned.find((voice) => voice.id === options[voiceField])?.name || optionLabel(selectedModel.inputs[voiceField], options[voiceField] ?? selectedModel.inputs[voiceField].default)) : "";
 
-          {/* Dynamic Configuration Form */}
-          <div className="space-y-5">
-            {selectedModel && Object.entries(selectedModel.inputs || {}).map(([key, schema]) => {
-              // Skip model switcher itself (if it's in schemas)
-              if (key === 'model') return null;
-              // Audio URL file upload (single)
-              if (schema.type === "string" && schema.field === "audio") {
-                return (
-                  <AudioFileUploader
-                    key={key}
-                    label={schema.title || key}
-                    value={params[key] || ""}
-                    onChange={(url) => setParams(prev => ({ ...prev, [key]: url }))}
-                    copy={copy}
-                  />
-                );
-              }
-              // Lists of objects (dialogue turns, speakers)
-              if (schema.type === "array" && schema.items?.properties) {
-                return (
-                  <ObjectListField
-                    key={key}
-                    label={schema.title || key}
-                    description={schema.description}
-                    schema={schema}
-                    value={params[key]}
-                    onChange={(rows) => setParams(prev => ({ ...prev, [key]: rows }))}
-                    copy={copy}
-                  />
-                );
-              }
-              // Boolean Toggles
-              if (schema.type === "boolean") {
-                return (
-                  <div key={key} className="flex items-center justify-between bg-zinc-900 border border-zinc-700/80 rounded p-4 transition-all hover:border-zinc-600">
-                    <div className="flex-1 pr-4">
-                      <span className="block text-xs font-bold text-white tracking-tight">
-                        {schema.title || key}
-                      </span>
-                      {schema.description && (
-                        <span className="block text-[11px] text-zinc-300 leading-normal mt-1">
-                          {schema.description}
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setParams(prev => ({ ...prev, [key]: !prev[key] }))}
-                      className={`w-11 h-6 rounded-full p-1 transition-all duration-300 relative shrink-0 ${
-                        params[key] ? "bg-primary" : "bg-zinc-800"
-                      }`}
-                    >
-                      <div className={`w-4 h-4 rounded-full bg-black shadow-md transform transition-all duration-300 ${
-                        params[key] ? "translate-x-5 bg-white" : "translate-x-0"
-                      }`} />
-                    </button>
-                  </div>
-                );
-              }
-              // Enum Dropdowns
-              if (schema.enum) {
-                const isOpen = openParamDropdown === key;
-                return (
-                  <div key={key} className="space-y-2 relative">
-                    <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                      {schema.title || key}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpenDropdown(false);
-                        setOpenParamDropdown(isOpen ? null : key);
-                      }}
-                      className="w-full bg-zinc-900 border border-zinc-700 hover:border-zinc-600 rounded px-4 py-3.5 text-xs text-left font-bold text-white flex items-center justify-between transition-all cursor-pointer"
-                    >
-                      <span>{params[key] || copy.sidebar.selectOption}</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`transition-transform duration-200 ${isOpen ? 'rotate-185' : ''}`}>
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
+  const pricePayload = useMemo(() => {
+    if (!selectedModel) return {};
+    if (page === "speech") return speechPayload(selectedModel, padForPricing(text.trim()), options);
+    if (page === "dialogue") return dialoguePayload(selectedModel, script, options);
+    if (page === "music") return musicPayload(selectedModel, { prompt, lyrics }, options);
+    return remixPayload(selectedModel, { sourceUrl: source?.url || "", prompt, lyrics, extendAtSeconds: extendAt }, options);
+  }, [selectedModel, page, text, script, prompt, lyrics, options, source, extendAt]);
+  const pickerPayload = (model) => {
+    const carried = carryOptions(options, model);
+    if (page === "speech") return speechPayload(model, padForPricing(text.trim()), carried);
+    if (page === "dialogue") return dialoguePayload(model, carryScript(script, model), carried);
+    if (page === "music") return musicPayload(model, { prompt, lyrics }, carried);
+    return remixPayload(model, { sourceUrl: source?.url || "", prompt, lyrics, extendAtSeconds: extendAt }, carried);
+  };
+  const pickerGroups = useMemo(() => {
+    if (page === "music") {
+      return [
+        { id: "music", label: copy.picker.musicSection, railLabel: copy.picker.musicRail, tone: "cyan", mono: "MU", models: models.filter((model) => !isSoundEffect(model)) },
+        { id: "sfx", label: copy.picker.sfxSection, railLabel: copy.picker.sfxRail, tone: "violet", mono: "FX", models: models.filter(isSoundEffect) },
+      ].filter((group) => group.models.length > 0);
+    }
+    const key = page === "speech" ? "speech" : page === "dialogue" ? "dialogue" : "remix";
+    return [{ id: key, label: copy.picker[`${key}Section`], railLabel: copy.picker[`${key}Rail`], tone: "cyan", mono: key.slice(0, 2).toUpperCase(), models }];
+  }, [page, models, copy.picker]);
 
-                    {isOpen && (
-                      <div className="absolute left-0 right-0 mt-1 z-50 bg-[#161618] border border-zinc-700 rounded shadow-3xl max-h-60 overflow-y-auto custom-scrollbar p-1">
-                        {schema.enum.map((opt) => {
-                          const optionValue = typeof opt === "object" ? opt.value : opt;
-                          const optionLabel = typeof opt === "object" ? (opt.label || opt.value) : opt;
-                          return (
-                            <button
-                              key={optionValue}
-                              type="button"
-                              onClick={() => {
-                                setParams(prev => ({ ...prev, [key]: optionValue }));
-                                setOpenParamDropdown(null);
-                              }}
-                              className={`w-full text-left px-4 py-2.5 rounded text-xs font-bold transition-all border ${
-                                params[key] === optionValue
-                                  ? "text-primary bg-primary/10 border-primary/20"
-                                  : "text-zinc-200 border-transparent hover:bg-zinc-900 hover:text-white"
-                              }`}
-                            >
-                              {optionLabel}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {schema.description && (
-                      <span className="block text-[11px] text-zinc-300 leading-normal">
-                        {schema.description}
-                      </span>
-                    )}
-                  </div>
-                );
-              }
+  const actionLabel = page === "speech" ? copy.buttons.speak : page === "dialogue" ? copy.buttons.read : page === "remix" ? copy.remix.sendHere : copy.buttons.generate;
+  const submitOnEnter = (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      handleGenerate();
+    }
+  };
 
-              // Number Sliders & Ranges
-              const isNumber = schema.type === "int" || schema.type === "integer" || schema.type === "float" || schema.type === "number";
-              const hasMinMax = schema.minValue !== undefined && schema.maxValue !== undefined;
-              if (isNumber && hasMinMax) {
-                const step = schema.step || (schema.type === "float" ? 0.05 : 1);
-                return (
-                  <div key={key} className="space-y-3 bg-zinc-900 border border-zinc-700/80 rounded p-4 transition-all hover:border-zinc-600">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-white tracking-tight">{schema.title || key}</span>
-                      <span className="text-primary font-mono bg-primary/10 px-2 py-0.5 rounded border border-primary/20">{params[key] !== undefined ? params[key] : schema.default}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-zinc-300 font-medium w-6 text-right">{schema.minValue}</span>
-                      <input
-                        type="range"
-                        min={schema.minValue}
-                        max={schema.maxValue}
-                        step={step}
-                        value={params[key] !== undefined ? params[key] : (schema.default || 0)}
-                        onChange={(e) => setParams(prev => ({ ...prev, [key]: parseFloat(e.target.value) }))}
-                        className="flex-1 h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-primary hover:bg-zinc-700 transition-all"
-                      />
-                      <span className="text-[10px] text-zinc-300 font-medium w-6 text-left">{schema.maxValue}</span>
-                    </div>
-                    {schema.description && (
-                      <span className="block text-[11px] text-zinc-300 leading-normal">
-                        {schema.description}
-                      </span>
-                    )}
-                  </div>
-                );
-              }
-
-              // Prompt / Textarea Input
-              if (key === "prompt") {
-                return (
-                  <div key={key} className="space-y-2">
-                    <label className="block text-xs font-bold text-zinc-200 uppercase tracking-wider">
-                      {schema.title || copy.sidebar.lyricsPromptLabel}
-                    </label>
-                    <textarea
-                      value={params[key] || ""}
-                      onChange={(e) => setParams(prev => ({ ...prev, [key]: e.target.value }))}
-                      className="w-full bg-zinc-900 border border-zinc-700 focus:border-primary/85 rounded p-3 text-xs text-white placeholder:text-zinc-400 focus:outline-none transition-all min-h-[100px] resize-none leading-relaxed shadow-inner"
-                      placeholder={schema.description || copy.sidebar.promptPlaceholder}
-                    />
-                    {schema.examples && Array.isArray(schema.examples) && (
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {schema.examples.map((ex, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => setParams(prev => ({ ...prev, [key]: ex }))}
-                            className="text-[11px] px-3 py-1 bg-zinc-800/80 border border-zinc-700 hover:bg-primary/20 hover:border-primary/45 hover:text-white rounded-full transition-all font-semibold text-zinc-100"
-                          >
-                            "{ex.slice(0, 35)}..."
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              // Standard Text / Input fields
-              return (
-                <div key={key} className="space-y-2">
-                  <label className="block text-xs font-bold text-zinc-200 uppercase tracking-wider">
-                    {schema.title || key}
-                  </label>
-                  <input
-                    type={isNumber ? "number" : "text"}
-                    value={params[key] !== undefined ? params[key] : ""}
-                    placeholder={schema.placeholder || schema.description || copy.sidebar.fieldPlaceholder.replace('{field}', key)}
-                    onChange={(e) => {
-                      const val = isNumber ? (e.target.value === "" ? "" : parseFloat(e.target.value)) : e.target.value;
-                      setParams(prev => ({ ...prev, [key]: val }));
-                    }}
-                    className="w-full bg-zinc-900 border border-zinc-700 hover:border-zinc-600 focus:border-primary/80 rounded px-4 py-3.5 text-xs text-white placeholder:text-zinc-400 focus:outline-none transition-all shadow-inner"
-                  />
-                  {schema.description && (
-                    <span className="block text-[11px] text-zinc-300 leading-normal">
-                      {schema.description}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-        </div>
-
-        {/* Generate Section */}
-        <div className="p-4 border-t border-zinc-900 bg-zinc-950/80 backdrop-blur-xl absolute bottom-0 left-0 w-full lg:w-[400px] z-40">
-          <div className="flex justify-end mb-2 empty:hidden">
-            <PriceChip locale={locale} endpoint={selectedModel?.endpoint || selectedModelId} enabled={Boolean(selectedModel)} payload={params} />
-          </div>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={isGenerating || !selectedModel}
-            className="w-full py-4 bg-primary text-black text-base font-bold rounded hover:bg-white transition-all transform hover:scale-[1.01] active:scale-95 disabled:opacity-50 disabled:grayscale shadow-glow flex items-center justify-center gap-3"
-          >
-            {isGenerating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin" />
-                <span>{copy.generate.generating}</span>
-              </>
-            ) : (
-              <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                  <path d="M5 3l14 9-14 9V3z" />
-                </svg>
-                <span>{copy.generate.cta}</span>
-              </>
-            )}
+  // One footer control per primary input: a menu for short enums, a
+  // searchable list for long ones, a slider popover for numbers, a toggle
+  // for booleans. The voice has its own control with the cloned voices.
+  const control = ({ key, input, kind }) => {
+    if (key === voiceField || key === instrumentalKey) return null;
+    const value = options[key] ?? input.default;
+    if (kind === "enum") {
+      const list = enumOptions(input);
+      return (
+        <div key={key} className="relative">
+          <button type="button" onClick={() => toggle(key)} className={promptControlClassName({ active: openDropdown === key })} title={input.description || input.title} data-audio-control={key}>
+            <span className="text-[11px] text-white/40">{input.title}</span>
+            <span className={PROMPT_CONTROL_LABEL_CLASS}>{optionLabel(input, value)}</span>
+            <PromptChevronIcon />
           </button>
+          {openDropdown === key && (list.length >= SEARCHABLE_FROM ? (
+            <SearchList title={input.title} options={list} value={value} onSelect={(next) => { setOption(key, next); setOpenDropdown(null); }} searchPlaceholder={copy.controls.voiceSearch} emptyLabel={copy.controls.noVoices} className="w-[300px]" />
+          ) : (
+            <PromptPopover>
+              <PromptPopoverHeader>{input.title}</PromptPopoverHeader>
+              <PromptMenuList>
+                {list.map((option) => <PromptMenuItem key={String(option.value)} selected={value === option.value} onClick={() => { setOption(key, option.value); setOpenDropdown(null); }}>{option.label}</PromptMenuItem>)}
+              </PromptMenuList>
+            </PromptPopover>
+          ))}
         </div>
-      </div>
-      {/* ─── RIGHT CONTENT AREA ─── */}
-      <div className="flex-1 flex flex-col min-w-0 h-full relative z-20">
-        
-        {/* Main Display panel */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-10 flex flex-col justify-between">
-          
-          <div className="flex-1 flex items-center justify-center min-h-[400px] mb-8">
-            
-            {/* 1. Error Display */}
-            {generateError && (
-              <div className="w-full max-w-md p-6 bg-red-500/10 border border-red-500/20 rounded flex flex-col items-center gap-4 animate-shake">
-                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center text-red-500 border border-red-500/30 shadow-lg">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                </div>
-                <div className="text-center">
-                  <span className="text-xs font-black text-red-500 uppercase tracking-widest block mb-1">
-                    {copy.result.errorHeading}
-                  </span>
-                  <p className="text-white font-medium text-sm leading-relaxed">
-                    {generateError}
-                  </p>
-                </div>
+      );
+    }
+    if (kind === "number") {
+      const range = numericRange(input);
+      const shown = key === "music_length_ms" ? fill(copy.controls.seconds, { count: Math.round((value ?? 0) / 1000) }) : key === "duration" ? fill(copy.controls.seconds, { count: value ?? 0 }) : String(value ?? "");
+      return (
+        <div key={key} className="relative">
+          <button type="button" onClick={() => toggle(key)} className={promptControlClassName({ active: openDropdown === key })} title={input.description || input.title} data-audio-control={key}>
+            <span className="text-[11px] text-white/40">{input.title}</span>
+            <span className={`${PROMPT_CONTROL_LABEL_CLASS} tabular-nums`}>{shown}</span>
+            <PromptChevronIcon />
+          </button>
+          {openDropdown === key && (
+            <PromptPopover className="w-[260px]">
+              <PromptPopoverHeader>{input.title}</PromptPopoverHeader>
+              <div className="px-2 pb-1">
+                <div className="mb-2 flex items-center justify-between text-[12px] text-white/70"><span>{input.description ? "" : input.title}</span><span className="tabular-nums text-white">{shown}</span></div>
+                <input type="range" min={range.min} max={range.max} step={range.step} value={value ?? range.min} onChange={(event) => setOption(key, Number(event.target.value))} className="w-full accent-[#22d3ee]" aria-label={input.title} />
+                {input.description && <p className="mt-2 text-[11px] leading-relaxed text-white/40">{input.description}</p>}
               </div>
-            )}
+            </PromptPopover>
+          )}
+        </div>
+      );
+    }
+    if (kind === "boolean") {
+      return (
+        <button key={key} type="button" onClick={() => setOption(key, !value)} aria-pressed={Boolean(value)} className={promptControlClassName({ active: Boolean(value) })} title={input.description || input.title} data-audio-control={key}>
+          <span className={PROMPT_CONTROL_LABEL_CLASS}>{input.title}</span>
+        </button>
+      );
+    }
+    return null;
+  };
 
-            {/* 2. Generating / Loading View */}
-            {isGenerating && !generateError && (
-              <div className="flex flex-col items-center gap-6 animate-fade-in">
-                <div className="relative">
-                  <div className="w-24 h-24 border-[3px] border-zinc-800 border-t-primary rounded-full animate-spin shadow-glow" />
-                  <div className="absolute inset-0 flex items-center justify-center text-primary">
-                    <MusicIcon className="animate-pulse text-primary" />
+  const advancedField = ({ key, input, kind }) => {
+    const value = options[key] ?? input.default;
+    if (kind === "enum") {
+      return (
+        <label key={key} className="flex flex-col gap-1 text-[12px] text-white/70" title={input.description || ""}>
+          <span>{input.title}</span>
+          <select value={value ?? ""} onChange={(event) => { const raw = event.target.value; const option = enumOptions(input).find((item) => String(item.value) === raw); setOption(key, option ? option.value : raw); }} className={SELECT_CLASS} style={CHEVRON_STYLE}>
+            {enumOptions(input).map((option) => <option key={String(option.value)} value={String(option.value)}>{option.label}</option>)}
+          </select>
+        </label>
+      );
+    }
+    if (kind === "number") {
+      const range = numericRange(input);
+      return (
+        <label key={key} className="flex flex-col gap-1 text-[12px] text-white/70" title={input.description || ""}>
+          <span className="flex items-center justify-between"><span>{input.title}</span><span className="tabular-nums text-white/45">{value ?? ""}</span></span>
+          <input type="range" min={range.min} max={range.max} step={range.step} value={value ?? range.min} onChange={(event) => setOption(key, Number(event.target.value))} className="w-full accent-[#22d3ee]" />
+        </label>
+      );
+    }
+    if (kind === "boolean") {
+      return (
+        <label key={key} className="flex items-center justify-between gap-3 text-[12px] text-white/70" title={input.description || ""}>
+          <span>{input.title}</span>
+          <Toggle on={Boolean(value)} onChange={(next) => setOption(key, next)} label={input.title} />
+        </label>
+      );
+    }
+    return (
+      <label key={key} className="flex flex-col gap-1 text-[12px] text-white/70" title={input.description || ""}>
+        <span>{input.title}</span>
+        <input value={value ?? ""} onChange={(event) => setOption(key, event.target.value)} className={INPUT_CLASS} />
+      </label>
+    );
+  };
+  const advancedCount = layout.advanced.length + (shape === "cast" ? 2 : 0);
+
+  // Dialogue: the cast and the lines.
+  const updateScript = (updater) => setScript((previous) => updater(previous || defaultScript(selectedModel)));
+  const castVoices = useMemo(() => (page === "dialogue" ? dialogueVoices(selectedModel) : []), [page, selectedModel]);
+  const addSpeaker = () => updateScript((previous) => {
+    if (previous.cast.length >= MAX_SPEAKERS) return previous;
+    const index = previous.cast.length;
+    const id = `Speaker ${index + 1}`;
+    return { ...previous, cast: [...previous.cast, { id, name: id, voice: castVoices[index % Math.max(1, castVoices.length)]?.value ?? "", profile: "" }] };
+  });
+  const updateSpeaker = (id, patch) => updateScript((previous) => ({ ...previous, cast: previous.cast.map((member) => (member.id === id ? { ...member, ...patch } : member)) }));
+  const removeSpeaker = (id) => updateScript((previous) => {
+    if (previous.cast.length <= 1) return previous;
+    const cast = previous.cast.filter((member) => member.id !== id);
+    return { cast, lines: previous.lines.map((line) => (line.speaker === id ? { ...line, speaker: cast[0].id } : line)) };
+  });
+  const addLine = () => updateScript((previous) => {
+    if (previous.lines.length >= MAX_LINES) return previous;
+    const last = previous.lines[previous.lines.length - 1];
+    const next = previous.cast[(previous.cast.findIndex((member) => member.id === last?.speaker) + 1) % previous.cast.length]?.id || previous.cast[0].id;
+    return { ...previous, lines: [...previous.lines, { speaker: next, text: "" }] };
+  });
+  const updateLine = (index, patch) => updateScript((previous) => ({ ...previous, lines: previous.lines.map((line, i) => (i === index ? { ...line, ...patch } : line)) }));
+  const removeLine = (index) => updateScript((previous) => ({ ...previous, lines: previous.lines.length > 1 ? previous.lines.filter((_, i) => i !== index) : [{ speaker: previous.cast[0].id, text: "" }] }));
+
+  const scriptEditor = page === "dialogue" && script && (
+    <div className="flex flex-col gap-2.5 px-1" data-audio-script>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-[11px] font-medium uppercase tracking-[0.08em] text-white/40">{copy.script.cast}</span>
+        {script.cast.map((member) => (
+          <div key={member.id} className="relative">
+            <button type="button" onClick={() => setEditingSpeaker(editingSpeaker === member.id ? null : member.id)} className={`flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] transition-colors ${editingSpeaker === member.id ? "border-primary/50 bg-primary/[0.08] text-white" : "border-white/[0.1] bg-white/[0.03] text-white/80 hover:border-white/25 hover:text-white"}`} data-audio-speaker={member.id}>
+              <span className="font-medium">{member.name}</span>
+              <span className="text-white/40">· {castVoices.find((voice) => voice.value === member.voice)?.label.split(/\s[—-]\s/)[0] || member.voice}</span>
+              <PromptChevronIcon />
+            </button>
+            {editingSpeaker === member.id && (
+              <PromptPopover className="w-[300px]" positionClassName="absolute left-0 top-full mt-2 z-50" fitViewport solid>
+                <div className="flex flex-col gap-3 p-1">
+                  <label className="flex flex-col gap-1 text-[12px] text-white/70">
+                    <span>{copy.script.speakerName}</span>
+                    <input value={member.name} onChange={(event) => updateSpeaker(member.id, { name: event.target.value })} placeholder={copy.script.speakerNamePlaceholder} className={INPUT_CLASS} autoFocus />
+                  </label>
+                  <label className="flex flex-col gap-1 text-[12px] text-white/70">
+                    <span>{copy.script.voice}</span>
+                    <select value={member.voice} onChange={(event) => updateSpeaker(member.id, { voice: event.target.value })} className={SELECT_CLASS} style={CHEVRON_STYLE}>
+                      {castVoices.map((voice) => <option key={String(voice.value)} value={voice.value}>{voice.label}</option>)}
+                    </select>
+                  </label>
+                  {shape === "cast" && (
+                    <label className="flex flex-col gap-1 text-[12px] text-white/70">
+                      <span>{copy.script.profile}</span>
+                      <input value={member.profile} onChange={(event) => updateSpeaker(member.id, { profile: event.target.value })} placeholder={copy.script.profilePlaceholder} className={INPUT_CLASS} />
+                      <span className="text-[11px] text-white/40">{copy.script.profileHint}</span>
+                    </label>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <button type="button" onClick={() => { removeSpeaker(member.id); setEditingSpeaker(null); }} disabled={script.cast.length <= 1} className="text-[12px] text-red-300/80 hover:text-red-300 disabled:opacity-40">{copy.script.removeSpeaker}</button>
+                    <button type="button" onClick={() => setEditingSpeaker(null)} className={SMALL_BUTTON_CLASS}>{copy.buttons.close}</button>
                   </div>
                 </div>
-                <div className="text-center space-y-2">
-                  <div className="text-xs font-black text-primary uppercase tracking-[0.3em] animate-pulse">
-                    {copy.result.loadingHeading}
-                  </div>
-                  <div className="text-sm text-zinc-200 font-bold">
-                    {copy.result.loadingSubtext}
-                  </div>
-                </div>
-              </div>
+              </PromptPopover>
             )}
-
-            {/* 3. Empty State (no audio, not loading, no error) */}
-            {view === "input" && !isGenerating && !generateError && (
-              <div className="flex flex-col items-center gap-6 max-w-md text-center p-8 bg-zinc-900/40 border border-zinc-800 rounded backdrop-blur-sm relative group oga-enter">
-                {/* Glow behind the icon */}
-                <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full opacity-25 group-hover:opacity-40 transition-opacity duration-1000 pointer-events-none" />
-                <div className="w-20 h-20 bg-zinc-900 border border-zinc-705 rounded flex items-center justify-center shadow-inner relative z-10 transition-transform duration-500 group-hover:scale-105">
-                  <MusicIcon className="text-primary w-8 h-8 filter drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]" />
-                </div>
-                <div className="relative z-10">
-                  <h3 className="text-white font-black text-xl mb-3 tracking-tight">{copy.result.emptyHeading}</h3>
-                  <p className="text-sm text-zinc-200 font-medium leading-relaxed px-4">
-                    {copy.result.emptyBody}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* 4. Active Result Player Display */}
-            {view === "result" && activeResultUrl && !isGenerating && !generateError && (
-              <div className="w-full max-w-2xl oga-enter space-y-4">
-                <div className="flex items-center justify-between px-1">
-                  <button
-                    onClick={handleNew}
-                    className="text-xs font-bold text-zinc-200 hover:text-primary flex items-center gap-2 transition-all bg-zinc-905 border border-zinc-700 hover:border-primary/30 px-4 py-2 rounded-full"
-                    type="button"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <line x1="19" y1="12" x2="5" y2="12" />
-                      <polyline points="12 19 5 12 12 5" />
-                    </svg>
-                    <span>{copy.result.newGeneration}</span>
-                  </button>
-                  <span className="text-[11px] font-bold text-green-400 px-3.5 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> {copy.result.success}
-                  </span>
-                </div>
-                <PremiumAudioPlayer url={activeResultUrl} title={activeResultTitle} copy={copy} />
-              </div>
-            )}
-
           </div>
+        ))}
+        {script.cast.length < MAX_SPEAKERS && (
+          <button type="button" onClick={addSpeaker} className="flex h-8 items-center gap-1 rounded-full border border-dashed border-white/20 px-3 text-[12px] text-white/60 hover:border-white/40 hover:text-white" data-audio-add-speaker>
+            <IconUserPlus size={14} stroke={1.75} aria-hidden="true" />{copy.script.addSpeaker}
+          </button>
+        )}
+      </div>
+      <div className="flex max-h-[200px] flex-col gap-1.5 overflow-y-auto custom-scrollbar pr-1 md:max-h-[300px]">
+        {script.lines.map((line, index) => (
+          <div key={index} className="flex items-start gap-2" data-audio-line={index}>
+            <select value={line.speaker} onChange={(event) => updateLine(index, { speaker: event.target.value })} aria-label={copy.script.cast} className={SMALL_SELECT_CLASS} style={SMALL_CHEVRON_STYLE}>
+              {script.cast.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
+            </select>
+            <PromptTextarea ref={index === 0 ? textareaRef : undefined} value={line.text} onChange={(event) => updateLine(index, { text: event.target.value })} onKeyDown={submitOnEnter} placeholder={pageCopy.placeholder} className="min-h-[32px] pt-1.5 text-[14px]" maxHeightDesktop={120} maxHeightMobile={90} />
+            <button type="button" onClick={() => removeLine(index)} aria-label={copy.script.removeLine} title={copy.script.removeLine} className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/35 hover:bg-white/10 hover:text-white"><IconX size={14} stroke={2} aria-hidden="true" /></button>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between">
+        <button type="button" onClick={addLine} disabled={script.lines.length >= MAX_LINES} className="flex h-8 items-center gap-1 rounded-lg px-2 text-[12px] text-white/60 hover:bg-white/[0.06] hover:text-white disabled:opacity-40" data-audio-add-line>
+          <IconPlus size={14} stroke={2} aria-hidden="true" />{copy.script.addLine}
+        </button>
+        <span className="text-[11px] tabular-nums text-white/35">{fill(copy.script.lines, { count: script.lines.filter((line) => line.text.trim()).length, characters: number(scriptCharacters(script), locale) })}</span>
+      </div>
+    </div>
+  );
 
-          {/* ─── BOTTOM HISTORY FOOTER ─── */}
-          {history.length > 0 && (
-            <div className="border-t border-zinc-900 pt-6 w-full oga-enter-fade" style={{ "--i": 2 }}>
-              <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider mb-4 px-1">
-                {copy.history.heading.replace('{count}', history.length)}
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                {history.map((entry, idx) => (
-                  <Entrance
-                    once
-                    variant="card"
-                    index={idx}
-                    key={entry.id || idx}
-                    onClick={() => handleSelectHistory(entry, idx)}
-                    className={`p-3.5 bg-zinc-900 border rounded cursor-pointer transition-all flex flex-col justify-between h-28 border-zinc-700/80 hover:bg-zinc-850 hover:border-zinc-500 ${
-                      activeResultUrl === entry.url && view === "result"
-                        ? "border-primary bg-primary/5 shadow-glow"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
-                        activeResultUrl === entry.url && view === "result" ? "bg-primary/20 text-primary" : "bg-zinc-800 text-zinc-200"
-                      }`}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                        </svg>
-                      </div>
-                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider truncate">
-                        {entry.model ? entry.model.split('-').slice(0, 2).join(' ') : copy.history.fallbackModel}
-                      </span>
-                    </div>
-                    <p className="text-[11px] font-semibold text-white line-clamp-2 leading-tight">
-                      {entry.title || entry.prompt || copy.history.untitled}
-                    </p>
-                  </Entrance>
-                ))}
-              </div>
+  // Remix: the source chip, like Vectorize's image chip.
+  const sourceChip = page === "remix" && (
+    source ? (
+      <div className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-primary/30 bg-primary/[0.08] pl-3 pr-3" data-audio-source>
+        <IconFileMusic size={16} stroke={1.75} className="text-primary" aria-hidden="true" />
+        <span className="max-w-[200px] truncate text-[12.5px] text-white/85">{source.name}</span>
+        <button type="button" onClick={() => setSource(null)} aria-label={copy.remix.clear} className="text-white/40 hover:text-white"><IconX size={14} stroke={2} aria-hidden="true" /></button>
+      </div>
+    ) : (
+      <div className="relative flex shrink-0 items-center gap-1.5">
+        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-dashed border-white/20 px-3.5 text-[12.5px] text-white/60 hover:border-white/40 hover:text-white" data-audio-upload>
+          {uploading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconUpload size={15} stroke={1.75} aria-hidden="true" />}
+          {copy.remix.upload}
+        </button>
+        <button type="button" onClick={() => toggle("tracks")} className={promptControlClassName({ active: openDropdown === "tracks", compact: true })} title={copy.remix.fromLibrary}>
+          <span className={PROMPT_CONTROL_LABEL_CLASS}>{copy.remix.fromLibrary}</span>
+          <PromptChevronIcon />
+        </button>
+        {openDropdown === "tracks" && (
+          <SearchList
+            title={copy.remix.libraryTitle}
+            options={library.entries.filter((entry) => entry.kind !== "clone").map((entry) => ({ value: entry.id, label: entryTitle(entry, entry.modelName) || copy.gallery.untitled, description: [copy.gallery.kinds[entry.kind] || copy.gallery.kinds.legacy, entry.modelName, formatDuration(entry.duration)].filter(Boolean).join(" · ") }))}
+            value={null}
+            onSelect={(id) => { const entry = library.entries.find((item) => item.id === id); if (entry) setSource({ url: entry.url, name: entryTitle(entry, entry.modelName) || "track", fromId: entry.id }); setOpenDropdown(null); }}
+            searchPlaceholder={copy.controls.voiceSearch}
+            emptyLabel={copy.remix.libraryEmpty}
+            className="w-[340px]"
+          />
+        )}
+      </div>
+    )
+  );
+
+  const body = (
+    <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-start">
+      {sourceChip}
+      {page === "speech" && <PromptTextarea ref={textareaRef} value={text} onChange={(event) => setText(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.placeholder} data-audio-text />}
+      {page === "dialogue" && <div className="min-w-0 flex-1">{scriptEditor}</div>}
+      {page === "music" && (
+        <>
+          <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.placeholder} className="flex-1" data-audio-prompt />
+          {wantsLyrics && (
+            <div className="flex w-full flex-col gap-1 sm:w-[300px]">
+              <textarea value={lyrics} onChange={(event) => setLyrics(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.lyricsPlaceholder} rows={4} aria-label={copy.controls.lyrics} className={`max-h-[220px] min-h-[96px] ${SIDE_TEXTAREA_CLASS}`} data-audio-lyrics />
+              <span className="px-1 text-[11.5px] text-white/45">{copy.controls.lyrics} · {fill(copy.controls.characters, { count: number(lyrics.length, locale) })}</span>
             </div>
           )}
-
+        </>
+      )}
+      {page === "remix" && (
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          {selectedModel?.inputs?.prompt && <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={submitOnEnter} placeholder={source ? pageCopy.placeholder : fill(copy.remix.readyHint, { model: selectedModel?.name || "" })} data-audio-prompt />}
+          {selectedModel?.inputs?.lyrics && <textarea value={lyrics} onChange={(event) => setLyrics(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.lyricsPlaceholder} rows={3} aria-label={copy.controls.lyrics} className={`max-h-[200px] min-h-[76px] ${SIDE_TEXTAREA_CLASS}`} data-audio-lyrics />}
+          {!selectedModel?.inputs?.prompt && !selectedModel?.inputs?.lyrics && <p className="px-1.5 pt-2.5 text-[13.5px] text-white/40">{fill(copy.remix.readyHint, { model: selectedModel?.name || "" })}</p>}
         </div>
+      )}
+      <input ref={fileInputRef} type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac" className="hidden" onChange={(event) => { if (event.target.files?.[0]) uploadSource(event.target.files[0]); event.target.value = ""; }} />
+    </div>
+  );
 
+  // The same tools on a card's hover column ("sm") and the viewer's rail ("lg").
+  const entryActions = (entry, size = "sm") => {
+    const iconSize = size === "lg" ? 18 : 15;
+    const textOf = entry.text || entry.lyrics || entry.prompt;
+    return [
+      textOf ? { key: "copy", node: <GenerationCopyButtons prompt={textOf} imageUrl={null} onCopyError={onGenerationError} size={size} /> } : null,
+      entry.kind !== "clone" ? { key: "remix", label: copy.remix.sendHere, icon: <IconArrowsExchange size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => sendToRemix(entry) } : null,
+      { key: "download", label: copy.buttons.download, icon: <IconDownload size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => download(entry) },
+      { key: "delete", label: copy.buttons.delete, danger: true, icon: <IconTrash size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => deleteEntry(entry.id) },
+    ];
+  };
+  const kindLabel = (entry) => copy.gallery.kinds[entry.kind] || copy.gallery.kinds.legacy;
+  const entryFacts = (entry) => [
+    { key: "vendor", value: entry.vendor, title: copy.gallery.vendor },
+    { key: "voice", value: entry.voice ? (library.voices.find((voice) => voice.id === entry.voice)?.name || (entry.model ? optionLabel(audioModels.find((model) => model.id === entry.model)?.inputs?.[voiceKey(audioModels.find((model) => model.id === entry.model))] || {}, entry.voice) : entry.voice)) : entry.speakers?.length ? entry.speakers.join(", ") : null, title: copy.gallery.voice },
+    { key: "duration", value: formatDuration(entry.duration), title: copy.gallery.duration },
+    { key: "cost", value: formatCost(entry.cost, locale), title: copy.gallery.cost },
+  ];
+  const whenFact = (entry) => ({ value: formatWhen(entry.timestamp, locale), title: copy.gallery.created });
+  const onDurationFor = (entry) => (duration) => { if (!entry.duration || Math.abs(entry.duration - duration) > 0.5) updateEntry(entry.id, { duration }); };
+
+  const card = (entry, index) => (
+    <Entrance once variant="card" index={index} key={entry.id} data-audio-entry={entry.kind} className="group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0a0a0a] shadow-xl transition-all duration-300 hover:border-primary/50" onClick={() => setViewer(entry)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter") setViewer(entry); }}>
+      <div className="relative bg-[radial-gradient(120%_120%_at_0%_0%,rgba(34,211,238,0.10),transparent_55%)] px-3.5 pb-3 pt-3">
+        <div className="mb-2.5 flex items-center gap-2 pr-10 text-[10.5px]">
+          <span className="rounded-md bg-white/[0.08] px-1.5 py-0.5 font-semibold uppercase tracking-wide text-white/70">{kindLabel(entry)}</span>
+          {entry.sourceName && <span className="truncate text-white/40" title={fill(copy.gallery.source, { name: entry.sourceName })}>{fill(copy.gallery.source, { name: entry.sourceName })}</span>}
+        </div>
+        <AudioPlayer url={entry.url} size="strip" onDuration={onDurationFor(entry)} labels={{ play: copy.buttons.play, pause: copy.buttons.pause }} />
       </div>
-      <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} toastOptions={{ duration: 5000, style: { background: '#18181b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '13px', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.6)', maxWidth: '440px', wordBreak: 'break-word', whiteSpace: 'pre-wrap', padding: '12px 16px' } }} />
+      <LibraryActions actions={entryActions(entry, "sm")} />
+      <LibraryDetails prompt={entryTitle(entry, "")} fallback={copy.gallery.untitled} model={entry.modelName || entry.model} facts={entryFacts(entry)} trailing={whenFact(entry)} />
+    </Entrance>
+  );
+
+  const dropHandlers = page === "remix" ? {
+    onDragOver: (event) => { event.preventDefault(); setDragging(true); },
+    onDragLeave: () => setDragging(false),
+    onDrop: (event) => { event.preventDefault(); event.stopPropagation(); setDragging(false); if (event.dataTransfer.files?.[0]) uploadSource(event.dataTransfer.files[0]); },
+  } : {};
+
+  return (
+    <div className={`relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-app-bg ${dragging ? "ring-2 ring-inset ring-primary/60" : ""}`} {...dropHandlers} data-audio-page={page}>
+      <Toaster position="top-center" toastOptions={{ style: { background: "#111114", color: "#fff", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" } }} />
+
+      {providerReady === false && (
+        <div className="absolute left-1/2 top-4 z-40 flex w-[min(640px,calc(100%-32px))] -translate-x-1/2 items-center justify-between gap-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-[13px] text-amber-100">
+          <span>{fill(copy.providers.needKey, { providers: providersText })}</span>
+          <button type="button" onClick={() => openProviderSettings()} className="shrink-0 rounded-lg bg-amber-300 px-3 py-1.5 text-[12px] font-semibold text-black">{copy.providers.openSettings}</button>
+        </div>
+      )}
+
+      <div className="w-full flex-1 overflow-y-auto px-4 pb-72 pt-4 custom-scrollbar md:px-8">
+        {hasGallery ? (
+          <div className="mx-auto max-w-6xl pt-12">
+            <div className="mb-3 flex items-center justify-between px-1">
+              <div className="text-[12px] font-medium uppercase tracking-[0.08em] text-white/40">{fill(copy.gallery.library, { count: library.entries.length })}</div>
+            </div>
+            <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {library.pending.map((pending) => (
+                <Entrance once variant="card" key={pending.id} className="flex min-h-[150px] flex-col items-center justify-center gap-3 rounded-lg border border-white/10 bg-[#0a0a0a] p-6 text-center">
+                  <span className="h-7 w-7 animate-spin rounded-full border-2 border-primary/25 border-t-primary" aria-hidden="true" />
+                  <div className="text-[14px] font-medium text-white/85">{fill(copy.gallery.pendingTitle, { model: pending.label })}</div>
+                  <div className="text-[12px] text-white/45">{copy.gallery.pendingHint}</div>
+                </Entrance>
+              ))}
+              {library.entries.map((entry, index) => card(entry, index))}
+            </div>
+          </div>
+        ) : (
+          <div className="h-full w-full">
+            <StudioEmptyState heading={pageCopy.heading} accent={pageCopy.accent} subtitle={pageCopy.subtitle} starters={starters} onStarter={onStarter} showcase={null} />
+          </div>
+        )}
+      </div>
+
+      {viewer && (
+        <Lightbox onClose={() => setViewer(null)} closeLabel={copy.buttons.close} tools={entryActions(viewer, "lg")} caption={<span>{[viewer.modelName, kindLabel(viewer), formatDuration(viewer.duration), formatCost(viewer.cost, locale), formatWhen(viewer.timestamp, locale)].filter(Boolean).join(" · ")}</span>}>
+          <div className="flex w-[min(92vw,760px)] flex-col gap-5 rounded-2xl border border-white/[0.08] bg-[#0e0e11] p-6 shadow-2xl md:p-8" data-audio-viewer>
+            <div className="flex items-center gap-2 text-[11px]">
+              <span className="rounded-md bg-white/[0.08] px-1.5 py-0.5 font-semibold uppercase tracking-wide text-white/70">{kindLabel(viewer)}</span>
+              {viewer.sourceName && <span className="truncate text-white/40">{fill(copy.gallery.source, { name: viewer.sourceName })}</span>}
+            </div>
+            <AudioPlayer url={viewer.url} size="full" onDuration={onDurationFor(viewer)} labels={{ play: copy.buttons.play, pause: copy.buttons.pause }} />
+            {(viewer.text || viewer.lyrics || viewer.prompt) && (
+              <div className="max-h-[32vh] overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/[0.06] bg-black/30 px-4 py-3 text-[13.5px] leading-relaxed text-white/80 custom-scrollbar">
+                {viewer.text || viewer.lyrics || viewer.prompt}
+                {viewer.lyrics && viewer.prompt && viewer.prompt !== viewer.lyrics && <div className="mt-3 border-t border-white/[0.06] pt-3 text-[12.5px] text-white/50">{viewer.prompt}</div>}
+              </div>
+            )}
+          </div>
+        </Lightbox>
+      )}
+
+      {cloning && cloneModel && (
+        <CloneVoiceDialog model={cloneModel} locale={locale} copy={copy} preset={cloning} onClose={() => setCloning(null)} onGenerationError={onGenerationError} onCloned={(voice) => { if (voiceField) setOption(voiceField, voice.id); setCloning(null); }} />
+      )}
+
+      <PromptComposer>
+        {body}
+
+        {showAdvanced && (layout.advanced.length > 0 || shape === "cast") && (
+          <div className="grid grid-cols-1 gap-3 border-t border-white/[0.08] px-1 pt-3 sm:grid-cols-2 lg:grid-cols-3" data-audio-advanced>
+            {shape === "cast" && (
+              <>
+                <label className="flex flex-col gap-1 text-[12px] text-white/70"><span>{copy.script.scene}</span><input value={scene.scene} onChange={(event) => setScene((previous) => ({ ...previous, scene: event.target.value }))} placeholder={copy.script.scenePlaceholder} className={INPUT_CLASS} /></label>
+                <label className="flex flex-col gap-1 text-[12px] text-white/70"><span>{copy.script.tone}</span><input value={scene.sample_context} onChange={(event) => setScene((previous) => ({ ...previous, sample_context: event.target.value }))} placeholder={copy.script.tonePlaceholder} className={INPUT_CLASS} /></label>
+              </>
+            )}
+            {layout.advanced.map(advancedField)}
+          </div>
+        )}
+
+        <PromptFooter>
+          <PromptControls>
+            {models.length > 0 && (
+              <div className="relative">
+                <button type="button" onClick={() => toggle("model")} className={promptControlClassName({ active: openDropdown === "model" })} data-audio-control="model">
+                  <span className="text-[11px] text-white/40">{copy.controls.model}</span>
+                  <span className={PROMPT_CONTROL_LABEL_CLASS}>{selectedModel?.name}</span>
+                  <PromptChevronIcon />
+                </button>
+                <ModelRailPicker
+                  open={openDropdown === "model"}
+                  onClose={() => setOpenDropdown(null)}
+                  groups={pickerGroups}
+                  selectedId={selectedModel?.id}
+                  onSelect={(model) => setModelId(model.id)}
+                  pricePayload={pickerPayload}
+                  benchmarksCategory={categoryId}
+                  locale={locale}
+                />
+              </div>
+            )}
+
+            {voiceField && selectedModel && (
+              <div className="relative">
+                <button type="button" onClick={() => toggle("voice")} className={promptControlClassName({ active: openDropdown === "voice" })} title={selectedModel.inputs[voiceField].description || copy.controls.voice} data-audio-control="voice">
+                  <IconMicrophone size={14} stroke={1.75} aria-hidden="true" />
+                  <span className={PROMPT_CONTROL_LABEL_CLASS}>{voiceLabel}</span>
+                  <PromptChevronIcon />
+                </button>
+                {openDropdown === "voice" && (
+                  <SearchList
+                    title={copy.controls.voice}
+                    options={voices}
+                    value={options[voiceField] ?? selectedModel.inputs[voiceField].default}
+                    onSelect={(value) => { setOption(voiceField, value); setOpenDropdown(null); }}
+                    searchPlaceholder={copy.controls.voiceSearch}
+                    emptyLabel={copy.controls.noVoices}
+                    head={clonable ? (
+                      <div className="mb-1 border-b border-white/[0.08] pb-1">
+                        {cloned.length > 0 && <div className="px-2.5 pb-1 pt-1.5 text-[9.5px] font-semibold uppercase tracking-[0.12em] text-white/40">{copy.controls.clonedVoices}</div>}
+                        {cloned.map((voice) => (
+                          <div key={voice.id} className="flex items-center">
+                            <PromptMenuItem selected={options[voiceField] === voice.id} onClick={() => { setOption(voiceField, voice.id); setOpenDropdown(null); }} className="flex-1">{voice.name}</PromptMenuItem>
+                            <button type="button" onClick={() => forgetVoice(voice)} aria-label={copy.controls.removeVoice} title={copy.controls.removeVoice} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white/35 hover:bg-white/10 hover:text-red-300"><IconTrash size={13} stroke={2} aria-hidden="true" /></button>
+                          </div>
+                        ))}
+                        <PromptMenuItem onClick={() => { setOpenDropdown(null); setCloning({}); }} className="text-primary hover:text-primary" data-audio-clone>
+                          <span className="flex items-center gap-2"><IconUserPlus size={14} stroke={2} aria-hidden="true" />{copy.controls.cloneVoice}</span>
+                        </PromptMenuItem>
+                      </div>
+                    ) : null}
+                  />
+                )}
+              </div>
+            )}
+
+            {instrumentalKey && (
+              <button type="button" onClick={() => setOption(instrumentalKey, !instrumental)} aria-pressed={instrumental} className={promptControlClassName({ active: instrumental })} title={selectedModel.inputs[instrumentalKey].description || ""} data-audio-control="instrumental">
+                <span className={PROMPT_CONTROL_LABEL_CLASS}>{instrumental ? copy.controls.instrumental : copy.controls.withVocals}</span>
+              </button>
+            )}
+
+            {page === "remix" && selectedModel?.inputs?.extend_at && (
+              <label className={promptControlClassName({ active: false })} title={copy.controls.extendFromTitle}>
+                <span className="text-[11px] text-white/40">{copy.controls.extendFrom}</span>
+                <input type="number" min={0} step={1} value={extendAt} onChange={(event) => setExtendAt(Math.max(0, Number(event.target.value) || 0))} className="w-14 bg-transparent text-right text-[12.5px] font-medium tabular-nums text-white focus:outline-none" aria-label={copy.controls.extendFrom} data-audio-control="extend_at" />
+                <span className="text-[11px] text-white/40">s</span>
+              </label>
+            )}
+
+            {layout.primary.map(control)}
+
+            {page === "speech" && text.length > 0 && <span className="px-1 text-[11px] tabular-nums text-white/35">{fill(copy.controls.characters, { count: number(text.length, locale) })}</span>}
+
+            {advancedCount > 0 && (
+              <button type="button" onClick={() => setShowAdvanced((value) => !value)} aria-expanded={showAdvanced} className={promptControlClassName({ active: showAdvanced })} title={copy.controls.advancedHint} data-audio-control="more">
+                <IconAdjustments size={14} stroke={1.75} aria-hidden="true" />
+                <span className={PROMPT_CONTROL_LABEL_CLASS}>{showAdvanced ? copy.controls.less : fill(copy.controls.more, { count: advancedCount })}</span>
+              </button>
+            )}
+          </PromptControls>
+
+          <PromptActionGroup>
+            <PriceChip locale={locale} endpoint={selectedModel?.endpoint} enabled={Boolean(selectedModel)} payload={pricePayload} />
+            <PromptAction onClick={handleGenerate} disabled={Boolean(uploading) || !selectedModel} data-audio-action={page} className="whitespace-nowrap">
+              {actionLabel}
+            </PromptAction>
+          </PromptActionGroup>
+        </PromptFooter>
+      </PromptComposer>
     </div>
   );
 }

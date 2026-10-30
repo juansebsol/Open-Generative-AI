@@ -26,7 +26,10 @@
   "studios": {
     "image": "Image Studio",
     "video": "Video Studio",
-    "audio": "Audio Studio",
+    "audio-speech": "Text to Speech",
+    "audio-dialogue": "Dialogue",
+    "audio-music": "Music",
+    "audio-remix": "Remix",
     "three-d-text": "Text to 3D",
     "three-d-image": "Image to 3D",
     "vector-logo": "Text to Logo",

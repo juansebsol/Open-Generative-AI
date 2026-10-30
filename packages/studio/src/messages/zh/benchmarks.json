@@ -26,7 +26,10 @@
   "studios": {
     "image": "图像工作室",
     "video": "视频工作室",
-    "audio": "音频工作室",
+    "audio-speech": "文本转语音",
+    "audio-dialogue": "对话",
+    "audio-music": "音乐",
+    "audio-remix": "混音",
     "three-d-text": "文本生成 3D",
     "three-d-image": "图像生成 3D",
     "vector-logo": "文本生成 Logo",

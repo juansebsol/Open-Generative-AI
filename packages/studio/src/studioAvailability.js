@@ -14,6 +14,7 @@ import {
   threeDModels,
   v2vModels,
 } from './models.js';
+import { audioModelsFor } from './audioPages.js';
 import { hasRoute } from './providers/catalog/index.js';
 import { vectorTextModels, vectorizeModels } from './vectorModels.js';
 
@@ -33,7 +34,10 @@ const STUDIO_REQUIREMENTS = {
   image: () => t2iModels.length > 0 || i2iModels.length > 0,
   layers: () => ['bytedance-seedream-5.0-pro-layer', 'topaz-image-upscale', 'seedvr2-image-upscale', 'ai-image-upscale', 'ai-background-remover', 'ai-image-extension'].some(hasRoute),
   video: () => t2vModels.length > 0 || i2vModels.length > 0 || v2vModels.length > 0,
-  audio: () => audioModels.length > 0,
+  'audio-speech': () => audioModelsFor('speech', audioModels).length > 0,
+  'audio-dialogue': () => audioModelsFor('dialogue', audioModels).length > 0,
+  'audio-music': () => audioModelsFor('music', audioModels).length > 0,
+  'audio-remix': () => audioModelsFor('remix', audioModels).length > 0,
   'motion-control': () => motionControlModels.length > 0,
   lipsync: () => lipsyncModels.length > 0,
   'body-swap': () => recastModels.length > 0,

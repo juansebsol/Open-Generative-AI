@@ -3,7 +3,7 @@
 // the page-to-category mapping and the per-visitor state can be unit-tested.
 //
 // A studio that covers several kinds of job (Image: text to image or
-// editing; Video: text or image to video; Audio: speech or music) tells the
+// editing; Video: text or image to video) tells the
 // shell which one is active by dispatching STUDIO_MODE_EVENT with
 // { tabId, mode }; the bubble keeps the last mode per tab.
 
@@ -18,13 +18,15 @@ export const MORE_COUNT = 4;
 // Tab id → Benchmarks category. `category(mode)` may return null to hide the
 // bubble in a mode no board covers (video to video). `pageOnly` keeps only
 // the category rows that open on this very page (the 3D category mixes text
-// and image models across two pages). Pages missing here show no bubble:
+// and image models across two pages; the two audio boards each span two). Pages missing here show no bubble:
 // Vibe Motion and the agents have no model picker to select into, and the
-// Vectorize tracers are on no public board.
+// Vectorize tracers and the Remix models are on no public board.
 const MAPPINGS = {
   image: { category: (mode) => (mode === 'edit' ? 'image-editing' : 'text-to-image') },
   video: { category: (mode) => (mode === 'v2v' ? null : mode === 'i2v' ? 'image-to-video' : 'text-to-video') },
-  audio: { category: (mode) => (mode === 'music' ? 'music' : 'text-to-speech') },
+  'audio-speech': { category: () => 'text-to-speech', pageOnly: true },
+  'audio-dialogue': { category: () => 'text-to-speech', pageOnly: true },
+  'audio-music': { category: () => 'music', pageOnly: true },
   'three-d-text': { category: () => 'three-d', pageOnly: true },
   'three-d-image': { category: () => 'three-d', pageOnly: true },
   'vector-logo': { category: () => 'vector' },

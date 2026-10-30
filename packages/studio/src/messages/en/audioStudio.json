@@ -1,53 +1,212 @@
 {
-  "uploader": {
-    "clear": "Clear",
-    "uploadPrompt": "Upload audio track",
-    "uploadHint": "MP3, WAV, M4A up to 20MB",
-    "uploading": "Uploading...",
-    "ready": "Ready to generate",
-    "sizeLimitError": "Audio file exceeds 20MB limit.",
-    "uploadFailedError": "Upload failed: {message}"
+  "pages": {
+    "speech": {
+      "title": "Text to Speech",
+      "heading": "Give any text a",
+      "accent": "voice",
+      "subtitle": "Paste a script, a caption or a whole chapter and hear it read by MiniMax, ElevenLabs or Gemini voices. Pick the voice, the emotion and the pace from the bar, or clone your own voice from a short sample and use it like any other.",
+      "placeholder": "Write what should be said, for example: Welcome back. Today we look at three ways to make a small kitchen feel twice its size.",
+      "starters": [
+        {
+          "label": "Warm product intro",
+          "prompt": "Meet Lumen, the lamp that learns your evenings. It dims as you wind down, brightens when you read, and never needs a switch."
+        },
+        {
+          "label": "Audiobook opening line",
+          "prompt": "The rain had stopped an hour ago, but the gutters still argued about it, dripping onto the tin roof of the shed where Mara kept her maps."
+        },
+        {
+          "label": "Short tutorial step",
+          "prompt": "Step three. Hold the fabric taut with your left hand and feed it slowly under the needle. Let the machine set the pace, not your wrist."
+        }
+      ]
+    },
+    "dialogue": {
+      "title": "Dialogue",
+      "heading": "A cast, a script, one",
+      "accent": "conversation",
+      "subtitle": "Name the speakers, give each a voice, then write the lines in order. ElevenLabs and Gemini read the whole scene in one take, with tone tags like [whispers] or [laughs] where you put them.",
+      "placeholder": "What this speaker says",
+      "starters": [
+        {
+          "label": "Two friends, one plan",
+          "prompt": "Speaker 1: [excited] Okay, hear me out. We leave Friday, drive through the night, and watch the sunrise from the pass.\nSpeaker 2: [sceptical] And sleep where, exactly?\nSpeaker 1: In the car. Like adventurers.\nSpeaker 2: [laughs] Like people with back pain."
+        },
+        {
+          "label": "Customer support call",
+          "prompt": "Speaker 1: Thanks for calling Northwind, this is Dana. How can I help?\nSpeaker 2: Hi Dana. My order shows delivered, but nothing came.\nSpeaker 1: [reassuring] I'm sorry about that. Let me check where the driver scanned it."
+        }
+      ]
+    },
+    "music": {
+      "title": "Music",
+      "heading": "Describe a track, get a",
+      "accent": "finished song",
+      "subtitle": "Lyria, MiniMax, Mureka and ElevenLabs write full songs and instrumentals from a style prompt, with your lyrics where the model sings. MM Audio turns the same bar into sound effects.",
+      "placeholder": "Genre, mood, tempo and instruments, for example: warm acoustic folk, slow, fingerpicked guitar, brushed drums, a little cello",
+      "lyricsPlaceholder": "[Verse]\nWrite the words here, one line per line.\n\n[Chorus]\nA blank line adds a pause.",
+      "starters": [
+        {
+          "label": "Late-night lo-fi",
+          "prompt": "Lo-fi hip hop instrumental, 80 bpm, dusty piano chords, vinyl crackle, soft sidechained bass, rain outside"
+        },
+        {
+          "label": "Festival anthem",
+          "prompt": "Big festival pop anthem, 128 bpm, bright synths, four-on-the-floor kick, a huge singalong chorus, euphoric"
+        },
+        {
+          "label": "Film score cue",
+          "prompt": "Cinematic orchestral cue, slow build from a solo cello to full strings and brass, tense then triumphant, no drums until the end"
+        }
+      ]
+    },
+    "remix": {
+      "title": "Remix",
+      "heading": "Take a track somewhere",
+      "accent": "new",
+      "subtitle": "Drop in a song or pick one from your library. Stable Audio restyles it from a prompt, keeping as much of the original as you like. Mureka extends a song with a new section and the lyrics it should sing.",
+      "placeholder": "The new style or sound, for example: slower, dreamier, swap the drums for brushed percussion",
+      "lyricsPlaceholder": "Lyrics for the new section",
+      "starters": []
+    }
   },
-  "player": {
-    "nowPlaying": "Now Playing",
-    "defaultTitle": "Generated Track",
-    "muteUnmute": "Mute/Unmute",
-    "pause": "Pause",
+  "controls": {
+    "model": "Model",
+    "voice": "Voice",
+    "voiceSearch": "Search voices",
+    "noVoices": "No voice matches",
+    "clonedVoices": "Your voices",
+    "cloneVoice": "Clone a voice…",
+    "removeVoice": "Remove this voice",
+    "characters": "{count} characters",
+    "more": "More ({count})",
+    "less": "Less",
+    "advancedHint": "Show the less common settings",
+    "lyrics": "Lyrics",
+    "instrumental": "Instrumental",
+    "withVocals": "With vocals",
+    "seconds": "{count} s",
+    "extendFrom": "Extend from",
+    "extendFromTitle": "Where the new part starts, in seconds from the beginning",
+    "sfx": "Sound effects"
+  },
+  "picker": {
+    "speechRail": "Speech models",
+    "speechSection": "Reads one voice",
+    "dialogueRail": "Dialogue models",
+    "dialogueSection": "Reads a whole scene",
+    "musicRail": "Music models",
+    "musicSection": "Songs and instrumentals",
+    "sfxRail": "Sound effects",
+    "sfxSection": "Sound effects from a prompt",
+    "remixRail": "Remix models",
+    "remixSection": "A track in, a track out"
+  },
+  "script": {
+    "cast": "Cast",
+    "addSpeaker": "Add speaker",
+    "removeSpeaker": "Remove speaker",
+    "speakerName": "Name",
+    "speakerNamePlaceholder": "Narrator",
+    "voice": "Voice",
+    "profile": "Sounds like",
+    "profilePlaceholder": "A weary gatekeeper, British, deadpan",
+    "profileHint": "Gemini shapes the voice from this description.",
+    "addLine": "Add line",
+    "removeLine": "Remove line",
+    "lines": "{count} lines · {characters} characters",
+    "scene": "Scene",
+    "scenePlaceholder": "A quiet, warm room late at night",
+    "tone": "Overall tone",
+    "tonePlaceholder": "Audiobook narration, gentle and unhurried"
+  },
+  "clone": {
+    "title": "Clone a voice",
+    "hint": "A clean 10 to 60 second sample of one person speaking, no music. MiniMax returns a voice you can pick for any MiniMax speech model. The sample is uploaded to the provider you run it on.",
+    "sample": "Voice sample",
+    "upload": "Upload sample",
+    "replace": "Replace sample",
+    "sampleHint": "MP3, WAV or M4A up to 20 MB",
+    "name": "Voice id",
+    "namePlaceholder": "sebas_warm_01",
+    "nameHint": "At least 8 characters, letters and numbers, starting with a letter. This is how the voice is named everywhere.",
+    "preview": "Preview text",
+    "previewPlaceholder": "Hi, this is a quick test of my cloned voice.",
+    "noise": "Noise reduction",
+    "normalize": "Volume normalisation",
+    "apply": "Clone voice",
+    "working": "Cloning…",
+    "done": "Voice {name} is ready and selected.",
+    "needSample": "Upload a voice sample first.",
+    "badName": "The voice id needs 8 or more characters, letters and numbers, starting with a letter.",
+    "failed": "Cloning failed: {message}",
+    "previewTitle": "Preview of {name}"
+  },
+  "remix": {
+    "dropTitle": "Drop a track here",
+    "dropHint": "MP3, WAV or M4A. Songs from the Music page work too.",
+    "upload": "Upload track",
+    "fromLibrary": "From your library",
+    "libraryTitle": "Your tracks",
+    "libraryEmpty": "No tracks yet. Generate one on the Music page, or upload here.",
+    "clear": "Clear track",
+    "readyHint": "{model} will work from the track above.",
+    "source": "Source",
+    "sendHere": "Remix"
+  },
+  "buttons": {
+    "generate": "Generate",
+    "speak": "Speak",
+    "read": "Read scene",
+    "download": "Download",
+    "delete": "Delete",
+    "close": "Close",
     "play": "Play",
-    "download": "Download Audio",
-    "save": "Save"
+    "pause": "Pause",
+    "copyText": "Copy text"
   },
-  "sidebar": {
-    "modelLabel": "Audio Model",
-    "selectModel": "Select Model",
-    "descriptionLabel": "Description",
-    "selectOption": "Select option",
-    "promptPlaceholder": "Enter what you want generated...",
-    "lyricsPromptLabel": "Lyrics / Prompt",
-    "fieldPlaceholder": "Enter {field}...",
-    "requiredFieldError": "Please complete the required field: {field}",
-    "addRow": "Add line",
-    "removeRow": "Remove line"
+  "gallery": {
+    "library": "Library · {count} tracks",
+    "pendingTitle": "Working with {model}",
+    "pendingHint": "Speech takes seconds, music a minute or two. You can keep working.",
+    "kinds": {
+      "speech": "Speech",
+      "dialogue": "Dialogue",
+      "music": "Music",
+      "sfx": "Sound effect",
+      "remix": "Remix",
+      "extend": "Extended",
+      "clone": "Voice preview",
+      "legacy": "Audio"
+    },
+    "vendor": "Provider",
+    "voice": "Voice",
+    "duration": "Length",
+    "cost": "Estimated cost of this result",
+    "created": "Created",
+    "source": "Made from {name}",
+    "untitled": "Untitled track"
   },
-  "generate": {
-    "generating": "Generating Audio...",
-    "cta": "Generate Track",
-    "noUrlError": "No audio URL returned by the API.",
-    "genericError": "Audio generation failed",
-    "droppedFileUploadError": "Failed to upload dropped file: {message}"
+  "confirm": {
+    "deleteItem": "Delete this track from the library?",
+    "deleteVoice": "Forget this voice? Tracks made with it stay."
   },
-  "result": {
-    "errorHeading": "Generation Error",
-    "loadingHeading": "Generating Soundtrack",
-    "loadingSubtext": "Rendering audio waveforms and vocals...",
-    "emptyHeading": "Audio Studio",
-    "emptyBody": "Choose an AI music model, voice cloner, or sound generator. Modify variables on the left and craft your next high-fidelity track.",
-    "newGeneration": "New Generation",
-    "success": "Success"
+  "providers": {
+    "needKey": "Audio models run on {providers}. Add a key in Settings → Providers to start.",
+    "openSettings": "Open Providers",
+    "or": "or"
   },
-  "history": {
-    "heading": "Generation History ({count})",
-    "untitled": "Untitled Audio",
-    "fallbackModel": "Audio"
+  "errors": {
+    "notAudio": "Only MP3, WAV, M4A, OGG or FLAC files can be used.",
+    "tooLarge": "The file is over 20 MB.",
+    "uploadFailed": "Upload failed: {message}",
+    "needText": "Write the text to speak first.",
+    "needScript": "Give at least one speaker a line.",
+    "needPrompt": "Describe the track first.",
+    "needLyrics": "This model sings lyrics. Add some, or switch to instrumental.",
+    "needSource": "Add a track to work from first.",
+    "noOutput": "The provider returned no audio.",
+    "generationFailed": "Audio generation failed.",
+    "downloadFailed": "Download failed: {message}"
   }
 }

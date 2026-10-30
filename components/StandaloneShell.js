@@ -7,7 +7,7 @@ import {
   PROVIDERS, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
-  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconLanguage, IconMenu2, IconMicrophone, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen
+  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconLanguage, IconMenu2, IconMessages, IconMicrophone, IconMicrophone2, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen, IconWaveSine
 } from '@tabler/icons-react';
 import SettingsDialog from './settings/SettingsDialog';
 import CommandPalette from './CommandPalette';
@@ -30,7 +30,10 @@ const TABS = [
   { id: 'body-swap', label: 'Body Swap', icon: IconReplace },
   { id: 'marketing', label: 'Marketing Studio', icon: IconSpeakerphone },
   { id: 'vibe-motion', label: 'Vibe Motion', icon: IconWand },
-  { id: 'audio', label: 'Audio Studio', icon: IconMusic },
+  { id: 'audio-speech', label: 'Text to Speech', icon: IconMicrophone2 },
+  { id: 'audio-dialogue', label: 'Dialogue', icon: IconMessages },
+  { id: 'audio-music', label: 'Music', icon: IconMusic },
+  { id: 'audio-remix', label: 'Remix', icon: IconWaveSine },
   { id: 'three-d-text', label: 'Text to 3D', icon: IconCube },
   { id: 'three-d-image', label: 'Image to 3D', icon: IconPhotoScan },
   { id: 'three-d-retexture', label: 'Retexture', icon: IconBrush },
@@ -47,7 +50,7 @@ const TABS = [
 const NAVIGATION_CATEGORIES = [
   { id: 'images', label: 'Images', tabIds: ['image', 'layers', 'cinema', 'ai-influencer', 'design-agent'] },
   { id: 'video', label: 'Video', tabIds: ['video', 'clipping', 'motion-control', 'lipsync', 'body-swap', 'marketing', 'vibe-motion'] },
-  { id: 'audio', label: 'Audio', tabIds: ['audio'] },
+  { id: 'audio', label: 'Audio', tabIds: ['audio-speech', 'audio-dialogue', 'audio-music', 'audio-remix'] },
   { id: '3d', label: '3D', tabIds: ['three-d-text', 'three-d-image', 'three-d-retexture', 'three-d-rig', 'three-d-mesh'] },
   { id: 'vector', label: 'Vector', tabIds: ['vector-logo', 'vector-icons', 'vector-vectorize'] },
   { id: 'agents-automation', label: 'Automation', tabIds: ['agents', 'workflows'] },
@@ -59,6 +62,11 @@ const NAVIGATION_CATEGORIES = [
 const THREE_D_TABS = TABS.map((tab) => tab.id).filter((id) => id.startsWith('three-d-'));
 // The Vector pages share one component the same way.
 const VECTOR_TABS = TABS.map((tab) => tab.id).filter((id) => id.startsWith('vector-'));
+// And the Audio pages.
+const AUDIO_TABS = TABS.map((tab) => tab.id).filter((id) => id.startsWith('audio-'));
+// Old links keep working: the single Audio Studio became four pages.
+const LEGACY_TAB_IDS = { audio: 'audio-speech' };
+const resolveTabId = (id) => LEGACY_TAB_IDS[id] || id;
 const AVAILABLE_TAB_IDS = new Set(TABS.map((tab) => tab.id).filter(isStudioAvailable));
 const VISIBLE_CATEGORIES = NAVIGATION_CATEGORIES
   .map((category) => ({ ...category, tabIds: category.tabIds.filter((id) => AVAILABLE_TAB_IDS.has(id)) }))
@@ -129,7 +137,7 @@ export default function StandaloneShell({ locale = 'en' }) {
 
   // Initialize activeTab from URL slug/params or default to 'image'
   const getInitialTab = () => {
-    const firstSegment = slug[0];
+    const firstSegment = resolveTabId(slug[0]);
     if (firstSegment && AVAILABLE_TAB_IDS.has(firstSegment)) return firstSegment;
     return DEFAULT_TAB;
   };
@@ -290,7 +298,7 @@ export default function StandaloneShell({ locale = 'en' }) {
       const { rootPath } = getLocaleConfig(locale);
       const localeAwarePath = rootPath && path.startsWith(rootPath) ? path.slice(rootPath.length) : path;
       const segments = localeAwarePath.split('/').filter(Boolean);
-      const tabId = segments[1] || DEFAULT_TAB;
+      const tabId = resolveTabId(segments[1]) || DEFAULT_TAB;
       if (AVAILABLE_TAB_IDS.has(tabId)) {
         setActiveTab(tabId);
       }
@@ -365,7 +373,7 @@ export default function StandaloneShell({ locale = 'en' }) {
   // asking the shell to open a tab.
   useEffect(() => {
     const openStudio = (event) => {
-      const tabId = event.detail?.tabId;
+      const tabId = resolveTabId(event.detail?.tabId);
       if (AVAILABLE_TAB_IDS.has(tabId)) handleTabChange(tabId);
     };
     window.addEventListener('oga:open-studio', openStudio);
@@ -627,11 +635,11 @@ export default function StandaloneShell({ locale = 'en' }) {
             <CinemaStudio locale={locale} onGenerationStart={makeGenerationStartCallback('cinema')} onGenerationEnd={makeGenerationEndCallback('cinema')} onGenerationComplete={makeSuccessCallback('cinema')} onGenerationError={makeErrorCallback('cinema')} />
           </div>
         )}
-        {AVAILABLE_TAB_IDS.has('audio') && (
-          <div className={activeTab === 'audio' ? "h-full w-full" : "hidden"}>
-            <AudioStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('audio')} onGenerationEnd={makeGenerationEndCallback('audio')} onGenerationComplete={makeSuccessCallback('audio')} onGenerationError={makeErrorCallback('audio')} />
+        {AUDIO_TABS.filter((tabId) => AVAILABLE_TAB_IDS.has(tabId)).map((tabId) => (
+          <div key={tabId} className={activeTab === tabId ? "h-full w-full" : "hidden"}>
+            <AudioStudio page={tabId.slice('audio-'.length)} locale={locale} droppedFiles={activeTab === tabId ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback(tabId)} onGenerationEnd={makeGenerationEndCallback(tabId)} onGenerationComplete={makeSuccessCallback(tabId)} onGenerationError={makeErrorCallback(tabId)} />
           </div>
-        )}
+        ))}
         {AVAILABLE_TAB_IDS.has('marketing') && (
           <div className={activeTab === 'marketing' ? "h-full w-full" : "hidden"}>
             <MarketingStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('marketing')} onGenerationEnd={makeGenerationEndCallback('marketing')} onGenerationComplete={makeSuccessCallback('marketing')} onGenerationError={makeErrorCallback('marketing')} />

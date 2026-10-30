@@ -4,6 +4,7 @@
 // module is pure so the ranking can be unit-tested without a browser.
 
 import { BENCHMARKS, BENCHMARKS_UPDATED, DECENT_GAP, SOURCES, VALUE_FLOOR_GAP } from './providers/catalog/benchmarks.js';
+import { audioPageOf, audioTabId, isVoiceClone } from './audioPages.js';
 import { EDITORS_PICKS, getEditorsPick } from './providers/catalog/editorsPicks.js';
 import { audioModels, i2iModels, i2vModels, t2iModels, t2vModels, threeDModels } from './models.js';
 import { vectorTextModels } from './vectorModels.js';
@@ -36,8 +37,10 @@ export const CATEGORIES = [
   { id: 'image-editing', studio: () => 'image', models: () => i2iModels.filter((model) => !UTILITY.test(model.id) && model.inputs?.prompt) },
   { id: 'text-to-video', studio: () => 'video', models: () => t2vModels.filter((model) => !UTILITY.test(model.id)) },
   { id: 'image-to-video', studio: () => 'video', models: () => i2vModels.filter((model) => !UTILITY.test(model.id)) },
-  { id: 'text-to-speech', studio: () => 'audio', models: () => audioModels.filter((model) => TTS_FAMILIES.has(model.family)) },
-  { id: 'music', studio: () => 'audio', models: () => audioModels.filter((model) => MUSIC_FAMILIES.has(model.family)) },
+  // Speech and dialogue models share the text-to-speech board; music and
+  // remix models the music board. Each opens on its own Audio page.
+  { id: 'text-to-speech', studio: (model) => audioTabId(audioPageOf(model) || 'speech'), models: () => audioModels.filter((model) => TTS_FAMILIES.has(model.family) && !isVoiceClone(model)) },
+  { id: 'music', studio: (model) => audioTabId(audioPageOf(model) || 'music'), models: () => audioModels.filter((model) => MUSIC_FAMILIES.has(model.family)) },
   { id: 'three-d', studio: (model) => (model.kind === 'text' ? 'three-d-text' : 'three-d-image'), models: () => threeDModels.filter((model) => model.kind !== 'edit') },
   // Text to Logo and Icon Set share these models; the tracers on Vectorize
   // are on no public board, so there is no category for them.
