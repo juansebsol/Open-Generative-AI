@@ -286,3 +286,68 @@ export function entryTitle(entry, fallback = '') {
   const line = (String(source || '').split('\n').find((part) => part.trim()) || '').trim();
   return line.length > 90 ? `${line.slice(0, 89).trimEnd()}…` : line;
 }
+
+// ── Music ───────────────────────────────────────────────────────────────
+
+/** Section tags the music models read in lyrics, in song order. Kept in English: the models expect these words. */
+export const LYRIC_SECTIONS = ['Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Outro'];
+
+/**
+ * A text input's length limits as { min, max }, from `maxLength`/`minLength`
+ * or from the description ("10-3000 characters", "up to 2,000 characters",
+ * "Maximum 10000 characters"); null when nothing says.
+ */
+export function textLimit(input) {
+  if (!input) return null;
+  const toNumber = (text) => Number(String(text).replace(/,/g, ''));
+  let min = Number.isFinite(input.minLength) ? input.minLength : null;
+  let max = Number.isFinite(input.maxLength) ? input.maxLength : null;
+  const description = String(input.description || '');
+  const range = description.match(/(\d[\d,]*)\s*[-–]\s*(\d[\d,]*)\s*characters/i);
+  if (range) {
+    min ??= toNumber(range[1]);
+    max ??= toNumber(range[2]);
+  }
+  const upTo = description.match(/(?:up to|maximum|max\.?|limited to)\s*(\d[\d,]*)\s*characters/i);
+  if (upTo) max ??= toNumber(upTo[1]);
+  return min === null && max === null ? null : { min, max };
+}
+
+/**
+ * Inserts a section tag ("[Chorus]") on its own line at the caret, with a
+ * blank line before it unless it starts the text. Returns the new text and
+ * where the caret goes (the start of the line after the tag).
+ */
+export function insertSectionTag(text, start, end, tag) {
+  const value = String(text || '');
+  const from = Math.max(0, Math.min(Number.isFinite(start) ? start : value.length, value.length));
+  const to = Math.max(from, Math.min(Number.isFinite(end) ? end : from, value.length));
+  const before = value.slice(0, from).replace(/[ \t]+$/, '');
+  const after = value.slice(to).replace(/^[ \t]*\n?/, '');
+  const lead = before === '' ? '' : before.endsWith('\n\n') ? '' : before.endsWith('\n') ? '\n' : '\n\n';
+  const inserted = `${lead}[${tag}]\n`;
+  return { text: `${before}${inserted}${after}`, caret: before.length + inserted.length };
+}
+
+const LENGTH_PRESETS = [5, 10, 15, 30, 60, 120, 180, 240];
+
+/**
+ * How a track-length input reads in seconds: `factor` turns seconds into the
+ * input's unit (1000 for milliseconds), `min`/`max` are in seconds, and
+ * `presets` are the round lengths inside that range. Null for other inputs.
+ */
+export function lengthSpec(key, input) {
+  if (!input || !['music_length_ms', 'duration'].includes(key)) return null;
+  const factor = key === 'music_length_ms' ? 1000 : 1;
+  const { min, max } = numericRange(input);
+  const low = Math.ceil(min / factor);
+  const high = Math.floor(max / factor);
+  return { factor, min: low, max: high, presets: LENGTH_PRESETS.filter((seconds) => seconds >= low && seconds <= high) };
+}
+
+/** "8 s" under a minute, "2:30" from a minute up. */
+export function formatLength(seconds) {
+  if (!Number.isFinite(seconds)) return '';
+  const whole = Math.round(seconds);
+  return whole < 60 ? `${whole} s` : formatDuration(whole);
+}

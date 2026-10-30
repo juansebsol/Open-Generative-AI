@@ -43,8 +43,8 @@
       "heading": "描述一首曲子，得到一首",
       "accent": "完整的歌",
       "subtitle": "Lyria、MiniMax、Mureka 和 ElevenLabs 根据风格提示词创作整首歌曲和纯音乐，会唱歌的模型可以用上你的歌词。MM Audio 把同一个输入栏变成音效生成器。",
-      "placeholder": "曲风、情绪、速度和乐器，例如：温暖的原声民谣，慢速，指弹吉他，刷鼓，一点大提琴",
-      "lyricsPlaceholder": "[Verse]\n在这里写歌词，一行一句。\n\n[Chorus]\n空一行表示停顿。",
+      "placeholder": "曲风、情绪、速度和乐器。例如：温暖的原声民谣，指弹吉他，刷鼓",
+      "lyricsPlaceholder": "写下歌词，一行一句。\n空一行表示停顿。",
       "starters": [
         {
           "label": "深夜 lo-fi",
@@ -58,7 +58,8 @@
           "label": "电影配乐段落",
           "prompt": "电影感管弦乐段落，从大提琴独奏慢慢铺到全弦乐与铜管，先紧张后凯旋，结尾前不要鼓"
         }
-      ]
+      ],
+      "sfxPlaceholder": "描述这个声音。例如：大雨打在铁皮屋顶上，远处雷声，一扇门吱呀关上"
     },
     "remix": {
       "title": "混音",
@@ -84,11 +85,14 @@
     "advancedHint": "显示不常用的设置",
     "lyrics": "歌词",
     "instrumental": "纯音乐",
-    "withVocals": "带人声",
-    "seconds": "{count} 秒",
     "extendFrom": "从何处延长",
     "extendFromTitle": "新段落开始的位置，从开头起计的秒数",
-    "sfx": "音效"
+    "sfx": "音效",
+    "vocals": "人声",
+    "length": "时长",
+    "custom": "自定义",
+    "auto": "自动",
+    "autoHint": "由模型决定"
   },
   "picker": {
     "speechRail": "语音模型",
@@ -208,5 +212,16 @@
     "noOutput": "服务商没有返回音频。",
     "generationFailed": "音频生成失败。",
     "downloadFailed": "下载失败：{message}"
+  },
+  "music": {
+    "style": "风格",
+    "sections": "歌曲段落",
+    "insertSection": "在光标处插入 [{tag}] 段落",
+    "instrumentalHint": "纯音乐，不需要歌词。",
+    "addVocals": "改为写歌词"
+  },
+  "optionLabels": {
+    "female": "女声",
+    "male": "男声"
   }
 }

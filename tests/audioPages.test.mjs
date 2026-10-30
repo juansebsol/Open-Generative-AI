@@ -137,3 +137,41 @@ test('durations and titles read like a player', () => {
   assert.equal(entryTitle({ text: 'x'.repeat(120) }).length, 90);
   assert.equal(entryTitle({}, 'Fallback'), 'Fallback');
 });
+
+test('lyric limits come from the schema or the description', async () => {
+  const { textLimit } = await import('../packages/studio/src/audioPages.js');
+  assert.deepEqual(textLimit(byId('minimax-music-3.0').inputs.lyrics), { min: 10, max: 3000 });
+  assert.deepEqual(textLimit(byId('lyria-3').inputs.prompt), { min: null, max: 2000 });
+  assert.deepEqual(textLimit({ description: 'Text to speak (up to 2,000 characters).' }), { min: null, max: 2000 });
+  assert.equal(textLimit(byId('mureka-song').inputs.lyrics), null);
+  assert.equal(textLimit(null), null);
+});
+
+test('section tags land on their own line with a blank line before them', async () => {
+  const { insertSectionTag } = await import('../packages/studio/src/audioPages.js');
+  assert.deepEqual(insertSectionTag('', 0, 0, 'Verse'), { text: '[Verse]\n', caret: 8 });
+  const afterLine = insertSectionTag('la la', 5, 5, 'Chorus');
+  assert.equal(afterLine.text, 'la la\n\n[Chorus]\n');
+  assert.equal(afterLine.caret, afterLine.text.length);
+  assert.equal(insertSectionTag('one\n', 4, 4, 'Bridge').text, 'one\n\n[Bridge]\n');
+  assert.equal(insertSectionTag('one\n\n', 5, 5, 'Bridge').text, 'one\n\n[Bridge]\n');
+  const middle = insertSectionTag('a\nb', 2, 2, 'Outro');
+  assert.equal(middle.text, 'a\n\n[Outro]\nb');
+  assert.equal(middle.text.slice(middle.caret), 'b');
+  assert.equal(insertSectionTag('abc', 99, 99, 'Intro').text, 'abc\n\n[Intro]\n', 'a caret past the end is clamped');
+});
+
+test('track lengths read in seconds whatever unit the model takes', async () => {
+  const { lengthSpec, formatLength } = await import('../packages/studio/src/audioPages.js');
+  const eleven = lengthSpec('music_length_ms', byId('elevenlabs-music-v2-5').inputs.music_length_ms);
+  assert.equal(eleven.factor, 1000);
+  assert.equal(eleven.min, 3);
+  assert.equal(eleven.max, 600);
+  assert.deepEqual(eleven.presets, [5, 10, 15, 30, 60, 120, 180, 240]);
+  const sfx = lengthSpec('duration', byId('mmaudio-v2-text-to-audio').inputs.duration);
+  assert.deepEqual([sfx.factor, sfx.min, sfx.max], [1, 1, 30]);
+  assert.deepEqual(sfx.presets, [5, 10, 15, 30]);
+  assert.equal(lengthSpec('speed', byId('minimax-speech-2.6-hd').inputs.speed), null);
+  assert.equal(formatLength(8), '8 s');
+  assert.equal(formatLength(150), '2:30');
+});

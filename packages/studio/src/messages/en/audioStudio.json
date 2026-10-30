@@ -43,8 +43,8 @@
       "heading": "Describe a track, get a",
       "accent": "finished song",
       "subtitle": "Lyria, MiniMax, Mureka and ElevenLabs write full songs and instrumentals from a style prompt, with your lyrics where the model sings. MM Audio turns the same bar into sound effects.",
-      "placeholder": "Genre, mood, tempo and instruments, for example: warm acoustic folk, slow, fingerpicked guitar, brushed drums, a little cello",
-      "lyricsPlaceholder": "[Verse]\nWrite the words here, one line per line.\n\n[Chorus]\nA blank line adds a pause.",
+      "placeholder": "Genre, mood, tempo and instruments. For example: warm acoustic folk, fingerpicked guitar, brushed drums",
+      "lyricsPlaceholder": "Write the words, one line per line.\nA blank line adds a pause.",
       "starters": [
         {
           "label": "Late-night lo-fi",
@@ -58,7 +58,8 @@
           "label": "Film score cue",
           "prompt": "Cinematic orchestral cue, slow build from a solo cello to full strings and brass, tense then triumphant, no drums until the end"
         }
-      ]
+      ],
+      "sfxPlaceholder": "Describe the sound. For example: heavy rain on a tin roof, distant thunder, a door creaking shut"
     },
     "remix": {
       "title": "Remix",
@@ -84,11 +85,14 @@
     "advancedHint": "Show the less common settings",
     "lyrics": "Lyrics",
     "instrumental": "Instrumental",
-    "withVocals": "With vocals",
-    "seconds": "{count} s",
     "extendFrom": "Extend from",
     "extendFromTitle": "Where the new part starts, in seconds from the beginning",
-    "sfx": "Sound effects"
+    "sfx": "Sound effects",
+    "vocals": "Vocals",
+    "length": "Length",
+    "custom": "Custom",
+    "auto": "Auto",
+    "autoHint": "Let the model choose"
   },
   "picker": {
     "speechRail": "Speech models",
@@ -208,5 +212,16 @@
     "noOutput": "The provider returned no audio.",
     "generationFailed": "Audio generation failed.",
     "downloadFailed": "Download failed: {message}"
+  },
+  "music": {
+    "style": "Style",
+    "sections": "Song sections",
+    "insertSection": "Insert a [{tag}] section at the cursor",
+    "instrumentalHint": "Instrumental track, no lyrics needed.",
+    "addVocals": "Write lyrics instead"
+  },
+  "optionLabels": {
+    "female": "Female",
+    "male": "Male"
   }
 }

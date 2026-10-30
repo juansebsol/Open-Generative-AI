@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
-  IconAdjustments, IconArrowsExchange, IconDownload, IconFileMusic, IconMicrophone, IconPlus, IconSearch, IconTrash, IconUpload, IconUserPlus, IconX,
+  IconAdjustments, IconAlignLeft, IconArrowsExchange, IconClock, IconDownload, IconFileMusic, IconMicrophone, IconMicrophone2, IconMusic, IconPiano, IconPlus, IconSearch,
+  IconTrash, IconUpload, IconUserPlus, IconX,
 } from "@tabler/icons-react";
 import { generateAudio, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
@@ -18,9 +19,9 @@ import {
   addEntry, addPending, addVoice, getEmptyLibrary, getLibrary, removeEntry, removePending, removeVoice, sendToAudio, subscribeLibrary, takeHandoff, updateEntry,
 } from "../audioLibrary.js";
 import {
-  acceptsClonedVoices, audioModelsFor, carryOptions, carryScript, defaultOptions, defaultScript, dialoguePayload, dialogueShape, dialogueVoices,
-  entryTitle, enumOptions, formatDuration, isSoundEffect, layoutInputs, missingInput, musicPayload, numericRange, optionLabel, remixPayload,
-  scriptCharacters, scriptText, speechPayload, voiceCloneModel, voiceKey,
+  LYRIC_SECTIONS, acceptsClonedVoices, audioModelsFor, carryOptions, carryScript, defaultOptions, defaultScript, dialoguePayload, dialogueShape, dialogueVoices,
+  entryTitle, enumOptions, formatDuration, formatLength, insertSectionTag, isSoundEffect, layoutInputs, lengthSpec, missingInput, musicPayload, numericRange,
+  optionLabel, remixPayload, scriptCharacters, scriptText, speechPayload, textLimit, voiceCloneModel, voiceKey,
 } from "../audioPages.js";
 import {
   PROMPT_CONTROL_LABEL_CLASS,
@@ -34,6 +35,8 @@ import {
   PromptMenuList,
   PromptPopover,
   PromptPopoverHeader,
+  PromptSegmentOption,
+  PromptSegmentedControl,
   PromptTextarea,
   promptControlClassName,
 } from "./prompt/PromptComposer.jsx";
@@ -290,6 +293,7 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
   const [providerReady, setProviderReady] = useState(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
+  const lyricsRef = useRef(null);
   const hasRestored = useRef(false);
 
   const selectedModel = models.find((model) => model.id === modelId) || models[0] || null;
@@ -299,7 +303,6 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
   const clonable = page === "speech" && cloneModel && acceptsClonedVoices(selectedModel);
   const instrumental = Boolean(options.is_instrumental || options.force_instrumental);
   const instrumentalKey = selectedModel?.inputs?.is_instrumental ? "is_instrumental" : selectedModel?.inputs?.force_instrumental ? "force_instrumental" : null;
-  const wantsLyrics = Boolean(selectedModel?.inputs?.lyrics) && !instrumental;
 
   // Options and the script follow the model; what still applies is kept.
   useEffect(() => {
@@ -527,6 +530,8 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
 
   // Controls
   const setOption = (key, value) => setOptions((previous) => ({ ...previous, [key]: value }));
+  // A value as people read it: "Female" rather than "female"; "Auto" when the model chooses.
+  const displayOption = (input, value) => (value === undefined || value === null || value === "" ? copy.controls.auto : copy.optionLabels?.[value] ?? optionLabel(input, value));
   const toggle = (id) => setOpenDropdown(openDropdown === id ? null : id);
   const voices = useMemo(() => (voiceField && selectedModel ? enumOptions(selectedModel.inputs[voiceField]) : []), [selectedModel, voiceField]);
   const cloned = clonable ? library.voices.filter((voice) => voice.family === "minimax") : [];
@@ -572,12 +577,13 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     if (key === voiceField || key === instrumentalKey) return null;
     const value = options[key] ?? input.default;
     if (kind === "enum") {
-      const list = enumOptions(input);
+      const list = enumOptions(input).map((option) => ({ ...option, label: displayOption(input, option.value) }));
+      const optional = input.default === undefined && !(selectedModel?.required || []).includes(key);
       return (
         <div key={key} className="relative">
           <button type="button" onClick={() => toggle(key)} className={promptControlClassName({ active: openDropdown === key })} title={input.description || input.title} data-audio-control={key}>
             <span className="text-[11px] text-white/40">{input.title}</span>
-            <span className={PROMPT_CONTROL_LABEL_CLASS}>{optionLabel(input, value)}</span>
+            <span className={PROMPT_CONTROL_LABEL_CLASS}>{displayOption(input, value)}</span>
             <PromptChevronIcon />
           </button>
           {openDropdown === key && (list.length >= SEARCHABLE_FROM ? (
@@ -586,6 +592,7 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
             <PromptPopover>
               <PromptPopoverHeader>{input.title}</PromptPopoverHeader>
               <PromptMenuList>
+                {optional && <PromptMenuItem selected={value === undefined} description={copy.controls.autoHint} onClick={() => { setOption(key, undefined); setOpenDropdown(null); }}>{copy.controls.auto}</PromptMenuItem>}
                 {list.map((option) => <PromptMenuItem key={String(option.value)} selected={value === option.value} onClick={() => { setOption(key, option.value); setOpenDropdown(null); }}>{option.label}</PromptMenuItem>)}
               </PromptMenuList>
             </PromptPopover>
@@ -593,9 +600,37 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
         </div>
       );
     }
+    const spec = kind === "number" ? lengthSpec(key, input) : null;
+    if (spec) {
+      const seconds = Math.round((value ?? spec.min * spec.factor) / spec.factor);
+      return (
+        <div key={key} className="relative">
+          <button type="button" onClick={() => toggle(key)} className={promptControlClassName({ active: openDropdown === key })} title={copy.controls.length} data-audio-control={key}>
+            <IconClock size={14} stroke={1.75} aria-hidden="true" />
+            <span className={`${PROMPT_CONTROL_LABEL_CLASS} tabular-nums`}>{formatLength(seconds)}</span>
+            <PromptChevronIcon />
+          </button>
+          {openDropdown === key && (
+            <PromptPopover className="w-[284px]" data-audio-length>
+              <PromptPopoverHeader>{copy.controls.length}</PromptPopoverHeader>
+              <div className="grid grid-cols-4 gap-1.5 px-1 pb-2.5">
+                {spec.presets.map((preset) => (
+                  <button key={preset} type="button" onClick={() => setOption(key, preset * spec.factor)} aria-pressed={seconds === preset} className={`h-8 rounded-[9px] text-[12px] font-medium tabular-nums transition-colors ${seconds === preset ? "bg-primary/15 text-primary ring-1 ring-inset ring-primary/40" : "bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white"}`}>{formatLength(preset)}</button>
+                ))}
+              </div>
+              <div className="border-t border-white/[0.06] px-2 pb-1 pt-2.5">
+                <div className="mb-1.5 flex items-center justify-between text-[11.5px] text-white/50"><span>{copy.controls.custom}</span><span className="tabular-nums text-white">{formatLength(seconds)}</span></div>
+                <input type="range" min={spec.min} max={spec.max} step={1} value={seconds} onChange={(event) => setOption(key, Number(event.target.value) * spec.factor)} className="w-full accent-[#22d3ee]" aria-label={copy.controls.length} />
+                <div className="mt-0.5 flex justify-between text-[10.5px] tabular-nums text-white/35"><span>{formatLength(spec.min)}</span><span>{formatLength(spec.max)}</span></div>
+              </div>
+            </PromptPopover>
+          )}
+        </div>
+      );
+    }
     if (kind === "number") {
       const range = numericRange(input);
-      const shown = key === "music_length_ms" ? fill(copy.controls.seconds, { count: Math.round((value ?? 0) / 1000) }) : key === "duration" ? fill(copy.controls.seconds, { count: value ?? 0 }) : String(value ?? "");
+      const shown = String(value ?? "");
       return (
         <div key={key} className="relative">
           <button type="button" onClick={() => toggle(key)} className={promptControlClassName({ active: openDropdown === key })} title={input.description || input.title} data-audio-control={key}>
@@ -787,22 +822,71 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     )
   );
 
+  // Music: the style and the lyrics as one sheet, two panes split by a
+  // hairline. Instrumental keeps the lyrics pane in place, quietly empty,
+  // so switching back and forth does not move the bar.
+  const lyricsInput = page === "music" ? selectedModel?.inputs?.lyrics : null;
+  const lyricsLimit = textLimit(lyricsInput);
+  const lyricsOver = Boolean(lyricsLimit?.max && lyrics.length > lyricsLimit.max);
+  const insertSection = (tag) => {
+    const node = lyricsRef.current;
+    const next = insertSectionTag(lyrics, node?.selectionStart ?? lyrics.length, node?.selectionEnd ?? lyrics.length, tag);
+    setLyrics(next.text);
+    requestAnimationFrame(() => {
+      const field = lyricsRef.current;
+      if (!field) return;
+      field.focus();
+      field.setSelectionRange(next.caret, next.caret);
+    });
+  };
+  const paneLabel = (icon, label, trailing = null) => (
+    <div className="flex h-6 items-center justify-between gap-2 px-1.5">
+      <span className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/40">{icon}{label}</span>
+      {trailing}
+    </div>
+  );
+  const musicBody = page === "music" && (
+    <div className={`grid min-w-0 flex-1 gap-y-2 ${lyricsInput ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`} data-audio-music-body>
+      <div className={`flex min-w-0 flex-col ${lyricsInput ? "sm:pr-3" : ""}`}>
+        {lyricsInput && paneLabel(<IconMusic size={12} stroke={2} aria-hidden="true" />, copy.music.style)}
+        <PromptTextarea key={lyricsInput ? "split" : "single"} ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={submitOnEnter} placeholder={isSoundEffect(selectedModel) ? pageCopy.sfxPlaceholder : pageCopy.placeholder} className={lyricsInput ? "!min-h-[76px] flex-auto sm:!min-h-[128px]" : "!min-h-[76px]"} data-audio-prompt />
+      </div>
+      {lyricsInput && (
+        <div className="flex min-w-0 flex-col border-t border-white/[0.07] pt-2 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0" data-audio-lyrics-pane>
+          {paneLabel(
+            <IconAlignLeft size={12} stroke={2} aria-hidden="true" />,
+            copy.controls.lyrics,
+            !instrumental && <span className={`text-[11px] tabular-nums ${lyricsOver ? "text-amber-300" : "text-white/35"}`} data-audio-lyrics-count>{lyricsLimit?.max ? `${number(lyrics.length, locale)} / ${number(lyricsLimit.max, locale)}` : fill(copy.controls.characters, { count: number(lyrics.length, locale) })}</span>,
+          )}
+          {instrumental ? (
+            <div className="mx-1.5 mt-1 flex min-h-[100px] flex-1 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/[0.08] px-4 text-center" data-audio-instrumental-note>
+              <IconPiano size={18} stroke={1.5} className="text-white/30" aria-hidden="true" />
+              <p className="text-[12.5px] text-white/50">{copy.music.instrumentalHint}</p>
+              <button type="button" onClick={() => setOption(instrumentalKey, false)} className="text-[12px] font-medium text-primary hover:brightness-110">{copy.music.addVocals}</button>
+            </div>
+          ) : (
+            <>
+              <PromptTextarea ref={lyricsRef} value={lyrics} onChange={(event) => setLyrics(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.lyricsPlaceholder} aria-label={copy.controls.lyrics} className="!min-h-[96px] flex-auto text-[14px]" maxHeightDesktop={220} maxHeightMobile={150} data-audio-lyrics />
+              <div className="mt-1.5 flex flex-wrap items-center gap-1 px-1" role="toolbar" aria-label={copy.music.sections}>
+                {LYRIC_SECTIONS.map((tag) => (
+                  <button key={tag} type="button" onClick={() => insertSection(tag)} title={fill(copy.music.insertSection, { tag })} className="flex h-6 shrink-0 items-center rounded-md border border-white/[0.08] bg-white/[0.02] px-1.5 text-[11px] text-white/55 transition-colors hover:border-white/20 hover:text-white" data-audio-section={tag}>
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   const body = (
     <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-start">
       {sourceChip}
       {page === "speech" && <PromptTextarea ref={textareaRef} value={text} onChange={(event) => setText(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.placeholder} data-audio-text />}
       {page === "dialogue" && <div className="min-w-0 flex-1">{scriptEditor}</div>}
-      {page === "music" && (
-        <>
-          <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.placeholder} className="flex-1" data-audio-prompt />
-          {wantsLyrics && (
-            <div className="flex w-full flex-col gap-1 sm:w-[300px]">
-              <textarea value={lyrics} onChange={(event) => setLyrics(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.lyricsPlaceholder} rows={4} aria-label={copy.controls.lyrics} className={`max-h-[220px] min-h-[96px] ${SIDE_TEXTAREA_CLASS}`} data-audio-lyrics />
-              <span className="px-1 text-[11.5px] text-white/45">{copy.controls.lyrics} · {fill(copy.controls.characters, { count: number(lyrics.length, locale) })}</span>
-            </div>
-          )}
-        </>
-      )}
+      {musicBody}
       {page === "remix" && (
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           {selectedModel?.inputs?.prompt && <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={submitOnEnter} placeholder={source ? pageCopy.placeholder : fill(copy.remix.readyHint, { model: selectedModel?.name || "" })} data-audio-prompt />}
@@ -984,9 +1068,14 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
             )}
 
             {instrumentalKey && (
-              <button type="button" onClick={() => setOption(instrumentalKey, !instrumental)} aria-pressed={instrumental} className={promptControlClassName({ active: instrumental })} title={selectedModel.inputs[instrumentalKey].description || ""} data-audio-control="instrumental">
-                <span className={PROMPT_CONTROL_LABEL_CLASS}>{instrumental ? copy.controls.instrumental : copy.controls.withVocals}</span>
-              </button>
+              <PromptSegmentedControl className="h-[34px]">
+                <PromptSegmentOption selected={!instrumental} onClick={() => setOption(instrumentalKey, false)} className="h-[28px] px-2.5" data-audio-control="vocals">
+                  <IconMicrophone2 size={13} stroke={1.75} aria-hidden="true" />{copy.controls.vocals}
+                </PromptSegmentOption>
+                <PromptSegmentOption selected={instrumental} onClick={() => setOption(instrumentalKey, true)} className="h-[28px] px-2.5" data-audio-control="instrumental">
+                  <IconPiano size={13} stroke={1.75} aria-hidden="true" />{copy.controls.instrumental}
+                </PromptSegmentOption>
+              </PromptSegmentedControl>
             )}
 
             {page === "remix" && selectedModel?.inputs?.extend_at && (
