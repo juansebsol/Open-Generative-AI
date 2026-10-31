@@ -37,7 +37,7 @@ export const voiceCloneModel = (models) => (models || []).find(isVoiceClone) || 
 
 // Inputs the page itself owns: they are drawn as the composer's body (the
 // text, the lyrics, the script, the source track), never as a control.
-const BODY_KEYS = new Set(['prompt', 'text', 'lyrics', 'dialogue', 'dialogue_turns', 'speakers', 'audio_url', 'scene', 'sample_context', 'negative_prompt', 'custom_voice_id', 'extend_at']);
+const BODY_KEYS = new Set(['prompt', 'text', 'lyrics', 'dialogue', 'dialogue_turns', 'speakers', 'audio_url', 'scene', 'sample_context', 'custom_voice_id', 'extend_at']);
 
 // Inputs that show as a control in the footer; everything else waits
 // behind "More".

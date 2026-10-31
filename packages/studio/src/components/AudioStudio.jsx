@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore
 import toast, { Toaster } from "react-hot-toast";
 import {
   IconAdjustments, IconAlignLeft, IconArrowsExchange, IconClock, IconDownload, IconFileMusic, IconMicrophone, IconMicrophone2, IconMusic, IconPiano, IconPlus, IconSearch,
-  IconTrash, IconUpload, IconUserPlus, IconX,
+  IconArrowBarToLeft, IconArrowBarToRight, IconTrash, IconUpload, IconUserPlus, IconX,
 } from "@tabler/icons-react";
 import { generateAudio, uploadFile } from "../generation.js";
 import { formatErrorMessage } from "../utils/formatError.js";
@@ -44,6 +44,7 @@ import PriceChip from "./prompt/PriceChip.jsx";
 import ModelRailPicker from "./prompt/ModelRailPicker.jsx";
 import StudioEmptyState from "./StudioEmptyState.jsx";
 import AudioPlayer, { stopAllAudio } from "./audio/AudioPlayer.jsx";
+import SourceTrack from "./audio/SourceTrack.jsx";
 import { Entrance } from "./motion/index.js";
 import en from "../messages/en/audioStudio.json";
 import zh from "../messages/zh/audioStudio.json";
@@ -129,12 +130,12 @@ function Toggle({ on, onChange, label }) {
 
 // A searchable list of choices in a popover: voices, languages, anything
 // longer than a short menu.
-function SearchList({ title, options, value, onSelect, searchPlaceholder, emptyLabel, head = null, className = "w-[320px]" }) {
+function SearchList({ title, options, value, onSelect, searchPlaceholder, emptyLabel, head = null, className = "w-[320px]", positionClassName }) {
   const [query, setQuery] = useState("");
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   const shown = words.length ? options.filter((option) => words.every((word) => `${option.label} ${option.value}`.toLowerCase().includes(word))) : options;
   return (
-    <PromptPopover className={className} fitViewport>
+    <PromptPopover className={className} positionClassName={positionClassName} fitViewport>
       <PromptPopoverHeader>{title}</PromptPopoverHeader>
       <label className="mb-1.5 flex h-[34px] items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 text-white/40 focus-within:border-primary/50">
         <IconSearch size={13} stroke={2} aria-hidden="true" />
@@ -282,6 +283,7 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
   const [script, setScript] = useState(null);
   const [scene, setScene] = useState({ scene: "", sample_context: "" });
   const [extendAt, setExtendAt] = useState(0);
+  const [sourceDuration, setSourceDuration] = useState(null);
   const [source, setSource] = useState(null); // { url, name, fromId }
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -392,6 +394,24 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     },
     apply: (wanted) => setModelId(wanted),
   });
+
+  // A new source starts with its marker unset; once its length is known
+  // the marker goes where the whole song is kept (the end for "add after",
+  // the start for "add before"), or stays where it was if that still fits.
+  const previousSource = useRef(undefined);
+  useEffect(() => {
+    const url = source?.url || null;
+    if (previousSource.current !== undefined && previousSource.current !== url) {
+      setSourceDuration(null);
+      setExtendAt(0);
+    }
+    previousSource.current = url;
+  }, [source?.url]);
+  useEffect(() => {
+    if (!sourceDuration) return;
+    const head = (options.extend_type ?? "tail") === "head";
+    setExtendAt((value) => (value > 0 && value <= sourceDuration ? value : head ? 0 : Math.floor(sourceDuration)));
+  }, [sourceDuration]);
 
   // The viewer closing stops playback; so does leaving the page.
   useEffect(() => { if (!viewer) stopAllAudio(); }, [viewer]);
@@ -562,7 +582,7 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     return [{ id: key, label: copy.picker[`${key}Section`], railLabel: copy.picker[`${key}Rail`], tone: "cyan", mono: key.slice(0, 2).toUpperCase(), models }];
   }, [page, models, copy.picker]);
 
-  const actionLabel = page === "speech" ? copy.buttons.speak : page === "dialogue" ? copy.buttons.read : page === "remix" ? copy.remix.sendHere : copy.buttons.generate;
+  const actionLabel = page === "speech" ? copy.buttons.speak : page === "dialogue" ? copy.buttons.read : page === "remix" ? (selectedModel?.inputs?.extend_at ? copy.remix.extend : copy.remix.sendHere) : copy.buttons.generate;
   const submitOnEnter = (event) => {
     if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
       event.preventDefault();
@@ -576,6 +596,29 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
   const control = ({ key, input, kind }) => {
     if (key === voiceField || key === instrumentalKey) return null;
     const value = options[key] ?? input.default;
+    if (key === "init_noise_level") {
+      const range = numericRange(input);
+      const filled = ((Number(value ?? range.min) - range.min) / Math.max(1e-9, range.max - range.min)) * 100;
+      return (
+        <label key={key} className="flex h-[34px] items-center gap-2.5 rounded-[10px] border border-white/[0.07] bg-white/[0.04] px-3" title={input.description || ""} data-audio-control={key}>
+          <span className="text-[11px] text-white/50">{copy.remix.keep}</span>
+          <input type="range" min={range.min} max={range.max} step={range.step} value={value ?? range.min} onChange={(event) => setOption(key, Number(event.target.value))} aria-label={copy.remix.changeAmount} className="oga-range w-[92px]" style={{ background: `linear-gradient(90deg, #22d3ee ${filled}%, rgba(255,255,255,0.14) ${filled}%)` }} />
+          <span className="text-[11px] text-white/50">{copy.remix.reimagine}</span>
+        </label>
+      );
+    }
+    if (key === "extend_type") {
+      return (
+        <PromptSegmentedControl key={key} className="h-[34px]">
+          <PromptSegmentOption selected={value !== "head"} onClick={() => setDirection("tail")} className="h-[28px] px-2.5" data-audio-control="extend-after">
+            <IconArrowBarToRight size={13} stroke={1.75} aria-hidden="true" />{copy.remix.addAfter}
+          </PromptSegmentOption>
+          <PromptSegmentOption selected={value === "head"} onClick={() => setDirection("head")} className="h-[28px] px-2.5" data-audio-control="extend-before">
+            <IconArrowBarToLeft size={13} stroke={1.75} aria-hidden="true" />{copy.remix.addBefore}
+          </PromptSegmentOption>
+        </PromptSegmentedControl>
+      );
+    }
     if (kind === "enum") {
       const list = enumOptions(input).map((option) => ({ ...option, label: displayOption(input, option.value) }));
       const optional = input.default === undefined && !(selectedModel?.required || []).includes(key);
@@ -789,39 +832,6 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     </div>
   );
 
-  // Remix: the source chip, like Vectorize's image chip.
-  const sourceChip = page === "remix" && (
-    source ? (
-      <div className="flex h-10 shrink-0 items-center gap-2 rounded-full border border-primary/30 bg-primary/[0.08] pl-3 pr-3" data-audio-source>
-        <IconFileMusic size={16} stroke={1.75} className="text-primary" aria-hidden="true" />
-        <span className="max-w-[200px] truncate text-[12.5px] text-white/85">{source.name}</span>
-        <button type="button" onClick={() => setSource(null)} aria-label={copy.remix.clear} className="text-white/40 hover:text-white"><IconX size={14} stroke={2} aria-hidden="true" /></button>
-      </div>
-    ) : (
-      <div className="relative flex shrink-0 items-center gap-1.5">
-        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-dashed border-white/20 px-3.5 text-[12.5px] text-white/60 hover:border-white/40 hover:text-white" data-audio-upload>
-          {uploading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconUpload size={15} stroke={1.75} aria-hidden="true" />}
-          {copy.remix.upload}
-        </button>
-        <button type="button" onClick={() => toggle("tracks")} className={promptControlClassName({ active: openDropdown === "tracks", compact: true })} title={copy.remix.fromLibrary}>
-          <span className={PROMPT_CONTROL_LABEL_CLASS}>{copy.remix.fromLibrary}</span>
-          <PromptChevronIcon />
-        </button>
-        {openDropdown === "tracks" && (
-          <SearchList
-            title={copy.remix.libraryTitle}
-            options={library.entries.filter((entry) => entry.kind !== "clone").map((entry) => ({ value: entry.id, label: entryTitle(entry, entry.modelName) || copy.gallery.untitled, description: [copy.gallery.kinds[entry.kind] || copy.gallery.kinds.legacy, entry.modelName, formatDuration(entry.duration)].filter(Boolean).join(" · ") }))}
-            value={null}
-            onSelect={(id) => { const entry = library.entries.find((item) => item.id === id); if (entry) setSource({ url: entry.url, name: entryTitle(entry, entry.modelName) || "track", fromId: entry.id }); setOpenDropdown(null); }}
-            searchPlaceholder={copy.controls.voiceSearch}
-            emptyLabel={copy.remix.libraryEmpty}
-            className="w-[340px]"
-          />
-        )}
-      </div>
-    )
-  );
-
   // Music: the style and the lyrics as one sheet, two panes split by a
   // hairline. Instrumental keeps the lyrics pane in place, quietly empty,
   // so switching back and forth does not move the bar.
@@ -843,6 +853,15 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     <div className="flex h-6 items-center justify-between gap-2 px-1.5">
       <span className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/40">{icon}{label}</span>
       {trailing}
+    </div>
+  );
+  const sectionChips = (
+    <div className="mt-1.5 flex flex-wrap items-center gap-1 px-1" role="toolbar" aria-label={copy.music.sections}>
+      {LYRIC_SECTIONS.map((tag) => (
+        <button key={tag} type="button" onClick={() => insertSection(tag)} title={fill(copy.music.insertSection, { tag })} className="flex h-6 shrink-0 items-center rounded-md border border-white/[0.08] bg-white/[0.02] px-1.5 text-[11px] text-white/55 transition-colors hover:border-white/20 hover:text-white" data-audio-section={tag}>
+          {tag}
+        </button>
+      ))}
     </div>
   );
   const musicBody = page === "music" && (
@@ -867,13 +886,7 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
           ) : (
             <>
               <PromptTextarea ref={lyricsRef} value={lyrics} onChange={(event) => setLyrics(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.lyricsPlaceholder} aria-label={copy.controls.lyrics} className="!min-h-[96px] flex-auto text-[14px]" maxHeightDesktop={220} maxHeightMobile={150} data-audio-lyrics />
-              <div className="mt-1.5 flex flex-wrap items-center gap-1 px-1" role="toolbar" aria-label={copy.music.sections}>
-                {LYRIC_SECTIONS.map((tag) => (
-                  <button key={tag} type="button" onClick={() => insertSection(tag)} title={fill(copy.music.insertSection, { tag })} className="flex h-6 shrink-0 items-center rounded-md border border-white/[0.08] bg-white/[0.02] px-1.5 text-[11px] text-white/55 transition-colors hover:border-white/20 hover:text-white" data-audio-section={tag}>
-                    {tag}
-                  </button>
-                ))}
-              </div>
+              {sectionChips}
             </>
           )}
         </div>
@@ -881,19 +894,101 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     </div>
   );
 
+  // Remix: the track you work from sits on top of the bar as a playable
+  // strip; below it the new style (Restyle) or the new part's lyrics
+  // (Extend). In Extend the strip's marker sets where the new part joins.
+  const isExtend = page === "remix" && Boolean(selectedModel?.inputs?.extend_at);
+  const direction = options.extend_type ?? selectedModel?.inputs?.extend_type?.default ?? "tail";
+  const setDirection = (next) => {
+    setOption("extend_type", next);
+    if (sourceDuration) setExtendAt(next === "head" ? 0 : Math.floor(sourceDuration));
+  };
+  const trackOptions = library.entries.filter((entry) => entry.kind !== "clone").map((entry) => ({ value: entry.id, label: entryTitle(entry, entry.modelName) || copy.gallery.untitled, description: [copy.gallery.kinds[entry.kind] || copy.gallery.kinds.legacy, entry.modelName, formatDuration(entry.duration)].filter(Boolean).join(" · ") }));
+  const pickTrack = (id) => {
+    const entry = library.entries.find((item) => item.id === id);
+    if (entry) setSource({ url: entry.url, name: entryTitle(entry, entry.modelName) || "track", fromId: entry.id });
+    setOpenDropdown(null);
+  };
+  const tracksMenu = openDropdown === "tracks" && (
+    <SearchList
+      title={source ? copy.remix.replace : copy.remix.libraryTitle}
+      options={trackOptions}
+      value={source?.fromId || null}
+      onSelect={pickTrack}
+      searchPlaceholder={copy.remix.search}
+      emptyLabel={copy.remix.libraryEmpty}
+      className="w-[340px]"
+      positionClassName="absolute bottom-[calc(100%+12px)] right-0 z-50"
+      head={source ? (
+        <div className="mb-1 border-b border-white/[0.08] pb-1">
+          <PromptMenuItem onClick={() => { setOpenDropdown(null); fileInputRef.current?.click(); }}>
+            <span className="flex items-center gap-2"><IconUpload size={14} stroke={1.75} aria-hidden="true" />{copy.remix.uploadFile}</span>
+          </PromptMenuItem>
+        </div>
+      ) : null}
+    />
+  );
+  const sourceEntry = source?.fromId ? library.entries.find((entry) => entry.id === source.fromId) : null;
+  const sourceMeta = source ? (sourceEntry ? fill(copy.remix.fromYourLibrary, { model: sourceEntry.modelName || copy.gallery.kinds[sourceEntry.kind] || "" }) : copy.remix.uploaded) : "";
+  const remixLyricsLimit = isExtend ? textLimit(selectedModel?.inputs?.lyrics) : null;
+  const remixBody = page === "remix" && (
+    <div className="flex min-w-0 flex-1 flex-col gap-2.5" data-audio-remix-body>
+      {source ? (
+        <SourceTrack
+          key={source.url}
+          url={source.url}
+          name={source.name}
+          meta={sourceMeta}
+          mode={isExtend ? "extend" : "restyle"}
+          extendAt={extendAt}
+          direction={direction}
+          onExtendAt={setExtendAt}
+          onDuration={setSourceDuration}
+          onReplace={() => toggle("tracks")}
+          onRemove={() => { setSource(null); setOpenDropdown(null); }}
+          replaceMenu={tracksMenu}
+          labels={{ play: copy.remix.playOriginal, pause: copy.buttons.pause, replace: copy.remix.replace, remove: copy.remix.clear, newPart: copy.remix.newPart, position: copy.remix.position, hint: direction === "head" ? copy.remix.markerHintHead : copy.remix.markerHintTail }}
+        />
+      ) : (
+        <div className={`flex min-h-[76px] flex-wrap items-center gap-x-3.5 gap-y-2 rounded-xl border-[1.5px] border-dashed px-3.5 py-3 transition-colors ${dragging ? "border-primary/60 bg-primary/[0.05]" : "border-white/[0.15]"}`} data-audio-dropzone>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[11px] bg-white/[0.05] text-white/55">
+            {uploading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconUpload size={20} stroke={1.75} aria-hidden="true" />}
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="text-[14px] font-medium text-white/90">{uploading ? fill(copy.remix.uploading, { progress: Math.round(uploading.progress || 0) }) : copy.remix.dropTitle}</span>
+            <span className="text-[12px] text-white/45">{copy.remix.dropHint}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-[34px] items-center gap-1.5 rounded-[9px] bg-white/[0.08] px-3.5 text-[12.5px] font-medium text-white transition-colors hover:bg-white/[0.14] disabled:opacity-50" data-audio-upload>
+              <IconUpload size={14} stroke={2} aria-hidden="true" />{copy.remix.upload}
+            </button>
+            <div className="relative">
+              <button type="button" onClick={() => toggle("tracks")} className={`flex h-[34px] items-center gap-1.5 rounded-[9px] border px-3 text-[12.5px] font-medium transition-colors ${openDropdown === "tracks" ? "border-white/25 text-white" : "border-white/10 text-white/75 hover:border-white/25 hover:text-white"}`} data-audio-library>
+                <IconMusic size={14} stroke={2} aria-hidden="true" />{copy.remix.fromLibrary}<PromptChevronIcon />
+              </button>
+              {tracksMenu}
+            </div>
+          </div>
+        </div>
+      )}
+      {isExtend ? (
+        <div className="flex min-w-0 flex-col">
+          {paneLabel(<IconAlignLeft size={12} stroke={2} aria-hidden="true" />, copy.remix.lyricsLabel, <span className={`text-[11px] tabular-nums ${remixLyricsLimit?.max && lyrics.length > remixLyricsLimit.max ? "text-amber-300" : "text-white/35"}`}>{remixLyricsLimit?.max ? `${number(lyrics.length, locale)} / ${number(remixLyricsLimit.max, locale)}` : fill(copy.controls.characters, { count: number(lyrics.length, locale) })}</span>)}
+          <PromptTextarea ref={lyricsRef} value={lyrics} onChange={(event) => setLyrics(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.lyricsPlaceholder} aria-label={copy.remix.lyricsLabel} className="!min-h-[52px] text-[14px]" maxHeightDesktop={200} maxHeightMobile={140} data-audio-lyrics />
+          {sectionChips}
+        </div>
+      ) : (
+        <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.placeholder} className="!min-h-[52px]" data-audio-prompt />
+      )}
+    </div>
+  );
+
   const body = (
     <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-start">
-      {sourceChip}
       {page === "speech" && <PromptTextarea ref={textareaRef} value={text} onChange={(event) => setText(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.placeholder} data-audio-text />}
       {page === "dialogue" && <div className="min-w-0 flex-1">{scriptEditor}</div>}
       {musicBody}
-      {page === "remix" && (
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          {selectedModel?.inputs?.prompt && <PromptTextarea ref={textareaRef} value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={submitOnEnter} placeholder={source ? pageCopy.placeholder : fill(copy.remix.readyHint, { model: selectedModel?.name || "" })} data-audio-prompt />}
-          {selectedModel?.inputs?.lyrics && <textarea value={lyrics} onChange={(event) => setLyrics(event.target.value)} onKeyDown={submitOnEnter} placeholder={pageCopy.lyricsPlaceholder} rows={3} aria-label={copy.controls.lyrics} className={`max-h-[200px] min-h-[76px] ${SIDE_TEXTAREA_CLASS}`} data-audio-lyrics />}
-          {!selectedModel?.inputs?.prompt && !selectedModel?.inputs?.lyrics && <p className="px-1.5 pt-2.5 text-[13.5px] text-white/40">{fill(copy.remix.readyHint, { model: selectedModel?.name || "" })}</p>}
-        </div>
-      )}
+      {remixBody}
       <input ref={fileInputRef} type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac" className="hidden" onChange={(event) => { if (event.target.files?.[0]) uploadSource(event.target.files[0]); event.target.value = ""; }} />
     </div>
   );
@@ -1078,15 +1173,8 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
               </PromptSegmentedControl>
             )}
 
-            {page === "remix" && selectedModel?.inputs?.extend_at && (
-              <label className={promptControlClassName({ active: false })} title={copy.controls.extendFromTitle}>
-                <span className="text-[11px] text-white/40">{copy.controls.extendFrom}</span>
-                <input type="number" min={0} step={1} value={extendAt} onChange={(event) => setExtendAt(Math.max(0, Number(event.target.value) || 0))} className="w-14 bg-transparent text-right text-[12.5px] font-medium tabular-nums text-white focus:outline-none" aria-label={copy.controls.extendFrom} data-audio-control="extend_at" />
-                <span className="text-[11px] text-white/40">s</span>
-              </label>
-            )}
-
             {layout.primary.map(control)}
+
 
             {page === "speech" && text.length > 0 && <span className="px-1 text-[11px] tabular-nums text-white/35">{fill(copy.controls.characters, { count: number(text.length, locale) })}</span>}
 

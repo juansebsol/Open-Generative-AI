@@ -34,7 +34,8 @@ test('inputs the page draws itself stay out of the controls; the common knobs ar
   assert.ok(speech.advanced.map((item) => item.key).includes('pitch'));
   assert.ok(!speech.primary.concat(speech.advanced).some((item) => item.key === 'prompt'));
   const remix = layoutInputs(byId('stable-audio-3-music-remix'));
-  assert.ok(!remix.primary.concat(remix.advanced).some((item) => ['audio_url', 'negative_prompt'].includes(item.key)));
+  assert.ok(!remix.primary.concat(remix.advanced).some((item) => item.key === 'audio_url'));
+  assert.deepEqual(remix.advanced.map((item) => [item.key, item.kind]), [['negative_prompt', 'text']], 'sounds to avoid wait behind More');
   assert.equal(speech.primary.find((item) => item.key === 'speed').kind, 'number');
   assert.equal(speech.primary.find((item) => item.key === 'voice_id').kind, 'enum');
   assert.deepEqual(numericRange(byId('minimax-speech-2.6-hd').inputs.speed), { min: 0.5, max: 2, step: 0.01 });
