@@ -45,6 +45,7 @@ import ModelRailPicker from "./prompt/ModelRailPicker.jsx";
 import StudioEmptyState from "./StudioEmptyState.jsx";
 import AudioPlayer, { stopAllAudio } from "./audio/AudioPlayer.jsx";
 import SourceTrack from "./audio/SourceTrack.jsx";
+import { AddTrackButton, TrackPicker } from "./audio/TrackPicker.jsx";
 import { Entrance } from "./motion/index.js";
 import en from "../messages/en/audioStudio.json";
 import zh from "../messages/zh/audioStudio.json";
@@ -419,9 +420,9 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
   const uploadSource = useCallback(async (file, { send = false } = {}) => {
     if (!isAudioFile(file)) return toast.error(copy.errors.notAudio);
     if (file.size > MAX_UPLOAD_BYTES) return toast.error(copy.errors.tooLarge);
-    setUploading({ progress: 0 });
+    setUploading({ progress: 0, name: file.name });
     try {
-      const url = await uploadFile(file, (progress) => setUploading({ progress }));
+      const url = await uploadFile(file, (progress) => setUploading({ progress, name: file.name }));
       const next = { url, name: file.name, fromId: null };
       if (send) sendToAudio("remix", { source: next });
       else setSource(next);
@@ -478,12 +479,13 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     }
   };
 
-  const missingMessage = { model: copy.errors.generationFailed, text: copy.errors.needText, script: copy.errors.needScript, prompt: copy.errors.needPrompt, lyrics: copy.errors.needLyrics, source: copy.errors.needSource };
+  const missingMessage = { model: copy.errors.generationFailed, text: copy.errors.needText, script: copy.errors.needScript, prompt: copy.errors.needPrompt, lyrics: copy.errors.needLyrics };
 
   const handleGenerate = async () => {
     if (!selectedModel) return;
     if (!providerReady) return openProviderSettings();
     const missing = missingInput(page, { model: selectedModel, text, script, prompt, lyrics, sourceUrl: source?.url || null, options });
+    if (missing === "source") return setOpenDropdown("tracks");
     if (missing) {
       if (["text", "prompt"].includes(missing)) textareaRef.current?.focus();
       return toast.error(missingMessage[missing]);
@@ -894,38 +896,30 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     </div>
   );
 
-  // Remix: the track you work from sits on top of the bar as a playable
-  // strip; below it the new style (Restyle) or the new part's lyrics
-  // (Extend). In Extend the strip's marker sets where the new part joins.
+  // Remix: a small add-track button (it pulses until a track is in) sits on
+  // top of the bar and opens the track picker; once a track is in, it shows
+  // as a slim pill (Restyle) or a one-line strip with the join marker
+  // (Extend). Below it the new style (Restyle) or the new part's lyrics
+  // (Extend). A file dropped anywhere on the page lands here too.
   const isExtend = page === "remix" && Boolean(selectedModel?.inputs?.extend_at);
   const direction = options.extend_type ?? selectedModel?.inputs?.extend_type?.default ?? "tail";
   const setDirection = (next) => {
     setOption("extend_type", next);
     if (sourceDuration) setExtendAt(next === "head" ? 0 : Math.floor(sourceDuration));
   };
-  const trackOptions = library.entries.filter((entry) => entry.kind !== "clone").map((entry) => ({ value: entry.id, label: entryTitle(entry, entry.modelName) || copy.gallery.untitled, description: [copy.gallery.kinds[entry.kind] || copy.gallery.kinds.legacy, entry.modelName, formatDuration(entry.duration)].filter(Boolean).join(" · ") }));
+  const trackOptions = library.entries.filter((entry) => entry.kind !== "clone" && entry.url).map((entry) => ({ value: entry.id, url: entry.url, label: entryTitle(entry, entry.modelName) || copy.gallery.untitled, description: [copy.gallery.kinds[entry.kind] || copy.gallery.kinds.legacy, entry.modelName].filter(Boolean).join(" · "), length: formatDuration(entry.duration) }));
   const pickTrack = (id) => {
     const entry = library.entries.find((item) => item.id === id);
     if (entry) setSource({ url: entry.url, name: entryTitle(entry, entry.modelName) || "track", fromId: entry.id });
     setOpenDropdown(null);
   };
-  const tracksMenu = openDropdown === "tracks" && (
-    <SearchList
-      title={source ? copy.remix.replace : copy.remix.libraryTitle}
-      options={trackOptions}
+  const trackPicker = openDropdown === "tracks" && (
+    <TrackPicker
+      tracks={trackOptions}
       value={source?.fromId || null}
-      onSelect={pickTrack}
-      searchPlaceholder={copy.remix.search}
-      emptyLabel={copy.remix.libraryEmpty}
-      className="w-[340px]"
-      positionClassName="absolute bottom-[calc(100%+12px)] right-0 z-50"
-      head={source ? (
-        <div className="mb-1 border-b border-white/[0.08] pb-1">
-          <PromptMenuItem onClick={() => { setOpenDropdown(null); fileInputRef.current?.click(); }}>
-            <span className="flex items-center gap-2"><IconUpload size={14} stroke={1.75} aria-hidden="true" />{copy.remix.uploadFile}</span>
-          </PromptMenuItem>
-        </div>
-      ) : null}
+      onPick={pickTrack}
+      onUpload={() => { setOpenDropdown(null); fileInputRef.current?.click(); }}
+      labels={{ title: source ? copy.remix.swap : copy.remix.addTrack, upload: copy.remix.upload, hint: copy.remix.pickerHint, library: copy.remix.libraryTitle, search: copy.remix.search, empty: copy.remix.libraryEmpty, noMatch: copy.remix.noMatch, play: copy.remix.preview, pause: copy.remix.stopPreview }}
     />
   );
   const sourceEntry = source?.fromId ? library.entries.find((entry) => entry.id === source.fromId) : null;
@@ -933,7 +927,7 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
   const remixLyricsLimit = isExtend ? textLimit(selectedModel?.inputs?.lyrics) : null;
   const remixBody = page === "remix" && (
     <div className="flex min-w-0 flex-1 flex-col gap-2.5" data-audio-remix-body>
-      {source ? (
+      {source && !uploading ? (
         <SourceTrack
           key={source.url}
           url={source.url}
@@ -944,31 +938,16 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
           direction={direction}
           onExtendAt={setExtendAt}
           onDuration={setSourceDuration}
-          onReplace={() => toggle("tracks")}
+          onSwap={() => toggle("tracks")}
           onRemove={() => { setSource(null); setOpenDropdown(null); }}
-          replaceMenu={tracksMenu}
-          labels={{ play: copy.remix.playOriginal, pause: copy.buttons.pause, replace: copy.remix.replace, remove: copy.remix.clear, newPart: copy.remix.newPart, position: copy.remix.position, hint: direction === "head" ? copy.remix.markerHintHead : copy.remix.markerHintTail }}
+          swapOpen={openDropdown === "tracks"}
+          swapMenu={trackPicker}
+          labels={{ play: copy.remix.playOriginal, pause: copy.buttons.pause, swap: copy.remix.swap, remove: copy.remix.clear, position: copy.remix.position, hint: copy.remix.markerHint, newPartFrom: copy.remix.newPartFrom, newPartBefore: copy.remix.newPartBefore }}
         />
       ) : (
-        <div className={`flex min-h-[76px] flex-wrap items-center gap-x-3.5 gap-y-2 rounded-xl border-[1.5px] border-dashed px-3.5 py-3 transition-colors ${dragging ? "border-primary/60 bg-primary/[0.05]" : "border-white/[0.15]"}`} data-audio-dropzone>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[11px] bg-white/[0.05] text-white/55">
-            {uploading ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" aria-hidden="true" /> : <IconUpload size={20} stroke={1.75} aria-hidden="true" />}
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="text-[14px] font-medium text-white/90">{uploading ? fill(copy.remix.uploading, { progress: Math.round(uploading.progress || 0) }) : copy.remix.dropTitle}</span>
-            <span className="text-[12px] text-white/45">{copy.remix.dropHint}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={Boolean(uploading)} className="flex h-[34px] items-center gap-1.5 rounded-[9px] bg-white/[0.08] px-3.5 text-[12.5px] font-medium text-white transition-colors hover:bg-white/[0.14] disabled:opacity-50" data-audio-upload>
-              <IconUpload size={14} stroke={2} aria-hidden="true" />{copy.remix.upload}
-            </button>
-            <div className="relative">
-              <button type="button" onClick={() => toggle("tracks")} className={`flex h-[34px] items-center gap-1.5 rounded-[9px] border px-3 text-[12.5px] font-medium transition-colors ${openDropdown === "tracks" ? "border-white/25 text-white" : "border-white/10 text-white/75 hover:border-white/25 hover:text-white"}`} data-audio-library>
-                <IconMusic size={14} stroke={2} aria-hidden="true" />{copy.remix.fromLibrary}<PromptChevronIcon />
-              </button>
-              {tracksMenu}
-            </div>
-          </div>
+        <div className="relative flex min-w-0 items-center">
+          <AddTrackButton open={openDropdown === "tracks"} uploading={uploading} onClick={() => toggle("tracks")} labels={{ add: copy.remix.addTrack, hint: copy.remix.addTrackHint, uploading: copy.remix.uploading }} />
+          {!uploading && trackPicker}
         </div>
       )}
       {isExtend ? (
@@ -1028,14 +1007,27 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
     </Entrance>
   );
 
+  // On Remix a file dragged over the page lights up the bar. The drop itself
+  // goes on to the shell, which hands the file back as droppedFiles.
+  const isFileDrag = (event) => Array.from(event.dataTransfer?.types || []).includes("Files");
   const dropHandlers = page === "remix" ? {
-    onDragOver: (event) => { event.preventDefault(); setDragging(true); },
-    onDragLeave: () => setDragging(false),
-    onDrop: (event) => { event.preventDefault(); event.stopPropagation(); setDragging(false); if (event.dataTransfer.files?.[0]) uploadSource(event.dataTransfer.files[0]); },
+    onDragEnter: (event) => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setDragging(true);
+    },
+    onDragOver: (event) => {
+      if (!isFileDrag(event)) return;
+      event.preventDefault();
+      if (!dragging) setDragging(true);
+    },
+    onDragLeave: (event) => { if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false); },
+    onDrop: () => setDragging(false),
   } : {};
 
   return (
-    <div className={`relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-app-bg ${dragging ? "ring-2 ring-inset ring-primary/60" : ""}`} {...dropHandlers} data-audio-page={page}>
+    <div className={`relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-app-bg`} {...dropHandlers} data-audio-page={page}>
       <Toaster position="top-center" toastOptions={{ style: { background: "#111114", color: "#fff", border: "1px solid rgba(255,255,255,0.12)", fontSize: "13px" } }} />
 
       {providerReady === false && (
@@ -1092,6 +1084,15 @@ export default function AudioStudio({ page = "speech", onGenerationStart, onGene
       )}
 
       <PromptComposer>
+        {page === "remix" && dragging && (
+          <div className="pointer-events-none absolute inset-0 z-40 rounded-2xl border border-primary/50 bg-[#111114]/95 shadow-[0_0_0_4px_rgba(34,211,238,0.12)]" data-audio-drop-overlay>
+            <div className="absolute inset-2 flex flex-col items-center justify-center gap-2 rounded-[11px] border-[1.5px] border-dashed border-primary/65 bg-primary/[0.06] px-4 text-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/[0.14] text-primary"><IconUpload size={18} stroke={1.75} aria-hidden="true" /></span>
+              <span className="text-[14px] font-medium text-white">{copy.remix.dropOverlay}</span>
+              <span className="text-[11.5px] text-white/55">{copy.remix.dropTypes}</span>
+            </div>
+          </div>
+        )}
         {body}
 
         {showAdvanced && (layout.advanced.length > 0 || shape === "cast") && (
