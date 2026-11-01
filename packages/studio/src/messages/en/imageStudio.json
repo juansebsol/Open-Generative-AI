@@ -64,12 +64,18 @@
     "swapFaceLabel": "Swap Face",
     "drawButton": "Draw",
     "generating": "Generating...",
-    "generateButton": "Generate"
+    "generateButton": "Generate",
+    "removeReference": "Remove reference {index}",
+    "moreReferences": "{count} more references",
+    "imageCountOne": "{count} image",
+    "imageCountMany": "{count} images"
   },
   "popovers": {
     "model": "Model",
     "aspectRatio": "Aspect Ratio",
-    "resolution": "Resolution"
+    "resolution": "Resolution",
+    "imageCount": "Images per run",
+    "outputSettings": "Output settings"
   },
   "errors": {
     "noImageReferenceSupport": "{name} does not support image references.",

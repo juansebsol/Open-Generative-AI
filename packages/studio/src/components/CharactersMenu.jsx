@@ -18,7 +18,7 @@ import { resolveCopy } from "../i18nUtils";
  * Prompt-bar button that lists saved characters (or avatars) and creates new
  * ones. onUse(character) is called when the visitor picks one.
  */
-export default function CharactersMenu({ locale = "en", kind = "character", onUse, align = "left", initialImages = [], buttonClassName = null, labelClassName = "" }) {
+export default function CharactersMenu({ locale = "en", kind = "character", onUse, align = "left", initialImages = [], buttonClassName = null, labelClassName = "", icon = null }) {
   const base = resolveCopy(en, zh, locale);
   const copy = kind === "avatar" ? { ...base, ...base.avatar } : base;
   const [open, setOpen] = useState(false);
@@ -87,7 +87,7 @@ export default function CharactersMenu({ locale = "en", kind = "character", onUs
         onClick={() => setOpen((current) => !current)}
         className={buttonClassName || `h-9 px-3 flex items-center gap-1.5 rounded-xl border text-[11px] font-semibold transition-colors ${open ? "bg-primary/15 border-primary/40 text-primary" : "bg-white/5 border-white/10 text-white/70 hover:text-white hover:bg-white/10"}`}
       >
-        <span className={`font-black ${buttonClassName ? "opacity-40 text-white group-hover:text-[#22d3ee] transition-colors" : ""}`}>@</span>
+        {icon || <span className={`font-black ${buttonClassName ? "opacity-40 text-white group-hover:text-[#22d3ee] transition-colors" : ""}`}>@</span>}
         <span className={labelClassName}>{copy.button}</span>
       </button>
 

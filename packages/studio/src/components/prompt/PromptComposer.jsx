@@ -1,12 +1,15 @@
 "use client";
 
 import {
+  Children,
+  Fragment,
   forwardRef,
   useCallback,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
+  useState,
 } from "react";
 import { ghostExit } from "../motion/index.js";
 
@@ -22,6 +25,14 @@ const DEFAULT_TEXTAREA_CLASS =
 const DEFAULT_ACTION_CLASS =
   "bg-[#22d3ee] text-[#04202a] h-9 px-4 rounded-[10px] font-semibold text-[13.5px] hover:brightness-105 active:scale-[0.98] transition-all flex items-center justify-center gap-2 w-full sm:w-auto z-10 disabled:opacity-50 disabled:cursor-not-allowed";
 
+// The action with something riding inside it (the price): one cyan pill
+// holding the button and the addon side by side.
+const ADDON_ACTION_CLASS =
+  "h-10 flex items-center rounded-xl bg-[#22d3ee] text-[#04202a] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] hover:brightness-105 transition-[filter,opacity] w-full sm:w-auto z-10";
+
+const ADDON_ACTION_BUTTON_CLASS =
+  "h-full flex-1 sm:flex-none px-4 rounded-xl flex items-center justify-center gap-2 font-semibold text-[14px] active:scale-[0.98] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-[#04202a]/40 disabled:cursor-not-allowed";
+
 const CONTROL_LAYOUT_CLASS =
   "h-[34px] flex items-center gap-1.5 rounded-[10px] transition-colors border group whitespace-nowrap focus:outline-none focus-visible:border-[#22d3ee]/45 focus-visible:ring-1 focus-visible:ring-[#22d3ee]/30";
 
@@ -30,6 +41,15 @@ const CONTROL_IDLE_CLASS =
 
 const CONTROL_ACTIVE_CLASS =
   "text-white bg-white/[0.06] border-white/[0.1]";
+
+const MODEL_CONTROL_LAYOUT_CLASS =
+  "h-9 min-w-0 pl-2 pr-2.5 flex items-center gap-2 rounded-[10px] border text-[13px] font-medium text-white whitespace-nowrap transition-colors group focus:outline-none focus-visible:border-[#22d3ee]/45 focus-visible:ring-1 focus-visible:ring-[#22d3ee]/30";
+
+const SETTING_LAYOUT_CLASS =
+  "h-full px-[11px] flex items-center gap-[7px] rounded-[8px] text-[13px] font-medium whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/40";
+
+const ADD_TILE_LAYOUT_CLASS =
+  "w-11 h-11 shrink-0 rounded-xl border border-dashed flex items-center justify-center relative overflow-hidden transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50";
 
 const MEDIA_CONTROL_LAYOUT_CLASS =
   "w-10 h-10 shrink-0 rounded-full border transition-all flex items-center justify-center relative overflow-hidden group focus:outline-none focus-visible:border-[#22d3ee]/45 focus-visible:ring-1 focus-visible:ring-[#22d3ee]/30";
@@ -77,6 +97,60 @@ export function promptMediaButtonClassName({
     className,
   );
 }
+
+// The bar's most important pick (the model): a filled button, a step above
+// the settings beside it.
+export function promptModelButtonClassName({
+  active = false,
+  className = "",
+} = {}) {
+  return joinClasses(
+    MODEL_CONTROL_LAYOUT_CLASS,
+    active
+      ? "bg-white/[0.09] border-white/[0.14]"
+      : "bg-white/[0.05] border-white/[0.08] hover:bg-white/[0.08]",
+    className,
+  );
+}
+
+// One cell of a PromptSettingsGroup.
+export function promptSettingClassName({
+  active = false,
+  className = "",
+} = {}) {
+  return joinClasses(
+    SETTING_LAYOUT_CLASS,
+    active
+      ? "bg-white/[0.08] text-white"
+      : "text-white/[0.86] hover:bg-white/[0.05] hover:text-white",
+    className,
+  );
+}
+
+// The dashed tile that adds reference images, beside the prompt.
+export function promptAddTileClassName({
+  active = false,
+  dragging = false,
+  className = "",
+} = {}) {
+  return joinClasses(
+    ADD_TILE_LAYOUT_CLASS,
+    dragging
+      ? "border-[#22d3ee] bg-[#22d3ee]/10 text-[#22d3ee]"
+      : active
+        ? "border-[#22d3ee]/50 bg-[#22d3ee]/[0.06] text-[#67e8f9] hover:border-[#22d3ee]/70"
+        : "border-white/20 bg-white/[0.03] text-white/70 hover:border-[#22d3ee]/50 hover:text-white",
+    className,
+  );
+}
+
+// A reference image beside the add tile; its remove button shows on hover
+// (always on touch screens).
+export const PROMPT_REFERENCE_THUMB_CLASS =
+  "relative w-11 h-11 shrink-0 rounded-xl group";
+
+export const PROMPT_REFERENCE_REMOVE_CLASS =
+  "absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full bg-[#26262b] border border-white/15 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/60";
 
 export const PROMPT_MEDIA_PREVIEW_CLASS =
   "relative w-10 h-10 shrink-0 rounded-full border border-white/10 overflow-hidden shadow-md group";
@@ -162,6 +236,131 @@ export function PromptQualityIcon({ className = "" }) {
       <path d="m6.5 3.5 3 5.5L12 21" />
       <path d="m17.5 3.5-3 5.5L12 21" />
     </svg>
+  );
+}
+
+// "16:9" as a width and height that fit a width x height box; null when the
+// value is not a ratio ("auto").
+function ratioSize(ratio, width, height) {
+  const match = /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/.exec(String(ratio).trim());
+  if (!match) return null;
+  const across = Number(match[1]);
+  const down = Number(match[2]);
+  if (!across || !down) return null;
+  const scale = Math.min(width / across, height / down);
+  const least = 3;
+  return [Math.max(least, Math.round(across * scale)), Math.max(least, Math.round(down * scale))];
+}
+
+// The aspect ratio drawn as its own shape (a dashed square for "auto").
+export function PromptRatioIcon({ ratio, width = 14, height = 12, active = false, className = "" }) {
+  const size = ratioSize(ratio, width, height);
+  const side = Math.min(width, height);
+  return (
+    <span
+      aria-hidden="true"
+      className={joinClasses(
+        "shrink-0 rounded-[2.5px] border-[1.5px] transition-colors",
+        size ? "" : "border-dashed",
+        active ? "border-[#22d3ee] bg-[#22d3ee]/15" : "border-white/60",
+        className,
+      )}
+      style={{ width: size ? size[0] : side, height: size ? size[1] : side }}
+    />
+  );
+}
+
+// Wide ratios first, tall ones last, anything that is not a ratio up front.
+function ratioOrder(ratio) {
+  const size = ratioSize(ratio, 1000, 1000);
+  return size ? -size[0] / size[1] : -Infinity;
+}
+
+// The aspect ratio picker: one tile per ratio, each drawn as its shape.
+export function PromptRatioGrid({ options = [], selected, onSelect, columns = 5 }) {
+  const sorted = [...options].sort((a, b) => ratioOrder(a) - ratioOrder(b));
+  return (
+    <div
+      className="grid gap-1.5"
+      style={{ gridTemplateColumns: `repeat(${Math.max(1, Math.min(columns, sorted.length))}, minmax(0, 1fr))` }}
+    >
+      {sorted.map((ratio) => {
+        const on = ratio === selected;
+        return (
+          <button
+            key={ratio}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onSelect(ratio)}
+            className={joinClasses(
+              "h-[60px] min-w-[52px] flex flex-col items-center justify-center gap-[7px] rounded-[10px] border transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50",
+              on
+                ? "border-[#22d3ee]/55 bg-[#22d3ee]/[0.08]"
+                : "border-white/[0.06] bg-white/[0.03] hover:border-white/[0.12] hover:bg-white/[0.06]",
+            )}
+            data-ratio={ratio}
+          >
+            <span className="h-[26px] flex items-center justify-center">
+              <PromptRatioIcon ratio={ratio} width={26} height={24} active={on} />
+            </span>
+            <span className={joinClasses("font-mono text-[11px]", on ? "text-[#67e8f9]" : "text-white/60")}>
+              {ratio}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Settings that belong together (ratio, size, count) as one bordered strip,
+// a hairline between cells. Each child is a cell (its button, and the
+// popover it opens).
+export function PromptSettingsGroup({ children, label, className = "" }) {
+  const cells = Children.toArray(children).filter(Boolean);
+  if (cells.length === 0) return null;
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className={joinClasses(
+        "h-9 flex items-stretch rounded-[10px] border border-white/[0.08] p-px",
+        className,
+      )}
+    >
+      {cells.map((cell, index) => (
+        <Fragment key={cell.key ?? index}>
+          {index > 0 && <span aria-hidden="true" className="w-px my-2 shrink-0 bg-white/[0.08]" />}
+          {cell}
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+// A hairline between groups of footer controls.
+export function PromptDivider({ className = "" }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={joinClasses("mx-1 h-5 w-px shrink-0 bg-white/[0.08]", className)}
+    />
+  );
+}
+
+// "⌘ ↵" (Ctrl on Windows and Linux) beside the action; hidden on phones.
+export function PromptShortcutHint({ className = "" }) {
+  const [mac, setMac] = useState(true);
+  useEffect(() => {
+    setMac(/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || ""));
+  }, []);
+  return (
+    <span
+      aria-hidden="true"
+      className={joinClasses("hidden md:inline font-mono text-[11px] text-white/50 whitespace-nowrap", className)}
+    >
+      {mac ? "⌘ ↵" : "Ctrl ↵"}
+    </span>
   );
 }
 
@@ -481,10 +680,21 @@ export function PromptActionGroup({ children, className = "" }) {
   );
 }
 
+// `addon` rides inside the action's pill, after its label (the price).
 export const PromptAction = forwardRef(function PromptAction(
-  { children, className = "", type = "button", ...props },
+  { children, className = "", addon = null, type = "button", ...props },
   ref,
 ) {
+  if (addon) {
+    return (
+      <div className={joinClasses(ADDON_ACTION_CLASS, props.disabled && "opacity-50", className)}>
+        <button {...props} ref={ref} type={type} className={ADDON_ACTION_BUTTON_CLASS}>
+          {children}
+        </button>
+        {addon}
+      </div>
+    );
+  }
   return (
     <button
       {...props}

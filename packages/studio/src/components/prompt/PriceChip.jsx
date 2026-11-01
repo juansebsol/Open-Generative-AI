@@ -3,9 +3,12 @@
 // The chip next to every Generate button: which provider (API) this run
 // will go to and what it is expected to cost there. Quotes come from
 // /api/price through quoteRun() and refresh when the model or a priced
-// option changes; clicking the chip opens the Providers panel.
+// option changes; clicking the chip opens the Providers panel. The "inset"
+// variant sits inside the Generate pill (PromptAction's addon) and shows
+// only the price; the provider moves to its tooltip.
 
 import { useEffect, useMemo, useState } from "react";
+import { IconAlertTriangle } from "@tabler/icons-react";
 import { describeQuote, providerName, quoteRun, routeFor } from "../../providers/pricing.js";
 import { subscribeProviderSettings } from "../../providers/keys.js";
 import { resolveCopy } from "../../i18nUtils";
@@ -64,9 +67,9 @@ const TONE = {
 };
 
 /**
- * @param {{ endpoint?: string, payload?: object, enabled?: boolean, runs?: number, locale?: string, className?: string }} props
+ * @param {{ endpoint?: string, payload?: object, enabled?: boolean, runs?: number, locale?: string, variant?: "chip"|"inset", className?: string }} props
  */
-export default function PriceChip({ endpoint, payload, enabled = true, runs = 1, locale = "en", className = "" }) {
+export default function PriceChip({ endpoint, payload, enabled = true, runs = 1, locale = "en", variant = "chip", className = "" }) {
   const copy = resolveCopy(en, zh, locale);
   const { status, quote } = usePriceQuote(endpoint, payload, { enabled });
 
@@ -78,6 +81,23 @@ export default function PriceChip({ endpoint, payload, enabled = true, runs = 1,
   if (!view) return null;
 
   const openProviders = () => window.dispatchEvent(new CustomEvent("oga:provider-setup-needed"));
+
+  if (variant === "inset") {
+    return (
+      <button
+        type="button"
+        onClick={openProviders}
+        title={view.title}
+        aria-label={view.title}
+        data-price-status={status}
+        data-provider={view.provider || undefined}
+        className={`-ml-1.5 mr-1.5 inline-flex h-7 max-w-[180px] shrink-0 items-center gap-1 rounded-lg bg-[#04202a]/[0.14] px-2.5 font-mono text-[12px] font-medium tabular-nums whitespace-nowrap text-[#04202a] transition-[opacity,background-color] hover:bg-[#04202a]/[0.22] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#04202a]/50 ${status === "loading" && quote ? "opacity-60" : ""} ${className}`}
+      >
+        {view.tone === "warn" && <IconAlertTriangle size={12} stroke={2.25} className="shrink-0" aria-hidden="true" />}
+        <span className="truncate">{view.label}</span>
+      </button>
+    );
+  }
 
   return (
     <button

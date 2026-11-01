@@ -43,26 +43,34 @@ import {
 } from "../modelParameters.js";
 import {
   PROMPT_CONTROL_LABEL_CLASS,
-  PROMPT_MEDIA_PREVIEW_CLASS,
-  PromptAspectRatioIcon,
+  PROMPT_REFERENCE_REMOVE_CLASS,
+  PROMPT_REFERENCE_THUMB_CLASS,
   PromptAction,
+  PromptActionGroup,
   PromptChevronIcon,
   PromptComposer,
   PromptControls,
+  PromptDivider,
   PromptFooter,
   PromptMenuItem,
   PromptMenuList,
   PromptPopover,
   PromptPopoverHeader,
-  PromptQualityIcon,
+  PromptRatioGrid,
+  PromptRatioIcon,
+  PromptSegmentOption,
+  PromptSegmentedControl,
+  PromptSettingsGroup,
+  PromptShortcutHint,
   PromptTextarea,
+  promptAddTileClassName,
   promptControlClassName,
-  promptMediaButtonClassName,
-  PromptActionGroup,
+  promptModelButtonClassName,
+  promptSettingClassName,
 } from "./prompt/PromptComposer.jsx";
 import PriceChip, { PriceHint } from "./prompt/PriceChip.jsx";
 import { quoteRun } from "../providers/pricing.js";
-import { IconDownload, IconTrash, IconTypography } from "@tabler/icons-react";
+import { IconAt, IconDownload, IconPhotoPlus, IconPlus, IconScribble, IconStack2, IconTrash, IconTypography, IconX } from "@tabler/icons-react";
 import { LibraryActions, LibraryDetails, Lightbox, formatCost, formatSize, formatWhen, useImageSize } from "./library/LibraryKit.jsx";
 import { EditorsPickStar, useEditorsPickPreselect } from "./benchmarks/shared.jsx";
 import en from "../messages/en/imageStudio.json";
@@ -432,19 +440,10 @@ function UploadButton({ maxImages, onSelect, onClear, initialUrls = [], label = 
     ) : (
       <span className="text-[10px] font-bold text-white/50">{t.faceLabel}</span>
     )
+  ) : hasSelection ? (
+    <IconPlus size={16} stroke={2} aria-hidden="true" />
   ) : (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      className="text-white/40 group-hover:text-[#22d3ee] transition-colors"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
+    <IconPhotoPlus size={18} stroke={1.75} aria-hidden="true" />
   );
 
   const defaultLabel = isMulti ? t.addUpToImages.replace("{max}", maxImages) : t.referenceImageLabel;
@@ -473,6 +472,7 @@ function UploadButton({ maxImages, onSelect, onClear, initialUrls = [], label = 
         ref={triggerRef}
         type="button"
         title={triggerTitle}
+        aria-label={triggerTitle}
         onClick={(e) => {
           e.stopPropagation();
           setPanelOpen((o) => !o);
@@ -481,9 +481,10 @@ function UploadButton({ maxImages, onSelect, onClear, initialUrls = [], label = 
         onDragLeave={handleTriggerDragLeave}
         onDragOver={handleTriggerDragOver}
         onDrop={handleTriggerDrop}
-        className={`${promptMediaButtonClassName({
-          active: hasSelection,
-        })}${isDragging ? " ring-2 ring-primary border-primary bg-primary/10" : ""}`}
+        className={promptAddTileClassName({
+          active: hasSelection && label === copy.promptBar.swapFaceLabel,
+          dragging: isDragging,
+        })}
       >
         {triggerContent}
       </button>
@@ -886,7 +887,12 @@ function ModelDropdown({ selectedModel, onSelect, onClose, copy, locale = "en", 
 
 // ─── SimpleDropdown ───────────────────────────────────────────────────────────
 
-function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
+// "1k" reads as "1K" on the bar; other quality names stay as the model lists them.
+function formatQuality(value) {
+  return /^\d+(\.\d+)?k$/i.test(String(value)) ? String(value).toUpperCase() : value;
+}
+
+function SimpleDropdown({ title, options, selected, onSelect, onClose, format = (option) => option }) {
   return (
     <>
       <PromptPopoverHeader>{title}</PromptPopoverHeader>
@@ -901,7 +907,7 @@ function SimpleDropdown({ title, options, selected, onSelect, onClose }) {
               onClose();
             }}
           >
-            {opt}
+            {format(opt)}
           </PromptMenuItem>
         ))}
       </PromptMenuList>
@@ -1430,6 +1436,19 @@ export default function ImageStudio({
         ? copy.promptBar.placeholderI2I
         : copy.promptBar.placeholderT2I;
 
+  // Beside the prompt: up to four references, or three and a "+N" count.
+  const showReferenceUpload = Boolean(referenceVariant) && uploadedImageUrls.length < referenceImageLimit;
+  const showSwapUpload = imageMode && Boolean(getI2IModelById(selectedModelId)?.swapField);
+  const visibleReferences = uploadedImageUrls.length > 4 ? uploadedImageUrls.slice(0, 3) : uploadedImageUrls;
+  const hiddenReferences = uploadedImageUrls.length - visibleReferences.length;
+
+  const submitOnEnter = (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      if (!generating) handleGenerate();
+    }
+  };
+
   // The same tools on a card's hover column ("sm") and the viewer's rail ("lg").
   const imageActions = (entry, idx, size) => {
     const iconSize = size === "lg" ? 18 : 15;
@@ -1529,90 +1548,105 @@ export default function ImageStudio({
 
       {/* ── BOTTOM PROMPT BAR ── */}
       <PromptComposer>
-          {/* Top row: upload picker + textarea */}
-          <div className="flex flex-col gap-3">
-            {/* Inline list of uploaded files */}
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {uploadedImageUrls && uploadedImageUrls.length > 0 && uploadedImageUrls.map((url, idx) => (
-                <div key={url} className={PROMPT_MEDIA_PREVIEW_CLASS}>
-                  <img src={url} alt="" className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const next = uploadedImageUrls.filter((_, i) => i !== idx);
-                      setUploadedImageUrls(next);
-                      if (next.length === 0) handleUploadClear();
-                    }}
-                    className="absolute top-0.5 right-0.5 w-4 h-4 bg-black/60 hover:bg-black rounded-full flex items-center justify-center text-white/85 hover:text-white text-[8px] border border-white/5"
+          {/* Top row: references beside the prompt (stacked on phones) */}
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-start sm:gap-3">
+            {(uploadedImageUrls.length > 0 || showReferenceUpload || showSwapUpload) && (
+              <div className="flex shrink-0 items-center gap-1.5" data-image-references>
+                {visibleReferences.map((url, idx) => {
+                  const removeLabel = copy.promptBar.removeReference.replace("{index}", idx + 1);
+                  return (
+                    <div key={url} className={PROMPT_REFERENCE_THUMB_CLASS}>
+                      <img src={url} alt="" className="h-full w-full rounded-xl object-cover" />
+                      <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-white/10" />
+                      <button
+                        type="button"
+                        aria-label={removeLabel}
+                        title={removeLabel}
+                        onClick={() => {
+                          const next = uploadedImageUrls.filter((_, i) => i !== idx);
+                          setUploadedImageUrls(next);
+                          if (next.length === 0) handleUploadClear();
+                        }}
+                        className={PROMPT_REFERENCE_REMOVE_CLASS}
+                      >
+                        <IconX size={9} stroke={3} aria-hidden="true" />
+                      </button>
+                    </div>
+                  );
+                })}
+                {hiddenReferences > 0 && (
+                  <span
+                    title={copy.promptBar.moreReferences.replace("{count}", hiddenReferences)}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] font-mono text-[12px] text-white/70"
                   >
-                    ×
-                  </button>
-                </div>
-              ))}
-              
-              {/* Main Upload Trigger */}
-              {referenceVariant && uploadedImageUrls.length < referenceImageLimit && (
-                <UploadButton
-                  maxImages={referenceImageLimit}
-                  onSelect={handleUploadSelect}
-                  onClear={handleUploadClear}
-                  initialUrls={uploadedImageUrls}
-                  persistedHistory={uploadHistory}
-                  onHistoryChange={setUploadHistory}
-                  copy={copy}
-                />
-              )}
+                    +{hiddenReferences}
+                  </span>
+                )}
 
-              {/* Swap Image Upload Trigger */}
-              {imageMode && getI2IModelById(selectedModelId)?.swapField && (
-                <UploadButton
-                  maxImages={1}
-                  onSelect={({ urls }) => setSwapImageUrl(urls[0] || null)}
-                  onClear={() => setSwapImageUrl(null)}
-                  initialUrls={swapImageUrl ? [swapImageUrl] : []}
-                  label={copy.promptBar.swapFaceLabel}
-                  copy={copy}
-                />
-              )}
-            </div>
+                {showReferenceUpload && (
+                  <UploadButton
+                    maxImages={referenceImageLimit}
+                    onSelect={handleUploadSelect}
+                    onClear={handleUploadClear}
+                    initialUrls={uploadedImageUrls}
+                    persistedHistory={uploadHistory}
+                    onHistoryChange={setUploadHistory}
+                    copy={copy}
+                  />
+                )}
 
-            {/* Input prompt text area */}
+                {showSwapUpload && (
+                  <UploadButton
+                    maxImages={1}
+                    onSelect={({ urls }) => setSwapImageUrl(urls[0] || null)}
+                    onClear={() => setSwapImageUrl(null)}
+                    initialUrls={swapImageUrl ? [swapImageUrl] : []}
+                    label={copy.promptBar.swapFaceLabel}
+                    copy={copy}
+                  />
+                )}
+              </div>
+            )}
+
             <PromptTextarea
               ref={textareaRef}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={submitOnEnter}
               placeholder={placeholderText}
+              className="min-w-0 flex-1 !min-h-[44px] sm:!pt-[10px]"
             />
           </div>
 
-          {/* Bottom row: controls + generate */}
+          {/* Bottom row: model, output settings, tools | generate */}
           <PromptFooter>
-            {/* Left controls */}
             <PromptControls ref={dropdownRef}>
-              {/* Model button */}
-              <div className="relative">
+              <div className="relative min-w-0">
                 <button
                   type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={dropdownOpen === "model"}
                   onClick={(e) => {
                     e.stopPropagation();
                     setDropdownOpen((o) => (o === "model" ? null : "model"));
                   }}
-                  className={promptControlClassName({
+                  className={promptModelButtonClassName({
                     active: dropdownOpen === "model",
                   })}
+                  data-image-model
                 >
                   {(() => {
                     const providerStyle = getProviderStyle(selectedFamily.provider);
                     return (
-                      <div
+                      <span
                         aria-hidden="true"
-                        className={`w-4 h-4 rounded shrink-0 flex items-center justify-center border text-[7px] font-black leading-none ${providerStyle.bg}`}
+                        className={`w-5 h-5 rounded-md shrink-0 flex items-center justify-center border text-[10px] font-semibold leading-none ${providerStyle.bg}`}
                       >
                         {providerStyle.text}
-                      </div>
+                      </span>
                     );
                   })()}
-                  <span className={PROMPT_CONTROL_LABEL_CLASS}>
+                  <span className="max-w-[200px] truncate">
                     {selectedModelDisplayName}
                   </span>
                   <PromptChevronIcon />
@@ -1637,6 +1671,124 @@ export default function ImageStudio({
                 )}
               </div>
 
+              <PromptSettingsGroup label={copy.popovers.outputSettings}>
+                <div key="ratio" className="relative flex">
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={dropdownOpen === "ar"}
+                    aria-label={`${copy.popovers.aspectRatio}: ${selectedAr}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDropdownOpen((o) => (o === "ar" ? null : "ar"));
+                    }}
+                    className={promptSettingClassName({ active: dropdownOpen === "ar" })}
+                    data-image-setting="ratio"
+                  >
+                    <PromptRatioIcon ratio={selectedAr} active={dropdownOpen === "ar"} />
+                    {selectedAr}
+                  </button>
+
+                  {dropdownOpen === "ar" && (
+                    <PromptPopover
+                      role="dialog"
+                      aria-label={copy.popovers.aspectRatio}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-[340px] max-w-[calc(100vw-2rem)] max-h-[60vh]"
+                      fitViewport
+                      data-image-ratio-picker
+                    >
+                      <PromptPopoverHeader>{copy.popovers.aspectRatio}</PromptPopoverHeader>
+                      <PromptRatioGrid
+                        options={currentAspectRatios}
+                        selected={selectedAr}
+                        onSelect={(val) => {
+                          setSelectedAr(val);
+                          setDropdownOpen(null);
+                        }}
+                      />
+                    </PromptPopover>
+                  )}
+                </div>
+
+                {showQualityBtn && (
+                  <div key="quality" className="relative flex">
+                    <button
+                      type="button"
+                      aria-haspopup="dialog"
+                      aria-expanded={dropdownOpen === "quality"}
+                      aria-label={`${copy.popovers.resolution}: ${formatQuality(selectedQuality || currentResolutions[0])}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDropdownOpen((o) => (o === "quality" ? null : "quality"));
+                      }}
+                      className={promptSettingClassName({ active: dropdownOpen === "quality" })}
+                      data-image-setting="quality"
+                    >
+                      {formatQuality(selectedQuality || currentResolutions[0])}
+                    </button>
+
+                    {dropdownOpen === "quality" && (
+                      <PromptPopover onClick={(e) => e.stopPropagation()}>
+                        <SimpleDropdown
+                          title={copy.popovers.resolution}
+                          options={currentResolutions}
+                          selected={selectedQuality}
+                          onSelect={(val) => setSelectedQuality(val)}
+                          onClose={() => setDropdownOpen(null)}
+                          format={formatQuality}
+                        />
+                      </PromptPopover>
+                    )}
+                  </div>
+                )}
+
+                <div key="count" className="relative flex">
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={dropdownOpen === "count"}
+                    aria-label={`${copy.popovers.imageCount}: ${batchSize}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDropdownOpen((o) => (o === "count" ? null : "count"));
+                    }}
+                    className={promptSettingClassName({ active: dropdownOpen === "count" })}
+                    data-image-setting="count"
+                  >
+                    <IconStack2 size={14} stroke={1.75} className="opacity-60" aria-hidden="true" />
+                    {(batchSize === 1 ? copy.promptBar.imageCountOne : copy.promptBar.imageCountMany).replace("{count}", batchSize)}
+                  </button>
+
+                  {dropdownOpen === "count" && (
+                    <PromptPopover
+                      role="dialog"
+                      aria-label={copy.popovers.imageCount}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-[220px]"
+                      data-image-count-picker
+                    >
+                      <PromptPopoverHeader>{copy.popovers.imageCount}</PromptPopoverHeader>
+                      <PromptSegmentedControl className="w-full">
+                        {[1, 2, 3, 4].map((count) => (
+                          <PromptSegmentOption
+                            key={count}
+                            selected={batchSize === count}
+                            onClick={() => {
+                              setBatchSize(count);
+                              setDropdownOpen(null);
+                            }}
+                            className="flex-1 font-mono"
+                          >
+                            {count}
+                          </PromptSegmentOption>
+                        ))}
+                      </PromptSegmentedControl>
+                    </PromptPopover>
+                  )}
+                </div>
+              </PromptSettingsGroup>
+
               <ModelParameterControls
                 inputs={supplementalInputs}
                 values={modelParameterValues}
@@ -1652,105 +1804,14 @@ export default function ImageStudio({
                 }}
               />
 
-              {/* Aspect ratio button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDropdownOpen((o) => (o === "ar" ? null : "ar"));
-                  }}
-                  className={promptControlClassName({
-                    active: dropdownOpen === "ar",
-                  })}
-                >
-                  <PromptAspectRatioIcon />
-                  <span className={PROMPT_CONTROL_LABEL_CLASS}>
-                    {selectedAr}
-                  </span>
-                </button>
+              <PromptDivider className="hidden sm:block" />
 
-                {dropdownOpen === "ar" && (
-                  <PromptPopover
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <SimpleDropdown
-                      title={copy.popovers.aspectRatio}
-                      options={currentAspectRatios}
-                      selected={selectedAr}
-                      onSelect={(val) => setSelectedAr(val)}
-                      onClose={() => setDropdownOpen(null)}
-                    />
-                  </PromptPopover>
-                )}
-              </div>
-
-              {/* Quality/resolution button (represented as Diamond icon) */}
-              {showQualityBtn && (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDropdownOpen((o) => (o === "quality" ? null : "quality"));
-                    }}
-                    className={promptControlClassName({
-                      active: dropdownOpen === "quality",
-                    })}
-                  >
-                    <PromptQualityIcon />
-                    <span className={PROMPT_CONTROL_LABEL_CLASS}>
-                      {selectedQuality || currentResolutions[0]}
-                    </span>
-                  </button>
-
-                  {dropdownOpen === "quality" && (
-                    <PromptPopover
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <SimpleDropdown
-                        title={copy.popovers.resolution}
-                        options={currentResolutions}
-                        selected={selectedQuality}
-                        onSelect={(val) => setSelectedQuality(val)}
-                        onClose={() => setDropdownOpen(null)}
-                      />
-                    </PromptPopover>
-                  )}
-                </div>
-              )}
-
-              {/* Batch size stepper */}
-              <div className={promptControlClassName({ compact: true, className: "select-none" })}>
-                <button
-                  type="button"
-                  onClick={() => setBatchSize(prev => Math.max(1, prev - 1))}
-                  className="text-white/40 hover:text-white/80 font-extrabold text-xs transition-colors px-1"
-                >
-                  -
-                </button>
-                <span className="text-xs font-semibold text-white/70 min-w-[24px] text-center">
-                  {batchSize}/4
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setBatchSize(prev => Math.min(4, prev + 1))}
-                  className="text-white/40 hover:text-white/80 font-extrabold text-xs transition-colors px-1"
-                >
-                  +
-                </button>
-              </div>
-
-              {/* Draw button */}
               <button
                 type="button"
-                className={promptControlClassName()}
+                className={promptControlClassName({ compact: true })}
                 onClick={() => setIsDrawModalOpen(true)}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="opacity-40 text-white group-hover:text-[#22d3ee] transition-colors">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
+                <IconScribble size={16} stroke={1.75} className="opacity-60 transition-opacity group-hover:opacity-100" aria-hidden="true" />
                 <span className={PROMPT_CONTROL_LABEL_CLASS}>
                   {copy.promptBar.drawButton}
                 </span>
@@ -1759,30 +1820,37 @@ export default function ImageStudio({
               <CharactersMenu
                 locale={locale}
                 onUse={handleUseCharacter}
-                buttonClassName={promptControlClassName()}
+                buttonClassName={promptControlClassName({ compact: true })}
                 labelClassName={PROMPT_CONTROL_LABEL_CLASS}
+                icon={<IconAt size={16} stroke={1.75} className="opacity-60 transition-opacity group-hover:opacity-100" aria-hidden="true" />}
               />
             </PromptControls>
 
-<PromptActionGroup>
-<PriceChip locale={locale} endpoint={selectedVariant?.model?.endpoint || selectedModelId} runs={batchSize} payload={pricePayload} />
-            {/* Generate button */}
-            <PromptAction
-              onClick={handleGenerate}
-              disabled={generating}
-            >
-              {generating ? (
-                <>
-                  <span className="animate-spin inline-block text-black">◌</span>
-                  {copy.promptBar.generating}
-                </>
-              ) : (
-                <>
-                  <span>{copy.promptBar.generateButton}</span>
-                </>
-              )}
-            </PromptAction>
-</PromptActionGroup>
+            <PromptActionGroup>
+              <PromptShortcutHint />
+              <PromptAction
+                onClick={handleGenerate}
+                disabled={generating}
+                addon={
+                  <PriceChip
+                    variant="inset"
+                    locale={locale}
+                    endpoint={selectedVariant?.model?.endpoint || selectedModelId}
+                    runs={batchSize}
+                    payload={pricePayload}
+                  />
+                }
+              >
+                {generating ? (
+                  <>
+                    <span className="animate-spin inline-block">◌</span>
+                    {copy.promptBar.generating}
+                  </>
+                ) : (
+                  copy.promptBar.generateButton
+                )}
+              </PromptAction>
+            </PromptActionGroup>
           </PromptFooter>
       </PromptComposer>
 

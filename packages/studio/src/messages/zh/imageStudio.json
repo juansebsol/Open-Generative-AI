@@ -64,12 +64,18 @@
     "swapFaceLabel": "换脸",
     "drawButton": "绘制",
     "generating": "生成中...",
-    "generateButton": "生成"
+    "generateButton": "生成",
+    "removeReference": "移除参考图 {index}",
+    "moreReferences": "另有 {count} 张参考图",
+    "imageCountOne": "{count} 张",
+    "imageCountMany": "{count} 张"
   },
   "popovers": {
     "model": "模型",
     "aspectRatio": "宽高比",
-    "resolution": "分辨率"
+    "resolution": "分辨率",
+    "imageCount": "每次生成张数",
+    "outputSettings": "输出设置"
   },
   "errors": {
     "noImageReferenceSupport": "{name} 不支持图像参考。",
