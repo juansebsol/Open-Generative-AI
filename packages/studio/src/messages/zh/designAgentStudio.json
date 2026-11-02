@@ -7,11 +7,12 @@
     "untitled": "未命名画板",
     "delete": "删除会话",
     "confirmDelete": "删除此会话及其画板？",
-    "lockedWhileRunning": "请等待助手完成后再切换会话。"
+    "lockedWhileRunning": "请等待助手完成后再切换会话。",
+    "items": "画板上有 {count} 个元素",
+    "itemsOne": "画板上有 1 个元素",
+    "itemsNone": "画板上还没有内容"
   },
   "settings": {
-    "title": "助手设置",
-    "askFirst": "付费步骤前先确认",
     "askFirstHint": "助手在运行多次图像生成前，会先展示计划供你批准。",
     "imageModel": "图像模型",
     "editModel": "编辑模型",
@@ -28,10 +29,14 @@
     "thinking": "思考中…",
     "working": "正在执行：{tool}",
     "stopped": "已停止。",
-    "selected": "已选中",
-    "clearSelection": "清除",
-    "emptyTitle": "我们来设计什么？",
-    "emptyBody": "可以让助手做海报、社媒图、产品样机或标志。它会规划步骤、在画板上生成图像并排版文字。上传图片即可使用你自己的素材。",
+    "label": "与助手对话",
+    "hide": "收起对话",
+    "show": "展开对话",
+    "emptyTitle": "我们来设计",
+    "emptyAccent": "什么？",
+    "emptyBody": "可以让助手做海报、社媒图、产品样机或标志。它会规划步骤、在这块画板上生成图像并排版文字。",
+    "starters": "示例",
+    "dropHint": "把图片拖到画板任意位置，即可使用你自己的素材。",
     "examples": [
       "极简风爵士音乐节海报，深蓝配金色，标题“Blue Notes 2026”",
       "咖啡品牌新品的 Instagram 帖子：拉花特写加一句简短标题",
@@ -39,6 +44,16 @@
     ],
     "you": "你",
     "agent": "助手"
+  },
+  "bar": {
+    "message": "给助手发消息",
+    "settings": "助手设置",
+    "planFirst": "先出计划",
+    "images": "图像：{model}",
+    "imageModels": "图像模型",
+    "enterHint": "↵ 发送",
+    "selection": "助手会把 {id} 视为已选中",
+    "clearSelection": "取消选择"
   },
   "plan": {
     "title": "计划",
@@ -71,13 +86,17 @@
     "openSettings": "打开设置"
   },
   "canvas": {
+    "tools": "画板工具",
     "upload": "上传图片",
     "addText": "添加文字",
     "fit": "适应内容",
     "zoomIn": "放大",
     "zoomOut": "缩小",
+    "resetZoom": "重置缩放",
     "export": "导出 PNG",
     "exporting": "导出中…",
+    "exportOptions": "导出选项",
+    "color": "颜色",
     "download": "下载",
     "delete": "删除",
     "front": "置于顶层",
@@ -98,6 +117,7 @@
     "weight": "粗体",
     "font": "字体",
     "align": "对齐",
+    "alignments": { "left": "左对齐", "center": "居中", "right": "右对齐" },
     "width": "宽度",
     "rotation": "旋转",
     "fonts": { "sans": "无衬线", "serif": "衬线", "mono": "等宽", "display": "标题体" }

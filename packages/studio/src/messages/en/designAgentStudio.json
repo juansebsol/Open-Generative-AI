@@ -7,11 +7,12 @@
     "untitled": "Untitled board",
     "delete": "Delete session",
     "confirmDelete": "Delete this session and its board?",
-    "lockedWhileRunning": "Wait for the agent to finish before switching sessions."
+    "lockedWhileRunning": "Wait for the agent to finish before switching sessions.",
+    "items": "{count} items on the board",
+    "itemsOne": "1 item on the board",
+    "itemsNone": "Nothing on the board yet"
   },
   "settings": {
-    "title": "Agent settings",
-    "askFirst": "Ask before paid steps",
     "askFirstHint": "The agent shows a plan you approve before it runs several image generations.",
     "imageModel": "Image model",
     "editModel": "Edit model",
@@ -28,10 +29,14 @@
     "thinking": "Thinking…",
     "working": "Working: {tool}",
     "stopped": "Stopped.",
-    "selected": "Selected",
-    "clearSelection": "Clear",
-    "emptyTitle": "What are we designing?",
-    "emptyBody": "Ask for a poster, a social post, a product mockup or a logo. The agent plans the steps, creates images on the board and lays out text. Upload images to work with your own assets.",
+    "label": "Chat with the agent",
+    "hide": "Hide the conversation",
+    "show": "Show the conversation",
+    "emptyTitle": "What are we",
+    "emptyAccent": "designing?",
+    "emptyBody": "Ask for a poster, a social post, a product mockup or a logo. The agent plans the steps, makes the images on this board and lays out the text.",
+    "starters": "Starters",
+    "dropHint": "Drop images anywhere on the board to work with your own assets.",
     "examples": [
       "A minimalist jazz festival poster, deep blue and gold, with the headline “Blue Notes 2026”",
       "Instagram post for a coffee brand launch: latte art close-up with a short headline",
@@ -39,6 +44,16 @@
     ],
     "you": "You",
     "agent": "Agent"
+  },
+  "bar": {
+    "message": "Message the agent",
+    "settings": "Agent settings",
+    "planFirst": "Plan first",
+    "images": "Images: {model}",
+    "imageModels": "Image models",
+    "enterHint": "↵ send",
+    "selection": "The agent sees {id} as selected",
+    "clearSelection": "Clear the selection"
   },
   "plan": {
     "title": "Plan",
@@ -71,13 +86,17 @@
     "openSettings": "Open Settings"
   },
   "canvas": {
+    "tools": "Board tools",
     "upload": "Upload images",
     "addText": "Add text",
     "fit": "Fit to content",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
+    "resetZoom": "Reset zoom",
     "export": "Export PNG",
     "exporting": "Exporting…",
+    "exportOptions": "Export options",
+    "color": "Color",
     "download": "Download",
     "delete": "Delete",
     "front": "Bring to front",
@@ -98,6 +117,7 @@
     "weight": "Bold",
     "font": "Font",
     "align": "Align",
+    "alignments": { "left": "Align left", "center": "Align center", "right": "Align right" },
     "width": "Width",
     "rotation": "Rotation",
     "fonts": { "sans": "Sans", "serif": "Serif", "mono": "Mono", "display": "Display" }

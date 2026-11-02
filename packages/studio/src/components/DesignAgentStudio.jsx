@@ -3,6 +3,50 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
+  IconAlignCenter,
+  IconAlignLeft,
+  IconAlignRight,
+  IconArrowDown,
+  IconArrowRight,
+  IconArrowUp,
+  IconCheck,
+  IconChevronDown,
+  IconChevronUp,
+  IconCopy,
+  IconDownload,
+  IconKey,
+  IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarLeftExpand,
+  IconMaximize,
+  IconMinus,
+  IconPhoto,
+  IconPlayerStopFilled,
+  IconPlus,
+  IconSend,
+  IconSparkles,
+  IconTrash,
+  IconTypography,
+  IconUpload,
+  IconX,
+} from "@tabler/icons-react";
+import {
+  PromptAction,
+  PromptActionGroup,
+  PromptChevronIcon,
+  PromptComposer,
+  PromptControls,
+  PromptFooter,
+  PromptMenuItem,
+  PromptMenuList,
+  PromptPopover,
+  PromptPopoverHeader,
+  PromptSegmentOption,
+  PromptSegmentedControl,
+  PromptSettingsGroup,
+  PromptTextarea,
+  promptSettingClassName,
+} from "./prompt/PromptComposer.jsx";
+import {
   generateImage,
   generateI2I,
   upscaleImage,
@@ -115,40 +159,31 @@ function toChatMessages(messages) {
 }
 
 // ---------------------------------------------------------------------------
-// Icons
+// Shared styles
 // ---------------------------------------------------------------------------
-const Icon = ({ d, size = 16, className = "", strokeWidth = 2 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    {(Array.isArray(d) ? d : [d]).map((path) => <path key={path} d={path} />)}
-  </svg>
-);
-const ICONS = {
-  send: ["M22 2L11 13", "M22 2l-7 20-4-9-9-4 20-7z"],
-  stop: "M6 6h12v12H6z",
-  plus: ["M12 5v14", "M5 12h14"],
-  minus: "M5 12h14",
-  upload: ["M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4", "M17 8l-5-5-5 5", "M12 3v12"],
-  download: ["M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4", "M7 10l5 5 5-5", "M12 15V3"],
-  text: ["M4 7V4h16v3", "M9 20h6", "M12 4v16"],
-  fit: ["M8 3H5a2 2 0 00-2 2v3", "M21 8V5a2 2 0 00-2-2h-3", "M3 16v3a2 2 0 002 2h3", "M16 21h3a2 2 0 002-2v-3"],
-  image: ["M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2z", "M21 15l-5-5L5 21"],
-  trash: ["M3 6h18", "M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"],
-  copy: ["M8 8h12v12H8z", "M16 8V4H4v12h4"],
-  front: ["M12 19V5", "M5 12l7-7 7 7"],
-  back: ["M12 5v14", "M19 12l-7 7-7-7"],
-  settings: ["M12 15a3 3 0 100-6 3 3 0 000 6z", "M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"],
-  check: "M20 6L9 17l-5-5",
-  x: ["M18 6L6 18", "M6 6l12 12"],
-  sparkle: ["M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z", "M19 3v4", "M21 5h-4"],
-  chevron: "M6 9l6 6 6-6",
-  key: ["M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"],
-};
-
 const Spinner = ({ className = "w-3.5 h-3.5" }) => (
-  <span className={`${className} inline-block rounded-full border-2 border-white/15 border-t-[#22d3ee] animate-spin`} />
+  <span className={`${className} inline-block shrink-0 rounded-full border-2 border-white/15 border-t-[#22d3ee] animate-spin`} />
 );
 
-const toolbarButton = "h-8 min-w-8 px-2 inline-flex items-center justify-center gap-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/[0.08] transition-colors text-xs disabled:opacity-40 disabled:pointer-events-none";
+// The floating surfaces on the board (chat, tools, export, inspector) share
+// the prompt bar's material.
+const FLOATING_CARD_CLASS =
+  "border border-white/[0.12] bg-[#111114] shadow-[0_16px_40px_rgba(0,0,0,0.45)]";
+
+const toolButtonClassName = ({ iconOnly = false, accent = false } = {}) =>
+  `flex h-[34px] shrink-0 items-center justify-center gap-[7px] rounded-[9px] text-[13px] font-medium whitespace-nowrap transition-colors hover:bg-white/[0.06] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 disabled:pointer-events-none disabled:opacity-35 ${
+    iconOnly ? "w-8" : "px-[11px]"
+  } ${accent ? "text-[#67e8f9] hover:text-[#a5f3fc]" : "text-white/70 hover:text-white"}`;
+
+const SMALL_ICON_BUTTON_CLASS =
+  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 disabled:opacity-30";
+
+const FIELD_CLASS =
+  "h-8 w-full rounded-[9px] border border-white/[0.08] bg-white/[0.04] px-2.5 text-[12.5px] text-white transition-colors focus:border-[#22d3ee]/45 focus:outline-none";
+
+const FIELD_LABEL_CLASS = "text-[11.5px] text-white/50";
+
+const ALIGN_ICONS = { left: IconAlignLeft, center: IconAlignCenter, right: IconAlignRight };
 
 // ---------------------------------------------------------------------------
 // Board item
@@ -243,29 +278,40 @@ function PlanCard({ message, copy, disabled, onApprove, onRevise, reviseActive }
   const status = message.status;
   return (
     <div className="rounded-xl border border-[#22d3ee]/25 bg-[#22d3ee]/[0.05] p-3 text-[13px]">
-      <div className="flex items-center gap-2 text-[#22d3ee] text-[11px] font-bold uppercase tracking-wider mb-1">
-        <Icon d={ICONS.sparkle} size={13} /> {copy.plan.title}
-        {plan.paid > 0 && <span className="ml-auto text-white/40 normal-case tracking-normal font-medium">{fill(copy.plan.paid, { count: plan.paid })}</span>}
+      <div className="mb-1.5 flex items-center gap-[7px]">
+        <IconSparkles size={13} stroke={2} aria-hidden="true" className="shrink-0 text-[#22d3ee]" />
+        <span className="text-[12px] font-semibold text-[#67e8f9]">{copy.plan.title}</span>
+        {plan.paid > 0 && <span className="ml-auto text-[11.5px] text-white/45">{fill(copy.plan.paid, { count: plan.paid })}</span>}
       </div>
-      {plan.title && <p className="text-white font-semibold mb-2">{plan.title}</p>}
-      <ol className="list-decimal pl-5 space-y-1 text-white/75">
+      {plan.title && <p className="mb-1.5 font-semibold text-white">{plan.title}</p>}
+      <ol className="list-decimal space-y-[3px] pl-[18px] leading-[1.45] text-white/75">
         {(plan.steps || []).map((step, index) => <li key={index}>{step}</li>)}
       </ol>
       {status === "awaiting" ? (
-        <div className="mt-3 flex items-center gap-2">
-          <button type="button" disabled={disabled} onClick={onApprove} className="px-3 py-1.5 rounded-lg bg-[#22d3ee] text-black font-bold text-xs hover:opacity-90 disabled:opacity-40">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onApprove}
+            className="h-8 rounded-[9px] bg-[#22d3ee] px-3 text-[12.5px] font-semibold text-[#04202a] transition-[filter,transform] hover:brightness-105 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/40 disabled:opacity-40"
+          >
             {copy.plan.approve}
           </button>
-          <button type="button" disabled={disabled} onClick={onRevise} className={`px-3 py-1.5 rounded-lg border text-xs font-semibold disabled:opacity-40 ${reviseActive ? "border-[#22d3ee]/60 text-[#22d3ee]" : "border-white/15 text-white/80 hover:bg-white/[0.06]"}`}>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onRevise}
+            className={`h-8 rounded-[9px] border px-3 text-[12.5px] font-medium transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 disabled:opacity-40 ${reviseActive ? "border-[#22d3ee]/50 text-[#67e8f9]" : "border-white/[0.12] text-white/80 hover:bg-white/[0.06] hover:text-white"}`}
+          >
             {copy.plan.revise}
           </button>
-          <span className="ml-auto text-[11px] text-white/40">{copy.plan.waiting}</span>
+          <span className="ml-auto text-[11.5px] text-white/45">{copy.plan.waiting}</span>
         </div>
       ) : (
-        <div className="mt-2 text-[11px] text-white/45 flex items-center gap-1.5">
-          <Icon d={status === "revised" ? ICONS.x : ICONS.check} size={12} />
+        <div className="mt-2 flex items-center gap-1.5 text-[11.5px] text-white/50">
+          {status === "revised" ? <IconX size={12} stroke={2.5} aria-hidden="true" className="shrink-0" /> : <IconCheck size={12} stroke={2.5} aria-hidden="true" className="shrink-0" />}
           {status === "approved" ? copy.plan.approved : status === "auto" ? copy.plan.autoApproved : copy.plan.revised}
-          {status === "revised" && message.feedback ? <span className="text-white/60 truncate">— {message.feedback}</span> : null}
+          {status === "revised" && message.feedback ? <span className="truncate text-white/60">— {message.feedback}</span> : null}
         </div>
       )}
     </div>
@@ -275,12 +321,24 @@ function PlanCard({ message, copy, disabled, onApprove, onRevise, reviseActive }
 function ToolRow({ message, onFocusItem }) {
   const isError = message.status === "error" || message.status === "skipped";
   return (
-    <div className={`flex items-center gap-2 text-[12px] rounded-lg px-2.5 py-1.5 border ${isError ? "border-red-500/20 bg-red-500/[0.06] text-red-300/90" : "border-white/[0.06] bg-white/[0.02] text-white/60"}`}>
-      {message.status === "running" ? <Spinner /> : <Icon d={isError ? ICONS.x : ICONS.check} size={13} className={isError ? "text-red-400" : "text-[#22d3ee]"} />}
-      <span className="flex-1 min-w-0 truncate" title={message.summary}>{message.summary}</span>
+    <div className={`flex min-h-[38px] items-center gap-[9px] rounded-[10px] border py-1 pl-2.5 pr-1 text-[12.5px] ${isError ? "border-red-500/20 bg-red-500/[0.06] text-red-300/90" : "border-white/[0.06] bg-white/[0.02] text-white/65"}`}>
+      {message.status === "running" ? (
+        <Spinner />
+      ) : isError ? (
+        <IconX size={13} stroke={2.5} aria-hidden="true" className="shrink-0 text-red-400" />
+      ) : (
+        <IconCheck size={13} stroke={2.5} aria-hidden="true" className="shrink-0 text-[#22d3ee]" />
+      )}
+      <span className="min-w-0 flex-1 truncate" title={message.summary}>{message.summary}</span>
       {message.url && message.assetId && (
-        <button type="button" onClick={() => onFocusItem(message.assetId)} className="shrink-0 w-9 h-9 rounded-md overflow-hidden border border-white/10 hover:border-[#22d3ee]/60">
-          <img src={message.url} alt={message.assetId} className="w-full h-full object-cover" />
+        <button
+          type="button"
+          onClick={() => onFocusItem(message.assetId)}
+          aria-label={message.assetId}
+          title={message.assetId}
+          className="h-[34px] w-[34px] shrink-0 overflow-hidden rounded-[7px] border border-white/[0.12] transition-colors hover:border-[#22d3ee]/60 focus:outline-none focus-visible:border-[#22d3ee]/60"
+        >
+          <img src={message.url} alt="" className="h-full w-full object-cover" />
         </button>
       )}
     </div>
@@ -312,15 +370,18 @@ export default function DesignAgentStudio({
   const [reviseTarget, setReviseTarget] = useState(null);
   const [chatReady, setChatReady] = useState(false);
   const [modelLists, setModelLists] = useState({ image: [], edit: [] });
-  const [openMenu, setOpenMenu] = useState(null); // 'sessions' | 'settings' | null
+  const [openMenu, setOpenMenu] = useState(null); // 'sessions' | 'images' | 'export' | null
+  const [chatCollapsed, setChatCollapsed] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [restored, setRestored] = useState(false);
 
   const rootRef = useRef(null);
   const canvasRef = useRef(null);
+  const boardAreaRef = useRef(null);
+  const composerRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
-  const messagesEndRef = useRef(null);
+  const messagesListRef = useRef(null);
   const inspectorTextRef = useRef(null);
 
   const activeIdRef = useRef(activeId);
@@ -451,31 +512,67 @@ export default function DesignAgentStudio({
     return subscribeProviderSettings(sync);
   }, []);
 
+  const hasConversation = messages.length > 0;
+  const chatOpen = hasConversation && !chatCollapsed;
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, activity]);
+    const list = messagesListRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, [messages.length, activity, chatOpen]);
+
+  // A plan waiting for approval brings the conversation back.
+  useEffect(() => {
+    if (awaitingPlan) setChatCollapsed(false);
+  }, [awaitingPlan]);
+
+  // A click outside a menu (menus stop their own clicks) or Escape closes it.
+  useEffect(() => {
+    if (!openMenu) return undefined;
+    const close = () => setOpenMenu(null);
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") close();
+    };
+    window.addEventListener("click", close);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("click", close);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openMenu]);
+
+  const toggleMenu = (name) => (event) => {
+    event.stopPropagation();
+    setOpenMenu((current) => (current === name ? null : name));
+  };
 
   // ── Viewport helpers ────────────────────────────────────────────────────
-  const canvasSize = () => {
-    const rect = canvasRef.current?.getBoundingClientRect();
-    return rect ? { width: rect.width, height: rect.height, left: rect.left, top: rect.top } : { width: 800, height: 600, left: 0, top: 0 };
+  // The part of the board the chat card, the tools and the prompt bar leave
+  // uncovered, in canvas pixels: fitting, revealing and new items aim here.
+  const openArea = () => {
+    const canvas = canvasRef.current?.getBoundingClientRect();
+    if (!canvas) return { x: 0, y: 0, width: 800, height: 600 };
+    const area = boardAreaRef.current?.getBoundingClientRect() || canvas;
+    const bar = composerRef.current?.getBoundingClientRect();
+    const top = area.top - canvas.top + 64;
+    const bottom = bar ? bar.top - canvas.top - 8 : area.bottom - canvas.top;
+    return { x: area.left - canvas.left, y: top, width: area.width, height: Math.max(120, bottom - top) };
   };
 
   const fitToContent = useCallback((items = boardRef.current.items) => {
     const bounds = contentBounds(items);
     if (!bounds) return;
-    const { width, height } = canvasSize();
-    const scale = clamp(Math.min((width - 120) / Math.max(bounds.width, 1), (height - 140) / Math.max(bounds.height, 1)), MIN_SCALE, 2);
+    const area = openArea();
+    const scale = clamp(Math.min((area.width - 96) / Math.max(bounds.width, 1), (area.height - 48) / Math.max(bounds.height, 1)), MIN_SCALE, 2);
     setViewport({
       scale,
-      x: (width - bounds.width * scale) / 2 - bounds.x * scale,
-      y: (height - bounds.height * scale) / 2 - bounds.y * scale + 20,
+      x: area.x + (area.width - bounds.width * scale) / 2 - bounds.x * scale,
+      y: area.y + (area.height - bounds.height * scale) / 2 - bounds.y * scale,
     });
   }, []);
 
   const zoomBy = (factor, origin) => {
-    const { width, height } = canvasSize();
-    const point = origin || { x: width / 2, y: height / 2 };
+    const area = openArea();
+    const point = origin || { x: area.x + area.width / 2, y: area.y + area.height / 2 };
     setViewport((current) => {
       const scale = clamp(current.scale * factor, MIN_SCALE, MAX_SCALE);
       const ratio = scale / current.scale;
@@ -484,9 +581,9 @@ export default function DesignAgentStudio({
   };
 
   const viewCenter = () => {
-    const { width, height } = canvasSize();
+    const area = openArea();
     const { x, y, scale } = viewportRef.current;
-    return { x: (width / 2 - x) / scale, y: (height / 2 - y) / scale };
+    return { x: (area.x + area.width / 2 - x) / scale, y: (area.y + area.height / 2 - y) / scale };
   };
 
   // Pans so the item is in view (keeps zoom unless it doesn't fit).
@@ -494,16 +591,16 @@ export default function DesignAgentStudio({
     const item = boardRef.current.items.find((entry) => entry.id === id);
     if (!item) return;
     const box = rotatedBounds(itemBox(item), item.rotation);
-    const { width, height } = canvasSize();
+    const area = openArea();
     const { x, y, scale } = viewportRef.current;
     const screen = { x: box.x * scale + x, y: box.y * scale + y, width: box.width * scale, height: box.height * scale };
-    const visible = screen.x >= 0 && screen.y >= 0 && screen.x + screen.width <= width && screen.y + screen.height <= height;
+    const visible = screen.x >= area.x && screen.y >= area.y && screen.x + screen.width <= area.x + area.width && screen.y + screen.height <= area.y + area.height;
     if (visible && !force) return;
-    const nextScale = clamp(Math.min(scale, (width - 120) / box.width, (height - 140) / box.height), MIN_SCALE, MAX_SCALE);
+    const nextScale = clamp(Math.min(scale, (area.width - 96) / box.width, (area.height - 48) / box.height), MIN_SCALE, MAX_SCALE);
     setViewport({
       scale: nextScale,
-      x: width / 2 - (box.x + box.width / 2) * nextScale,
-      y: height / 2 - (box.y + box.height / 2) * nextScale,
+      x: area.x + area.width / 2 - (box.x + box.width / 2) * nextScale,
+      y: area.y + area.height / 2 - (box.y + box.height / 2) * nextScale,
     });
   }, []);
 
@@ -517,6 +614,8 @@ export default function DesignAgentStudio({
   const addPending = (box) => {
     const id = `pending_${uid()}`;
     setBoard((current) => ({ ...current, items: [...current.items, { id, kind: "pending", ...box, z: topZ(current.items) + 1 }] }));
+    // Keep the placeholder out from under the chat card and the prompt bar.
+    revealItem(id);
     return id;
   };
 
@@ -1006,6 +1105,7 @@ export default function DesignAgentStudio({
       return;
     }
     setInput("");
+    setChatCollapsed(false);
     if (awaitingPlan) {
       revisePlan(awaitingPlan, content);
       return;
@@ -1235,262 +1335,378 @@ export default function DesignAgentStudio({
   const visibleMessages = messages.filter((message) => message.role !== "assistant" || message.content);
   const isEmptyChat = messages.length === 0;
   const isEmptyBoard = board.items.length === 0;
+  const showIntro = isEmptyChat && isEmptyBoard;
   const pct = Math.round(viewport.scale * 100);
+  const placedCount = board.items.filter((item) => item.kind !== "pending").length;
+  const itemsLabel = placedCount === 0 ? copy.sessions.itemsNone : placedCount === 1 ? copy.sessions.itemsOne : fill(copy.sessions.items, { count: placedCount });
+  const imageModelName = modelLists.image.find((model) => model.id === settings.imageModelId)?.name || copy.settings.auto;
+  const exportTransparent = board.background === "transparent";
+  const inspecting = selectedItem && selectedItem.kind !== "pending" ? selectedItem : null;
+  const setupNotice = !chatReady
+    ? { title: copy.setup.chatTitle, body: copy.setup.chatBody, providers: CHAT_PROVIDER_IDS }
+    : !imageReady
+      ? { title: copy.setup.imageTitle, body: copy.setup.imageBody, providers: ["fal", "wavespeed", "openrouter", "google", "openai"] }
+      : null;
 
-  const textInspector = selectedItem?.kind === "text" && (
-    <div className="grid grid-cols-2 gap-2">
-      <label className="col-span-2 flex flex-col gap-1">
-        <span className="text-[10px] uppercase tracking-wider text-white/40">{copy.inspector.text}</span>
+  const pickModel = (key, id) => {
+    setSettings((current) => ({ ...current, [key]: id }));
+    setOpenMenu(null);
+  };
+
+  const modelMenu = (key, label, list) => (
+    <>
+      <PromptPopoverHeader>{label}</PromptPopoverHeader>
+      <PromptMenuList>
+        <PromptMenuItem
+          selected={!settings[key]}
+          description={list.length === 0 ? copy.settings.unavailable : undefined}
+          onClick={() => pickModel(key, "")}
+        >
+          {copy.settings.auto}
+        </PromptMenuItem>
+        {list.map((model) => (
+          <PromptMenuItem key={model.id} selected={settings[key] === model.id} onClick={() => pickModel(key, model.id)}>
+            {model.name}
+          </PromptMenuItem>
+        ))}
+      </PromptMenuList>
+    </>
+  );
+
+  const textInspector = inspecting?.kind === "text" && (
+    <>
+      <label className="flex flex-col gap-1.5">
+        <span className={FIELD_LABEL_CLASS}>{copy.inspector.text}</span>
         <textarea
           ref={inspectorTextRef}
-          value={selectedItem.text}
-          onChange={(event) => updateItem(selectedItem.id, { text: event.target.value })}
+          value={inspecting.text}
+          onChange={(event) => updateItem(inspecting.id, { text: event.target.value })}
           rows={2}
-          className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-[#22d3ee]/50 resize-none"
+          className={`${FIELD_CLASS} custom-scrollbar h-auto resize-none py-[7px] text-[13px] leading-[1.45]`}
         />
       </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-[10px] uppercase tracking-wider text-white/40">{copy.inspector.fontSize}</span>
-        <input type="number" min={6} max={2000} value={selectedItem.fontSize} onChange={(event) => updateItem(selectedItem.id, { fontSize: clamp(Number(event.target.value) || 6, 6, 2000) })} className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-sm text-white focus:outline-none" />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-[10px] uppercase tracking-wider text-white/40">{copy.inspector.color}</span>
-        <input type="color" value={/^#[0-9a-f]{6}$/i.test(selectedItem.color || "") ? selectedItem.color : "#ffffff"} onChange={(event) => updateItem(selectedItem.id, { color: event.target.value })} className="w-full h-[30px] bg-black/40 border border-white/10 rounded-lg cursor-pointer" />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="text-[10px] uppercase tracking-wider text-white/40">{copy.inspector.font}</span>
-        <select value={selectedItem.fontFamily || "sans"} onChange={(event) => updateItem(selectedItem.id, { fontFamily: event.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-sm text-white focus:outline-none">
-          {Object.keys(TEXT_FONTS).map((font) => <option key={font} value={font}>{copy.inspector.fonts[font]}</option>)}
-        </select>
-      </label>
-      <div className="flex flex-col gap-1">
-        <span className="text-[10px] uppercase tracking-wider text-white/40">{copy.inspector.align}</span>
-        <div className="flex gap-1">
-          <button type="button" onClick={() => updateItem(selectedItem.id, { fontWeight: selectedItem.fontWeight === "bold" ? "normal" : "bold" })} className={`flex-1 h-[30px] rounded-lg text-sm font-bold border ${selectedItem.fontWeight === "bold" ? "border-[#22d3ee]/50 text-[#22d3ee]" : "border-white/10 text-white/60"}`} title={copy.inspector.weight}>B</button>
-          {["left", "center", "right"].map((align) => (
-            <button key={align} type="button" title={align} onClick={() => updateItem(selectedItem.id, { align })} className={`flex-1 h-[30px] rounded-lg border flex items-center justify-center ${(selectedItem.align || "left") === align ? "border-[#22d3ee]/50 text-[#22d3ee]" : "border-white/10 text-white/60"}`}>
-              <Icon size={13} d={align === "left" ? ["M4 6h16", "M4 12h10", "M4 18h13"] : align === "center" ? ["M4 6h16", "M7 12h10", "M5 18h14"] : ["M4 6h16", "M10 12h10", "M7 18h13"]} />
+      <div className="grid grid-cols-2 gap-2">
+        <label className="flex flex-col gap-1.5">
+          <span className={FIELD_LABEL_CLASS}>{copy.inspector.fontSize}</span>
+          <input type="number" min={6} max={2000} value={inspecting.fontSize} onChange={(event) => updateItem(inspecting.id, { fontSize: clamp(Number(event.target.value) || 6, 6, 2000) })} className={`${FIELD_CLASS} font-mono`} />
+        </label>
+        <div className="flex flex-col gap-1.5">
+          <span className={FIELD_LABEL_CLASS}>{copy.inspector.color}</span>
+          <label className={`${FIELD_CLASS} relative flex cursor-pointer items-center gap-2 font-mono uppercase text-white/80`}>
+            <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded ring-1 ring-inset ring-white/20" style={{ background: inspecting.color || "#ffffff" }} />
+            {inspecting.color || "#ffffff"}
+            <input
+              type="color"
+              aria-label={copy.inspector.color}
+              value={/^#[0-9a-f]{6}$/i.test(inspecting.color || "") ? inspecting.color : "#ffffff"}
+              onChange={(event) => updateItem(inspecting.id, { color: event.target.value })}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </label>
+        </div>
+        <label className="flex flex-col gap-1.5">
+          <span className={FIELD_LABEL_CLASS}>{copy.inspector.font}</span>
+          <span className="group relative flex">
+            <select value={inspecting.fontFamily || "sans"} onChange={(event) => updateItem(inspecting.id, { fontFamily: event.target.value })} className={`${FIELD_CLASS} cursor-pointer appearance-none pr-7`}>
+              {Object.keys(TEXT_FONTS).map((font) => <option key={font} value={font} className="bg-[#111114]">{copy.inspector.fonts[font]}</option>)}
+            </select>
+            <PromptChevronIcon className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" />
+          </span>
+        </label>
+        <div className="flex flex-col gap-1.5">
+          <span className={FIELD_LABEL_CLASS}>{copy.inspector.align}</span>
+          <div role="group" aria-label={copy.inspector.align} className="flex h-8 gap-0.5 rounded-[9px] border border-white/[0.07] bg-white/[0.04] p-0.5">
+            <button
+              type="button"
+              aria-pressed={inspecting.fontWeight === "bold"}
+              aria-label={copy.inspector.weight}
+              title={copy.inspector.weight}
+              onClick={() => updateItem(inspecting.id, { fontWeight: inspecting.fontWeight === "bold" ? "normal" : "bold" })}
+              className={`flex-1 rounded-[7px] text-[12.5px] font-bold transition-colors ${inspecting.fontWeight === "bold" ? "bg-white/[0.1] text-white" : "text-white/55 hover:text-white"}`}
+            >
+              B
             </button>
-          ))}
+            {["left", "center", "right"].map((align) => {
+              const AlignIcon = ALIGN_ICONS[align];
+              const on = (inspecting.align || "left") === align;
+              return (
+                <button
+                  key={align}
+                  type="button"
+                  aria-pressed={on}
+                  aria-label={copy.inspector.alignments[align]}
+                  title={copy.inspector.alignments[align]}
+                  onClick={() => updateItem(inspecting.id, { align })}
+                  className={`flex flex-1 items-center justify-center rounded-[7px] transition-colors ${on ? "bg-white/[0.1] text-white" : "text-white/55 hover:text-white"}`}
+                >
+                  <AlignIcon size={13} stroke={2} aria-hidden="true" />
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
-    <div ref={rootRef} className="w-full h-full flex flex-col-reverse md:flex-row bg-app-bg relative overflow-hidden">
+    <div ref={rootRef} className="relative h-full w-full overflow-hidden bg-app-bg" data-design-agent>
       <Toaster position="top-center" toastOptions={{ style: { background: "#141414", color: "#fff", border: "1px solid rgba(255,255,255,0.08)" } }} />
 
-      {/* ── Chat panel ── */}
-      <aside className="w-full md:w-[380px] h-[46%] md:h-full shrink-0 flex flex-col border-t md:border-t-0 md:border-r border-white/[0.06] bg-[#08080a] relative z-20">
-        <header className="flex items-center gap-2 px-4 h-14 border-b border-white/[0.06] shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-[#22d3ee]/10 border border-[#22d3ee]/20 flex items-center justify-center text-[#22d3ee]">
-            <Icon d={ICONS.sparkle} size={16} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <button type="button" onClick={() => setOpenMenu(openMenu === "sessions" ? null : "sessions")} className="flex items-center gap-1 max-w-full text-left">
-              <span className="text-sm font-bold text-white truncate">{activeSession.title || copy.sessions.untitled}</span>
-              <Icon d={ICONS.chevron} size={14} className="text-white/40 shrink-0" />
-            </button>
-            <p className="text-[11px] text-white/35 truncate">{copy.title}</p>
-          </div>
-          <button type="button" onClick={newSession} title={copy.sessions.new} className={toolbarButton}><Icon d={ICONS.plus} /></button>
-          <button type="button" onClick={() => setOpenMenu(openMenu === "settings" ? null : "settings")} title={copy.settings.title} className={`${toolbarButton} ${openMenu === "settings" ? "text-[#22d3ee]" : ""}`}><Icon d={ICONS.settings} /></button>
-
-          {openMenu === "sessions" && (
-            <div className="absolute left-3 right-3 top-14 z-40 rounded-xl border border-white/[0.08] bg-[#111114] shadow-2xl p-1.5 max-h-[50vh] overflow-y-auto custom-scrollbar">
-              <p className="px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-white/35">{copy.sessions.label}</p>
-              {sessionList.map((session) => (
-                <div key={session.id} className={`group flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer ${session.id === activeId ? "bg-[#22d3ee]/10 text-[#22d3ee]" : "text-white/75 hover:bg-white/[0.05]"}`} onClick={() => switchSession(session)}>
-                  <span className="flex-1 truncate text-[13px]">{session.title || copy.sessions.untitled}</span>
-                  <span className="text-[10px] text-white/30 shrink-0">{session.board.items.length}</span>
-                  <button type="button" title={copy.sessions.delete} onClick={(event) => { event.stopPropagation(); deleteSession(session); }} className="opacity-0 group-hover:opacity-100 text-white/40 hover:text-red-400">
-                    <Icon d={ICONS.trash} size={13} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {openMenu === "settings" && (
-            <div className="absolute left-3 right-3 top-14 z-40 rounded-xl border border-white/[0.08] bg-[#111114] shadow-2xl p-3.5 space-y-3 text-[13px]">
-              <p className="text-[10px] uppercase tracking-wider text-white/35">{copy.settings.title}</p>
-              <label className="flex items-start gap-2.5 cursor-pointer">
-                <input type="checkbox" checked={settings.askFirst} onChange={(event) => setSettings((current) => ({ ...current, askFirst: event.target.checked }))} className="mt-0.5 accent-[#22d3ee]" />
-                <span>
-                  <span className="text-white font-medium block">{copy.settings.askFirst}</span>
-                  <span className="text-white/40 text-[11px]">{copy.settings.askFirstHint}</span>
-                </span>
-              </label>
-              {[["imageModelId", copy.settings.imageModel, modelLists.image], ["editModelId", copy.settings.editModel, modelLists.edit]].map(([key, label, list]) => (
-                <label key={key} className="flex flex-col gap-1">
-                  <span className="text-white/50 text-[11px]">{label}</span>
-                  <select value={settings[key]} onChange={(event) => setSettings((current) => ({ ...current, [key]: event.target.value }))} className="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white focus:outline-none">
-                    <option value="">{copy.settings.auto}{list.length === 0 ? ` (${copy.settings.unavailable})` : ""}</option>
-                    {list.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}
-                  </select>
-                </label>
-              ))}
-              <div className="flex flex-col gap-1">
-                <span className="text-white/50 text-[11px]">{copy.settings.background}</span>
-                <div className="flex items-center gap-3">
-                  <input type="color" disabled={board.background === "transparent"} value={board.background === "transparent" ? "#ffffff" : board.background} onChange={(event) => setBoard((current) => ({ ...current, background: event.target.value }))} className="w-10 h-7 bg-transparent border border-white/10 rounded cursor-pointer disabled:opacity-30" />
-                  <label className="flex items-center gap-1.5 text-white/70 cursor-pointer">
-                    <input type="checkbox" checked={board.background === "transparent"} onChange={(event) => setBoard((current) => ({ ...current, background: event.target.checked ? "transparent" : "#ffffff" }))} className="accent-[#22d3ee]" />
-                    {copy.settings.transparent}
-                  </label>
-                </div>
-              </div>
-            </div>
-          )}
-        </header>
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-3" onClick={() => setOpenMenu(null)}>
-          {!chatReady && (
-            <div className="rounded-xl border border-amber-400/20 bg-amber-400/[0.06] p-3.5">
-              <p className="text-amber-200 font-semibold text-[13px] flex items-center gap-2"><Icon d={ICONS.key} size={14} /> {copy.setup.chatTitle}</p>
-              <p className="text-white/55 text-[12px] mt-1.5 leading-relaxed">{copy.setup.chatBody}</p>
-              <button type="button" onClick={() => openProviderSettings(CHAT_PROVIDER_IDS)} className="mt-2.5 px-3 py-1.5 rounded-lg bg-amber-300 text-black text-xs font-bold hover:opacity-90">{copy.setup.openSettings}</button>
-            </div>
-          )}
-
-          {isEmptyChat && (
-            <div className="pt-2">
-              <h3 className="text-white font-bold text-base">{copy.chat.emptyTitle}</h3>
-              <p className="text-white/45 text-[13px] mt-1.5 leading-relaxed">{copy.chat.emptyBody}</p>
-              <div className="mt-4 flex flex-col gap-2">
-                {copy.chat.examples.map((example) => (
-                  <button key={example} type="button" onClick={() => { setInput(example); textareaRef.current?.focus(); }} className="text-left text-[12px] text-white/70 rounded-lg border border-white/[0.07] bg-white/[0.02] hover:border-[#22d3ee]/30 hover:text-white px-3 py-2 transition-colors">
-                    {example}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {visibleMessages.map((message) => {
-            if (message.role === "user") {
-              return (
-                <div key={message.id} className="flex flex-col items-end gap-1">
-                  {message.selection && (
-                    <button type="button" onClick={() => focusItem(message.selection)} className="text-[10px] font-mono text-[#22d3ee]/80 hover:text-[#22d3ee]">@{message.selection}</button>
-                  )}
-                  <div className="max-w-[88%] rounded-2xl rounded-br-md bg-[#22d3ee]/12 border border-[#22d3ee]/20 px-3.5 py-2 text-[13px] text-white whitespace-pre-wrap break-words">{message.content}</div>
-                </div>
-              );
-            }
-            if (message.role === "assistant") {
-              return (
-                <div key={message.id} className={`max-w-[92%] rounded-2xl rounded-bl-md px-3.5 py-2 text-[13px] whitespace-pre-wrap break-words ${message.error ? "bg-red-500/[0.08] border border-red-500/20 text-red-200" : "bg-white/[0.04] border border-white/[0.06] text-white/85"}`}>
-                  {message.content}
-                </div>
-              );
-            }
-            if (message.name === "plan") {
-              return (
-                <PlanCard
-                  key={message.id}
-                  message={message}
-                  copy={copy}
-                  disabled={running}
-                  reviseActive={reviseTarget === message.id}
-                  onApprove={() => approvePlan(message)}
-                  onRevise={() => { setReviseTarget(message.id); textareaRef.current?.focus(); }}
-                />
-              );
-            }
-            return <ToolRow key={message.id} message={message} onFocusItem={focusItem} />;
-          })}
-
-          {running && activity && (
-            <div className="flex items-center gap-2 text-[12px] text-white/50 pl-1"><Spinner /> {activity}</div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <div className="p-3 border-t border-white/[0.06] shrink-0">
-          {selectedItem && selectedItem.kind !== "pending" && (
-            <div className="flex items-center gap-2 mb-2 text-[11px] text-white/45">
-              {copy.chat.selected}
-              <span className="font-mono text-[#22d3ee] bg-[#22d3ee]/10 rounded px-1.5 py-0.5">{selectedItem.id}</span>
-              <button type="button" onClick={() => setSelectedId(null)} className="hover:text-white">{copy.chat.clearSelection}</button>
-            </div>
-          )}
-          <div className="flex items-end gap-2 rounded-2xl border border-white/[0.08] bg-[#111114] p-2 focus-within:border-[#22d3ee]/40">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-                  event.preventDefault();
-                  send();
-                }
-              }}
-              rows={2}
-              placeholder={awaitingPlan || reviseTarget ? copy.chat.revisePlaceholder : copy.chat.placeholder}
-              className="flex-1 bg-transparent resize-none text-[13px] text-white placeholder:text-white/25 focus:outline-none max-h-40 min-h-[40px] px-1.5 py-1 custom-scrollbar"
+      {/* ── Board ── */}
+      <div
+        ref={canvasRef}
+        onPointerDown={startPan}
+        className="absolute inset-0 overflow-hidden cursor-grab active:cursor-grabbing"
+        style={{
+          touchAction: "none",
+          backgroundColor: "#0b0b0d",
+          backgroundImage: "radial-gradient(rgba(255,255,255,0.09) 1px, transparent 1px)",
+          backgroundSize: `${24 * viewport.scale}px ${24 * viewport.scale}px`,
+          backgroundPosition: `${viewport.x}px ${viewport.y}px`,
+        }}
+      >
+        <div className="absolute left-0 top-0" style={{ transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`, transformOrigin: "0 0" }}>
+          {sortedItems.map((item) => (
+            <BoardItem
+              key={item.id}
+              item={item}
+              selected={item.id === selectedId}
+              scale={viewport.scale}
+              copy={copy}
+              onPointerDown={startItemDrag}
+              onHandleDown={startHandleDrag}
+              onDoubleClick={() => setTimeout(() => inspectorTextRef.current?.select(), 0)}
             />
-            {running ? (
-              <button type="button" onClick={stop} title={copy.chat.stop} className="w-9 h-9 shrink-0 rounded-xl bg-white/10 text-white hover:bg-red-500/80 flex items-center justify-center">
-                <Icon d={ICONS.stop} size={14} />
-              </button>
-            ) : (
-              <button type="button" onClick={() => send()} disabled={!input.trim()} title={copy.chat.send} className="w-9 h-9 shrink-0 rounded-xl bg-[#22d3ee] text-black flex items-center justify-center disabled:opacity-30 hover:opacity-90">
-                <Icon d={ICONS.send} size={15} />
-              </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Chat card (a session pill until the conversation starts) ── */}
+      <section
+        aria-label={copy.chat.label}
+        className={`absolute inset-x-3 top-3 z-30 flex flex-col rounded-2xl md:left-4 md:right-auto md:top-4 ${FLOATING_CARD_CLASS} ${
+          chatOpen ? "h-[min(34%,300px)] md:bottom-4 md:h-auto md:w-[320px] lg:w-[360px]" : "md:max-w-[360px]"
+        }`}
+        data-design-chat
+      >
+        <div className={`flex h-[52px] shrink-0 items-center gap-0.5 pl-1.5 pr-2 ${chatOpen ? "border-b border-white/[0.06]" : ""}`}>
+          <div className="relative min-w-0 flex-1">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={openMenu === "sessions"}
+              aria-label={`${copy.sessions.label}: ${activeSession.title || copy.sessions.untitled}`}
+              onClick={toggleMenu("sessions")}
+              className="group flex h-10 w-full min-w-0 items-center gap-2.5 rounded-[10px] pl-[5px] pr-2.5 text-left transition-colors hover:bg-white/[0.05] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+              data-design-sessions
+            >
+              <span aria-hidden="true" className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg border border-[#22d3ee]/20 bg-[#22d3ee]/10 text-[#22d3ee]">
+                <IconSparkles size={15} stroke={2} />
+              </span>
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate text-[13.5px] font-semibold text-white">{activeSession.title || copy.sessions.untitled}</span>
+                <span className="flex min-w-0 items-center gap-1.5 text-[11.5px] text-white/45">
+                  {!chatOpen && running && activity ? <><Spinner className="h-2.5 w-2.5" /><span className="truncate">{activity}</span></> : <span className="truncate">{itemsLabel}</span>}
+                </span>
+              </span>
+              <PromptChevronIcon className={`ml-auto ${openMenu === "sessions" ? "rotate-180" : ""}`} />
+            </button>
+            {openMenu === "sessions" && (
+              <PromptPopover
+                onClick={(event) => event.stopPropagation()}
+                positionClassName="absolute left-0 top-full z-50 mt-2"
+                className="w-[300px] max-w-[calc(100vw-24px)]"
+                solid
+                data-design-sessions-menu
+              >
+                <PromptPopoverHeader>{copy.sessions.label}</PromptPopoverHeader>
+                <div role="menu" className="flex flex-col gap-0.5">
+                  {sessionList.map((session) => {
+                    const current = session.id === activeId;
+                    return (
+                      <div key={session.id} className={`group/session flex items-center rounded-[10px] pr-1 transition-colors ${current ? "bg-[#22d3ee]/[0.08]" : "hover:bg-white/[0.06]"}`}>
+                        <button
+                          type="button"
+                          role="menuitemradio"
+                          aria-checked={current}
+                          onClick={() => switchSession(session)}
+                          className="flex min-h-9 min-w-0 flex-1 items-center gap-2 py-2 pl-2.5 pr-1.5 text-left text-[13px] font-medium focus:outline-none"
+                        >
+                          <span className={`truncate ${current ? "text-[#67e8f9]" : "text-white/75 group-hover/session:text-white"}`}>{session.title || copy.sessions.untitled}</span>
+                          <span className="ml-auto shrink-0 font-mono text-[11px] text-white/35">{session.board.items.length}</span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={copy.sessions.delete}
+                          title={copy.sessions.delete}
+                          onClick={() => deleteSession(session)}
+                          className={`${SMALL_ICON_BUTTON_CLASS} opacity-0 hover:!text-red-400 focus-visible:opacity-100 group-hover/session:opacity-100 [@media(hover:none)]:opacity-100`}
+                        >
+                          <IconTrash size={14} stroke={1.75} aria-hidden="true" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </PromptPopover>
             )}
           </div>
-        </div>
-      </aside>
-
-      {/* ── Canvas board ── */}
-      <main className="flex-1 min-h-0 relative overflow-hidden">
-        <div
-          ref={canvasRef}
-          onPointerDown={startPan}
-          className="absolute inset-0 overflow-hidden cursor-grab active:cursor-grabbing"
-          style={{
-            touchAction: "none",
-            backgroundColor: "#0b0b0d",
-            backgroundImage: "radial-gradient(rgba(255,255,255,0.09) 1px, transparent 1px)",
-            backgroundSize: `${24 * viewport.scale}px ${24 * viewport.scale}px`,
-            backgroundPosition: `${viewport.x}px ${viewport.y}px`,
-          }}
-        >
-          <div className="absolute left-0 top-0" style={{ transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`, transformOrigin: "0 0" }}>
-            {sortedItems.map((item) => (
-              <BoardItem
-                key={item.id}
-                item={item}
-                selected={item.id === selectedId}
-                scale={viewport.scale}
-                copy={copy}
-                onPointerDown={startItemDrag}
-                onHandleDown={startHandleDrag}
-                onDoubleClick={() => setTimeout(() => inspectorTextRef.current?.select(), 0)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Toolbar */}
-        <div className="absolute top-3 left-3 right-3 flex flex-wrap items-center gap-2 pointer-events-none z-10">
-          <div className="pointer-events-auto flex items-center gap-0.5 rounded-xl border border-white/[0.08] bg-[#111114]/90 backdrop-blur-md p-1 shadow-xl">
-            <button type="button" onClick={() => fileInputRef.current?.click()} className={toolbarButton} title={copy.canvas.upload}><Icon d={ICONS.upload} /><span className="hidden lg:inline">{copy.canvas.upload}</span></button>
-            <button type="button" onClick={addTextLayer} className={toolbarButton} title={copy.canvas.addText}><Icon d={ICONS.text} /><span className="hidden lg:inline">{copy.canvas.addText}</span></button>
-            <span className="w-px h-5 bg-white/10 mx-1" />
-            <button type="button" onClick={() => zoomBy(1 / 1.25)} className={toolbarButton} title={copy.canvas.zoomOut}><Icon d={ICONS.minus} /></button>
-            <button type="button" onClick={() => setViewport((current) => ({ ...current, scale: 1 }))} className={`${toolbarButton} font-mono w-12`}>{pct}%</button>
-            <button type="button" onClick={() => zoomBy(1.25)} className={toolbarButton} title={copy.canvas.zoomIn}><Icon d={ICONS.plus} /></button>
-            <button type="button" onClick={() => fitToContent()} disabled={isEmptyBoard} className={toolbarButton} title={copy.canvas.fit}><Icon d={ICONS.fit} /></button>
-          </div>
-          <div className="pointer-events-auto ml-auto flex items-center gap-0.5 rounded-xl border border-white/[0.08] bg-[#111114]/90 backdrop-blur-md p-1 shadow-xl">
-            <button type="button" onClick={handleExportClick} disabled={isEmptyBoard || exporting} className={`${toolbarButton} text-[#22d3ee] hover:text-[#22d3ee]`}>
-              {exporting ? <Spinner /> : <Icon d={ICONS.download} />}
-              <span>{exporting ? copy.canvas.exporting : copy.canvas.export}</span>
+          <button type="button" onClick={newSession} aria-label={copy.sessions.new} title={copy.sessions.new} className={toolButtonClassName({ iconOnly: true })}>
+            <IconPlus size={16} stroke={1.75} aria-hidden="true" />
+          </button>
+          {hasConversation && (
+            <button
+              type="button"
+              onClick={() => setChatCollapsed((collapsed) => !collapsed)}
+              aria-expanded={chatOpen}
+              aria-label={chatOpen ? copy.chat.hide : copy.chat.show}
+              title={chatOpen ? copy.chat.hide : copy.chat.show}
+              className={toolButtonClassName({ iconOnly: true })}
+              data-design-chat-toggle
+            >
+              {chatOpen ? (
+                <>
+                  <IconChevronUp size={16} stroke={1.75} aria-hidden="true" className="md:hidden" />
+                  <IconLayoutSidebarLeftCollapse size={16} stroke={1.75} aria-hidden="true" className="hidden md:block" />
+                </>
+              ) : (
+                <>
+                  <IconChevronDown size={16} stroke={1.75} aria-hidden="true" className="md:hidden" />
+                  <IconLayoutSidebarLeftExpand size={16} stroke={1.75} aria-hidden="true" className="hidden md:block" />
+                </>
+              )}
             </button>
+          )}
+        </div>
+
+        {chatOpen && (
+          <div ref={messagesListRef} className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-3.5 py-4" data-design-messages>
+            {visibleMessages.map((message) => {
+              if (message.role === "user") {
+                return (
+                  <div key={message.id} className="flex flex-col items-end gap-1">
+                    {message.selection && (
+                      <button type="button" onClick={() => focusItem(message.selection)} className="font-mono text-[11px] text-[#67e8f9]/80 transition-colors hover:text-[#67e8f9]">@{message.selection}</button>
+                    )}
+                    <div className="max-w-[88%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md border border-[#22d3ee]/20 bg-[#22d3ee]/[0.12] px-3.5 py-2 text-[13px] leading-relaxed text-white">{message.content}</div>
+                  </div>
+                );
+              }
+              if (message.role === "assistant") {
+                return (
+                  <div key={message.id} className={`max-w-[92%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md border px-3.5 py-2 text-[13px] leading-relaxed ${message.error ? "border-red-500/20 bg-red-500/[0.08] text-red-200" : "border-white/[0.06] bg-white/[0.04] text-white/85"}`}>
+                    {message.content}
+                  </div>
+                );
+              }
+              if (message.name === "plan") {
+                return (
+                  <PlanCard
+                    key={message.id}
+                    message={message}
+                    copy={copy}
+                    disabled={running}
+                    reviseActive={reviseTarget === message.id}
+                    onApprove={() => approvePlan(message)}
+                    onRevise={() => { setReviseTarget(message.id); textareaRef.current?.focus(); }}
+                  />
+                );
+              }
+              return <ToolRow key={message.id} message={message} onFocusItem={focusItem} />;
+            })}
+
+            {running && activity && (
+              <div className="flex items-center gap-2 pl-1 text-[12px] text-white/50"><Spinner /> {activity}</div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ── What floats over the open board: tools, notices, the prompt bar ── */}
+      <div
+        ref={boardAreaRef}
+        className={`pointer-events-none absolute inset-x-0 bottom-0 flex flex-col ${openMenu === "images" || openMenu === "export" ? "z-40" : "z-20"} ${
+          chatOpen ? "top-[calc(min(34%,300px)+20px)] md:top-0 md:left-[352px] lg:left-[392px]" : "top-[72px] md:top-0"
+        }`}
+        data-design-board-area
+      >
+        <div className="relative z-10 flex items-start justify-end gap-2 px-3 pt-3 md:px-4 md:pt-4 lg:grid lg:grid-cols-[1fr_auto_1fr]">
+          <div role="toolbar" aria-label={copy.canvas.tools} className={`pointer-events-auto flex h-11 shrink-0 items-center gap-0.5 rounded-xl p-[3px] lg:col-start-2 ${FLOATING_CARD_CLASS}`} data-design-tools>
+            <button type="button" onClick={() => fileInputRef.current?.click()} aria-label={copy.canvas.upload} title={copy.canvas.upload} className={toolButtonClassName()}>
+              <IconUpload size={15} stroke={1.75} aria-hidden="true" />
+              <span className="hidden xl:inline">{copy.canvas.upload}</span>
+            </button>
+            <button type="button" onClick={addTextLayer} aria-label={copy.canvas.addText} title={copy.canvas.addText} className={toolButtonClassName()}>
+              <IconTypography size={15} stroke={1.75} aria-hidden="true" />
+              <span className="hidden xl:inline">{copy.canvas.addText}</span>
+            </button>
+            <span aria-hidden="true" className="mx-1 h-5 w-px shrink-0 bg-white/[0.08]" />
+            <button type="button" onClick={() => zoomBy(1 / 1.25)} aria-label={copy.canvas.zoomOut} title={copy.canvas.zoomOut} className={toolButtonClassName({ iconOnly: true })}>
+              <IconMinus size={14} stroke={2} aria-hidden="true" />
+            </button>
+            <button type="button" onClick={() => zoomBy(1 / viewportRef.current.scale)} aria-label={copy.canvas.resetZoom} title={copy.canvas.resetZoom} className={`${toolButtonClassName({ iconOnly: true })} !w-11 font-mono !text-[12px]`}>
+              {pct}%
+            </button>
+            <button type="button" onClick={() => zoomBy(1.25)} aria-label={copy.canvas.zoomIn} title={copy.canvas.zoomIn} className={toolButtonClassName({ iconOnly: true })}>
+              <IconPlus size={14} stroke={2} aria-hidden="true" />
+            </button>
+            <button type="button" onClick={() => fitToContent()} disabled={isEmptyBoard} aria-label={copy.canvas.fit} title={copy.canvas.fit} className={toolButtonClassName({ iconOnly: true })}>
+              <IconMaximize size={15} stroke={1.75} aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className={`pointer-events-auto relative flex h-11 shrink-0 items-center gap-0.5 rounded-xl p-[3px] lg:col-start-3 lg:justify-self-end ${FLOATING_CARD_CLASS}`} data-design-export>
+            <button type="button" onClick={handleExportClick} disabled={isEmptyBoard || exporting} aria-label={copy.canvas.export} title={copy.canvas.export} className={toolButtonClassName({ accent: true })}>
+              {exporting ? <Spinner /> : <IconDownload size={15} stroke={1.75} aria-hidden="true" />}
+              <span className="hidden lg:inline">{exporting ? copy.canvas.exporting : copy.canvas.export}</span>
+            </button>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={openMenu === "export"}
+              aria-label={copy.canvas.exportOptions}
+              title={copy.canvas.exportOptions}
+              onClick={toggleMenu("export")}
+              className={`group ${toolButtonClassName({ iconOnly: true })} !w-7`}
+            >
+              <PromptChevronIcon className={openMenu === "export" ? "rotate-180" : ""} />
+            </button>
+            {openMenu === "export" && (
+              <PromptPopover
+                role="dialog"
+                aria-label={copy.settings.background}
+                onClick={(event) => event.stopPropagation()}
+                positionClassName="absolute right-0 top-full z-50 mt-2"
+                className="w-[240px]"
+                solid
+                data-design-export-menu
+              >
+                <PromptPopoverHeader>{copy.settings.background}</PromptPopoverHeader>
+                <PromptSegmentedControl className="w-full">
+                  <PromptSegmentOption className="flex-1" selected={exportTransparent} onClick={() => setBoard((current) => ({ ...current, background: "transparent" }))}>
+                    {copy.settings.transparent}
+                  </PromptSegmentOption>
+                  <PromptSegmentOption className="flex-1" selected={!exportTransparent} onClick={() => setBoard((current) => ({ ...current, background: current.background === "transparent" ? "#ffffff" : current.background }))}>
+                    {copy.canvas.color}
+                  </PromptSegmentOption>
+                </PromptSegmentedControl>
+                {!exportTransparent && (
+                  <label className="relative mt-2 flex h-9 cursor-pointer items-center gap-2.5 rounded-[10px] border border-white/[0.08] bg-white/[0.03] px-2.5 font-mono text-[12px] uppercase text-white/80 transition-colors hover:border-white/[0.14]">
+                    <span aria-hidden="true" className="h-4 w-4 shrink-0 rounded ring-1 ring-inset ring-white/20" style={{ background: board.background }} />
+                    {board.background}
+                    <input
+                      type="color"
+                      aria-label={copy.canvas.color}
+                      value={/^#[0-9a-f]{6}$/i.test(board.background) ? board.background : "#ffffff"}
+                      onChange={(event) => setBoard((current) => ({ ...current, background: event.target.value }))}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    />
+                  </label>
+                )}
+              </PromptPopover>
+            )}
           </div>
           <input
             ref={fileInputRef}
@@ -1506,73 +1722,204 @@ export default function DesignAgentStudio({
           />
         </div>
 
-        {/* Image provider prompt */}
-        {!imageReady && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 w-[min(440px,calc(100%-24px))] rounded-xl border border-amber-400/20 bg-[#141210]/95 backdrop-blur-md p-3 flex items-start gap-3 shadow-xl">
-            <Icon d={ICONS.key} size={16} className="text-amber-300 mt-0.5 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-amber-200 text-[13px] font-semibold">{copy.setup.imageTitle}</p>
-              <p className="text-white/50 text-[12px] mt-0.5">{copy.setup.imageBody}</p>
+        {/* Provider setup: the chat key first, then an image key. Over a
+            board with work on it, the title alone. */}
+        {setupNotice && (
+          <div className={`pointer-events-auto mx-auto mt-2 flex w-[min(440px,calc(100%-24px))] gap-3 rounded-xl border border-amber-400/20 bg-[#141210]/95 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur-md ${showIntro ? "items-start p-3" : "items-center py-2 pl-3 pr-2"}`} data-design-setup>
+            <IconKey size={16} stroke={1.75} aria-hidden="true" className={`shrink-0 text-amber-300 ${showIntro ? "mt-0.5" : ""}`} />
+            <div className="min-w-0 flex-1">
+              <p className={`text-[13px] font-semibold text-amber-200 ${showIntro ? "" : "truncate"}`} title={showIntro ? undefined : setupNotice.body}>{setupNotice.title}</p>
+              {showIntro && <p className="mt-0.5 text-[12px] leading-relaxed text-white/55">{setupNotice.body}</p>}
             </div>
-            <button type="button" onClick={() => openProviderSettings(["fal", "wavespeed", "openrouter", "google", "openai"])} className="shrink-0 px-2.5 py-1.5 rounded-lg bg-amber-300 text-black text-[11px] font-bold">{copy.setup.openSettings}</button>
+            <button type="button" onClick={() => openProviderSettings(setupNotice.providers)} className="h-8 shrink-0 rounded-[9px] bg-amber-300 px-3 text-[12px] font-semibold text-black transition-[filter] hover:brightness-105">
+              {copy.setup.openSettings}
+            </button>
           </div>
         )}
 
-        {/* Empty board */}
-        {isEmptyBoard && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center max-w-sm px-6">
-              <div className="w-14 h-14 mx-auto rounded-2xl border border-white/10 bg-white/[0.03] flex items-center justify-center text-white/30 mb-4"><Icon d={ICONS.image} size={24} /></div>
-              <p className="text-white/70 font-semibold">{copy.canvas.emptyTitle}</p>
-              <p className="text-white/35 text-[13px] mt-1.5 leading-relaxed">{copy.canvas.emptyBody}</p>
+        <div className={`flex min-h-0 flex-1 ${showIntro ? "no-scrollbar pointer-events-auto overflow-y-auto" : ""}`}>
+          {showIntro ? (
+            <div className="oga-enter m-auto flex w-full max-w-[460px] flex-col items-start px-5 py-6" data-design-intro>
+              <span aria-hidden="true" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#22d3ee]/20 bg-[#22d3ee]/10 text-[#22d3ee]">
+                <IconSparkles size={20} stroke={1.75} />
+              </span>
+              <h2 className="mt-[18px] text-[26px] font-semibold leading-[1.12] tracking-[-0.025em] text-white/[0.92] md:text-[32px]">
+                {copy.chat.emptyTitle} <span className="text-[#22d3ee]">{copy.chat.emptyAccent}</span>
+              </h2>
+              <p className="mt-3 text-[14px] leading-relaxed text-white/55 md:text-[15px]">{copy.chat.emptyBody}</p>
+              <nav aria-label={copy.chat.starters} className="mt-[22px] w-full">
+                {copy.chat.examples.map((example, index) => (
+                  <button
+                    key={example}
+                    type="button"
+                    onClick={() => { setInput(example); textareaRef.current?.focus(); }}
+                    className={`group flex w-full items-center justify-between gap-4 border-t border-white/[0.08] py-3 text-left text-[14px] leading-[1.45] text-white/70 transition-colors hover:text-white focus:outline-none focus-visible:text-white ${index === copy.chat.examples.length - 1 ? "border-b" : ""}`}
+                  >
+                    {example}
+                    <IconArrowRight size={14} stroke={1.75} aria-hidden="true" className="shrink-0 text-white/35 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-[#22d3ee]" />
+                  </button>
+                ))}
+              </nav>
+              <p className="mt-4 text-[12.5px] text-white/40">{copy.chat.dropHint}</p>
             </div>
-          </div>
-        )}
+          ) : isEmptyBoard ? (
+            <div className="m-auto max-w-sm px-6 text-center">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white/35"><IconPhoto size={22} stroke={1.75} aria-hidden="true" /></div>
+              <p className="text-[15px] font-semibold text-white/80">{copy.canvas.emptyTitle}</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-white/45">{copy.canvas.emptyBody}</p>
+            </div>
+          ) : null}
+        </div>
+
+        {/* The prompt bar talks to the agent */}
+        <div ref={composerRef} className="pointer-events-auto relative z-10 mx-auto w-full max-w-[680px] px-3 pb-3 md:px-4 md:pb-5" data-design-composer>
+          <PromptComposer positionClassName="relative w-full oga-enter-bar">
+            <div className="flex items-start gap-2.5">
+              {inspecting && (
+                <span title={fill(copy.bar.selection, { id: inspecting.id })} className="mt-[5px] flex h-[30px] shrink-0 items-center gap-1.5 rounded-[9px] border border-[#22d3ee]/30 bg-[#22d3ee]/[0.06] pl-[9px] pr-1 font-mono text-[12px] text-[#a5f3fc]" data-design-selection>
+                  {inspecting.kind === "text" ? <IconTypography size={13} stroke={2} aria-hidden="true" /> : <IconPhoto size={13} stroke={2} aria-hidden="true" />}
+                  {inspecting.id}
+                  <button type="button" onClick={() => setSelectedId(null)} aria-label={copy.bar.clearSelection} title={copy.bar.clearSelection} className="flex h-[22px] w-[22px] items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/[0.08] hover:text-white">
+                    <IconX size={10} stroke={2.5} aria-hidden="true" />
+                  </button>
+                </span>
+              )}
+              <PromptTextarea
+                ref={textareaRef}
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                    event.preventDefault();
+                    send();
+                  }
+                }}
+                aria-label={copy.bar.message}
+                placeholder={awaitingPlan || reviseTarget ? copy.chat.revisePlaceholder : copy.chat.placeholder}
+                className="min-w-0 flex-1"
+              />
+            </div>
+            <PromptFooter>
+              <PromptControls>
+                <PromptSettingsGroup label={copy.bar.settings}>
+                  <button
+                    key="plan"
+                    type="button"
+                    role="switch"
+                    aria-checked={settings.askFirst}
+                    title={copy.settings.askFirstHint}
+                    onClick={() => setSettings((current) => ({ ...current, askFirst: !current.askFirst }))}
+                    className={promptSettingClassName()}
+                    data-design-plan-first
+                  >
+                    <span aria-hidden="true" className={`relative h-[15px] w-[26px] shrink-0 rounded-full transition-colors ${settings.askFirst ? "bg-[#22d3ee]" : "bg-white/[0.16]"}`}>
+                      <span className={`absolute top-[2px] h-[11px] w-[11px] rounded-full transition-[left,background-color] ${settings.askFirst ? "left-[13px] bg-[#04202a]" : "left-[2px] bg-white/80"}`} />
+                    </span>
+                    {copy.bar.planFirst}
+                  </button>
+                  <div key="images" className="relative flex">
+                    <button
+                      type="button"
+                      aria-haspopup="dialog"
+                      aria-expanded={openMenu === "images"}
+                      onClick={toggleMenu("images")}
+                      className={promptSettingClassName({ active: openMenu === "images" })}
+                      data-design-images
+                    >
+                      <IconPhoto size={14} stroke={1.75} aria-hidden="true" className="opacity-60" />
+                      <span className="max-w-[170px] truncate">{fill(copy.bar.images, { model: imageModelName })}</span>
+                    </button>
+                    {openMenu === "images" && (
+                      <PromptPopover
+                        role="dialog"
+                        aria-label={copy.bar.imageModels}
+                        onClick={(event) => event.stopPropagation()}
+                        className="w-[260px]"
+                        fitViewport
+                        solid
+                        data-design-images-menu
+                      >
+                        {modelMenu("imageModelId", copy.settings.imageModel, modelLists.image)}
+                        <div className="mt-2 border-t border-white/[0.06] pt-2">
+                          {modelMenu("editModelId", copy.settings.editModel, modelLists.edit)}
+                        </div>
+                      </PromptPopover>
+                    )}
+                  </div>
+                </PromptSettingsGroup>
+              </PromptControls>
+              <PromptActionGroup>
+                <span aria-hidden="true" className="hidden whitespace-nowrap font-mono text-[11px] text-white/50 md:inline">{copy.bar.enterHint}</span>
+                {running ? (
+                  <button
+                    type="button"
+                    onClick={stop}
+                    className="flex h-9 w-full items-center justify-center gap-2 rounded-[10px] border border-white/[0.12] bg-white/[0.06] px-4 text-[13.5px] font-semibold text-white transition-colors hover:border-red-400/40 hover:bg-red-500/20 sm:w-auto"
+                    data-design-stop
+                  >
+                    <IconPlayerStopFilled size={13} aria-hidden="true" />
+                    {copy.chat.stop}
+                  </button>
+                ) : (
+                  <PromptAction onClick={() => send()} disabled={!input.trim()} data-design-send>
+                    <IconSend size={15} stroke={2} aria-hidden="true" />
+                    {copy.chat.send}
+                  </PromptAction>
+                )}
+              </PromptActionGroup>
+            </PromptFooter>
+          </PromptComposer>
+        </div>
 
         {/* Selection inspector */}
-        {selectedItem && selectedItem.kind !== "pending" && (
-          <div className="absolute bottom-3 right-3 z-10 w-[min(300px,calc(100%-24px))] rounded-xl border border-white/[0.08] bg-[#111114]/95 backdrop-blur-md shadow-2xl p-3 space-y-3" onPointerDown={(event) => event.stopPropagation()}>
-            <div className="flex items-center gap-1">
-              <span className="font-mono text-[12px] font-bold text-[#22d3ee] mr-auto">{selectedItem.id}</span>
-              {selectedItem.kind === "image" && (
-                <button type="button" onClick={() => downloadImage(selectedItem.url, selectedItem.id)} className={toolbarButton} title={copy.canvas.download}><Icon d={ICONS.download} size={14} /></button>
+        {inspecting && (
+          <section
+            aria-label={inspecting.id}
+            onPointerDown={(event) => event.stopPropagation()}
+            className={`custom-scrollbar oga-enter-card pointer-events-auto absolute right-3 top-[64px] flex max-h-[calc(100%-250px)] w-[min(280px,calc(100%-24px))] flex-col gap-3 overflow-y-auto rounded-2xl p-3 md:right-4 md:top-[72px] ${FLOATING_CARD_CLASS}`}
+            data-design-inspector
+          >
+            <div className="flex items-center gap-0.5">
+              <span className="mr-auto flex h-[22px] items-center rounded-md bg-[#22d3ee]/[0.12] px-[7px] font-mono text-[12px] text-[#67e8f9]">{inspecting.id}</span>
+              {inspecting.kind === "image" && (
+                <button type="button" onClick={() => downloadImage(inspecting.url, inspecting.id)} aria-label={copy.canvas.download} title={copy.canvas.download} className={SMALL_ICON_BUTTON_CLASS}><IconDownload size={14} stroke={1.75} aria-hidden="true" /></button>
               )}
-              <button type="button" onClick={() => duplicateItem(selectedItem)} className={toolbarButton} title={copy.canvas.duplicate}><Icon d={ICONS.copy} size={14} /></button>
-              <button type="button" onClick={() => restack(selectedItem, "front")} className={toolbarButton} title={copy.canvas.front}><Icon d={ICONS.front} size={14} /></button>
-              <button type="button" onClick={() => restack(selectedItem, "back")} className={toolbarButton} title={copy.canvas.back}><Icon d={ICONS.back} size={14} /></button>
-              <button type="button" onClick={() => removeItem(selectedItem.id)} className={`${toolbarButton} hover:text-red-400`} title={copy.canvas.delete}><Icon d={ICONS.trash} size={14} /></button>
+              <button type="button" onClick={() => duplicateItem(inspecting)} aria-label={copy.canvas.duplicate} title={copy.canvas.duplicate} className={SMALL_ICON_BUTTON_CLASS}><IconCopy size={14} stroke={1.75} aria-hidden="true" /></button>
+              <button type="button" onClick={() => restack(inspecting, "front")} aria-label={copy.canvas.front} title={copy.canvas.front} className={SMALL_ICON_BUTTON_CLASS}><IconArrowUp size={14} stroke={1.75} aria-hidden="true" /></button>
+              <button type="button" onClick={() => restack(inspecting, "back")} aria-label={copy.canvas.back} title={copy.canvas.back} className={SMALL_ICON_BUTTON_CLASS}><IconArrowDown size={14} stroke={1.75} aria-hidden="true" /></button>
+              <button type="button" onClick={() => removeItem(inspecting.id)} aria-label={copy.canvas.delete} title={copy.canvas.delete} className={`${SMALL_ICON_BUTTON_CLASS} hover:!text-red-400`}><IconTrash size={14} stroke={1.75} aria-hidden="true" /></button>
             </div>
-            {selectedItem.kind === "image" && selectedItem.label && (
-              <p className="text-[11px] text-white/45 line-clamp-3" title={selectedItem.label}>{selectedItem.label}</p>
+            {inspecting.kind === "image" && inspecting.label && (
+              <p className="line-clamp-3 text-[12px] leading-relaxed text-white/50" title={inspecting.label}>{inspecting.label}</p>
             )}
             {textInspector}
             <div className="grid grid-cols-2 gap-2">
-              <label className="flex flex-col gap-1">
-                <span className="text-[10px] uppercase tracking-wider text-white/40">{copy.inspector.width}</span>
+              <label className="flex flex-col gap-1.5">
+                <span className={FIELD_LABEL_CLASS}>{copy.inspector.width}</span>
                 <input
                   type="number"
                   min={16}
-                  value={Math.round(itemBox(selectedItem).width)}
-                  onChange={(event) => updateItem(selectedItem.id, (item) => resizeItem(item, Number(event.target.value) || 16))}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-sm text-white focus:outline-none"
+                  value={Math.round(itemBox(inspecting).width)}
+                  onChange={(event) => updateItem(inspecting.id, (item) => resizeItem(item, Number(event.target.value) || 16))}
+                  className={`${FIELD_CLASS} font-mono`}
                 />
               </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-[10px] uppercase tracking-wider text-white/40">{copy.inspector.rotation}</span>
+              <label className="flex flex-col gap-1.5">
+                <span className={FIELD_LABEL_CLASS}>{copy.inspector.rotation}</span>
                 <input
                   type="number"
-                  value={Math.round(selectedItem.rotation || 0)}
-                  onChange={(event) => updateItem(selectedItem.id, { rotation: ((Number(event.target.value) || 0) % 360 + 360) % 360 })}
-                  className="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-sm text-white focus:outline-none"
+                  value={Math.round(inspecting.rotation || 0)}
+                  onChange={(event) => updateItem(inspecting.id, { rotation: ((Number(event.target.value) || 0) % 360 + 360) % 360 })}
+                  className={`${FIELD_CLASS} font-mono`}
                 />
               </label>
             </div>
-            {selectedItem.kind === "image" && selectedItem.naturalWidth ? (
-              <p className="text-[10px] text-white/30 font-mono">{selectedItem.naturalWidth}×{selectedItem.naturalHeight}px{selectedItem.model ? ` · ${selectedItem.model}` : ""}</p>
+            {inspecting.kind === "image" && inspecting.naturalWidth ? (
+              <p className="font-mono text-[11px] text-white/35">{inspecting.naturalWidth}×{inspecting.naturalHeight}px{inspecting.model ? ` · ${inspecting.model}` : ""}</p>
             ) : null}
-          </div>
+          </section>
         )}
-      </main>
+      </div>
     </div>
   );
 }
