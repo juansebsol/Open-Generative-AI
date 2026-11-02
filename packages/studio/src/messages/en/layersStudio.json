@@ -12,16 +12,116 @@
     "tools": "Tools"
   },
   "menuItems": {
-    "layer-decomposition": "Layer Decomposition",
+    "layer-decomposition": "Layer decomposition",
     "upscale": "Upscale",
-    "color-grading": "Color Grading",
+    "color-grading": "Color grading",
     "remove-bg": "Remove background",
-    "expand-crop": "Expand & Outpaint",
+    "expand-crop": "Expand image",
     "edit-text": "Edit text",
     "enhancer": "Enhancer",
     "relight": "Relight",
     "angles": "Angles",
     "new": "New"
+  },
+  "toolTabs": {
+    "label": "Tool",
+    "layer-decomposition": "Layers",
+    "upscale": "Upscale",
+    "color-grading": "Color",
+    "remove-bg": "Remove background",
+    "expand-crop": "Expand",
+    "more": "More"
+  },
+  "rail": {
+    "label": "Canvas tools",
+    "select": "Select",
+    "pan": "Pan",
+    "lasso": "Lasso edit",
+    "region": "Region edit",
+    "marker": "Marker",
+    "eraser": "Eraser",
+    "shapes": "Shapes",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetZoom": "Reset zoom",
+    "size": "Size",
+    "customColor": "Custom color",
+    "undo": "Undo",
+    "redo": "Redo",
+    "clear": "Clear",
+    "line": "Line",
+    "arrow": "Arrow",
+    "rectangle": "Rectangle",
+    "circle": "Circle"
+  },
+  "canvas": {
+    "dropTitle": "Drop an image here or click to upload",
+    "dropHint": "PNG, JPEG or WEBP, up to 20 MB",
+    "uploading": "Uploading {progress}%",
+    "processing": "Working on it",
+    "imageAlt": "The image you are editing",
+    "layerAlt": "Layer {n}",
+    "regionPlaceholder": "Describe the change for this area",
+    "regionRun": "Edit"
+  },
+  "bar": {
+    "addImage": "Add an image",
+    "changeImage": "Change the image",
+    "uploading": "Uploading the image, {progress}%",
+    "layersPlaceholder": "Describe how to split the image, or leave it empty to split everything",
+    "regionsPlaceholder": "Describe the layers for the {count} marked areas",
+    "editTextPlaceholder": "Describe the text change you want",
+    "relightPlaceholder": "Describe the light you want",
+    "anglesPlaceholder": "Describe the angle you want",
+    "settings": "Settings",
+    "resolution": "Resolution",
+    "layers": "Layers",
+    "layerCount": "{count} layers",
+    "regions": "{count} marked",
+    "clearRegions": "Clear the marked areas",
+    "model": "Model",
+    "factor": "Upscale factor",
+    "outputSize": "Output size",
+    "adjustments": "Adjustments",
+    "changes": "{count} changed",
+    "resetAll": "Reset all",
+    "download": "Download",
+    "working": "Working… {progress}%",
+    "hints": {
+      "upscale": "Enlarges the image and sharpens detail",
+      "color-grading": "Runs in your browser, no provider and no cost",
+      "remove-bg": "Cuts the subject out onto a transparent background",
+      "expand-crop": "Extends the image past its edges, matching light and style",
+      "enhancer": "Improves lighting, sharpness and color balance"
+    },
+    "actions": {
+      "layer-decomposition": "Split into layers",
+      "upscale": "Upscale",
+      "remove-bg": "Remove background",
+      "expand-crop": "Expand image",
+      "edit-text": "Edit text",
+      "enhancer": "Enhance",
+      "relight": "Relight",
+      "angles": "Change angle"
+    }
+  },
+  "upscaleModels": {
+    "topaz-image-upscale": "General-purpose upscaling, up to 8×",
+    "seedvr2-image-upscale": "Diffusion super-resolution, up to 8K",
+    "ai-image-upscaler": "Fast one-click super-resolution"
+  },
+  "layersCard": {
+    "title": "Layers",
+    "stack": "Stack",
+    "solo": "Solo",
+    "showAll": "Show the layers stacked",
+    "showOne": "Show only the selected layer",
+    "downloadAll": "Download all layers",
+    "download": "Download {name}",
+    "hide": "Hide {name}",
+    "show": "Show {name}",
+    "collapse": "Collapse the layers list",
+    "expand": "Expand the layers list"
   },
   "tools": {
     "uploadOrChangeImage": "Upload or Change Image",
@@ -69,16 +169,68 @@
     "seedreamDecomposed": "Seedream Decomposed"
   },
   "colorGrading": {
-    "colorCorrect": { "heading": "Color Correct", "info": "Temperature, hue, saturation, contrast and split-tone", "reset": "Reset Color Correct" },
-    "softenDetails": { "heading": "Soften Details", "info": "Radius and detail softening", "reset": "Reset Soften Details" },
-    "bloom": { "heading": "Bloom", "info": "Luminescence diffusion and blend mode", "reset": "Reset Bloom" },
-    "halation": { "heading": "Halation", "info": "Film red glow around intense highlights", "reset": "Reset Halation" },
-    "lensInstructions": { "heading": "Lens Instructions", "info": "Vignette and optical lens distortion", "reset": "Reset Lens Instructions" },
-    "exposure": { "heading": "Exposure", "info": "Exposure stops adjustment", "reset": "Reset Exposure" },
-    "filmGrain": { "heading": "Film Grain", "info": "Analog film stock grain simulation", "reset": "Reset Film Grain" },
+    "colorCorrect": {
+      "heading": "Color correct",
+      "info": "Temperature, hue, saturation, contrast and split-tone",
+      "reset": "Reset Color Correct"
+    },
+    "softenDetails": {
+      "heading": "Soften details",
+      "info": "Radius and detail softening",
+      "reset": "Reset Soften Details"
+    },
+    "bloom": {
+      "heading": "Bloom",
+      "info": "Luminescence diffusion and blend mode",
+      "reset": "Reset Bloom"
+    },
+    "halation": {
+      "heading": "Halation",
+      "info": "Film red glow around intense highlights",
+      "reset": "Reset Halation"
+    },
+    "lensInstructions": {
+      "heading": "Lens",
+      "info": "Vignette and optical lens distortion",
+      "reset": "Reset lens"
+    },
+    "exposure": {
+      "heading": "Exposure",
+      "info": "Exposure stops adjustment",
+      "reset": "Reset Exposure"
+    },
+    "filmGrain": {
+      "heading": "Film grain",
+      "info": "Analog film stock grain simulation",
+      "reset": "Reset Film Grain"
+    },
     "resetToDefault": "Reset to default",
     "resetAll": "Reset All Color Grading",
-    "download": "Download"
+    "download": "Download",
+    "controls": {
+      "temp": "Temp",
+      "hue": "Hue",
+      "saturation": "Saturation",
+      "contrast": "Contrast",
+      "splitTone": "Split tone",
+      "radius": "Radius",
+      "detail": "Detail",
+      "bright": "Brightness",
+      "fade": "Fade",
+      "blend": "Blend",
+      "strength": "Strength",
+      "threshold": "Threshold",
+      "vignette": "Vignette",
+      "distortion": "Distortion",
+      "stops": "Stops",
+      "bias": "Bias",
+      "size": "Size"
+    },
+    "options": {
+      "Screen": "Screen",
+      "Soft Light": "Soft light"
+    },
+    "changed": "Changed"
   },
   "removeBg": {
     "modelName": "AI Background Remover",

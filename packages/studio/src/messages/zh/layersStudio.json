@@ -23,6 +23,106 @@
     "angles": "角度调整",
     "new": "新"
   },
+  "toolTabs": {
+    "label": "工具",
+    "layer-decomposition": "图层",
+    "upscale": "超分",
+    "color-grading": "调色",
+    "remove-bg": "移除背景",
+    "expand-crop": "扩图",
+    "more": "更多"
+  },
+  "rail": {
+    "label": "画布工具",
+    "select": "选择",
+    "pan": "平移",
+    "lasso": "套索编辑",
+    "region": "区域编辑",
+    "marker": "记号笔",
+    "eraser": "橡皮擦",
+    "shapes": "形状",
+    "zoomIn": "放大",
+    "zoomOut": "缩小",
+    "resetZoom": "重置缩放",
+    "size": "大小",
+    "customColor": "自定义颜色",
+    "undo": "撤销",
+    "redo": "重做",
+    "clear": "清除",
+    "line": "直线",
+    "arrow": "箭头",
+    "rectangle": "矩形",
+    "circle": "圆形"
+  },
+  "canvas": {
+    "dropTitle": "将图片拖到这里，或点击上传",
+    "dropHint": "PNG、JPEG 或 WEBP，最大 20 MB",
+    "uploading": "上传中 {progress}%",
+    "processing": "处理中",
+    "imageAlt": "正在编辑的图片",
+    "layerAlt": "图层 {n}",
+    "regionPlaceholder": "描述这个区域要做的修改",
+    "regionRun": "编辑"
+  },
+  "bar": {
+    "addImage": "添加图片",
+    "changeImage": "更换图片",
+    "uploading": "图片上传中，{progress}%",
+    "layersPlaceholder": "描述如何拆分图片，留空则拆分全部内容",
+    "regionsPlaceholder": "描述 {count} 个标记区域的图层",
+    "editTextPlaceholder": "描述你想要的文字修改",
+    "relightPlaceholder": "描述你想要的光线",
+    "anglesPlaceholder": "描述你想要的角度",
+    "settings": "设置",
+    "resolution": "分辨率",
+    "layers": "图层数",
+    "layerCount": "{count} 个图层",
+    "regions": "已标记 {count} 处",
+    "clearRegions": "清除标记区域",
+    "model": "模型",
+    "factor": "放大倍数",
+    "outputSize": "输出尺寸",
+    "adjustments": "调整",
+    "changes": "已修改 {count} 项",
+    "resetAll": "全部重置",
+    "download": "下载",
+    "working": "处理中… {progress}%",
+    "hints": {
+      "upscale": "放大图片并锐化细节",
+      "color-grading": "在浏览器中运行，无需服务商，不产生费用",
+      "remove-bg": "把主体抠出到透明背景上",
+      "expand-crop": "向外扩展图片边缘，匹配光线与风格",
+      "enhancer": "优化光线、清晰度和色彩平衡"
+    },
+    "actions": {
+      "layer-decomposition": "拆分图层",
+      "upscale": "超分",
+      "remove-bg": "移除背景",
+      "expand-crop": "扩展图片",
+      "edit-text": "编辑文字",
+      "enhancer": "增强",
+      "relight": "重新打光",
+      "angles": "调整角度"
+    }
+  },
+  "upscaleModels": {
+    "topaz-image-upscale": "通用放大，最高 8 倍",
+    "seedvr2-image-upscale": "扩散模型超分辨率，最高 8K",
+    "ai-image-upscaler": "一键快速超分辨率"
+  },
+  "layersCard": {
+    "title": "图层",
+    "stack": "叠加",
+    "solo": "单独",
+    "showAll": "叠加显示所有图层",
+    "showOne": "只显示选中的图层",
+    "downloadAll": "下载全部图层",
+    "download": "下载{name}",
+    "hide": "隐藏{name}",
+    "show": "显示{name}",
+    "collapse": "收起图层列表",
+    "expand": "展开图层列表"
+  },
   "tools": {
     "uploadOrChangeImage": "上传或更换图片",
     "clearMarkedRegions": "清除标记区域",
@@ -69,16 +169,68 @@
     "seedreamDecomposed": "Seedream 分解结果"
   },
   "colorGrading": {
-    "colorCorrect": { "heading": "色彩校正", "info": "色温、色相、饱和度、对比度与分离色调", "reset": "重置色彩校正" },
-    "softenDetails": { "heading": "细节柔化", "info": "半径与细节柔化程度", "reset": "重置细节柔化" },
-    "bloom": { "heading": "泛光", "info": "光晕扩散与混合模式", "reset": "重置泛光" },
-    "halation": { "heading": "光晕渗色", "info": "强光边缘的红色光晕效果", "reset": "重置光晕渗色" },
-    "lensInstructions": { "heading": "镜头效果", "info": "暗角与光学镜头畸变", "reset": "重置镜头效果" },
-    "exposure": { "heading": "曝光", "info": "曝光档位调整", "reset": "重置曝光" },
-    "filmGrain": { "heading": "胶片颗粒", "info": "模拟胶片颗粒质感", "reset": "重置胶片颗粒" },
+    "colorCorrect": {
+      "heading": "色彩校正",
+      "info": "色温、色相、饱和度、对比度与分离色调",
+      "reset": "重置色彩校正"
+    },
+    "softenDetails": {
+      "heading": "细节柔化",
+      "info": "半径与细节柔化程度",
+      "reset": "重置细节柔化"
+    },
+    "bloom": {
+      "heading": "泛光",
+      "info": "光晕扩散与混合模式",
+      "reset": "重置泛光"
+    },
+    "halation": {
+      "heading": "光晕渗色",
+      "info": "强光边缘的红色光晕效果",
+      "reset": "重置光晕渗色"
+    },
+    "lensInstructions": {
+      "heading": "镜头",
+      "info": "暗角与光学镜头畸变",
+      "reset": "重置镜头"
+    },
+    "exposure": {
+      "heading": "曝光",
+      "info": "曝光档位调整",
+      "reset": "重置曝光"
+    },
+    "filmGrain": {
+      "heading": "胶片颗粒",
+      "info": "模拟胶片颗粒质感",
+      "reset": "重置胶片颗粒"
+    },
     "resetToDefault": "重置为默认",
     "resetAll": "重置全部调色",
-    "download": "下载"
+    "download": "下载",
+    "controls": {
+      "temp": "色温",
+      "hue": "色相",
+      "saturation": "饱和度",
+      "contrast": "对比度",
+      "splitTone": "分离色调",
+      "radius": "半径",
+      "detail": "细节",
+      "bright": "亮度",
+      "fade": "淡化",
+      "blend": "混合",
+      "strength": "强度",
+      "threshold": "阈值",
+      "vignette": "暗角",
+      "distortion": "畸变",
+      "stops": "档位",
+      "bias": "偏移",
+      "size": "颗粒尺寸"
+    },
+    "options": {
+      "Screen": "滤色",
+      "Soft Light": "柔光"
+    },
+    "changed": "已修改"
   },
   "removeBg": {
     "modelName": "AI 背景移除",

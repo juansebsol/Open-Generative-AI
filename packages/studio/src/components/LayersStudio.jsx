@@ -1,7 +1,43 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { Fragment, useState, useEffect, useRef, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import {
+  IconAdjustmentsHorizontal,
+  IconArrowBackUp,
+  IconArrowForwardUp,
+  IconArrowUpRight,
+  IconArrowsDiagonal,
+  IconArrowsMaximize,
+  IconChevronDown,
+  IconChevronRight,
+  IconCircle,
+  IconDots,
+  IconDownload,
+  IconEraser,
+  IconEye,
+  IconEyeOff,
+  IconHandStop,
+  IconHighlight,
+  IconLasso,
+  IconLine,
+  IconMarquee2,
+  IconMinus,
+  IconPalette,
+  IconPhotoPlus,
+  IconPlus,
+  IconPointer,
+  IconRotate3d,
+  IconScissors,
+  IconSparkles,
+  IconSquare,
+  IconStack2,
+  IconSun,
+  IconTrash,
+  IconTriangleSquareCircle,
+  IconTypography,
+  IconX,
+} from "@tabler/icons-react";
 import {
   decomposeLayers,
   uploadFile,
@@ -10,6 +46,28 @@ import {
   removeBackground,
   expandImage,
 } from "../generation.js";
+import { getEndpointForModelId } from "../models.js";
+import {
+  PROMPT_REFERENCE_THUMB_CLASS,
+  PromptAction,
+  PromptActionGroup,
+  PromptChevronIcon,
+  PromptComposer,
+  PromptControls,
+  PromptFooter,
+  PromptMenuItem,
+  PromptMenuList,
+  PromptPopover,
+  PromptPopoverHeader,
+  PromptSegmentOption,
+  PromptSegmentedControl,
+  PromptSettingsGroup,
+  PromptShortcutHint,
+  PromptTextarea,
+  promptAddTileClassName,
+  promptModelButtonClassName,
+  promptSettingClassName,
+} from "./prompt/PromptComposer.jsx";
 import PriceChip from "./prompt/PriceChip.jsx";
 import { formatErrorMessage } from "../utils/formatError.js";
 import en from "../messages/en/layersStudio.json";
@@ -68,6 +126,195 @@ const DEFAULT_COLOR_GRADING = {
   filmGrain: { strength: 0.0, bias: 0.0, size: "16mm" },
 };
 
+// ─── Tools, grading controls and the studio's floating pieces ────────────────
+
+// The first five are tabs; the rest sit under "More".
+const TOOLS = [
+  { id: "layer-decomposition", Icon: IconStack2 },
+  { id: "upscale", Icon: IconArrowsDiagonal },
+  { id: "color-grading", Icon: IconPalette },
+  { id: "remove-bg", Icon: IconScissors },
+  { id: "expand-crop", Icon: IconArrowsMaximize },
+  { id: "edit-text", Icon: IconTypography, more: true },
+  { id: "enhancer", Icon: IconSparkles, more: true },
+  { id: "relight", Icon: IconSun, more: true },
+  { id: "angles", Icon: IconRotate3d, more: true },
+];
+
+// Tools whose run reads what is typed in the bar.
+const PROMPT_TOOLS = new Set(["layer-decomposition", "edit-text", "relight", "angles"]);
+
+const LAYER_RESOLUTIONS = ["1K", "1.5K", "2K"];
+const TOPAZ_FACTORS = [1, 2, 4, 8];
+const SEEDVR_RESOLUTIONS = ["2k", "4k", "8k"];
+
+// Every color-grading control, section by section: a slider (range and
+// shown digits) or a choice between options.
+const GRADE_SECTIONS = [
+  {
+    key: "colorCorrect",
+    controls: [
+      { key: "temp", min: -100, max: 100, step: 1, digits: 0 },
+      { key: "hue", min: -180, max: 180, step: 0.5, digits: 1 },
+      { key: "saturation", min: -100, max: 100, step: 1, digits: 0 },
+      { key: "contrast", min: -100, max: 100, step: 1, digits: 0 },
+      { key: "splitTone", min: 0, max: 1, step: 0.05, digits: 2 },
+    ],
+  },
+  {
+    key: "softenDetails",
+    controls: [
+      { key: "radius", min: 0, max: 50, step: 1, digits: 0 },
+      { key: "detail", min: 0, max: 1, step: 0.05, digits: 2 },
+    ],
+  },
+  {
+    key: "bloom",
+    controls: [
+      { key: "radius", min: 0, max: 50, step: 1, digits: 0 },
+      { key: "bright", min: 0, max: 10, step: 0.5, digits: 1 },
+      { key: "fade", min: 0, max: 1, step: 0.05, digits: 2 },
+      { key: "blend", options: ["Screen", "Soft Light"] },
+    ],
+  },
+  {
+    key: "halation",
+    controls: [
+      { key: "strength", min: 0, max: 1, step: 0.05, digits: 2 },
+      { key: "threshold", min: 0, max: 1, step: 0.05, digits: 2 },
+      { key: "radius", min: 0, max: 50, step: 1, digits: 0 },
+    ],
+  },
+  {
+    key: "lensInstructions",
+    controls: [
+      { key: "strength", min: 0, max: 1, step: 0.01, digits: 2 },
+      { key: "radius", min: 0, max: 50, step: 1, digits: 0 },
+      { key: "vignette", min: 0, max: 1, step: 0.05, digits: 2 },
+      { key: "distortion", min: -1, max: 1, step: 0.05, digits: 2 },
+    ],
+  },
+  {
+    key: "exposure",
+    controls: [{ key: "stops", min: -5, max: 5, step: 0.1, digits: 1 }],
+  },
+  {
+    key: "filmGrain",
+    controls: [
+      { key: "strength", min: 0, max: 1, step: 0.05, digits: 2 },
+      { key: "bias", min: 0, max: 1, step: 0.05, digits: 2 },
+      { key: "size", options: ["35mm", "16mm", "8mm"] },
+    ],
+  },
+];
+
+const gradeChangesIn = (grading, section) =>
+  section.controls.filter(
+    (control) =>
+      grading[section.key][control.key] !==
+      DEFAULT_COLOR_GRADING[section.key][control.key],
+  ).length;
+
+// The floating surfaces on the canvas (tabs, tool rail, layers card) share
+// the prompt bar's material.
+const FLOATING_CARD_CLASS =
+  "border border-white/[0.12] bg-[#111114] shadow-[0_16px_40px_rgba(0,0,0,0.45)]";
+
+const toolTabClassName = (selected) =>
+  `flex h-[34px] shrink-0 items-center gap-[7px] rounded-[9px] px-3 text-[13px] font-medium whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 ${
+    selected
+      ? "bg-white/[0.09] text-white"
+      : "text-white/[0.62] hover:bg-white/[0.05] hover:text-white"
+  }`;
+
+const railButtonClassName = (active) =>
+  `flex h-[38px] w-[38px] items-center justify-center rounded-[10px] transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 disabled:opacity-30 ${
+    active
+      ? "bg-[#22d3ee]/[0.12] text-[#67e8f9]"
+      : "text-white/60 hover:bg-white/[0.06] hover:text-white"
+  }`;
+
+const SMALL_ICON_BUTTON_CLASS =
+  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 disabled:opacity-30";
+
+// Transparent pixels in a layer read as transparent over this.
+const CHECKERBOARD_STYLE = {
+  backgroundColor: "#17171a",
+  backgroundImage:
+    "linear-gradient(45deg, #24242a 25%, transparent 25%), linear-gradient(-45deg, #24242a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #24242a 75%), linear-gradient(-45deg, transparent 75%, #24242a 75%)",
+  backgroundSize: "8px 8px",
+  backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0",
+};
+
+// A slider filled from zero (the middle, for ranges that go negative).
+function rangeTrack(value, min, max) {
+  const span = max - min || 1;
+  const zero = min < 0 ? (-min / span) * 100 : 0;
+  const at = ((value - min) / span) * 100;
+  const from = Math.min(zero, at);
+  const to = Math.max(zero, at);
+  return `linear-gradient(90deg, rgba(255,255,255,0.12) ${from}%, #22d3ee ${from}%, #22d3ee ${to}%, rgba(255,255,255,0.12) ${to}%)`;
+}
+
+function GradeSlider({ id, label, value, min, max, step, digits, changed, onChange }) {
+  const shown = `${min < 0 && value > 0 ? "+" : ""}${value.toFixed(digits)}`;
+  return (
+    <div className="flex items-center gap-3">
+      <label htmlFor={id} className="w-[76px] shrink-0 text-[12.5px] text-white/70">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="oga-range min-w-0 flex-1"
+        style={{ background: rangeTrack(value, min, max) }}
+      />
+      <span
+        className={`w-11 shrink-0 text-right font-mono text-[12px] tabular-nums ${
+          changed ? "text-white" : "text-white/45"
+        }`}
+      >
+        {shown}
+      </span>
+    </div>
+  );
+}
+
+function ColorSwatches({ colors, value, onChange, customLabel }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {colors.map((color) => (
+        <button
+          key={color}
+          type="button"
+          aria-label={color}
+          aria-pressed={value === color}
+          onClick={() => onChange(color)}
+          className={`h-5 w-5 rounded-full border border-white/20 transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee] ${
+            value === color ? "ring-2 ring-[#22d3ee] ring-offset-2 ring-offset-[#111114]" : ""
+          }`}
+          style={{ backgroundColor: color }}
+        />
+      ))}
+      {customLabel && (
+        <input
+          type="color"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          aria-label={customLabel}
+          title={customLabel}
+          className="h-5 w-5 cursor-pointer appearance-none overflow-hidden rounded-full border border-white/20 bg-transparent p-0 [&::-moz-color-swatch]:rounded-full [&::-moz-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-full [&::-webkit-color-swatch]:border-0"
+        />
+      )}
+    </div>
+  );
+}
+
 export default function LayersStudio({
   hasProvider,
   droppedFiles,
@@ -93,22 +340,21 @@ export default function LayersStudio({
 
   // Upscale Clean Panel State
   const [upscaleModel, setUpscaleModel] = useState("topaz-image-upscale");
-  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const [topazFactor, setTopazFactor] = useState(1);
   const [seedvrResolution, setSeedvrResolution] = useState("4k");
 
   // Color Grading State (Individual Category Resets, No Toggles)
   const [colorGrading, setColorGrading] = useState(DEFAULT_COLOR_GRADING);
 
-  // Accordion open/close state for Color Grading sections
+  // Which Adjustments sections are open
   const [openSections, setOpenSections] = useState({
     colorCorrect: true,
-    softenDetails: true,
-    bloom: true,
-    halation: true,
-    lensInstructions: true,
-    exposure: true,
-    filmGrain: true,
+    softenDetails: false,
+    bloom: false,
+    halation: false,
+    lensInstructions: false,
+    exposure: false,
+    filmGrain: false,
   });
 
   // Active Tool state: 'pointer' | 'hand' | 'lasso' | 'regional-edit' | 'draw' | 'eraser' | 'shapes'
@@ -153,9 +399,26 @@ export default function LayersStudio({
   const [brushSize, setBrushSize] = useState(8);
   const [isDrawing, setIsDrawing] = useState(false);
 
-  // Right Inspector Panel State: 'layer-decomposition' | 'upscale' | 'color-grading' | 'remove-bg' | 'expand-crop' | 'menu' | etc.
+  // The active tool (a TOOLS id) and the bar's open popover
   const [activeSideTab, setActiveSideTab] = useState("layer-decomposition");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [layersCollapsed, setLayersCollapsed] = useState(false);
+  const textareaRef = useRef(null);
+
+  // A click outside a popover (popovers stop their own clicks) or Escape closes it.
+  useEffect(() => {
+    if (!openDropdown) return undefined;
+    const close = () => setOpenDropdown(null);
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") close();
+    };
+    window.addEventListener("click", close);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("click", close);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openDropdown]);
 
   // Tool Specific Inputs
   const [textEditPrompt, setTextEditPrompt] = useState("");
@@ -167,6 +430,12 @@ export default function LayersStudio({
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [visibleLayers, setVisibleLayers] = useState({});
   const [isSoloMode, setIsSoloMode] = useState(false);
+
+  // On a phone the layers card would cover the image: it arrives collapsed.
+  const hasLayers = decomposedLayers.length > 0;
+  useEffect(() => {
+    if (hasLayers) setLayersCollapsed(window.innerWidth < 640);
+  }, [hasLayers]);
 
   // Canvas Refs
   const fileInputRef = useRef(null);
@@ -761,9 +1030,7 @@ export default function LayersStudio({
           initialVis[idx] = true;
         });
         setVisibleLayers(initialVis);
-        toast.success(
-          `Generated ${layerUrls.length} layer(s) with Seedream 5 Pro!`,
-        );
+        toast.success(copy.toasts.decomposedInto.replace('{count}', layerUrls.length));
         onGenerationComplete?.(result);
       }
     } catch (err) {
@@ -1034,21 +1301,13 @@ export default function LayersStudio({
     }
   };
 
-  // Reset Upscale parameters to default
-  const handleResetUpscale = () => {
-    setUpscaleModel("topaz-image-upscale");
-    setTopazFactor(1);
-    setSeedvrResolution("4k");
-    toast(copy.toasts.upscaleSettingsReset);
-  };
-
   // Reset individual Color Grading category
   const resetCategory = (catKey) => {
     setColorGrading((prev) => ({
       ...prev,
       [catKey]: { ...DEFAULT_COLOR_GRADING[catKey] },
     }));
-    toast(copy.toasts.resetCategory.replace('{category}', catKey));
+    toast(copy.toasts.resetCategory.replace('{category}', copy.colorGrading[catKey].heading));
   };
 
   // Reset all Color Grading parameters
@@ -1243,18 +1502,6 @@ export default function LayersStudio({
     toast.success(copy.toasts.downloadingAll);
   };
 
-  const sideMenuItems = [
-    { id: "layer-decomposition", label: copy.menuItems["layer-decomposition"], isNew: true },
-    { id: "upscale", label: copy.menuItems.upscale, isNew: true },
-    { id: "color-grading", label: copy.menuItems["color-grading"], isNew: true },
-    { id: "remove-bg", label: copy.menuItems["remove-bg"], isNew: true },
-    { id: "expand-crop", label: copy.menuItems["expand-crop"], isNew: true },
-    { id: "edit-text", label: copy.menuItems["edit-text"], isNew: false },
-    { id: "enhancer", label: copy.menuItems.enhancer, isNew: false },
-    { id: "relight", label: copy.menuItems.relight, isNew: false },
-    { id: "angles", label: copy.menuItems.angles, isNew: false },
-  ];
-
   const getLassoPathString = () => {
     if (lassoPoints.length < 2) return "";
     return (
@@ -1267,20 +1514,124 @@ export default function LayersStudio({
     );
   };
 
+  // ── Bar state: the active tool, its run, and the open popover ──
+  const currentTool = TOOLS.find((tool) => tool.id === activeSideTab) || TOOLS[0];
+  const moreTool = currentTool.more ? currentTool : null;
+  const usesPrompt = PROMPT_TOOLS.has(currentTool.id);
+  const promptValue = currentTool.id === "edit-text" ? textEditPrompt : prompt;
+  const setPromptValue = currentTool.id === "edit-text" ? setTextEditPrompt : setPrompt;
+  const promptPlaceholder = {
+    "layer-decomposition":
+      markedRegions.length > 0
+        ? copy.bar.regionsPlaceholder.replace("{count}", markedRegions.length)
+        : copy.bar.layersPlaceholder,
+    "edit-text": copy.bar.editTextPlaceholder,
+    relight: copy.bar.relightPlaceholder,
+    angles: copy.bar.anglesPlaceholder,
+  }[currentTool.id];
+
+  const upscaleModelInfo =
+    UPSCALE_MODELS.find((model) => model.id === upscaleModel) || UPSCALE_MODELS[0];
+
+  // What the run button's price is quoted on (color grading costs nothing).
+  const price = (() => {
+    switch (currentTool.id) {
+      case "layer-decomposition":
+        return { endpoint: "bytedance-seedream-5.0-pro-layer", payload: { resolution, output_format: outputFormat } };
+      case "upscale":
+        if (upscaleModel === "seedvr2-image-upscale") return { endpoint: "seedvr2-image-upscale", payload: { resolution: seedvrResolution } };
+        if (upscaleModel === "ai-image-upscaler") return { endpoint: "ai-image-upscale", payload: {} };
+        return { endpoint: "topaz-image-upscale", payload: { upscale_factor: topazFactor } };
+      case "color-grading":
+        return null;
+      case "remove-bg":
+        return { endpoint: "ai-background-remover", payload: {} };
+      case "expand-crop":
+        return { endpoint: "ai-image-extension", payload: {} };
+      default:
+        return { endpoint: getEndpointForModelId("nano-banana-pro-edit"), payload: {} };
+    }
+  })();
+
+  const gradeChanges = GRADE_SECTIONS.reduce(
+    (count, section) => count + gradeChangesIn(colorGrading, section),
+    0,
+  );
+
+  const runTool = () => {
+    if (currentTool.id === "layer-decomposition") return handleDecompose();
+    if (currentTool.id === "upscale") return handleRunUpscale();
+    if (currentTool.id === "remove-bg") return handleRunRemoveBg();
+    if (currentTool.id === "expand-crop") return handleRunExpand();
+    if (currentTool.id === "color-grading") return handleDownloadGradedImage();
+    return handleExecuteSideTool(currentTool.id);
+  };
+
+  const submitOnEnter = (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      if (!isProcessing) runTool();
+    }
+  };
+
+  const pickTool = (id) => {
+    setActiveSideTab(id);
+    setOpenDropdown(null);
+  };
+
+  const toggleDropdown = (name) => (event) => {
+    event.stopPropagation();
+    setOpenDropdown((open) => (open === name ? null : name));
+  };
+
+  const updateGrade = (sectionKey, controlKey, value) =>
+    setColorGrading((prev) => ({
+      ...prev,
+      [sectionKey]: { ...prev[sectionKey], [controlKey]: value },
+    }));
+
+  const railGroups = [
+    [
+      { id: "pointer", Icon: IconPointer, label: copy.rail.select },
+      { id: "hand", Icon: IconHandStop, label: copy.rail.pan },
+    ],
+    [
+      { id: "lasso", Icon: IconLasso, label: copy.rail.lasso },
+      { id: "regional-edit", Icon: IconMarquee2, label: copy.rail.region },
+    ],
+    [
+      { id: "draw", Icon: IconHighlight, label: copy.rail.marker },
+      { id: "eraser", Icon: IconEraser, label: copy.rail.eraser },
+      { id: "shapes", Icon: IconTriangleSquareCircle, label: copy.rail.shapes },
+    ],
+  ];
+
+  const shapeOptions = [
+    { id: "line", Icon: IconLine, label: copy.rail.line },
+    { id: "arrow", Icon: IconArrowUpRight, label: copy.rail.arrow },
+    { id: "rect", Icon: IconSquare, label: copy.rail.rectangle },
+    { id: "circle", Icon: IconCircle, label: copy.rail.circle },
+  ];
+
+  const showToolOptions =
+    activeTool === "draw" || activeTool === "eraser" || activeTool === "shapes";
+
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="relative w-full h-full bg-[#121318] text-white flex overflow-hidden font-sans select-none">
+    <div className="relative h-full w-full overflow-hidden bg-black text-white select-none">
       <Toaster
         position="top-center"
         toastOptions={{
           style: {
-            background: "#1c1e24",
+            background: "#18181b",
             color: "#fff",
-            border: "1px solid rgba(255,255,255,0.1)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            fontSize: "13px",
+            borderRadius: "12px",
           },
         }}
       />
 
-      {/* Hidden File Input */}
       <input
         type="file"
         ref={fileInputRef}
@@ -1289,74 +1640,32 @@ export default function LayersStudio({
         className="hidden"
       />
 
-      {/* Left Thumbnail Pill Strip */}
-      <div className="absolute left-6 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-3">
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          title={copy.tools.uploadOrChangeImage}
-          className="group relative w-12 h-14 rounded-2xl overflow-hidden bg-[#1a1c23] border border-white/10 flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-[0_0_20px_rgba(0,0,0,0.5)] ring-2 ring-[#84cc16]/80"
-        >
-          {currentImageUrl ? (
-            <img
-              src={currentImageUrl}
-              alt="Input thumb"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          )}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] font-bold tracking-tighter text-white">
-            CHANGE
-          </div>
-        </button>
-
-        {markedRegions.length > 0 && (
-          <button
-            onClick={() => setMarkedRegions([])}
-            className="px-2 py-1 bg-red-500/20 hover:bg-red-500/40 text-red-300 text-[10px] font-black rounded-lg border border-red-500/40 shadow-sm"
-            title={copy.tools.clearMarkedRegions}
-          >
-            Clear ({markedRegions.length})
-          </button>
-        )}
-      </div>
-
-      {/* Main Canvas Area with Live Color Grading Filter & Realtime Vignette / Grain */}
+      {/* Canvas: the image (or the drop zone) with its live grade and overlays */}
       <div
         ref={canvasContainerRef}
         onMouseDown={startPan}
         onMouseMove={doPan}
         onMouseUp={stopPan}
         onMouseLeave={stopPan}
-        className={`flex-1 relative h-full flex flex-col items-center justify-center p-4 pb-28 overflow-hidden bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#1d2029] via-[#0f1015] to-[#08090c] ${
+        className={`absolute inset-0 flex items-center justify-center overflow-hidden bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:22px_22px] pl-16 pr-4 pb-56 pt-20 sm:px-20 sm:pb-44 ${
           activeTool === "hand" ? "cursor-grab active:cursor-grabbing" : ""
         }`}
       >
-        <div className="absolute w-[700px] h-[700px] bg-[#84cc16]/5 rounded-full blur-[160px] pointer-events-none" />
-
-        {/* Central Display Viewport Container */}
         <div
-          className="relative max-w-[90%] max-h-[78vh] flex items-center justify-center transition-transform duration-100 ease-out"
+          className="relative flex items-center justify-center transition-transform duration-100 ease-out"
           style={{
             transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel / 100})`,
             filter: getColorGradingCSSFilter(),
           }}
         >
           {uploading ? (
-            <div className="flex flex-col items-center justify-center p-12 bg-[#1a1c23]/80 backdrop-blur-md rounded-3xl border border-white/10">
-              <div className="w-12 h-12 border-4 border-[#84cc16]/20 border-t-[#84cc16] rounded-full animate-spin mb-4" />
-              <p className="text-sm font-semibold text-white/80">
-                Uploading image... {uploadProgress}%
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/[0.12] bg-[#111114] px-10 py-8">
+              <span
+                aria-hidden="true"
+                className="h-10 w-10 animate-spin rounded-full border-[3px] border-[#22d3ee]/20 border-t-[#22d3ee]"
+              />
+              <p className="text-[13px] font-medium text-white/80">
+                {copy.canvas.uploading.replace("{progress}", uploadProgress)}
               </p>
             </div>
           ) : currentImageUrl ? (
@@ -1368,7 +1677,7 @@ export default function LayersStudio({
               onTouchStart={handleImageMouseDown}
               onTouchMove={handleImageMouseMove}
               onTouchEnd={handleImageMouseUp}
-              className={`relative group rounded-2xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 ${
+              className={`group relative overflow-hidden rounded-2xl shadow-[0_24px_70px_rgba(0,0,0,0.6)] ring-1 ring-white/10 ${
                 activeTool === "lasso" ||
                 activeTool === "regional-edit" ||
                 activeTool === "shapes"
@@ -1381,33 +1690,32 @@ export default function LayersStudio({
                     ? `scale(${1 + Math.abs(colorGrading.lensInstructions.distortion) * 0.08})`
                     : undefined,
               }}
+              data-layers-image
             >
               <img
                 ref={imageRef}
                 src={currentImageUrl}
-                alt="Main canvas"
+                alt={copy.canvas.imageAlt}
                 onLoad={syncCanvasDimensions}
-                className={`max-h-[72vh] max-w-[70vw] object-contain transition-opacity duration-300 pointer-events-none ${
-                  decomposedLayers.length > 0
-                    ? "opacity-30 blur-[1px]"
-                    : "opacity-100"
+                className={`pointer-events-none block max-h-[calc(100dvh-21rem)] max-w-[calc(100vw-6rem)] object-contain transition-opacity duration-300 sm:max-w-[calc(100vw-12rem)] lg:max-w-[62vw] ${
+                  decomposedLayers.length > 0 ? "opacity-30 blur-[1px]" : "opacity-100"
                 }`}
               />
 
-              {/* Realtime Vignette Layer Overlay */}
+              {/* Live vignette */}
               {colorGrading.lensInstructions.vignette > 0 && (
                 <div
-                  className="absolute inset-0 pointer-events-none rounded-2xl z-20 transition-opacity duration-150"
+                  className="pointer-events-none absolute inset-0 z-20 rounded-2xl transition-opacity duration-150"
                   style={{
                     background: `radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,${colorGrading.lensInstructions.vignette * 0.95}) 100%)`,
                   }}
                 />
               )}
 
-              {/* Realtime Film Grain SVG Noise Layer Overlay */}
+              {/* Live film grain */}
               {colorGrading.filmGrain.strength > 0 && (
                 <div
-                  className="absolute inset-0 pointer-events-none rounded-2xl z-20 mix-blend-overlay transition-opacity duration-150"
+                  className="pointer-events-none absolute inset-0 z-20 rounded-2xl mix-blend-overlay transition-opacity duration-150"
                   style={{
                     opacity: colorGrading.filmGrain.strength,
                     backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='${
@@ -1423,30 +1731,31 @@ export default function LayersStudio({
                 />
               )}
 
-              {/* 1. FREEHAND LASSO EDIT OVERLAY */}
+              {/* Lasso outline */}
               {activeTool === "lasso" && lassoPoints.length > 1 && (
                 <svg
                   viewBox="0 0 1000 1000"
                   preserveAspectRatio="none"
-                  className="absolute inset-0 w-full h-full pointer-events-none z-30"
+                  className="pointer-events-none absolute inset-0 z-30 h-full w-full"
+                  aria-hidden="true"
                 >
                   <path
                     d={getLassoPathString()}
-                    fill="rgba(56, 189, 248, 0.18)"
-                    stroke="#38bdf8"
-                    strokeWidth="4"
+                    fill="rgba(34, 211, 238, 0.14)"
+                    stroke="#22d3ee"
+                    strokeWidth="3"
                     strokeDasharray="8 8"
-                    className="drop-shadow-[0_0_15px_rgba(56,189,248,0.8)]"
+                    vectorEffect="non-scaling-stroke"
                   />
                 </svg>
               )}
 
-              {/* 2. RECTANGULAR REGIONAL EDIT BOX OVERLAY */}
+              {/* Region box */}
               {activeTool === "regional-edit" &&
                 regionalBox.width > 0 &&
                 regionalBox.height > 0 && (
                   <div
-                    className="absolute border-2 border-dashed border-[#38bdf8] bg-[#38bdf8]/10 rounded-lg pointer-events-auto shadow-[0_0_25px_rgba(56,189,248,0.5)] z-30"
+                    className="pointer-events-auto absolute z-30 rounded-lg border-2 border-dashed border-[#22d3ee] bg-[#22d3ee]/10"
                     style={{
                       left: `${regionalBox.x}%`,
                       top: `${regionalBox.y}%`,
@@ -1454,14 +1763,14 @@ export default function LayersStudio({
                       height: `${regionalBox.height}%`,
                     }}
                   >
-                    <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-[#38bdf8] border border-white rounded-full" />
-                    <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-[#38bdf8] border border-white rounded-full" />
-                    <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-[#38bdf8] border border-white rounded-full" />
-                    <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-[#38bdf8] border border-white rounded-full" />
+                    <span className="absolute -left-1.5 -top-1.5 h-3 w-3 rounded-full border border-white bg-[#22d3ee]" />
+                    <span className="absolute -right-1.5 -top-1.5 h-3 w-3 rounded-full border border-white bg-[#22d3ee]" />
+                    <span className="absolute -bottom-1.5 -left-1.5 h-3 w-3 rounded-full border border-white bg-[#22d3ee]" />
+                    <span className="absolute -bottom-1.5 -right-1.5 h-3 w-3 rounded-full border border-white bg-[#22d3ee]" />
                   </div>
                 )}
 
-              {/* FLOATING REGIONAL / LASSO PROMPT BAR */}
+              {/* The edit prompt for a lasso or region selection */}
               {((activeTool === "lasso" &&
                 lassoPoints.length > 2 &&
                 !isDraggingLasso) ||
@@ -1469,41 +1778,30 @@ export default function LayersStudio({
                   regionalBox.width > 2 &&
                   !isSelectingRegion)) && (
                 <div
-                  onMouseDown={(e) => e.stopPropagation()}
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[280px] sm:w-[340px] bg-[#161822]/95 backdrop-blur-2xl border border-white/20 rounded-full px-3.5 py-2 flex items-center gap-2 shadow-[0_20px_40px_rgba(0,0,0,0.9)] z-50 animate-fade-in"
+                  onMouseDown={(event) => event.stopPropagation()}
+                  className="absolute bottom-4 left-1/2 z-50 flex w-[280px] -translate-x-1/2 items-center gap-2 rounded-xl border border-white/[0.12] bg-[#111114] p-1.5 pl-3 shadow-[0_20px_40px_rgba(0,0,0,0.6)] sm:w-[340px]"
                 >
-                  <span className="text-white/40 font-semibold text-sm ml-1">
-                    +
-                  </span>
                   <input
                     type="text"
                     value={regionalPrompt}
-                    onChange={(e) => setRegionalPrompt(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && handleRunRegionalEdit()
-                    }
-                    placeholder={copy.tools.regionalPromptPlaceholder}
-                    className="flex-1 bg-transparent text-xs text-white placeholder-white/40 focus:outline-none min-w-0 font-medium"
+                    onChange={(event) => setRegionalPrompt(event.target.value)}
+                    onKeyDown={(event) => event.key === "Enter" && handleRunRegionalEdit()}
+                    placeholder={copy.canvas.regionPlaceholder}
+                    aria-label={copy.canvas.regionPlaceholder}
+                    className="min-w-0 flex-1 bg-transparent text-[13px] text-white placeholder:text-white/40 focus:outline-none"
                   />
                   <button
+                    type="button"
                     onClick={handleRunRegionalEdit}
                     disabled={isProcessing}
-                    className="w-7 h-7 rounded-full bg-[#84cc16] hover:bg-[#a3e635] text-black flex items-center justify-center shadow-[0_0_12px_rgba(132,204,22,0.6)] transition-all hover:scale-105 active:scale-95 flex-shrink-0"
-                    title={copy.tools.runSelectionEdit}
+                    className="h-8 shrink-0 rounded-lg bg-[#22d3ee] px-3 text-[12.5px] font-semibold text-[#04202a] transition hover:brightness-105 disabled:opacity-50"
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
+                    {copy.canvas.regionRun}
                   </button>
                 </div>
               )}
 
-              {/* Interactive HTML5 Drawing & Shapes Overlay Canvas */}
+              {/* Drawing and shapes overlay */}
               <canvas
                 ref={drawingCanvasRef}
                 onMouseDown={startDrawing}
@@ -1513,37 +1811,36 @@ export default function LayersStudio({
                 onTouchStart={startDrawing}
                 onTouchMove={drawStroke}
                 onTouchEnd={stopDrawing}
-                className={`absolute inset-0 w-full h-full touch-none ${
+                className={`absolute inset-0 h-full w-full touch-none ${
                   activeTool === "draw" ||
                   activeTool === "eraser" ||
                   activeTool === "shapes"
-                    ? "cursor-crosshair z-30 pointer-events-auto"
+                    ? "pointer-events-auto z-30 cursor-crosshair"
                     : "pointer-events-none z-10"
                 }`}
               />
 
-              {/* Decomposed Layer Overlay Stack on Canvas */}
+              {/* The split layers, stacked (or the picked one alone) */}
               {decomposedLayers.length > 0 && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                   {decomposedLayers.map((layerUrl, idx) => {
                     const isVisible = isSoloMode
                       ? carouselIndex === idx
                       : visibleLayers[idx];
                     if (!isVisible) return null;
-                    const isSelected = carouselIndex === idx;
                     return (
                       <img
                         key={idx}
                         src={layerUrl}
-                        alt={`Layer ${idx + 1}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
+                        alt={copy.canvas.layerAlt.replace("{n}", idx + 1)}
+                        onClick={(event) => {
+                          event.stopPropagation();
                           setCarouselIndex(idx);
                         }}
-                        className={`absolute inset-0 w-full h-full object-contain transition-all duration-200 cursor-pointer pointer-events-auto ${
-                          isSelected
-                            ? "ring-2 ring-[#84cc16] drop-shadow-[0_0_20px_rgba(132,204,22,0.6)]"
-                            : "hover:opacity-90"
+                        className={`pointer-events-auto absolute inset-0 h-full w-full cursor-pointer object-contain transition-[filter] duration-200 ${
+                          carouselIndex === idx
+                            ? "drop-shadow-[0_0_10px_rgba(34,211,238,0.6)]"
+                            : ""
                         }`}
                       />
                     );
@@ -1551,23 +1848,19 @@ export default function LayersStudio({
                 </div>
               )}
 
-              {/* Loading Overlay */}
+              {/* Working */}
               {isProcessing && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center p-6 z-40">
-                  <div className="relative w-16 h-16 mb-4">
-                    <div className="absolute inset-0 border-4 border-[#84cc16]/20 rounded-full" />
-                    <div className="absolute inset-0 border-4 border-[#84cc16] border-t-transparent rounded-full animate-spin" />
-                  </div>
-                  <p className="text-sm font-bold tracking-wide text-white">
-                    Processing Image...
+                <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/60 p-6 backdrop-blur-sm">
+                  <span
+                    aria-hidden="true"
+                    className="h-12 w-12 animate-spin rounded-full border-[3px] border-[#22d3ee]/20 border-t-[#22d3ee]"
+                  />
+                  <p className="mt-4 text-[13.5px] font-medium text-white">
+                    {copy.canvas.processing}
                   </p>
-                  <p className="text-xs text-white/50 mt-1">
-                    Openstudio
-                  </p>
-
-                  <div className="w-48 bg-white/10 h-1.5 rounded-full overflow-hidden mt-4">
+                  <div className="mt-3 h-1 w-44 overflow-hidden rounded-full bg-white/10">
                     <div
-                      className="bg-gradient-to-r from-[#84cc16] to-[#a3e635] h-full transition-all duration-300"
+                      className="h-full bg-[#22d3ee] transition-all duration-300"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -1575,2440 +1868,917 @@ export default function LayersStudio({
               )}
             </div>
           ) : (
-            <div
+            <button
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               onDragEnter={handleDropzoneDragEnter}
               onDragLeave={handleDropzoneDragLeave}
               onDragOver={handleDropzoneDragOver}
               onDrop={handleDropzoneDrop}
-              className={`flex flex-col items-center justify-center p-16 border-2 border-dashed rounded-3xl cursor-pointer transition-all duration-200 ${
+              className={`flex w-[min(420px,calc(100vw-8rem))] flex-col items-center gap-3 rounded-2xl border border-dashed px-8 py-12 text-center transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/60 ${
                 isDropzoneDragging
-                  ? "border-[#84cc16] bg-[#84cc16]/10 scale-[1.02]"
-                  : "border-white/20 hover:border-[#84cc16]/60 bg-[#16181f]/50 hover:bg-[#16181f]/80"
+                  ? "border-[#22d3ee] bg-[#22d3ee]/[0.06]"
+                  : "border-white/15 bg-[#111114]/70 hover:border-[#22d3ee]/50"
               }`}
+              data-layers-dropzone
             >
-              <div className="w-16 h-16 rounded-2xl bg-[#84cc16]/10 text-[#84cc16] flex items-center justify-center mb-4">
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-              </div>
-              <p className="text-base font-bold text-white mb-1">
-                Click or Drop Image Here
-              </p>
-              <p className="text-xs text-white/50">
-                Supports PNG, JPEG, WEBP up to 20MB
-              </p>
-            </div>
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.05] text-[#67e8f9]">
+                <IconPhotoPlus size={22} stroke={1.75} aria-hidden="true" />
+              </span>
+              <span className="text-[15px] font-medium text-white">{copy.canvas.dropTitle}</span>
+              <span className="text-[12.5px] text-white/50">{copy.canvas.dropHint}</span>
+            </button>
           )}
         </div>
+      </div>
 
-        {/* Floating Canvas Controls & Prompt Composer */}
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2.5 w-full max-w-xl px-4">
-          {/* SHAPES (R) POPOVER TOOLBAR */}
-          {activeTool === "shapes" && (
-            <div className="flex items-center gap-3 px-4 py-2 bg-[#1b1e26]/95 backdrop-blur-xl border border-[#84cc16]/40 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] animate-fade-in">
-              <div className="flex items-center gap-1">
+      {/* Tool tabs */}
+      <div className="pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center px-3">
+        <div className="pointer-events-auto relative max-w-full">
+          <div
+            role="tablist"
+            aria-label={copy.toolTabs.label}
+            className={`no-scrollbar flex max-w-full items-center gap-0.5 overflow-x-auto rounded-xl p-[3px] ${FLOATING_CARD_CLASS}`}
+            data-layers-tabs
+          >
+            {TOOLS.filter((tool) => !tool.more).map((tool) => {
+              const selected = tool.id === currentTool.id;
+              return (
                 <button
-                  onClick={() => setActiveShape("line")}
-                  className={`p-1.5 rounded-lg border transition-all ${
-                    activeShape === "line"
-                      ? "bg-[#84cc16] text-black border-[#84cc16]"
-                      : "text-white/70 hover:text-white border-transparent"
-                  }`}
-                  title={copy.tools.line}
+                  key={tool.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  aria-label={copy.toolTabs[tool.id]}
+                  onClick={() => pickTool(tool.id)}
+                  className={toolTabClassName(selected)}
+                  data-layers-tab={tool.id}
                 >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <line x1="5" y1="19" x2="19" y2="5" />
-                  </svg>
-                </button>
-
-                <button
-                  onClick={() => setActiveShape("arrow")}
-                  className={`p-1.5 rounded-lg border transition-all ${
-                    activeShape === "arrow"
-                      ? "bg-[#84cc16] text-black border-[#84cc16]"
-                      : "text-white/70 hover:text-white border-transparent"
-                  }`}
-                  title={copy.tools.arrow}
-                >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <line x1="5" y1="19" x2="19" y2="5" />
-                    <polyline points="12 5 19 5 19 12" />
-                  </svg>
-                </button>
-
-                <button
-                  onClick={() => setActiveShape("rect")}
-                  className={`p-1.5 rounded-lg border transition-all ${
-                    activeShape === "rect"
-                      ? "bg-[#84cc16] text-black border-[#84cc16]"
-                      : "text-white/70 hover:text-white border-transparent"
-                  }`}
-                  title={copy.tools.rectangle}
-                >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                  </svg>
-                </button>
-
-                <button
-                  onClick={() => setActiveShape("circle")}
-                  className={`p-1.5 rounded-lg border transition-all ${
-                    activeShape === "circle"
-                      ? "bg-[#84cc16] text-black border-[#84cc16]"
-                      : "text-white/70 hover:text-white border-transparent"
-                  }`}
-                  title={copy.tools.circle}
-                >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="12" cy="12" r="9" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="w-[1px] h-4 bg-white/10" />
-
-              <div className="flex items-center gap-1.5">
-                {PRESET_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setShapeColor(c)}
-                    className={`w-4 h-4 rounded-full border border-white/20 transition-all ${
-                      shapeColor === c
-                        ? "scale-125 ring-2 ring-white shadow-md"
-                        : "hover:scale-110"
-                    }`}
-                    style={{ backgroundColor: c }}
+                  <tool.Icon
+                    size={16}
+                    stroke={1.75}
+                    aria-hidden="true"
+                    className={selected ? "text-[#67e8f9]" : ""}
                   />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Active Drawing Tool Popover Options Bar */}
-          {(activeTool === "draw" || activeTool === "eraser") && (
-            <div className="flex items-center gap-3 px-4 py-2 bg-[#1b1e26]/95 backdrop-blur-xl border border-[#84cc16]/40 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.6)] animate-fade-in">
-              <span className="text-xs font-extrabold uppercase text-[#a3e635] tracking-wider">
-                {activeTool === "draw" ? "Marker Pen" : "Eraser"}
-              </span>
-
-              {activeTool === "draw" && (
-                <div className="flex items-center gap-1.5">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setBrushColor(c)}
-                      className={`w-5 h-5 rounded-full border border-white/20 transition-all ${
-                        brushColor === c
-                          ? "scale-125 ring-2 ring-white shadow-md"
-                          : "hover:scale-110"
-                      }`}
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                  <input
-                    type="color"
-                    value={brushColor}
-                    onChange={(e) => setBrushColor(e.target.value)}
-                    className="w-5 h-5 rounded-full border-0 cursor-pointer bg-transparent"
-                    title={copy.tools.customColor}
-                  />
-                </div>
+                  <span className={selected ? "" : "hidden sm:inline"}>
+                    {copy.toolTabs[tool.id]}
+                  </span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={Boolean(moreTool)}
+              aria-haspopup="menu"
+              aria-expanded={openDropdown === "more"}
+              aria-label={moreTool ? copy.menuItems[moreTool.id] : copy.toolTabs.more}
+              onClick={toggleDropdown("more")}
+              className={`group ${toolTabClassName(Boolean(moreTool))}`}
+              data-layers-tab="more"
+            >
+              {moreTool ? (
+                <moreTool.Icon size={16} stroke={1.75} aria-hidden="true" className="text-[#67e8f9]" />
+              ) : (
+                <IconDots size={16} stroke={1.75} aria-hidden="true" />
               )}
+              <span className={moreTool ? "" : "hidden sm:inline"}>
+                {moreTool ? copy.menuItems[moreTool.id] : copy.toolTabs.more}
+              </span>
+              <PromptChevronIcon className={openDropdown === "more" ? "rotate-180" : ""} />
+            </button>
+          </div>
 
-              <div className="flex items-center gap-2 border-l border-white/10 pl-3">
-                <span className="text-[11px] text-white/60 font-semibold">
-                  Size:
-                </span>
+          {openDropdown === "more" && (
+            <PromptPopover
+              onClick={(event) => event.stopPropagation()}
+              positionClassName="absolute right-0 top-full z-50 mt-2"
+              className="w-[220px]"
+              solid
+              data-layers-more-menu
+            >
+              <PromptMenuList>
+                {TOOLS.filter((tool) => tool.more).map((tool) => (
+                  <PromptMenuItem
+                    key={tool.id}
+                    selected={tool.id === currentTool.id}
+                    onClick={() => pickTool(tool.id)}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <tool.Icon size={15} stroke={1.75} aria-hidden="true" className="opacity-70" />
+                      {copy.menuItems[tool.id]}
+                    </span>
+                  </PromptMenuItem>
+                ))}
+              </PromptMenuList>
+            </PromptPopover>
+          )}
+        </div>
+      </div>
+
+      {/* Canvas tools and zoom */}
+      <div className="absolute left-3 top-[124px] z-30 sm:left-5 sm:top-1/2 sm:-translate-y-1/2">
+        <div
+          role="toolbar"
+          aria-label={copy.rail.label}
+          aria-orientation="vertical"
+          className={`flex flex-col gap-0.5 rounded-[14px] p-[5px] ${FLOATING_CARD_CLASS}`}
+          data-layers-rail
+        >
+          {railGroups.map((group, groupIndex) => (
+            <Fragment key={groupIndex}>
+              {groupIndex > 0 && (
+                <span aria-hidden="true" className="mx-1.5 my-1 h-px bg-white/[0.08]" />
+              )}
+              {group.map((tool) => {
+                const active = activeTool === tool.id;
+                return (
+                  <button
+                    key={tool.id}
+                    type="button"
+                    aria-label={tool.label}
+                    aria-pressed={active}
+                    title={tool.label}
+                    onClick={() =>
+                      setActiveTool(
+                        tool.id === "pointer" || tool.id === "hand"
+                          ? tool.id
+                          : active
+                            ? "pointer"
+                            : tool.id,
+                      )
+                    }
+                    className={railButtonClassName(active)}
+                    data-layers-canvas-tool={tool.id}
+                  >
+                    <tool.Icon size={18} stroke={1.75} aria-hidden="true" />
+                  </button>
+                );
+              })}
+            </Fragment>
+          ))}
+          <span aria-hidden="true" className="mx-1.5 my-1 h-px bg-white/[0.08]" />
+          <button
+            type="button"
+            aria-label={copy.rail.zoomIn}
+            title={copy.rail.zoomIn}
+            onClick={() => setZoomLevel((zoom) => Math.min(200, zoom + 10))}
+            className={railButtonClassName(false)}
+          >
+            <IconPlus size={16} stroke={1.75} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-label={copy.rail.resetZoom}
+            title={copy.rail.resetZoom}
+            onClick={resetView}
+            className="flex h-7 w-[38px] items-center justify-center rounded-lg font-mono text-[10.5px] text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+            data-layers-zoom
+          >
+            {zoomLevel}%
+          </button>
+          <button
+            type="button"
+            aria-label={copy.rail.zoomOut}
+            title={copy.rail.zoomOut}
+            onClick={() => setZoomLevel((zoom) => Math.max(50, zoom - 10))}
+            className={railButtonClassName(false)}
+          >
+            <IconMinus size={16} stroke={1.75} aria-hidden="true" />
+          </button>
+        </div>
+
+        {/* The marker, eraser or shapes options, beside the rail */}
+        {showToolOptions && (
+          <div
+            className={`absolute left-full top-0 ml-2 flex w-[212px] flex-col gap-3 rounded-[14px] p-3 ${FLOATING_CARD_CLASS}`}
+            data-layers-tool-options
+          >
+            <span className="text-[12px] font-medium text-white/60">
+              {activeTool === "draw"
+                ? copy.rail.marker
+                : activeTool === "eraser"
+                  ? copy.rail.eraser
+                  : copy.rail.shapes}
+            </span>
+
+            {activeTool === "shapes" && (
+              <PromptSegmentedControl className="w-full">
+                {shapeOptions.map((shape) => (
+                  <PromptSegmentOption
+                    key={shape.id}
+                    selected={activeShape === shape.id}
+                    onClick={() => setActiveShape(shape.id)}
+                    aria-label={shape.label}
+                    title={shape.label}
+                    className="flex-1 !px-0"
+                  >
+                    <shape.Icon size={15} stroke={1.75} aria-hidden="true" />
+                  </PromptSegmentOption>
+                ))}
+              </PromptSegmentedControl>
+            )}
+
+            {activeTool === "draw" && (
+              <ColorSwatches
+                colors={PRESET_COLORS}
+                value={brushColor}
+                onChange={setBrushColor}
+                customLabel={copy.rail.customColor}
+              />
+            )}
+            {activeTool === "shapes" && (
+              <ColorSwatches colors={PRESET_COLORS} value={shapeColor} onChange={setShapeColor} />
+            )}
+
+            {(activeTool === "draw" || activeTool === "eraser") && (
+              <div className="flex items-center gap-2.5">
+                <label htmlFor="layers-brush-size" className="text-[12px] text-white/60">
+                  {copy.rail.size}
+                </label>
                 <input
+                  id="layers-brush-size"
                   type="range"
                   min="2"
                   max="40"
                   value={brushSize}
-                  onChange={(e) => setBrushSize(Number(e.target.value))}
-                  className="w-20 accent-[#84cc16] cursor-pointer"
+                  onChange={(event) => setBrushSize(Number(event.target.value))}
+                  className="oga-range min-w-0 flex-1"
+                  style={{ background: rangeTrack(brushSize, 2, 40) }}
                 />
-                <span className="text-xs font-bold text-white min-w-[20px]">
+                <span className="w-9 text-right font-mono text-[11.5px] text-white/80">
                   {brushSize}px
                 </span>
               </div>
-
-              <div className="flex items-center gap-1 border-l border-white/10 pl-3">
-                <button
-                  onClick={handleUndo}
-                  disabled={historyIndex < 0}
-                  className="p-1.5 text-white/70 hover:text-white disabled:opacity-30 rounded-lg hover:bg-white/5"
-                  title={copy.tools.undoStroke}
-                >
-                  ↶
-                </button>
-                <button
-                  onClick={handleRedo}
-                  disabled={historyIndex >= historyStack.length - 1}
-                  className="p-1.5 text-white/70 hover:text-white disabled:opacity-30 rounded-lg hover:bg-white/5"
-                  title={copy.tools.redoStroke}
-                >
-                  ↷
-                </button>
-                <button
-                  onClick={clearDrawingCanvas}
-                  className="p-1.5 text-rose-400 hover:text-rose-300 rounded-lg hover:bg-white/5 text-xs font-bold"
-                  title={copy.tools.clearDrawings}
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Bottom Floating Micro Toolbar */}
-          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-[#1b1e26]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_12px_35px_rgba(0,0,0,0.6)]">
-            <button
-              onClick={() => setActiveTool("pointer")}
-              className={`p-2 rounded-xl transition-all ${
-                activeTool === "pointer"
-                  ? "bg-[#84cc16] text-black shadow-[0_0_12px_rgba(132,204,22,0.4)]"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-              title={copy.tools.selectPointerTool}
-            >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <polygon points="3 3 10.07 19.97 12.58 12.58 19.97 10.07 3 3" />
-              </svg>
-            </button>
-
-            <button
-              onClick={() => setActiveTool("hand")}
-              className={`p-2 rounded-xl transition-all ${
-                activeTool === "hand"
-                  ? "bg-[#84cc16] text-black shadow-[0_0_12px_rgba(132,204,22,0.4)]"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-              title={copy.tools.panTool}
-            >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M18 11V6a2 2 0 0 0-4 0v5" />
-                <path d="M14 10V4a2 2 0 0 0-4 0v6" />
-                <path d="M10 10.5V6a2 2 0 0 0-4 0v9" />
-                <path d="M18 11a2 2 0 0 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.8-5.6-2.4l-3-4.2a2 2 0 0 1 3.2-2.4l1.4 1.6" />
-              </svg>
-            </button>
-
-            <button
-              onClick={() =>
-                setActiveTool(activeTool === "lasso" ? "pointer" : "lasso")
-              }
-              className={`group relative p-2 rounded-xl transition-all ${
-                activeTool === "lasso"
-                  ? "bg-[#84cc16] text-black shadow-[0_0_12px_rgba(132,204,22,0.4)]"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-              title={copy.tools.lassoEdit}
-            >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  d="M4 16c-1.1 0-2-.9-2-2V8c0-1.1.9-2 2-2h16c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2"
-                  strokeDasharray="3 3"
-                />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-[11px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md">
-                Lasso edit
-              </div>
-            </button>
-
-            <button
-              onClick={() =>
-                setActiveTool(
-                  activeTool === "regional-edit" ? "pointer" : "regional-edit",
-                )
-              }
-              className={`group relative p-2 rounded-xl transition-all ${
-                activeTool === "regional-edit"
-                  ? "bg-[#84cc16] text-black shadow-[0_0_12px_rgba(132,204,22,0.4)]"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-              title={copy.tools.regionalEdit}
-            >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect
-                  x="4"
-                  y="4"
-                  width="16"
-                  height="16"
-                  rx="2"
-                  strokeDasharray="3 3"
-                />
-                <path d="M9 12h6M12 9v6" />
-              </svg>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-[11px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md">
-                Regional edit
-              </div>
-            </button>
-
-            <button
-              onClick={() =>
-                setActiveTool(activeTool === "draw" ? "pointer" : "draw")
-              }
-              className={`p-2 rounded-xl transition-all ${
-                activeTool === "draw"
-                  ? "bg-[#84cc16] text-black shadow-[0_0_12px_rgba(132,204,22,0.4)]"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-              title={copy.tools.highlightMarkerPen}
-            >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M12 19l7-7 3 3-7 7-3-3z" />
-                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-              </svg>
-            </button>
-
-            <button
-              onClick={() =>
-                setActiveTool(activeTool === "eraser" ? "pointer" : "eraser")
-              }
-              className={`p-2 rounded-xl transition-all ${
-                activeTool === "eraser"
-                  ? "bg-[#84cc16] text-black shadow-[0_0_12px_rgba(132,204,22,0.4)]"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-              title={copy.tools.eraserTool}
-            >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M20 20H7L3 16C2 15 2 13 3 12L13 2C14 1 16 1 17 2L21 6C22 7 22 9 21 10L12 19" />
-              </svg>
-            </button>
-
-            <button
-              onClick={() =>
-                setActiveTool(activeTool === "shapes" ? "pointer" : "shapes")
-              }
-              className={`group relative p-2 rounded-xl transition-all ${
-                activeTool === "shapes"
-                  ? "bg-[#84cc16] text-black shadow-[0_0_12px_rgba(132,204,22,0.4)]"
-                  : "text-white/60 hover:text-white hover:bg-white/5"
-              }`}
-              title={copy.tools.shapes}
-            >
-              <svg
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect x="3" y="3" width="10" height="10" rx="1" />
-                <circle cx="16" cy="16" r="5" />
-              </svg>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-[11px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-md">
-                Shapes (R)
-              </div>
-            </button>
-
-            <div className="w-[1px] h-4 bg-white/10 mx-1" />
-
-            <button
-              onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
-              className="px-1.5 py-1 text-white/60 hover:text-white text-xs font-bold"
-            >
-              –
-            </button>
-            <button
-              onClick={resetView}
-              className="text-xs font-semibold text-white/80 min-w-[36px] text-center hover:text-white"
-              title={copy.tools.resetZoomPan}
-            >
-              {zoomLevel}%
-            </button>
-            <button
-              onClick={() => setZoomLevel((z) => Math.min(200, z + 10))}
-              className="px-1.5 py-1 text-white/60 hover:text-white text-xs font-bold"
-            >
-              +
-            </button>
-          </div>
-
-          {/* Bottom Floating Main Prompt Bar */}
-          <div className="w-full relative flex items-center bg-[#15171e]/95 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-[0_15px_40px_rgba(0,0,0,0.6)]">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all mr-2 flex-shrink-0"
-              title={copy.tools.addImage}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </button>
-
-            <input
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleDecompose()}
-              placeholder={
-                markedRegions.length > 0
-                  ? `Describe layers for ${markedRegions.length} marked region(s)...`
-                  : "Describe how to edit image or split layers..."
-              }
-              className="flex-1 bg-transparent text-sm text-white placeholder-white/40 focus:outline-none px-2 font-medium min-w-0"
-            />
-
-            <PriceChip locale={locale} endpoint="bytedance-seedream-5.0-pro-layer" payload={{ resolution, output_format: outputFormat }} className="ml-2" />
-
-            <button
-              onClick={() => handleDecompose()}
-              disabled={isProcessing}
-              className="w-10 h-10 rounded-full bg-[#84cc16] hover:bg-[#a3e635] text-black flex items-center justify-center shadow-[0_0_20px_rgba(132,204,22,0.5)] transition-all hover:scale-105 active:scale-95 disabled:opacity-50 ml-2 flex-shrink-0"
-              title={copy.tools.runLayerDecomposition}
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Inspector Panel */}
-      {isSidebarOpen && (
-        <div className="w-[380px] h-full bg-[#242833] border-l border-white/10 flex flex-col justify-between z-20 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] animate-fade-in">
-          {/* Top Header & Panel Content */}
-          <div className="p-5 flex-1 overflow-y-auto custom-scrollbar">
-            {/* Header with Back, Title & Close */}
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setActiveSideTab("menu")}
-                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center transition-colors"
-                  title={copy.tools.backToTools}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <polyline points="15 18 9 12 15 6" />
-                  </svg>
-                </button>
-
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-black shadow-sm">
-                    {activeSideTab === "upscale" ? (
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <polyline points="15 3 21 3 21 9" />
-                        <polyline points="9 21 3 21 3 15" />
-                        <line x1="21" y1="3" x2="14" y2="10" />
-                        <line x1="3" y1="21" x2="10" y2="14" />
-                      </svg>
-                    ) : activeSideTab === "color-grading" ? (
-                      <svg
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          fill="none"
-                        />
-                        <path
-                          d="M12 2a10 10 0 0 1 10 10c0 5.52-4.48 10-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2z"
-                          opacity="0.4"
-                        />
-                        <circle cx="9" cy="9" r="3" />
-                        <circle cx="15" cy="9" r="3" />
-                        <circle cx="12" cy="15" r="3" />
-                      </svg>
-                    ) : activeSideTab === "remove-bg" ? (
-                      <svg
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" />
-                      </svg>
-                    ) : activeSideTab === "expand-crop" ? (
-                      <svg
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <polyline points="15 3 21 3 21 9" />
-                        <polyline points="9 21 3 21 3 15" />
-                        <polyline points="21 15 21 21 15 21" />
-                        <polyline points="3 9 3 3 9 3" />
-                      </svg>
-                    ) : (
-                      <svg
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                        <polyline points="2 17 12 22 22 17" />
-                        <polyline points="2 12 12 17 22 12" />
-                      </svg>
-                    )}
-                  </div>
-                  <h3 className="text-sm font-extrabold text-white tracking-tight">
-                    {copy.panels[activeSideTab] || copy.panels.tools}
-                  </h3>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setIsSidebarOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white flex items-center justify-center transition-colors"
-                title={copy.tools.closePanel}
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            {/* --- VIEW 1: LAYER DECOMPOSITION VIEW --- */}
-            {activeSideTab === "layer-decomposition" && (
-              <div className="space-y-4">
-                {/* Settings Section */}
-                <div className="bg-[#2d313d] rounded-3xl p-5 border border-white/5 space-y-4 shadow-sm">
-                  <h4 className="text-sm font-bold text-white tracking-tight">
-                    {copy.settings.heading}
-                  </h4>
-
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-white/40 mb-2">
-                      {copy.settings.resolution}
-                    </label>
-                    <div className="grid grid-cols-3 gap-1.5 bg-[#1a1c24] p-1 rounded-2xl border border-white/5">
-                      {["1K", "1.5K", "2K"].map((res) => (
-                        <button
-                          key={res}
-                          onClick={() => setResolution(res)}
-                          className={`py-2 text-xs font-extrabold rounded-xl transition-all ${
-                            resolution === res
-                              ? "bg-[#383c4a] text-white shadow-md border border-white/10"
-                              : "text-white/40 hover:text-white"
-                          }`}
-                        >
-                          {res}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-white/40">
-                        {copy.settings.layers}
-                      </label>
-                      <span className="px-2.5 py-0.5 rounded-lg bg-[#1a1c24] border border-white/10 text-xs font-black text-white shadow-sm">
-                        {layerCount}
-                      </span>
-                    </div>
-                    <div className="bg-[#1a1c24] rounded-2xl p-3 border border-white/5 flex items-center gap-3">
-                      <span className="text-[10px] font-bold text-white/30">
-                        2
-                      </span>
-                      <input
-                        type="range"
-                        min="2"
-                        max="16"
-                        value={layerCount}
-                        onChange={(e) => setLayerCount(Number(e.target.value))}
-                        className="w-full accent-[#e2f924] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                      />
-                      <span className="text-[10px] font-bold text-white/30">
-                        16
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* RESULTS: DECOMPOSED LAYERS INTERACTIVE CAROUSEL */}
-                {decomposedLayers.length > 0 && (
-                  <div className="space-y-4 border-t border-white/10 pt-4 animate-fade-in">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase text-white/80">
-                          {copy.carousel.heading}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-[#84cc16]/20 text-[#a3e635] text-[10px] font-black">
-                          {carouselIndex + 1} / {decomposedLayers.length}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setIsSoloMode(!isSoloMode)}
-                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all ${
-                            isSoloMode
-                              ? "bg-[#84cc16] text-black border-[#84cc16]"
-                              : "bg-white/5 text-white/60 hover:text-white border-white/10"
-                          }`}
-                          title={copy.carousel.viewOnlyActive}
-                        >
-                          {isSoloMode ? copy.carousel.soloActive : copy.carousel.stackMode}
-                        </button>
-                        <button
-                          onClick={handleDownloadAll}
-                          className="text-xs text-[#a3e635] hover:underline font-semibold"
-                        >
-                          {copy.carousel.downloadAll}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="relative group bg-[#111319] border border-white/15 rounded-2xl overflow-hidden p-3 flex flex-col items-center shadow-xl">
-                      <div
-                        className="w-full h-48 rounded-xl overflow-hidden relative flex items-center justify-center border border-white/10"
-                        style={{
-                          backgroundImage: `linear-gradient(45deg, #1c1f26 25%, transparent 25%), linear-gradient(-45deg, #1c1f26 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1c1f26 75%), linear-gradient(-45deg, transparent 75%, #1c1f26 75%)`,
-                          backgroundSize: "16px 16px",
-                          backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
-                        }}
-                      >
-                        <img
-                          src={decomposedLayers[carouselIndex]}
-                          alt={`Layer ${carouselIndex + 1}`}
-                          className="max-h-full max-w-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] transition-all duration-300 transform group-hover:scale-105"
-                        />
-
-                        <button
-                          onClick={() =>
-                            setCarouselIndex((prev) =>
-                              prev > 0 ? prev - 1 : decomposedLayers.length - 1,
-                            )
-                          }
-                          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-[#84cc16] text-white hover:text-black flex items-center justify-center backdrop-blur-md border border-white/10 transition-all shadow-md"
-                          title={copy.carousel.previousLayer}
-                        >
-                          ‹
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            setCarouselIndex((prev) =>
-                              prev < decomposedLayers.length - 1 ? prev + 1 : 0,
-                            )
-                          }
-                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-[#84cc16] text-white hover:text-black flex items-center justify-center backdrop-blur-md border border-white/10 transition-all shadow-md"
-                          title={copy.carousel.nextLayer}
-                        >
-                          ›
-                        </button>
-                      </div>
-
-                      <div className="w-full flex items-center justify-between mt-3 px-1 text-xs">
-                        <div>
-                          <span className="font-extrabold text-white text-sm">
-                            {copy.carousel.layerLabel.replace('{n}', carouselIndex + 1)}
-                          </span>
-                          <span className="text-[11px] text-white/40 ml-2">
-                            {copy.carousel.seedreamDecomposed}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => toggleLayerVisibility(carouselIndex)}
-                            className={`p-1.5 rounded-lg border transition-all ${
-                              visibleLayers[carouselIndex]
-                                ? "bg-white/10 text-[#a3e635] border-white/10"
-                                : "text-white/30 border-transparent"
-                            }`}
-                            title={copy.carousel.toggleVisibility}
-                          >
-                            👁
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              handleDownloadSingle(
-                                decomposedLayers[carouselIndex],
-                                `layer_${carouselIndex + 1}.${outputFormat}`,
-                              )
-                            }
-                            className="px-2.5 py-1 rounded-lg bg-[#84cc16] hover:bg-[#a3e635] text-black font-extrabold text-xs flex items-center gap-1 shadow-md"
-                            title={copy.carousel.downloadThisLayer}
-                          >
-                            <span>⬇</span>
-                            <span>{copy.carousel.save}</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                      {decomposedLayers.map((layerUrl, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCarouselIndex(idx)}
-                          className={`relative flex-shrink-0 w-14 h-12 rounded-xl overflow-hidden border transition-all p-1 bg-[#181a22] ${
-                            carouselIndex === idx
-                              ? "border-[#84cc16] ring-2 ring-[#84cc16]/50 scale-105"
-                              : "border-white/10 opacity-60 hover:opacity-100"
-                          }`}
-                        >
-                          <img
-                            src={layerUrl}
-                            alt={`Thumb ${idx + 1}`}
-                            className="w-full h-full object-contain"
-                          />
-                          <span className="absolute bottom-0.5 right-1 text-[8px] font-black text-white/80 bg-black/60 px-1 rounded">
-                            {idx + 1}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
             )}
 
-            {/* --- VIEW 2: DEDICATED CLEAN UPSCALE VIEW --- */}
-            {activeSideTab === "upscale" && (
-              <div className="space-y-4 animate-fade-in">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-white/40">
-                      {copy.common.model}
-                    </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleUndo}
+                disabled={historyIndex < 0}
+                aria-label={copy.rail.undo}
+                title={copy.rail.undo}
+                className={SMALL_ICON_BUTTON_CLASS}
+              >
+                <IconArrowBackUp size={15} stroke={1.75} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={handleRedo}
+                disabled={historyIndex >= historyStack.length - 1}
+                aria-label={copy.rail.redo}
+                title={copy.rail.redo}
+                className={SMALL_ICON_BUTTON_CLASS}
+              >
+                <IconArrowForwardUp size={15} stroke={1.75} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={clearDrawingCanvas}
+                className="ml-auto flex h-7 items-center gap-1.5 rounded-lg px-2 text-[12px] font-medium text-white/60 transition-colors hover:bg-white/[0.06] hover:text-rose-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+              >
+                <IconTrash size={13} stroke={1.75} aria-hidden="true" />
+                {copy.rail.clear}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* The split layers */}
+      {decomposedLayers.length > 0 && (
+        <section
+          aria-label={copy.layersCard.title}
+          className={`absolute right-3 top-[72px] z-30 flex max-h-[calc(100%-18rem)] w-[248px] flex-col gap-2 rounded-2xl p-2.5 sm:right-5 sm:max-h-[calc(100%-15rem)] sm:w-[252px] ${FLOATING_CARD_CLASS}`}
+          data-layers-card
+        >
+          <div className="flex items-center justify-between gap-1.5 pl-1">
+            <button
+              type="button"
+              aria-expanded={!layersCollapsed}
+              aria-label={layersCollapsed ? copy.layersCard.expand : copy.layersCard.collapse}
+              title={layersCollapsed ? copy.layersCard.expand : copy.layersCard.collapse}
+              onClick={() => setLayersCollapsed((collapsed) => !collapsed)}
+              className="flex items-center gap-1.5 rounded-md text-[13px] font-semibold text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+            >
+              {copy.layersCard.title}
+              <span className="flex h-[18px] items-center rounded-md bg-white/[0.06] px-1.5 font-mono text-[11px] font-normal text-white/70">
+                {decomposedLayers.length}
+              </span>
+              <IconChevronDown
+                size={12}
+                stroke={2.5}
+                aria-hidden="true"
+                className={`text-white/45 transition-transform ${layersCollapsed ? "-rotate-90" : ""}`}
+              />
+            </button>
+            <div className="flex items-center gap-1">
+              {!layersCollapsed && (
+                <PromptSegmentedControl className="!p-[2px]">
+                  <PromptSegmentOption
+                    selected={!isSoloMode}
+                    onClick={() => setIsSoloMode(false)}
+                    title={copy.layersCard.showAll}
+                    className="!min-h-[22px] !px-2 !py-0 !text-[11.5px]"
+                  >
+                    {copy.layersCard.stack}
+                  </PromptSegmentOption>
+                  <PromptSegmentOption
+                    selected={isSoloMode}
+                    onClick={() => setIsSoloMode(true)}
+                    title={copy.layersCard.showOne}
+                    className="!min-h-[22px] !px-2 !py-0 !text-[11.5px]"
+                  >
+                    {copy.layersCard.solo}
+                  </PromptSegmentOption>
+                </PromptSegmentedControl>
+              )}
+              <button
+                type="button"
+                onClick={handleDownloadAll}
+                aria-label={copy.layersCard.downloadAll}
+                title={copy.layersCard.downloadAll}
+                className={SMALL_ICON_BUTTON_CLASS}
+              >
+                <IconDownload size={14} stroke={1.75} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+
+          {!layersCollapsed && (
+            <div className="custom-scrollbar -mx-0.5 flex min-h-0 flex-col gap-0.5 overflow-y-auto px-0.5">
+              {decomposedLayers.map((layerUrl, idx) => {
+                const name = copy.carousel.layerLabel.replace("{n}", idx + 1);
+                const selected = carouselIndex === idx;
+                const shown = isSoloMode ? selected : Boolean(visibleLayers[idx]);
+                const visibilityLabel = (shown ? copy.layersCard.hide : copy.layersCard.show).replace("{name}", name);
+                const downloadLabel = copy.layersCard.download.replace("{name}", name);
+                return (
+                  <div
+                    key={`${layerUrl}-${idx}`}
+                    className={`group flex h-[46px] shrink-0 items-center gap-0.5 rounded-[10px] border pl-1 pr-[3px] transition-colors ${
+                      selected
+                        ? "border-[#22d3ee]/40 bg-[#22d3ee]/[0.07]"
+                        : "border-transparent hover:bg-white/[0.04]"
+                    }`}
+                    data-layers-row={idx}
+                  >
                     <button
-                      onClick={handleResetUpscale}
-                      className="flex items-center gap-1 text-[11px] font-bold text-white/50 hover:text-white transition-colors"
-                      title={copy.colorGrading.resetToDefault}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => setCarouselIndex(idx)}
+                      className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
                     >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+                      <span
+                        aria-hidden="true"
+                        className="h-[33px] w-11 shrink-0 overflow-hidden rounded-[7px] border border-white/[0.08]"
+                        style={CHECKERBOARD_STYLE}
                       >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                      <span>{copy.common.reset}</span>
+                        <img
+                          src={layerUrl}
+                          alt=""
+                          className={`h-full w-full object-contain ${shown ? "" : "opacity-35"}`}
+                        />
+                      </span>
+                      <span
+                        className={`truncate text-[12.5px] font-medium ${
+                          selected
+                            ? "text-[#a5f3fc]"
+                            : shown
+                              ? "text-white/[0.86]"
+                              : "text-white/40"
+                        }`}
+                      >
+                        {name}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleDownloadSingle(layerUrl, `layer_${idx + 1}.${outputFormat}`)
+                      }
+                      aria-label={downloadLabel}
+                      title={downloadLabel}
+                      className={`${SMALL_ICON_BUTTON_CLASS} group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 ${
+                        selected ? "opacity-100" : "opacity-0"
+                      }`}
+                    >
+                      <IconDownload size={14} stroke={1.75} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleLayerVisibility(idx)}
+                      disabled={isSoloMode}
+                      aria-label={visibilityLabel}
+                      title={visibilityLabel}
+                      className={`${SMALL_ICON_BUTTON_CLASS} ${shown ? "" : "!text-white/35"}`}
+                    >
+                      {shown ? (
+                        <IconEye size={14} stroke={1.75} aria-hidden="true" />
+                      ) : (
+                        <IconEyeOff size={14} stroke={1.75} aria-hidden="true" />
+                      )}
                     </button>
                   </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
-                  <div className="relative">
-                    <button
-                      onClick={() =>
-                        setIsModelDropdownOpen(!isModelDropdownOpen)
-                      }
-                      className="w-full bg-[#2d313d] hover:bg-[#343946] p-3 rounded-2xl border border-white/5 flex items-center justify-between text-left transition-all shadow-sm"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white flex-shrink-0">
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                          >
-                            <rect x="4" y="14" width="5" height="5" rx="1" />
-                            <rect x="9.5" y="9.5" width="5" height="5" rx="1" />
-                            <rect x="15" y="4" width="5" height="5" rx="1" />
-                          </svg>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-white leading-tight">
-                            {UPSCALE_MODELS.find((m) => m.id === upscaleModel)
-                              ?.name || "Topaz"}
-                          </h4>
-                          <p className="text-[11px] text-white/50 truncate max-w-[200px]">
-                            {
-                              UPSCALE_MODELS.find((m) => m.id === upscaleModel)
-                                ?.subtitle
-                            }
-                          </p>
-                        </div>
-                      </div>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
+      {/* ── BOTTOM PROMPT BAR ── */}
+      <PromptComposer positionClassName="absolute inset-x-3 bottom-3 z-30 mx-auto sm:bottom-5 sm:max-w-[760px] oga-enter-bar">
+          {/* Top row: the image being edited beside the prompt (or the tool) */}
+          <div className="flex items-start gap-3">
+            <div
+              className="flex shrink-0"
+              onDragEnter={handleDropzoneDragEnter}
+              onDragLeave={handleDropzoneDragLeave}
+              onDragOver={handleDropzoneDragOver}
+              onDrop={handleDropzoneDrop}
+              data-layers-source
+            >
+              {currentImageUrl && !uploading ? (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label={copy.bar.changeImage}
+                  title={copy.bar.changeImage}
+                  className={`${PROMPT_REFERENCE_THUMB_CLASS} overflow-hidden focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/60`}
+                >
+                  <img src={currentImageUrl} alt="" className="h-full w-full rounded-xl object-cover" />
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute inset-0 rounded-xl ring-inset ${
+                      isDropzoneDragging ? "ring-2 ring-[#22d3ee]" : "ring-1 ring-white/10"
+                    }`}
+                  />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  aria-label={
+                    uploading
+                      ? copy.bar.uploading.replace("{progress}", uploadProgress)
+                      : copy.bar.addImage
+                  }
+                  title={copy.bar.addImage}
+                  className={promptAddTileClassName({ dragging: isDropzoneDragging })}
+                >
+                  {uploading ? (
+                    <svg width="26" height="26" viewBox="0 0 26 26" className="-rotate-90" aria-hidden="true">
+                      <circle cx="13" cy="13" r="11" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/10" />
+                      <circle
+                        cx="13"
+                        cy="13"
+                        r="11"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
-                        className={`text-white/40 transition-transform ${isModelDropdownOpen ? "rotate-180" : ""}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                    </button>
-
-                    {isModelDropdownOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-[#1f222b] border border-white/10 rounded-2xl p-1.5 shadow-2xl z-50 space-y-1">
-                        {UPSCALE_MODELS.map((opt) => (
-                          <button
-                            key={opt.id}
-                            onClick={() => {
-                              setUpscaleModel(opt.id);
-                              setIsModelDropdownOpen(false);
-                            }}
-                            className={`w-full p-2.5 rounded-xl text-left flex flex-col transition-all ${
-                              upscaleModel === opt.id
-                                ? "bg-[#343946] text-white"
-                                : "text-white/70 hover:bg-white/5 hover:text-white"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-white">
-                                {opt.name}
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-white/40">
-                              {opt.subtitle}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {upscaleModel === "topaz-image-upscale" && (
-                  <div className="bg-[#2d313d] rounded-2xl p-3 border border-white/5 space-y-2 shadow-sm">
-                    <div className="flex items-center justify-between px-1">
-                      <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
-                        Upscale Factor
-                      </span>
-                      <span className="bg-[#181a22] text-white text-[10px] font-black px-2 py-0.5 rounded-lg border border-white/10">
-                        {topazFactor * 442}×{topazFactor * 413}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-4 gap-1.5 bg-[#1a1c24] p-1 rounded-xl border border-white/5">
-                      {[1, 2, 4, 8].map((fac) => (
-                        <button
-                          key={fac}
-                          onClick={() => setTopazFactor(fac)}
-                          className={`py-2 text-xs font-extrabold rounded-lg transition-all ${
-                            topazFactor === fac
-                              ? "bg-[#383c4a] text-white shadow-md border border-white/10"
-                              : "text-white/40 hover:text-white"
-                          }`}
-                        >
-                          x{fac}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {upscaleModel === "seedvr2-image-upscale" && (
-                  <div className="bg-[#2d313d] rounded-2xl p-3 border border-white/5 space-y-2 shadow-sm">
-                    <div className="flex items-center justify-between px-1">
-                      <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider">
-                        {copy.settings.resolution}
-                      </span>
-                      <span className="bg-[#181a22] text-white text-[10px] font-black px-2 py-0.5 rounded-lg border border-white/10">
-                        {seedvrResolution.toUpperCase()} UHD
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-1.5 bg-[#1a1c24] p-1 rounded-xl border border-white/5">
-                      {["2k", "4k", "8k"].map((res) => (
-                        <button
-                          key={res}
-                          onClick={() => setSeedvrResolution(res)}
-                          className={`py-2 text-xs font-extrabold uppercase rounded-lg transition-all ${
-                            seedvrResolution === res
-                              ? "bg-[#383c4a] text-white shadow-md border border-white/10"
-                              : "text-white/40 hover:text-white"
-                          }`}
-                        >
-                          {res}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {upscaleModel === "ai-image-upscaler" && (
-                  <div className="bg-[#2d313d] rounded-2xl p-4 border border-white/5 flex items-center gap-3 shadow-sm">
-                    <div className="w-8 h-8 rounded-xl bg-[#84cc16]/10 text-[#84cc16] flex items-center justify-center flex-shrink-0">
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h5 className="text-xs font-bold text-white">
-                        Automatic AI Super-Resolution
-                      </h5>
-                      <p className="text-[10px] text-white/50">
-                        1-click neural clarity and noise reduction.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* --- VIEW 3: DEDICATED COLOR GRADING VIEW --- */}
-            {activeSideTab === "color-grading" && (
-              <div className="space-y-4 animate-fade-in">
-                {/* 1. Color Correct Card */}
-                <div className="bg-[#2d313d] rounded-3xl p-4 border border-white/5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() =>
-                        setOpenSections((prev) => ({
-                          ...prev,
-                          colorCorrect: !prev.colorCorrect,
-                        }))
-                      }
-                      className="flex items-center gap-2 text-left"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        className={`text-white/40 transition-transform ${openSections.colorCorrect ? "" : "-rotate-90"}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                      <span className="text-sm font-bold text-white tracking-tight">
-                        Color Correct
-                      </span>
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-white/20 text-[9px] flex items-center justify-center text-white/40 cursor-help"
-                        title={copy.colorGrading.colorCorrect.info}
-                      >
-                        ℹ
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => resetCategory("colorCorrect")}
-                      className="flex items-center gap-1 text-[11px] font-bold text-white/40 hover:text-white transition-colors px-2 py-0.5 rounded-lg hover:bg-white/5"
-                      title={copy.colorGrading.colorCorrect.reset}
-                    >
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                      <span>{copy.common.reset}</span>
-                    </button>
-                  </div>
-
-                  {openSections.colorCorrect && (
-                    <div className="space-y-2 pt-1">
-                      {/* Temp */}
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Temp
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="-100"
-                            max="100"
-                            value={colorGrading.colorCorrect.temp}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                colorCorrect: {
-                                  ...prev.colorCorrect,
-                                  temp: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.colorCorrect.temp}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Hue */}
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Hue
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="-180"
-                            max="180"
-                            step="0.5"
-                            value={colorGrading.colorCorrect.hue}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                colorCorrect: {
-                                  ...prev.colorCorrect,
-                                  hue: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.colorCorrect.hue.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Saturation */}
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Saturation
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="-100"
-                            max="100"
-                            value={colorGrading.colorCorrect.saturation}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                colorCorrect: {
-                                  ...prev.colorCorrect,
-                                  saturation: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.colorCorrect.saturation}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Contrast */}
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Contrast
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="-100"
-                            max="100"
-                            value={colorGrading.colorCorrect.contrast}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                colorCorrect: {
-                                  ...prev.colorCorrect,
-                                  contrast: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.colorCorrect.contrast}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Split Tone */}
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Split Tone
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={colorGrading.colorCorrect.splitTone}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                colorCorrect: {
-                                  ...prev.colorCorrect,
-                                  splitTone: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.colorCorrect.splitTone.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 2. Soften Details Card */}
-                <div className="bg-[#2d313d] rounded-3xl p-4 border border-white/5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() =>
-                        setOpenSections((prev) => ({
-                          ...prev,
-                          softenDetails: !prev.softenDetails,
-                        }))
-                      }
-                      className="flex items-center gap-2 text-left"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        className={`text-white/40 transition-transform ${openSections.softenDetails ? "" : "-rotate-90"}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                      <span className="text-sm font-bold text-white tracking-tight">
-                        Soften Details
-                      </span>
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-white/20 text-[9px] flex items-center justify-center text-white/40 cursor-help"
-                        title={copy.colorGrading.softenDetails.info}
-                      >
-                        ℹ
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => resetCategory("softenDetails")}
-                      className="flex items-center gap-1 text-[11px] font-bold text-white/40 hover:text-white transition-colors px-2 py-0.5 rounded-lg hover:bg-white/5"
-                      title={copy.colorGrading.softenDetails.reset}
-                    >
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                      <span>{copy.common.reset}</span>
-                    </button>
-                  </div>
-
-                  {openSections.softenDetails && (
-                    <div className="space-y-2 pt-1">
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Radius
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="50"
-                            value={colorGrading.softenDetails.radius}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                softenDetails: {
-                                  ...prev.softenDetails,
-                                  radius: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.softenDetails.radius}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Detail
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={colorGrading.softenDetails.detail}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                softenDetails: {
-                                  ...prev.softenDetails,
-                                  detail: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.softenDetails.detail.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. Bloom Card */}
-                <div className="bg-[#2d313d] rounded-3xl p-4 border border-white/5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() =>
-                        setOpenSections((prev) => ({
-                          ...prev,
-                          bloom: !prev.bloom,
-                        }))
-                      }
-                      className="flex items-center gap-2 text-left"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        className={`text-white/40 transition-transform ${openSections.bloom ? "" : "-rotate-90"}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                      <span className="text-sm font-bold text-white tracking-tight">
-                        Bloom
-                      </span>
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-white/20 text-[9px] flex items-center justify-center text-white/40 cursor-help"
-                        title={copy.colorGrading.bloom.info}
-                      >
-                        ℹ
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => resetCategory("bloom")}
-                      className="flex items-center gap-1 text-[11px] font-bold text-white/40 hover:text-white transition-colors px-2 py-0.5 rounded-lg hover:bg-white/5"
-                      title={copy.colorGrading.bloom.reset}
-                    >
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                      <span>{copy.common.reset}</span>
-                    </button>
-                  </div>
-
-                  {openSections.bloom && (
-                    <div className="space-y-2 pt-1">
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Radius
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="50"
-                            value={colorGrading.bloom.radius}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                bloom: {
-                                  ...prev.bloom,
-                                  radius: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.bloom.radius}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Bright
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="10"
-                            step="0.5"
-                            value={colorGrading.bloom.bright}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                bloom: {
-                                  ...prev.bloom,
-                                  bright: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.bloom.bright.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Fade
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={colorGrading.bloom.fade}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                bloom: {
-                                  ...prev.bloom,
-                                  fade: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.bloom.fade.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70 px-1">
-                          Blend
-                        </span>
-                        <div className="grid grid-cols-2 gap-1 bg-[#151720] p-0.5 rounded-xl border border-white/5">
-                          {["Screen", "Soft Light"].map((b) => (
-                            <button
-                              key={b}
-                              onClick={() =>
-                                setColorGrading((prev) => ({
-                                  ...prev,
-                                  bloom: { ...prev.bloom, blend: b },
-                                }))
-                              }
-                              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                                colorGrading.bloom.blend === b
-                                  ? "bg-[#383c4a] text-white shadow"
-                                  : "text-white/40 hover:text-white"
-                              }`}
-                            >
-                              {b}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 4. Halation Card */}
-                <div className="bg-[#2d313d] rounded-3xl p-4 border border-white/5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() =>
-                        setOpenSections((prev) => ({
-                          ...prev,
-                          halation: !prev.halation,
-                        }))
-                      }
-                      className="flex items-center gap-2 text-left"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        className={`text-white/40 transition-transform ${openSections.halation ? "" : "-rotate-90"}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                      <span className="text-sm font-bold text-white tracking-tight">
-                        Halation
-                      </span>
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-white/20 text-[9px] flex items-center justify-center text-white/40 cursor-help"
-                        title={copy.colorGrading.halation.info}
-                      >
-                        ℹ
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => resetCategory("halation")}
-                      className="flex items-center gap-1 text-[11px] font-bold text-white/40 hover:text-white transition-colors px-2 py-0.5 rounded-lg hover:bg-white/5"
-                      title={copy.colorGrading.halation.reset}
-                    >
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                      <span>{copy.common.reset}</span>
-                    </button>
-                  </div>
-
-                  {openSections.halation && (
-                    <div className="space-y-2 pt-1">
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Strength
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={colorGrading.halation.strength}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                halation: {
-                                  ...prev.halation,
-                                  strength: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.halation.strength.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Threshold
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={colorGrading.halation.threshold}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                halation: {
-                                  ...prev.halation,
-                                  threshold: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.halation.threshold.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Radius
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="50"
-                            value={colorGrading.halation.radius}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                halation: {
-                                  ...prev.halation,
-                                  radius: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.halation.radius}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 5. Lens Instructions Card */}
-                <div className="bg-[#2d313d] rounded-3xl p-4 border border-white/5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() =>
-                        setOpenSections((prev) => ({
-                          ...prev,
-                          lensInstructions: !prev.lensInstructions,
-                        }))
-                      }
-                      className="flex items-center gap-2 text-left"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        className={`text-white/40 transition-transform ${openSections.lensInstructions ? "" : "-rotate-90"}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                      <span className="text-sm font-bold text-white tracking-tight">
-                        Lens Instructions
-                      </span>
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-white/20 text-[9px] flex items-center justify-center text-white/40 cursor-help"
-                        title={copy.colorGrading.lensInstructions.info}
-                      >
-                        ℹ
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => resetCategory("lensInstructions")}
-                      className="flex items-center gap-1 text-[11px] font-bold text-white/40 hover:text-white transition-colors px-2 py-0.5 rounded-lg hover:bg-white/5"
-                      title={copy.colorGrading.lensInstructions.reset}
-                    >
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                      <span>{copy.common.reset}</span>
-                    </button>
-                  </div>
-
-                  {openSections.lensInstructions && (
-                    <div className="space-y-2 pt-1">
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Strength
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.01"
-                            value={colorGrading.lensInstructions.strength}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                lensInstructions: {
-                                  ...prev.lensInstructions,
-                                  strength: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.lensInstructions.strength.toFixed(3)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Radius
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="50"
-                            value={colorGrading.lensInstructions.radius}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                lensInstructions: {
-                                  ...prev.lensInstructions,
-                                  radius: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.lensInstructions.radius}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Vignette
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={colorGrading.lensInstructions.vignette}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                lensInstructions: {
-                                  ...prev.lensInstructions,
-                                  vignette: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.lensInstructions.vignette.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Distortion
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="-1"
-                            max="1"
-                            step="0.05"
-                            value={colorGrading.lensInstructions.distortion}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                lensInstructions: {
-                                  ...prev.lensInstructions,
-                                  distortion: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.lensInstructions.distortion.toFixed(
-                              2,
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 6. Exposure Card */}
-                <div className="bg-[#2d313d] rounded-3xl p-4 border border-white/5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() =>
-                        setOpenSections((prev) => ({
-                          ...prev,
-                          exposure: !prev.exposure,
-                        }))
-                      }
-                      className="flex items-center gap-2 text-left"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        className={`text-white/40 transition-transform ${openSections.exposure ? "" : "-rotate-90"}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                      <span className="text-sm font-bold text-white tracking-tight">
-                        Exposure
-                      </span>
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-white/20 text-[9px] flex items-center justify-center text-white/40 cursor-help"
-                        title={copy.colorGrading.exposure.info}
-                      >
-                        ℹ
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => resetCategory("exposure")}
-                      className="flex items-center gap-1 text-[11px] font-bold text-white/40 hover:text-white transition-colors px-2 py-0.5 rounded-lg hover:bg-white/5"
-                      title={copy.colorGrading.exposure.reset}
-                    >
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                      <span>{copy.common.reset}</span>
-                    </button>
-                  </div>
-
-                  {openSections.exposure && (
-                    <div className="space-y-2 pt-1">
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Stops
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="-5"
-                            max="5"
-                            step="0.1"
-                            value={colorGrading.exposure.stops}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                exposure: {
-                                  ...prev.exposure,
-                                  stops: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.exposure.stops.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 7. Film Grain Card */}
-                <div className="bg-[#2d313d] rounded-3xl p-4 border border-white/5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() =>
-                        setOpenSections((prev) => ({
-                          ...prev,
-                          filmGrain: !prev.filmGrain,
-                        }))
-                      }
-                      className="flex items-center gap-2 text-left"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        className={`text-white/40 transition-transform ${openSections.filmGrain ? "" : "-rotate-90"}`}
-                      >
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                      <span className="text-sm font-bold text-white tracking-tight">
-                        Film Grain
-                      </span>
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-white/20 text-[9px] flex items-center justify-center text-white/40 cursor-help"
-                        title={copy.colorGrading.filmGrain.info}
-                      >
-                        ℹ
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => resetCategory("filmGrain")}
-                      className="flex items-center gap-1 text-[11px] font-bold text-white/40 hover:text-white transition-colors px-2 py-0.5 rounded-lg hover:bg-white/5"
-                      title={copy.colorGrading.filmGrain.reset}
-                    >
-                      <svg
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                      </svg>
-                      <span>{copy.common.reset}</span>
-                    </button>
-                  </div>
-
-                  {openSections.filmGrain && (
-                    <div className="space-y-2 pt-1">
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Strength
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={colorGrading.filmGrain.strength}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                filmGrain: {
-                                  ...prev.filmGrain,
-                                  strength: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.filmGrain.strength.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2.5 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70">
-                          Bias
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={colorGrading.filmGrain.bias}
-                            onChange={(e) =>
-                              setColorGrading((prev) => ({
-                                ...prev,
-                                filmGrain: {
-                                  ...prev.filmGrain,
-                                  bias: Number(e.target.value),
-                                },
-                              }))
-                            }
-                            className="w-24 accent-[#84cc16] cursor-pointer h-1.5 bg-white/10 rounded-lg"
-                          />
-                          <span className="text-xs font-bold text-white min-w-[28px] text-right">
-                            {colorGrading.filmGrain.bias.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="bg-[#1f222d] rounded-2xl p-2 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white/70 px-1">
-                          Size
-                        </span>
-                        <div className="grid grid-cols-3 gap-1 bg-[#151720] p-0.5 rounded-xl border border-white/5">
-                          {["35mm", "16mm", "8mm"].map((sz) => (
-                            <button
-                              key={sz}
-                              onClick={() =>
-                                setColorGrading((prev) => ({
-                                  ...prev,
-                                  filmGrain: { ...prev.filmGrain, size: sz },
-                                }))
-                              }
-                              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                                colorGrading.filmGrain.size === sz
-                                  ? "bg-[#383c4a] text-white shadow"
-                                  : "text-white/40 hover:text-white"
-                              }`}
-                            >
-                              {sz}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* --- VIEW 4: DEDICATED REMOVE BACKGROUND VIEW (ai-background-remover) --- */}
-            {activeSideTab === "remove-bg" && (
-              <div className="space-y-4 animate-fade-in">
-                {/* Model Selector Card */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-white/40">
-                      {copy.common.model}
-                    </span>
-                  </div>
-
-                  <div className="bg-[#2d313d] p-3.5 rounded-2xl border border-white/5 flex items-center gap-3 shadow-sm">
-                    <div className="w-10 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] flex items-center justify-center flex-shrink-0">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white leading-tight">
-                        {copy.removeBg.modelName}
-                      </h4>
-                      <p className="text-[11px] text-white/50">
-                        ai-background-remover
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Transparency Preview Card */}
-                <div className="bg-[#2d313d] rounded-3xl p-4 border border-white/5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">
-                      {copy.removeBg.targetPreview}
-                    </span>
-                    <span className="text-[10px] text-white/40">
-                      {copy.removeBg.alphaMatte}
-                    </span>
-                  </div>
-
-                  <div
-                    className="w-full h-44 rounded-2xl overflow-hidden relative flex items-center justify-center border border-white/10"
-                    style={{
-                      backgroundImage: `linear-gradient(45deg, #1c1f26 25%, transparent 25%), linear-gradient(-45deg, #1c1f26 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1c1f26 75%), linear-gradient(-45deg, transparent 75%, #1c1f26 75%)`,
-                      backgroundSize: "14px 14px",
-                      backgroundPosition: "0 0, 0 7px, 7px -7px, -7px 0px",
-                    }}
-                  >
-                    {currentImageUrl && (
-                      <img
-                        src={currentImageUrl}
-                        alt="Current input"
-                        className="max-h-full max-w-full object-contain drop-shadow-md"
+                        strokeLinecap="round"
+                        strokeDasharray={69.1}
+                        strokeDashoffset={69.1 * (1 - uploadProgress / 100)}
+                        className="text-[#22d3ee] transition-[stroke-dashoffset] duration-300"
                       />
-                    )}
-                  </div>
+                    </svg>
+                  ) : (
+                    <IconPhotoPlus size={18} stroke={1.75} aria-hidden="true" />
+                  )}
+                </button>
+              )}
+            </div>
 
-                  <div className="space-y-1.5 pt-1">
-                    <div className="flex items-center gap-2 text-xs text-white/70">
-                      <span className="text-[#a3e635] font-bold">✓</span>
-                      <span>
-                        {copy.removeBg.feature1}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-white/70">
-                      <span className="text-[#a3e635] font-bold">✓</span>
-                      <span>{copy.removeBg.feature2}</span>
-                    </div>
-                  </div>
-                </div>
+            {usesPrompt ? (
+              <PromptTextarea
+                ref={textareaRef}
+                value={promptValue}
+                onChange={(event) => setPromptValue(event.target.value)}
+                onKeyDown={submitOnEnter}
+                placeholder={promptPlaceholder}
+                className="min-w-0 flex-1 !min-h-[44px] !pt-[10px]"
+              />
+            ) : (
+              <div className="min-w-0 flex-1 pt-[3px]">
+                <p className="text-[14px] font-medium text-white">{copy.menuItems[currentTool.id]}</p>
+                <p className="mt-0.5 text-[12.5px] text-white/50">{copy.bar.hints[currentTool.id]}</p>
               </div>
             )}
+          </div>
 
-            {/* --- VIEW 5: DEDICATED EXPAND IMAGE VIEW (ai-image-extension) --- */}
-            {activeSideTab === "expand-crop" && (
-              <div className="space-y-4 animate-fade-in">
-                {/* Model Selector Card */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-white/40">
-                      {copy.common.model}
-                    </span>
-                  </div>
-
-                  <div className="bg-[#2d313d] p-3.5 rounded-2xl border border-white/5 flex items-center gap-3 shadow-sm">
-                    <div className="w-10 h-10 rounded-xl bg-[#84cc16]/10 text-[#84cc16] flex items-center justify-center flex-shrink-0">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
+          {/* Bottom row: the tool's settings | its run */}
+          <PromptFooter>
+            <PromptControls>
+              {currentTool.id === "layer-decomposition" && (
+                <>
+                  <PromptSettingsGroup label={copy.bar.settings}>
+                    <div key="resolution" className="relative flex">
+                      <button
+                        type="button"
+                        aria-haspopup="dialog"
+                        aria-expanded={openDropdown === "resolution"}
+                        aria-label={`${copy.bar.resolution}: ${resolution}`}
+                        onClick={toggleDropdown("resolution")}
+                        className={promptSettingClassName({ active: openDropdown === "resolution" })}
+                        data-layers-setting="resolution"
                       >
-                        <polyline points="15 3 21 3 21 9" />
-                        <polyline points="9 21 3 21 3 15" />
-                        <polyline points="21 15 21 21 15 21" />
-                        <polyline points="3 9 3 3 9 3" />
-                      </svg>
+                        {resolution}
+                      </button>
+                      {openDropdown === "resolution" && (
+                        <PromptPopover
+                          role="dialog"
+                          aria-label={copy.bar.resolution}
+                          onClick={(event) => event.stopPropagation()}
+                          className="w-[220px]"
+                          data-layers-resolution-picker
+                        >
+                          <PromptPopoverHeader>{copy.bar.resolution}</PromptPopoverHeader>
+                          <PromptSegmentedControl className="w-full">
+                            {LAYER_RESOLUTIONS.map((option) => (
+                              <PromptSegmentOption
+                                key={option}
+                                selected={resolution === option}
+                                onClick={() => {
+                                  setResolution(option);
+                                  setOpenDropdown(null);
+                                }}
+                                className="flex-1 font-mono"
+                              >
+                                {option}
+                              </PromptSegmentOption>
+                            ))}
+                          </PromptSegmentedControl>
+                        </PromptPopover>
+                      )}
                     </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white leading-tight">
-                        {copy.expandCrop.modelName}
-                      </h4>
-                      <p className="text-[11px] text-white/50">
-                        ai-image-extension
-                      </p>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Interactive Outpaint Expansion Canvas Preview Card */}
-                <div className="bg-[#2d313d] rounded-3xl p-4 border border-white/5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">
-                      {copy.expandCrop.canvasPreview}
+                    <div key="count" className="relative flex">
+                      <button
+                        type="button"
+                        aria-haspopup="dialog"
+                        aria-expanded={openDropdown === "count"}
+                        aria-label={`${copy.bar.layers}: ${layerCount}`}
+                        onClick={toggleDropdown("count")}
+                        className={promptSettingClassName({ active: openDropdown === "count" })}
+                        data-layers-setting="count"
+                      >
+                        <IconStack2 size={14} stroke={1.75} className="opacity-60" aria-hidden="true" />
+                        {copy.bar.layerCount.replace("{count}", layerCount)}
+                      </button>
+                      {openDropdown === "count" && (
+                        <PromptPopover
+                          role="dialog"
+                          aria-label={copy.bar.layers}
+                          onClick={(event) => event.stopPropagation()}
+                          className="w-[260px]"
+                          data-layers-count-picker
+                        >
+                          <div className="flex items-baseline justify-between px-2 pb-2.5">
+                            <label htmlFor="layers-count" className="text-[11px] font-medium text-white/40">
+                              {copy.bar.layers}
+                            </label>
+                            <span className="font-mono text-[12px] text-white">{layerCount}</span>
+                          </div>
+                          <div className="px-2 pb-1">
+                            <input
+                              id="layers-count"
+                              type="range"
+                              min="2"
+                              max="16"
+                              value={layerCount}
+                              onChange={(event) => setLayerCount(Number(event.target.value))}
+                              className="oga-range w-full"
+                              style={{ background: rangeTrack(layerCount, 2, 16) }}
+                            />
+                            <div aria-hidden="true" className="mt-1.5 flex justify-between font-mono text-[10.5px] text-white/40">
+                              <span>2</span>
+                              <span>16</span>
+                            </div>
+                          </div>
+                        </PromptPopover>
+                      )}
+                    </div>
+                  </PromptSettingsGroup>
+
+                  {markedRegions.length > 0 && (
+                    <span
+                      className="flex h-9 items-center gap-1 rounded-[10px] border border-[#22d3ee]/30 bg-[#22d3ee]/[0.06] pl-3 pr-1 text-[12.5px] font-medium text-[#a5f3fc]"
+                      data-layers-regions
+                    >
+                      {copy.bar.regions.replace("{count}", markedRegions.length)}
+                      <button
+                        type="button"
+                        onClick={() => setMarkedRegions([])}
+                        aria-label={copy.bar.clearRegions}
+                        title={copy.bar.clearRegions}
+                        className={SMALL_ICON_BUTTON_CLASS}
+                      >
+                        <IconX size={12} stroke={2.5} aria-hidden="true" />
+                      </button>
                     </span>
-                    <span className="text-[10px] text-white/40">
-                      {copy.expandCrop.boundaryOutpainting}
-                    </span>
+                  )}
+                </>
+              )}
+
+              {currentTool.id === "upscale" && (
+                <>
+                  <div className="relative min-w-0">
+                    <button
+                      type="button"
+                      aria-haspopup="dialog"
+                      aria-expanded={openDropdown === "upscale-model"}
+                      aria-label={`${copy.bar.model}: ${upscaleModelInfo.name}`}
+                      onClick={toggleDropdown("upscale-model")}
+                      className={promptModelButtonClassName({ active: openDropdown === "upscale-model" })}
+                      data-layers-upscale-model
+                    >
+                      <IconArrowsDiagonal size={15} stroke={1.75} className="text-[#67e8f9]" aria-hidden="true" />
+                      <span className="truncate">{upscaleModelInfo.name}</span>
+                      <PromptChevronIcon />
+                    </button>
+                    {openDropdown === "upscale-model" && (
+                      <PromptPopover
+                        role="dialog"
+                        aria-label={copy.bar.model}
+                        onClick={(event) => event.stopPropagation()}
+                        className="w-[300px] max-w-[calc(100vw-2rem)]"
+                        solid
+                      >
+                        <PromptPopoverHeader>{copy.bar.model}</PromptPopoverHeader>
+                        <PromptMenuList>
+                          {UPSCALE_MODELS.map((model) => (
+                            <PromptMenuItem
+                              key={model.id}
+                              selected={model.id === upscaleModel}
+                              description={copy.upscaleModels[model.id]}
+                              wrapDescription
+                              onClick={() => {
+                                setUpscaleModel(model.id);
+                                setOpenDropdown(null);
+                              }}
+                            >
+                              {model.name}
+                            </PromptMenuItem>
+                          ))}
+                        </PromptMenuList>
+                      </PromptPopover>
+                    )}
                   </div>
 
-                  <div className="w-full h-44 rounded-2xl overflow-hidden relative flex items-center justify-center border border-dashed border-[#84cc16]/50 bg-[#161822] p-4">
-                    {/* Corner Guides */}
-                    <div className="absolute top-2 left-2 text-[#84cc16] text-[10px] font-mono">
-                      {'↖ ' + copy.expandCrop.expand}
-                    </div>
-                    <div className="absolute top-2 right-2 text-[#84cc16] text-[10px] font-mono">
-                      {'↗ ' + copy.expandCrop.expand}
-                    </div>
-                    <div className="absolute bottom-2 left-2 text-[#84cc16] text-[10px] font-mono">
-                      {'↙ ' + copy.expandCrop.expand}
-                    </div>
-                    <div className="absolute bottom-2 right-2 text-[#84cc16] text-[10px] font-mono">
-                      {'↘ ' + copy.expandCrop.expand}
-                    </div>
-
-                    {currentImageUrl && (
-                      <div className="relative border border-white/30 rounded-lg overflow-hidden shadow-2xl max-h-[75%] max-w-[75%]">
-                        <img
-                          src={currentImageUrl}
-                          alt="Current input"
-                          className="w-full h-full object-contain"
-                        />
-                        <div className="absolute inset-0 ring-1 ring-white/40 pointer-events-none" />
+                  {upscaleModel !== "ai-image-upscaler" && (
+                    <PromptSettingsGroup label={copy.bar.settings}>
+                      <div key="option" className="relative flex">
+                        <button
+                          type="button"
+                          aria-haspopup="dialog"
+                          aria-expanded={openDropdown === "upscale-option"}
+                          aria-label={
+                            upscaleModel === "topaz-image-upscale"
+                              ? `${copy.bar.factor}: ${topazFactor}×`
+                              : `${copy.bar.outputSize}: ${seedvrResolution.toUpperCase()}`
+                          }
+                          onClick={toggleDropdown("upscale-option")}
+                          className={promptSettingClassName({ active: openDropdown === "upscale-option" })}
+                          data-layers-setting="upscale"
+                        >
+                          {upscaleModel === "topaz-image-upscale"
+                            ? `${topazFactor}×`
+                            : seedvrResolution.toUpperCase()}
+                        </button>
+                        {openDropdown === "upscale-option" && (
+                          <PromptPopover
+                            role="dialog"
+                            aria-label={upscaleModel === "topaz-image-upscale" ? copy.bar.factor : copy.bar.outputSize}
+                            onClick={(event) => event.stopPropagation()}
+                            className="w-[240px]"
+                          >
+                            <PromptPopoverHeader>
+                              {upscaleModel === "topaz-image-upscale" ? copy.bar.factor : copy.bar.outputSize}
+                            </PromptPopoverHeader>
+                            <PromptSegmentedControl className="w-full">
+                              {upscaleModel === "topaz-image-upscale"
+                                ? TOPAZ_FACTORS.map((factor) => (
+                                    <PromptSegmentOption
+                                      key={factor}
+                                      selected={topazFactor === factor}
+                                      onClick={() => {
+                                        setTopazFactor(factor);
+                                        setOpenDropdown(null);
+                                      }}
+                                      className="flex-1 font-mono"
+                                    >
+                                      {factor}×
+                                    </PromptSegmentOption>
+                                  ))
+                                : SEEDVR_RESOLUTIONS.map((option) => (
+                                    <PromptSegmentOption
+                                      key={option}
+                                      selected={seedvrResolution === option}
+                                      onClick={() => {
+                                        setSeedvrResolution(option);
+                                        setOpenDropdown(null);
+                                      }}
+                                      className="flex-1 font-mono"
+                                    >
+                                      {option.toUpperCase()}
+                                    </PromptSegmentOption>
+                                  ))}
+                            </PromptSegmentedControl>
+                          </PromptPopover>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    </PromptSettingsGroup>
+                  )}
+                </>
+              )}
 
-                  <div className="space-y-1.5 pt-1">
-                    <div className="flex items-center gap-2 text-xs text-white/70">
-                      <span className="text-[#a3e635] font-bold">✓</span>
-                      <span>
-                        {copy.expandCrop.feature1}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-white/70">
-                      <span className="text-[#a3e635] font-bold">✓</span>
-                      <span>
-                        {copy.expandCrop.feature2}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* --- VIEW 6: TOOLS MENU --- */}
-            {activeSideTab === "menu" && (
-              <div className="space-y-1 mb-6">
-                {sideMenuItems.map((item) => (
+              {currentTool.id === "color-grading" && (
+                <div className="relative">
                   <button
-                    key={item.id}
-                    onClick={() => setActiveSideTab(item.id)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-white/70 hover:text-white hover:bg-white/5"
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={openDropdown === "adjustments"}
+                    onClick={toggleDropdown("adjustments")}
+                    className={promptModelButtonClassName({ active: openDropdown === "adjustments" })}
+                    data-layers-adjustments
                   >
-                    <div className="flex items-center gap-3">
-                      <span>{item.label}</span>
-                    </div>
-                    {item.isNew && (
-                      <span className="px-2 py-0.5 text-[10px] font-black uppercase bg-[#84cc16] text-black rounded-md tracking-wider">
-                        {copy.menuItems.new}
+                    <IconAdjustmentsHorizontal size={16} stroke={1.75} className="text-[#67e8f9]" aria-hidden="true" />
+                    {copy.bar.adjustments}
+                    {gradeChanges > 0 && (
+                      <span
+                        title={copy.bar.changes.replace("{count}", gradeChanges)}
+                        className="flex h-[18px] items-center rounded-md bg-[#22d3ee]/[0.14] px-1.5 font-mono text-[11px] text-[#a5f3fc]"
+                      >
+                        {gradeChanges}
                       </span>
                     )}
+                    <PromptChevronIcon className={openDropdown === "adjustments" ? "rotate-180" : ""} />
                   </button>
-                ))}
-              </div>
-            )}
 
-            {/* Sub-Panels for Other Side Tools */}
-            {activeSideTab === "edit-text" && (
-              <div className="p-4 bg-[#2d313d] border border-white/10 rounded-2xl space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#a3e635]">
-                  {copy.editText.heading}
-                </h4>
-                <input
-                  type="text"
-                  value={textEditPrompt}
-                  onChange={(e) => setTextEditPrompt(e.target.value)}
-                  placeholder={copy.editText.placeholder}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#84cc16]"
-                />
-                <button
-                  onClick={() => handleExecuteSideTool("edit-text")}
-                  disabled={isProcessing}
-                  className="w-full py-2 bg-[#84cc16] hover:bg-[#a3e635] text-black font-bold text-xs uppercase rounded-xl shadow-md"
-                >
-                  {isProcessing ? copy.editText.processing : copy.editText.run}
-                </button>
-              </div>
-            )}
-
-            {activeSideTab === "enhancer" && (
-              <div className="p-4 bg-[#2d313d] border border-white/10 rounded-2xl space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#a3e635]">
-                  {copy.enhancer.heading}
-                </h4>
-                <p className="text-xs text-white/60">
-                  {copy.enhancer.description}
-                </p>
-                <button
-                  onClick={() => handleExecuteSideTool("enhancer")}
-                  disabled={isProcessing}
-                  className="w-full py-2 bg-[#84cc16] hover:bg-[#a3e635] text-black font-bold text-xs uppercase rounded-xl shadow-md"
-                >
-                  {isProcessing ? copy.enhancer.processing : copy.enhancer.run}
-                </button>
-              </div>
-            )}
-
-            {activeSideTab === "relight" && (
-              <div className="p-4 bg-[#2d313d] border border-white/10 rounded-2xl space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#a3e635]">
-                  {copy.relight.heading}
-                </h4>
-                <p className="text-xs text-white/60">
-                  {copy.relight.description}
-                </p>
-                <button
-                  onClick={() => handleExecuteSideTool("relight")}
-                  disabled={isProcessing}
-                  className="w-full py-2 bg-[#84cc16] hover:bg-[#a3e635] text-black font-bold text-xs uppercase rounded-xl shadow-md"
-                >
-                  {isProcessing ? copy.relight.processing : copy.relight.run}
-                </button>
-              </div>
-            )}
-
-            {activeSideTab === "angles" && (
-              <div className="p-4 bg-[#2d313d] border border-white/10 rounded-2xl space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#a3e635]">
-                  {copy.angles.heading}
-                </h4>
-                <p className="text-xs text-white/60">
-                  {copy.angles.description}
-                </p>
-                <button
-                  onClick={() => handleExecuteSideTool("angles")}
-                  disabled={isProcessing}
-                  className="w-full py-2 bg-[#84cc16] hover:bg-[#a3e635] text-black font-bold text-xs uppercase rounded-xl shadow-md"
-                >
-                  {isProcessing ? copy.angles.processing : copy.angles.run}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Action Footer */}
-          <div className="p-4 bg-[#242833] border-t border-white/10 flex flex-col gap-2">
-            {activeSideTab === "layer-decomposition" ? (
-              <button
-                onClick={() => handleDecompose()}
-                disabled={isProcessing}
-                className="w-full py-3.5 bg-[#e2f924] hover:bg-[#d4ed1b] active:scale-[0.98] text-black font-extrabold text-sm rounded-2xl shadow-[0_4px_25px_rgba(226,249,36,0.35)] transition-all flex items-center justify-center gap-2 tracking-tight disabled:opacity-50"
-              >
-                {isProcessing ? (
-                  <span>{copy.footer.decomposing.replace('{progress}', progress)}</span>
-                ) : (
-                  <>
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
+                  {openDropdown === "adjustments" && (
+                    <PromptPopover
+                      role="dialog"
+                      aria-label={copy.bar.adjustments}
+                      onClick={(event) => event.stopPropagation()}
+                      className="w-[372px] max-w-[calc(100vw-2rem)] max-h-[62vh] !p-2"
+                      fitViewport
+                      solid
+                      data-layers-adjustments-panel
                     >
-                      <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
-                    </svg>
-                    <span>{copy.footer.separateLayers.replace('{count}', layerCount > 4 ? 12 : 8)}</span>
-                  </>
-                )}
-              </button>
-            ) : activeSideTab === "upscale" ? (
-              <button
-                onClick={handleRunUpscale}
-                disabled={isProcessing}
-                className="w-full py-3.5 bg-[#e2f924] hover:bg-[#d4ed1b] active:scale-[0.98] text-black font-extrabold text-sm rounded-2xl shadow-[0_4px_25px_rgba(226,249,36,0.35)] transition-all flex items-center justify-center gap-2 tracking-tight disabled:opacity-50"
-              >
-                {isProcessing ? (
-                  <span>{copy.footer.upscaling.replace('{progress}', progress)}</span>
-                ) : (
-                  <>
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
-                    </svg>
-                    <span>{copy.footer.upscale}</span>
-                  </>
-                )}
-              </button>
-            ) : activeSideTab === "color-grading" ? (
-              <div className="flex items-center gap-2.5 w-full">
-                <button
-                  onClick={handleResetAllColorGrading}
-                  className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/15 text-white flex items-center justify-center transition-all border border-white/10 hover:border-white/20 flex-shrink-0"
-                  title={copy.colorGrading.resetAll}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
+                      <PromptPopoverHeader className="!mb-0">{copy.bar.adjustments}</PromptPopoverHeader>
+                      {GRADE_SECTIONS.map((section) => {
+                        const sectionCopy = copy.colorGrading[section.key];
+                        const open = Boolean(openSections[section.key]);
+                        const changed = gradeChangesIn(colorGrading, section) > 0;
+                        return (
+                          <section
+                            key={section.key}
+                            className="border-b border-white/[0.06] last:border-b-0"
+                            data-layers-grade={section.key}
+                          >
+                            <div className="flex h-10 items-center justify-between gap-2 px-2">
+                              <button
+                                type="button"
+                                aria-expanded={open}
+                                onClick={() =>
+                                  setOpenSections((prev) => ({ ...prev, [section.key]: !prev[section.key] }))
+                                }
+                                title={sectionCopy.info}
+                                className="flex min-w-0 items-center gap-2 rounded-md text-[13.5px] font-medium text-white/[0.86] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+                              >
+                                <IconChevronRight
+                                  size={12}
+                                  stroke={2.5}
+                                  aria-hidden="true"
+                                  className={`shrink-0 text-white/45 transition-transform ${open ? "rotate-90" : ""}`}
+                                />
+                                {sectionCopy.heading}
+                                {changed && (
+                                  <span
+                                    role="img"
+                                    aria-label={copy.colorGrading.changed}
+                                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#22d3ee]"
+                                  />
+                                )}
+                              </button>
+                              {changed && (
+                                <button
+                                  type="button"
+                                  onClick={() => resetCategory(section.key)}
+                                  title={sectionCopy.reset}
+                                  className="h-[26px] shrink-0 rounded-[7px] px-2 text-[12px] font-medium text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+                                >
+                                  {copy.common.reset}
+                                </button>
+                              )}
+                            </div>
+                            {open && (
+                              <div className="flex flex-col gap-3 pb-3.5 pl-7 pr-2">
+                                {section.controls.map((control) => {
+                                  const value = colorGrading[section.key][control.key];
+                                  const label = copy.colorGrading.controls[control.key];
+                                  if (control.options) {
+                                    return (
+                                      <div key={control.key} className="flex items-center gap-3">
+                                        <span className="w-[76px] shrink-0 text-[12.5px] text-white/70">{label}</span>
+                                        <PromptSegmentedControl className="min-w-0 flex-1">
+                                          {control.options.map((option) => (
+                                            <PromptSegmentOption
+                                              key={option}
+                                              selected={value === option}
+                                              onClick={() => updateGrade(section.key, control.key, option)}
+                                              className="flex-1"
+                                            >
+                                              {copy.colorGrading.options[option] || option}
+                                            </PromptSegmentOption>
+                                          ))}
+                                        </PromptSegmentedControl>
+                                      </div>
+                                    );
+                                  }
+                                  return (
+                                    <GradeSlider
+                                      key={control.key}
+                                      id={`layers-grade-${section.key}-${control.key}`}
+                                      label={label}
+                                      value={value}
+                                      min={control.min}
+                                      max={control.max}
+                                      step={control.step}
+                                      digits={control.digits}
+                                      changed={value !== DEFAULT_COLOR_GRADING[section.key][control.key]}
+                                      onChange={(next) => updateGrade(section.key, control.key, next)}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </section>
+                        );
+                      })}
+                    </PromptPopover>
+                  )}
+                </div>
+              )}
+            </PromptControls>
+
+            <PromptActionGroup>
+              {currentTool.id === "color-grading" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleResetAllColorGrading}
+                    disabled={gradeChanges === 0}
+                    className="flex h-10 items-center justify-center gap-2 rounded-xl px-3.5 text-[13.5px] font-medium text-white/70 transition-colors hover:bg-white/[0.05] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 disabled:opacity-40 disabled:hover:bg-transparent"
                   >
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                    <path d="M3 3v5h5" />
-                  </svg>
-                </button>
-
-                <button
-                  onClick={handleDownloadGradedImage}
-                  className="flex-1 py-3.5 bg-white/10 hover:bg-white/15 text-white font-extrabold text-sm rounded-2xl border border-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 shadow-md"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
+                    <IconArrowBackUp size={15} stroke={1.75} aria-hidden="true" />
+                    {copy.bar.resetAll}
+                  </button>
+                  <PromptAction
+                    onClick={handleDownloadGradedImage}
+                    disabled={!currentImageUrl}
+                    className="!h-10 !rounded-xl !text-[14px] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
+                    data-layers-run
                   >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                  <span>Download</span>
-                </button>
-              </div>
-            ) : activeSideTab === "remove-bg" ? (
-              <button
-                onClick={handleRunRemoveBg}
-                disabled={isProcessing}
-                className="w-full py-3.5 bg-[#e2f924] hover:bg-[#d4ed1b] active:scale-[0.98] text-black font-extrabold text-sm rounded-2xl shadow-[0_4px_25px_rgba(226,249,36,0.35)] transition-all flex items-center justify-center gap-2 tracking-tight disabled:opacity-50"
-              >
-                {isProcessing ? (
-                  <span>{copy.footer.removingBackground.replace('{progress}', progress)}</span>
-                ) : (
-                  <>
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
-                    </svg>
-                    <span>{copy.footer.removeBackground}</span>
-                  </>
-                )}
-              </button>
-            ) : activeSideTab === "expand-crop" ? (
-              <button
-                onClick={handleRunExpand}
-                disabled={isProcessing}
-                className="w-full py-3.5 bg-[#e2f924] hover:bg-[#d4ed1b] active:scale-[0.98] text-black font-extrabold text-sm rounded-2xl shadow-[0_4px_25px_rgba(226,249,36,0.35)] transition-all flex items-center justify-center gap-2 tracking-tight disabled:opacity-50"
-              >
-                {isProcessing ? (
-                  <span>{copy.footer.expandingBorders.replace('{progress}', progress)}</span>
-                ) : (
-                  <>
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z" />
-                    </svg>
-                    <span>{copy.footer.expandImage}</span>
-                  </>
-                )}
-              </button>
-            ) : null}
-          </div>
-        </div>
-      )}
+                    <IconDownload size={16} stroke={2} aria-hidden="true" />
+                    {copy.bar.download}
+                  </PromptAction>
+                </>
+              ) : (
+                <>
+                  {usesPrompt && <PromptShortcutHint />}
+                  <PromptAction
+                    onClick={runTool}
+                    disabled={isProcessing}
+                    addon={
+                      price && (
+                        <PriceChip
+                          variant="inset"
+                          locale={locale}
+                          endpoint={price.endpoint}
+                          payload={price.payload}
+                        />
+                      )
+                    }
+                    data-layers-run
+                  >
+                    {isProcessing ? (
+                      <>
+                        <span className="animate-spin inline-block">◌</span>
+                        {copy.bar.working.replace("{progress}", progress)}
+                      </>
+                    ) : (
+                      copy.bar.actions[currentTool.id]
+                    )}
+                  </PromptAction>
+                </>
+              )}
+            </PromptActionGroup>
+          </PromptFooter>
+      </PromptComposer>
     </div>
   );
 }
