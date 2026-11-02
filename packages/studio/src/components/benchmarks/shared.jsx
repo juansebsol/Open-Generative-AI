@@ -13,10 +13,14 @@ import benchmarksEn from "../../messages/en/benchmarks.json";
 import benchmarksZh from "../../messages/zh/benchmarks.json";
 import { describeQuote, providerName, quoteRuns } from "../../providers/pricing.js";
 import { subscribeProviderSettings } from "../../providers/keys.js";
+import { useStudioVisible } from "../../studioVisibility.js";
 
 // Quotes go to /api/price in one batch per provider; a 429 from a provider's
 // pricing API is retried with backoff instead of shown as an error.
 const RETRY_MS = [2000, 5000, 10000, 20000];
+// Re-runs that land together (a page settling on its mode, React's dev
+// double effects) wait this long and send one batch, not one each.
+const DEBOUNCE_MS = 150;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const fill = (template, values) => Object.entries(values).reduce((text, [key, value]) => text.replaceAll(`{${key}}`, String(value)), String(template || ""));
@@ -24,16 +28,20 @@ export const fill = (template, values) => Object.entries(values).reduce((text, [
 /**
  * Quotes every entry of a category, and again when the visitor's provider
  * keys change. Entries nobody keyed fall back to a published list price when
- * the model has one. Nothing is asked for while `enabled` is false.
+ * the model has one. Nothing is asked for while `enabled` is false or the
+ * studio it sits in is hidden (the Benchmarks page stays mounted behind the
+ * other studios).
  * @returns {Record<string, { status: 'loading'|'ready'|'error', quote: object|null }>}
  */
 export function useCategoryQuotes(entries, categoryId, { enabled = true } = {}) {
+  const visible = useStudioVisible();
+  const active = enabled && visible;
   const [quotes, setQuotes] = useState({});
   const [settingsVersion, setSettingsVersion] = useState(0);
   useEffect(() => subscribeProviderSettings(() => setSettingsVersion((v) => v + 1)), []);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!active) {
       setQuotes({});
       return undefined;
     }
@@ -42,7 +50,7 @@ export function useCategoryQuotes(entries, categoryId, { enabled = true } = {}) 
     const set = (id, state) => {
       if (!cancelled) setQuotes((previous) => ({ ...previous, [id]: state }));
     };
-    (async () => {
+    const timer = setTimeout(async () => {
       let pending = entries.map((entry) => ({ entry, payload: benchmarkPayload(entry.model, categoryId) }));
       for (let attempt = 0; pending.length > 0 && !cancelled; attempt += 1) {
         let results;
@@ -60,11 +68,12 @@ export function useCategoryQuotes(entries, categoryId, { enabled = true } = {}) 
         pending = retry;
         if (pending.length > 0) await sleep(RETRY_MS[attempt]);
       }
-    })();
+    }, DEBOUNCE_MS);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [entries, categoryId, settingsVersion, enabled]);
+  }, [entries, categoryId, settingsVersion, active]);
 
   return quotes;
 }
