@@ -79,10 +79,11 @@ function ShowcaseWall({ kind, onPick, copy }) {
  * @param {{label: string, prompt: string}[]} [props.starters]
  * @param {(prompt: string) => void} [props.onStarter]
  * @param {"image"|"video"|null} [props.showcase]  Which outputs to show on the wall; null hides it.
+ * @param {import("react").ReactNode} [props.visual]  A studio's own picture in place of the wall.
  * @param {{usePrompt?: string}} [props.copy]
  */
-export default function StudioEmptyState({ heading, accent, subtitle, starters = [], onStarter, showcase = "image", copy }) {
-  const withWall = Boolean(showcase);
+export default function StudioEmptyState({ heading, accent, subtitle, starters = [], onStarter, showcase = "image", visual = null, copy }) {
+  const withWall = Boolean(showcase) || Boolean(visual);
   return (
     <div className={`h-full w-full ${withWall ? "grid grid-cols-1 md:grid-cols-[5fr_7fr] md:grid-rows-[minmax(0,1fr)] md:items-center gap-6 md:gap-12 px-6 md:px-14" : "flex items-center px-6 md:px-16"} mx-auto max-w-[1280px] py-6`}>
       <div className="min-w-0 max-w-[460px]">
@@ -109,7 +110,7 @@ export default function StudioEmptyState({ heading, accent, subtitle, starters =
       </div>
       {withWall && (
         <div className="oga-enter-fade hidden md:block h-full min-h-0" style={{ "--i": 2 }}>
-          <ShowcaseWall kind={showcase} onPick={onStarter} copy={copy} />
+          {visual || <ShowcaseWall kind={showcase} onPick={onStarter} copy={copy} />}
         </div>
       )}
     </div>

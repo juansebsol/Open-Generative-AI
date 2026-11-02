@@ -81,6 +81,13 @@ code, kbd, pre, .font-mono {
   .oga-wall-up, .oga-wall-down { animation: none; }
 }
 
+/* A slow bob for a card that rests in an empty state (AI Influencer's card fan). */
+@keyframes oga-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.oga-float { animation: oga-float 7s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .oga-float { animation: none; }
+}
+
 @keyframes fade-in-up {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }

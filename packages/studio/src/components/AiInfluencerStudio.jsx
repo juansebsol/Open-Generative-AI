@@ -371,6 +371,47 @@ const NAMED_TRAITS = new Set([
   "right_leg",
 ]);
 
+// The empty studio's picture: one character three ways (the clay sculpt
+// being built, the finished face, a shot from her feed) fanned like cards.
+// Each card bobs on its own beat and the fan spreads a little on hover.
+const FAN_CARDS = [
+  {
+    src: "/assets/influencer/sculpt.jpg",
+    place: "left-[3%] top-[17%] z-10 w-[34%] -rotate-[7deg] group-hover:-translate-x-[7%] group-hover:-rotate-[10deg]",
+    delay: "0s",
+  },
+  {
+    src: "/assets/influencer/portrait.jpg",
+    place: "left-1/2 top-[4%] z-20 w-[43%] -translate-x-1/2 group-hover:-translate-y-[2%]",
+    delay: "-2.4s",
+  },
+  {
+    src: "/assets/influencer/feed.jpg",
+    place: "right-[3%] top-[21%] z-10 w-[32%] rotate-[6deg] group-hover:translate-x-[7%] group-hover:rotate-[9deg]",
+    delay: "-4.8s",
+  },
+];
+
+function CharacterFan() {
+  return (
+    <div aria-hidden="true" className="flex h-full min-h-0 items-center justify-center">
+      <div className="group relative aspect-[16/15] max-h-full w-full max-w-[660px]">
+        <span className="absolute inset-x-[15%] bottom-[6%] h-[40%] rounded-full bg-[#22d3ee]/[0.08] blur-[80px]" />
+        {FAN_CARDS.map((card) => (
+          <div key={card.src} className={`absolute transition-transform duration-500 ease-out ${card.place}`}>
+            <div
+              className="oga-float aspect-[9/16] overflow-hidden rounded-[24px] border border-white/[0.14] bg-[#111114] shadow-[0_30px_80px_rgba(0,0,0,0.7)]"
+              style={{ animationDelay: card.delay }}
+            >
+              <img src={card.src} alt="" className="h-full w-full object-cover" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // The picked traits in builder order: [{ sub, opt }].
 function pickedTraits(selected) {
   return SUBCATEGORIES.flatMap((sub) => {
@@ -485,15 +526,10 @@ export default function AiInfluencerStudio({
     setSelectedOptions(next);
   };
 
-  // A starter picks its traits and shows them in the sheet; a showcase tile
-  // brings its prompt in as extra details.
-  const applyStarter = (value) => {
-    const preset = PRESETS.find((item) => item.id === value);
-    if (!preset) {
-      setCustomPrompt(value);
-      textareaRef.current?.focus();
-      return;
-    }
+  // A starter picks its traits and shows them in the sheet.
+  const applyPreset = (presetId) => {
+    const preset = PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
     setSelectedOptions({ ...preset.picks });
     setTraitTab("face");
     setTimeout(() => setOpenDropdown("traits"), 0);
@@ -667,9 +703,9 @@ export default function AiInfluencerStudio({
               accent={copy.empty.accent}
               subtitle={copy.empty.subtitle}
               starters={PRESETS.map((preset) => ({ label: copy.presets[preset.id], prompt: preset.id }))}
-              onStarter={applyStarter}
-              showcase="image"
-              copy={copy.empty}
+              onStarter={applyPreset}
+              showcase={null}
+              visual={<CharacterFan />}
             />
           </div>
         )}

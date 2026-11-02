@@ -57,8 +57,7 @@
   "empty": {
     "heading": "Start creating your",
     "accent": "AI influencer",
-    "subtitle": "Pick traits for your character, then generate. Every pick goes into the prompt.",
-    "usePrompt": "Use as details"
+    "subtitle": "Pick traits for your character, then generate. Every pick goes into the prompt."
   },
   "preview": {
     "generating": "Generating your character…",

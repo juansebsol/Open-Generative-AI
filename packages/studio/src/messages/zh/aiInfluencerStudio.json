@@ -57,8 +57,7 @@
   "empty": {
     "heading": "开始创建你的",
     "accent": "AI 网红",
-    "subtitle": "为角色选择特征，再生成。每个选择都会写进提示词。",
-    "usePrompt": "用作细节"
+    "subtitle": "为角色选择特征，再生成。每个选择都会写进提示词。"
   },
   "preview": {
     "generating": "正在生成你的角色…",
