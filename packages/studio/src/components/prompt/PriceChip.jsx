@@ -5,30 +5,43 @@
 // /api/price through quoteRun() and refresh when the model or a priced
 // option changes; clicking the chip opens the Providers panel. The "inset"
 // variant sits inside the Generate pill (PromptAction's addon) and shows
-// only the price; the provider moves to its tooltip.
+// only the price; the provider moves to its tooltip. Chips in a hidden studio
+// stay quiet until it is shown (see studioVisibility.js).
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { describeQuote, providerName, quoteRun, routeFor } from "../../providers/pricing.js";
 import { subscribeProviderSettings } from "../../providers/keys.js";
+import { useStudioVisible } from "../../studioVisibility.js";
 import { resolveCopy } from "../../i18nUtils";
 import en from "../../messages/en/pricing.json";
 import zh from "../../messages/zh/pricing.json";
 
 const DEBOUNCE_MS = 350;
+// A provider's pricing API that answers 429 is asked again after these waits,
+// as the Benchmarks quotes do, before the chip gives up.
+const RETRY_MS = [2000, 5000, 10000];
 
 /**
  * Quotes `endpoint` with `payload` (only price-relevant keys are sent).
+ * While its studio is hidden it keeps what it last showed and sends nothing;
+ * once shown it quotes again unless that quote is still current, so a quote
+ * that failed is retried.
  * @returns {{ status: 'idle'|'loading'|'ready'|'error', quote: object|null }}
  */
 export function usePriceQuote(endpoint, payload, { enabled = true } = {}) {
+  const visible = useStudioVisible();
   const inputs = useMemo(() => JSON.stringify(payload || {}), [payload]);
   const [settingsVersion, setSettingsVersion] = useState(0);
   const [state, setState] = useState({ status: "idle", quote: null });
+  // The last quote that came back and what it was asked for, so showing the
+  // studio again does not ask for the same thing twice.
+  const last = useRef(null);
 
   useEffect(() => subscribeProviderSettings(() => setSettingsVersion((v) => v + 1)), []);
 
   useEffect(() => {
+    if (!visible) return undefined;
     if (!enabled || !endpoint) {
       setState({ status: "idle", quote: null });
       return undefined;
@@ -37,18 +50,33 @@ export function usePriceQuote(endpoint, payload, { enabled = true } = {}) {
       quoteRun(endpoint, {}).then((quote) => setState({ status: "ready", quote }));
       return undefined;
     }
+    const request = `${endpoint}|${inputs}|${settingsVersion}`;
+    if (last.current?.request === request) {
+      setState({ status: "ready", quote: last.current.quote });
+      return undefined;
+    }
     let cancelled = false;
-    setState((previous) => ({ status: "loading", quote: previous.quote }));
-    const timer = setTimeout(() => {
+    let timer;
+    const ask = (attempt) => {
       quoteRun(endpoint, JSON.parse(inputs))
-        .then((quote) => { if (!cancelled) setState({ status: "ready", quote }); })
-        .catch(() => { if (!cancelled) setState({ status: "error", quote: null }); });
-    }, DEBOUNCE_MS);
+        .then((quote) => {
+          if (cancelled) return;
+          last.current = { request, quote };
+          setState({ status: "ready", quote });
+        })
+        .catch((error) => {
+          if (cancelled) return;
+          if (error?.status === 429 && attempt < RETRY_MS.length) timer = setTimeout(() => ask(attempt + 1), RETRY_MS[attempt]);
+          else setState({ status: "error", quote: null });
+        });
+    };
+    setState((previous) => ({ status: "loading", quote: previous.quote }));
+    timer = setTimeout(() => ask(0), DEBOUNCE_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [endpoint, inputs, enabled, settingsVersion]);
+  }, [endpoint, inputs, enabled, settingsVersion, visible]);
 
   return state;
 }

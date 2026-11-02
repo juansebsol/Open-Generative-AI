@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import {
   ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio, ThreeDStudio, VectorStudio, BenchmarksStudio, BenchmarksHelper,
-  PROVIDERS, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
+  PROVIDERS, StudioVisibility, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
   IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconLanguage, IconMenu2, IconMessages, IconMicrophone, IconMicrophone2, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen, IconWaveSine
@@ -118,6 +118,17 @@ const countConfiguredProviders = () => {
 const isPlainLeftClick = (event) => (
   event.button === 0 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey
 );
+
+// Every studio stays mounted so its state survives a tab switch. The hidden
+// ones are told so, which keeps their price chips from quoting in the
+// background (one burst of ~20 quotes got rate-limited by the providers).
+function StudioPane({ visible, children }) {
+  return (
+    <div className={visible ? "h-full w-full" : "hidden"}>
+      <StudioVisibility value={visible}>{children}</StudioVisibility>
+    </div>
+  );
+}
 
 export default function StandaloneShell({ locale = 'en' }) {
   const params = useParams();
@@ -596,57 +607,57 @@ export default function StandaloneShell({ locale = 'en' }) {
       {/* Studio Content */}
       <div className="flex-1 min-h-0 h-full relative overflow-hidden bg-app-bg">
         {AVAILABLE_TAB_IDS.has('image') && (
-          <div className={activeTab === 'image' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'image'}>
             <ImageStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('image')} onGenerationEnd={makeGenerationEndCallback('image')} onGenerationComplete={makeSuccessCallback('image')} onGenerationError={makeErrorCallback('image')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('layers') && (
-          <div className={activeTab === 'layers' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'layers'}>
             <LayersStudio hasProvider={hasProvider} locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('layers')} onGenerationEnd={makeGenerationEndCallback('layers')} onGenerationComplete={makeSuccessCallback('layers')} onGenerationError={makeErrorCallback('layers')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('video') && (
-          <div className={activeTab === 'video' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'video'}>
             <VideoStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('video')} onGenerationEnd={makeGenerationEndCallback('video')} onGenerationComplete={makeSuccessCallback('video')} onGenerationError={makeErrorCallback('video')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('motion-control') && (
-          <div className={activeTab === 'motion-control' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'motion-control'}>
             <MotionControlStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('motion-control')} onGenerationEnd={makeGenerationEndCallback('motion-control')} onGenerationComplete={makeSuccessCallback('motion-control')} onGenerationError={makeErrorCallback('motion-control')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('clipping') && (
-          <div className={activeTab === 'clipping' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'clipping'}>
             <ClippingStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('clipping')} onGenerationEnd={makeGenerationEndCallback('clipping')} onGenerationComplete={makeSuccessCallback('clipping')} onGenerationError={makeErrorCallback('clipping')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('lipsync') && (
-          <div className={activeTab === 'lipsync' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'lipsync'}>
             <LipSyncStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('lipsync')} onGenerationEnd={makeGenerationEndCallback('lipsync')} onGenerationComplete={makeSuccessCallback('lipsync')} onGenerationError={makeErrorCallback('lipsync')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('body-swap') && (
-          <div className={activeTab === 'body-swap' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'body-swap'}>
             <RecastStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('body-swap')} onGenerationEnd={makeGenerationEndCallback('body-swap')} onGenerationComplete={makeSuccessCallback('body-swap')} onGenerationError={makeErrorCallback('body-swap')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('cinema') && (
-          <div className={activeTab === 'cinema' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'cinema'}>
             <CinemaStudio locale={locale} onGenerationStart={makeGenerationStartCallback('cinema')} onGenerationEnd={makeGenerationEndCallback('cinema')} onGenerationComplete={makeSuccessCallback('cinema')} onGenerationError={makeErrorCallback('cinema')} />
-          </div>
+          </StudioPane>
         )}
         {AUDIO_TABS.filter((tabId) => AVAILABLE_TAB_IDS.has(tabId)).map((tabId) => (
-          <div key={tabId} className={activeTab === tabId ? "h-full w-full" : "hidden"}>
+          <StudioPane key={tabId} visible={activeTab === tabId}>
             <AudioStudio page={tabId.slice('audio-'.length)} locale={locale} droppedFiles={activeTab === tabId ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback(tabId)} onGenerationEnd={makeGenerationEndCallback(tabId)} onGenerationComplete={makeSuccessCallback(tabId)} onGenerationError={makeErrorCallback(tabId)} />
-          </div>
+          </StudioPane>
         ))}
         {AVAILABLE_TAB_IDS.has('marketing') && (
-          <div className={activeTab === 'marketing' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'marketing'}>
             <MarketingStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('marketing')} onGenerationEnd={makeGenerationEndCallback('marketing')} onGenerationComplete={makeSuccessCallback('marketing')} onGenerationError={makeErrorCallback('marketing')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('ai-influencer') && (
-          <div className={activeTab === 'ai-influencer' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'ai-influencer'}>
             <AiInfluencerStudio
               locale={locale}
               onGenerationStart={makeGenerationStartCallback('ai-influencer')}
@@ -654,42 +665,42 @@ export default function StandaloneShell({ locale = 'en' }) {
               onGenerationComplete={makeSuccessCallback('ai-influencer')}
               onGenerationError={makeErrorCallback('ai-influencer')}
             />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('vibe-motion') && (
-          <div className={activeTab === 'vibe-motion' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'vibe-motion'}>
             <VibeMotionStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('vibe-motion')} onGenerationEnd={makeGenerationEndCallback('vibe-motion')} onGenerationComplete={makeSuccessCallback('vibe-motion')} onGenerationError={makeErrorCallback('vibe-motion')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('agents') && (
-          <div className={activeTab === 'agents' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'agents'}>
             <AgentsStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('agents')} onGenerationEnd={makeGenerationEndCallback('agents')} onGenerationComplete={makeSuccessCallback('agents')} onGenerationError={makeErrorCallback('agents')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('design-agent') && (
-          <div className={activeTab === 'design-agent' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'design-agent'}>
             <DesignAgentStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('design-agent')} onGenerationEnd={makeGenerationEndCallback('design-agent')} onGenerationComplete={makeSuccessCallback('design-agent')} onGenerationError={makeErrorCallback('design-agent')} />
-          </div>
+          </StudioPane>
         )}
         {THREE_D_TABS.filter((tabId) => AVAILABLE_TAB_IDS.has(tabId)).map((tabId) => (
-          <div key={tabId} className={activeTab === tabId ? "h-full w-full" : "hidden"}>
+          <StudioPane key={tabId} visible={activeTab === tabId}>
             <ThreeDStudio page={tabId.slice('three-d-'.length)} locale={locale} droppedFiles={activeTab === tabId ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback(tabId)} onGenerationEnd={makeGenerationEndCallback(tabId)} onGenerationComplete={makeSuccessCallback(tabId)} onGenerationError={makeErrorCallback(tabId)} />
-          </div>
+          </StudioPane>
         ))}
         {VECTOR_TABS.filter((tabId) => AVAILABLE_TAB_IDS.has(tabId)).map((tabId) => (
-          <div key={tabId} className={activeTab === tabId ? "h-full w-full" : "hidden"}>
+          <StudioPane key={tabId} visible={activeTab === tabId}>
             <VectorStudio page={tabId.slice('vector-'.length)} locale={locale} droppedFiles={activeTab === tabId ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback(tabId)} onGenerationEnd={makeGenerationEndCallback(tabId)} onGenerationComplete={makeSuccessCallback(tabId)} onGenerationError={makeErrorCallback(tabId)} />
-          </div>
+          </StudioPane>
         ))}
         {AVAILABLE_TAB_IDS.has('workflows') && (
-          <div className={activeTab === 'workflows' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'workflows'}>
             <WorkflowStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('workflows')} onGenerationEnd={makeGenerationEndCallback('workflows')} onGenerationComplete={makeSuccessCallback('workflows')} onGenerationError={makeErrorCallback('workflows')} />
-          </div>
+          </StudioPane>
         )}
         {AVAILABLE_TAB_IDS.has('benchmarks') && (
-          <div className={activeTab === 'benchmarks' ? "h-full w-full" : "hidden"}>
+          <StudioPane visible={activeTab === 'benchmarks'}>
             <BenchmarksStudio locale={locale} />
-          </div>
+          </StudioPane>
         )}
       </div>
 
