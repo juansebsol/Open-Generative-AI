@@ -14,7 +14,19 @@
   },
   "dropdowns": {
     "aspectRatio": "宽高比",
-    "resolution": "分辨率"
+    "resolution": "分辨率",
+    "outputSettings": "输出设置"
+  },
+  "rig": {
+    "title": "相机配置",
+    "openFull": "打开完整设置",
+    "back": "返回相机配置",
+    "summary": "相机配置：{camera}，{lens}，{focal}mm，{aperture}"
+  },
+  "reference": {
+    "add": "添加参考图片",
+    "remove": "移除参考图片",
+    "uploading": "参考图片上传中，{progress}%"
   },
   "actions": {
     "copyPrompt": "复制提示词",

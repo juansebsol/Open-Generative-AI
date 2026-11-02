@@ -13,8 +13,20 @@
     }
   },
   "dropdowns": {
-    "aspectRatio": "Aspect Ratio",
-    "resolution": "Resolution"
+    "aspectRatio": "Aspect ratio",
+    "resolution": "Resolution",
+    "outputSettings": "Output settings"
+  },
+  "rig": {
+    "title": "Camera rig",
+    "openFull": "Open full rig",
+    "back": "Back to the rig",
+    "summary": "Camera rig: {camera}, {lens}, {focal}mm, {aperture}"
+  },
+  "reference": {
+    "add": "Add a reference image",
+    "remove": "Remove the reference",
+    "uploading": "Uploading the reference, {progress}%"
   },
   "actions": {
     "copyPrompt": "Copy prompt",

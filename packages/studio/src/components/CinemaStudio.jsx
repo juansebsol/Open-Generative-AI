@@ -7,21 +7,28 @@ import MobileGenerationActions, {
   CopyContentIcon,
 } from "./MobileGenerationActions.jsx";
 import {
-  PromptAspectRatioIcon,
+  PROMPT_REFERENCE_REMOVE_CLASS,
+  PROMPT_REFERENCE_THUMB_CLASS,
   PromptAction,
+  PromptActionGroup,
+  PromptChevronIcon,
   PromptComposer,
   PromptControls,
   PromptFooter,
-  PromptMenuItem,
-  PromptMenuList,
   PromptPopover,
   PromptPopoverHeader,
-  PromptQualityIcon,
+  PromptRatioGrid,
+  PromptRatioIcon,
+  PromptSegmentOption,
+  PromptSegmentedControl,
+  PromptSettingsGroup,
+  PromptShortcutHint,
   PromptTextarea,
-  promptControlClassName,
-  promptMediaButtonClassName,
-  PromptActionGroup,
+  promptAddTileClassName,
+  promptModelButtonClassName,
+  promptSettingClassName,
 } from "./prompt/PromptComposer.jsx";
+import { IconChevronLeft, IconChevronRight, IconPhotoPlus, IconX } from "@tabler/icons-react";
 import PriceChip from "./prompt/PriceChip.jsx";
 import en from "../messages/en/cinemaStudio.json";
 import zh from "../messages/zh/cinemaStudio.json";
@@ -171,47 +178,166 @@ function buildNanoBananaPrompt(
   return parts.filter((p) => p && p.trim() !== "").join(", ");
 }
 
-// ─── Dropdown ────────────────────────────────────────────────────────────────
+// ─── Camera rig picker ───────────────────────────────────────────────────────
 
-function Dropdown({ title, items, selected, onSelect, triggerRef, onClose }) {
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(e.target) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target)
-      ) {
-        onClose();
+// Camera or lens art (transparent) in a dark well: "sm" on the bar's rig
+// button, "lg" on the picker's rows.
+function GearThumb({ name, size = "sm" }) {
+  const large = size === "lg";
+  return (
+    <span
+      aria-hidden="true"
+      className={
+        large
+          ? "flex h-11 w-11 shrink-0 items-center justify-center rounded-[9px] bg-[#18181d]"
+          : "flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] border border-white/[0.08] bg-[#1b1b20]"
       }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onClose, triggerRef]);
+    >
+      {ASSET_URLS[name] && (
+        <img
+          src={ASSET_URLS[name]}
+          alt=""
+          className={large ? "h-[38px] w-[38px] object-contain" : "h-6 w-6 object-contain"}
+        />
+      )}
+    </span>
+  );
+}
+
+// Every camera or lens as a picture tile.
+function GearGrid({ items, selected, onSelect }) {
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
+      {items.map((item) => {
+        const on = item === selected;
+        return (
+          <button
+            key={item}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onSelect(item)}
+            className={`flex flex-col items-center gap-1.5 rounded-xl border px-1.5 pb-2 pt-2 text-center transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 ${
+              on
+                ? "border-[#22d3ee]/55 bg-[#22d3ee]/[0.08]"
+                : "border-white/[0.06] bg-white/[0.03] hover:border-white/[0.12] hover:bg-white/[0.06]"
+            }`}
+            data-cinema-gear={item}
+          >
+            <img src={ASSET_URLS[item]} alt="" className="h-12 w-12 object-contain" />
+            <span
+              className={`line-clamp-2 text-[11px] font-medium leading-tight ${
+                on ? "text-[#a5f3fc]" : "text-white/70"
+              }`}
+            >
+              {item}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// The rig button's popover: camera and lens rows that open their picture
+// grids, focal length and aperture as segmented picks, and a way into the
+// full camera settings.
+function CameraRigPicker({ settings, onChange, onOpenFull, copy }) {
+  const [view, setView] = useState("rig"); // 'rig' | 'camera' | 'lens'
+  const labels = copy.cameraOverlay.columns;
+
+  if (view !== "rig") {
+    return (
+      <>
+        <div className="flex items-center gap-1 pb-2.5">
+          <button
+            type="button"
+            onClick={() => setView("rig")}
+            aria-label={copy.rig.back}
+            title={copy.rig.back}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+          >
+            <IconChevronLeft size={14} stroke={2} aria-hidden="true" />
+          </button>
+          <span className="text-[12px] font-semibold text-white/[0.78]">{labels[view]}</span>
+        </div>
+        <GearGrid
+          items={view === "camera" ? CAMERAS : LENSES}
+          selected={settings[view]}
+          onSelect={(item) => {
+            onChange(view, item);
+            setView("rig");
+          }}
+        />
+      </>
+    );
+  }
 
   return (
-    <PromptPopover
-      ref={menuRef}
-    >
-      <PromptPopoverHeader>{title}</PromptPopoverHeader>
-      <PromptMenuList>
-      {items.map((item) => (
-        <PromptMenuItem
-          key={item}
-          selected={item === selected}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(item);
-            onClose();
-          }}
+    <>
+      <div className="flex items-center justify-between px-0.5 pb-2.5">
+        <span className="text-[12px] font-semibold text-white/[0.78]">{copy.rig.title}</span>
+        <button
+          type="button"
+          onClick={onOpenFull}
+          className="rounded text-[12px] font-medium text-[#67e8f9] transition-colors hover:text-[#a5f3fc] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+          data-cinema-open-full
         >
-          {item}
-        </PromptMenuItem>
-      ))}
-      </PromptMenuList>
-    </PromptPopover>
+          {copy.rig.openFull}
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        {["camera", "lens"].map((key) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setView(key)}
+            className="flex h-14 items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.035] pl-1.5 pr-3 text-left transition-colors hover:border-white/[0.12] hover:bg-white/[0.06] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+            data-cinema-rig-row={key}
+          >
+            <GearThumb name={settings[key]} size="lg" />
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="text-[11px] text-white/50">{labels[key]}</span>
+              <span className="truncate text-[13px] font-medium text-white">{settings[key]}</span>
+            </span>
+            <IconChevronRight size={13} stroke={2} className="shrink-0 text-white/50" aria-hidden="true" />
+          </button>
+        ))}
+      </div>
+
+      <div role="group" aria-label={labels.focalLength} className="mt-3 flex flex-col gap-1.5">
+        <span className="px-0.5 text-[11.5px] text-white/55">{labels.focalLength}</span>
+        <PromptSegmentedControl className="w-full">
+          {FOCAL_LENGTHS.map((focal) => (
+            <PromptSegmentOption
+              key={focal}
+              selected={settings.focal === focal}
+              onClick={() => onChange("focal", focal)}
+              aria-label={`${focal}mm`}
+              className="flex-1 font-mono"
+            >
+              {focal}
+            </PromptSegmentOption>
+          ))}
+        </PromptSegmentedControl>
+      </div>
+
+      <div role="group" aria-label={labels.aperture} className="mt-3 flex flex-col gap-1.5">
+        <span className="px-0.5 text-[11.5px] text-white/55">{labels.aperture}</span>
+        <PromptSegmentedControl className="w-full">
+          {APERTURES.map((aperture) => (
+            <PromptSegmentOption
+              key={aperture}
+              selected={settings.aperture === aperture}
+              onClick={() => onChange("aperture", aperture)}
+              className="flex-1 font-mono"
+            >
+              {aperture}
+            </PromptSegmentOption>
+          ))}
+        </PromptSegmentedControl>
+      </div>
+    </>
   );
 }
 
@@ -569,10 +695,29 @@ export default function CinemaStudio({
   // ── History state ──
   const [internalHistory, setInternalHistory] = useState([]);
 
-  // ── Dropdown state ──
-  const [openDropdown, setOpenDropdown] = useState(null); // 'ar' | 'res' | null
-  const arBtnRef = useRef(null);
-  const resBtnRef = useRef(null);
+  // ── Popover state ──
+  const [openDropdown, setOpenDropdown] = useState(null); // 'rig' | 'ar' | 'res' | null
+  const controlsRef = useRef(null);
+  const toggleDropdown = (name) =>
+    setOpenDropdown((open) => (open === name ? null : name));
+
+  useEffect(() => {
+    if (!openDropdown) return undefined;
+    const handleClick = (event) => {
+      if (controlsRef.current && !controlsRef.current.contains(event.target)) {
+        setOpenDropdown(null);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setOpenDropdown(null);
+    };
+    window.addEventListener("click", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("click", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openDropdown]);
 
   // ── Textarea auto-grow ──
   const textareaRef = useRef(null);
@@ -684,8 +829,11 @@ export default function CinemaStudio({
 
   const history = internalHistory;
 
-  const formatSummaryValue = () =>
-    `${settings.lens}, ${settings.focal}mm, ${settings.aperture}`;
+  const rigSummary = copy.rig.summary
+    .replace("{camera}", settings.camera)
+    .replace("{lens}", settings.lens)
+    .replace("{focal}", settings.focal)
+    .replace("{aperture}", settings.aperture);
 
   // ── Textarea auto-height ──
   // ── Generate ──
@@ -760,6 +908,22 @@ export default function CinemaStudio({
     onGenerationError,
     onGenerationStart,
   ]);
+
+  // Shoot with no scene yet puts the cursor in the prompt instead.
+  const handleShoot = () => {
+    if (!settings.prompt.trim()) {
+      textareaRef.current?.focus();
+      return;
+    }
+    handleGenerate();
+  };
+
+  const submitOnEnter = (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      handleShoot();
+    }
+  };
 
   // ── Regenerate ──
   const handleRegenerate = useCallback(() => {
@@ -1038,15 +1202,15 @@ export default function CinemaStudio({
       <PromptComposer
         positionClassName="absolute bottom-4 left-4 right-4 md:left-0 md:right-0 md:mx-auto md:max-w-[95%] lg:max-w-4xl z-30 transition-all duration-700 oga-enter-bar"
       >
-          {/* Upper Row: Image Upload & Textarea */}
-          <div className="flex items-start gap-4 w-full px-1">
-            {/* Image Upload Button */}
+          {/* Top row: the reference beside the prompt */}
+          <div className="flex items-start gap-3">
             <div
-              className="relative pt-0.5"
+              className="flex shrink-0 items-center"
               onDragEnter={handleImageDragEnter}
               onDragLeave={handleImageDragLeave}
               onDragOver={handleImageDragOver}
               onDrop={handleImageDrop}
+              data-cinema-reference
             >
               <input
                 type="file"
@@ -1056,66 +1220,63 @@ export default function CinemaStudio({
                 onChange={handleImageUpload}
               />
 
-              <button
-                onClick={() =>
-                  uploadedImage
-                    ? removeImage()
-                    : imageInputRef.current?.click()
-                }
-                disabled={isUploadingImage}
-                className={promptMediaButtonClassName({
-                  active: Boolean(uploadedImage) || isImageDragging,
-                }) + (isImageDragging ? " ring-2 ring-[#22d3ee] ring-offset-1 ring-offset-black scale-105" : "")}
-              >
-                {isUploadingImage ? (
-                  <div className="flex flex-col items-center justify-center w-full h-full absolute inset-0 bg-black/80 z-20 backdrop-blur-[2px]">
-                    <svg className="w-8 h-8 -rotate-90">
+              {uploadedImage && !isUploadingImage ? (
+                <div className={PROMPT_REFERENCE_THUMB_CLASS}>
+                  <img
+                    src={uploadedImage}
+                    alt={copy.referenceImage.alt}
+                    className="h-full w-full rounded-xl object-cover"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute inset-0 rounded-xl ring-inset ${
+                      isImageDragging ? "ring-2 ring-[#22d3ee]" : "ring-1 ring-white/10"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    aria-label={copy.reference.remove}
+                    title={copy.reference.remove}
+                    onClick={removeImage}
+                    className={PROMPT_REFERENCE_REMOVE_CLASS}
+                  >
+                    <IconX size={9} stroke={3} aria-hidden="true" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  aria-label={
+                    isUploadingImage
+                      ? copy.reference.uploading.replace("{progress}", imageUploadProgress)
+                      : copy.reference.add
+                  }
+                  title={copy.reference.add}
+                  disabled={isUploadingImage}
+                  onClick={() => imageInputRef.current?.click()}
+                  className={promptAddTileClassName({ dragging: isImageDragging })}
+                >
+                  {isUploadingImage ? (
+                    <svg width="26" height="26" viewBox="0 0 26 26" className="-rotate-90" aria-hidden="true">
+                      <circle cx="13" cy="13" r="11" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/10" />
                       <circle
-                        cx="16"
-                        cy="16"
-                        r="14"
+                        cx="13"
+                        cy="13"
+                        r="11"
+                        fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
-                        fill="transparent"
-                        className="text-white/10"
-                      />
-                      <circle
-                        cx="16"
-                        cy="16"
-                        r="14"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        fill="transparent"
-                        strokeDasharray={88}
-                        strokeDashoffset={88 - (88 * imageUploadProgress) / 100}
-                        className="text-primary transition-all duration-300"
+                        strokeLinecap="round"
+                        strokeDasharray={69.1}
+                        strokeDashoffset={69.1 * (1 - imageUploadProgress / 100)}
+                        className="text-[#22d3ee] transition-[stroke-dashoffset] duration-300"
                       />
                     </svg>
-                    <span className="absolute text-[8px] font-bold text-white">
-                      {imageUploadProgress}%
-                    </span>
-                  </div>
-                ) : uploadedImage ? (
-                  <div className="relative w-full h-full group">
-                    <img
-                      src={uploadedImage}
-                      alt={copy.referenceImage.alt}
-                      className="w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-white">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                      </svg>
-                    </div>
-                  </div>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white/40 group-hover:text-[#22d3ee] transition-colors">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                )}
-              </button>
+                  ) : (
+                    <IconPhotoPlus size={18} stroke={1.75} aria-hidden="true" />
+                  )}
+                </button>
+              )}
             </div>
 
             <PromptTextarea
@@ -1124,102 +1285,179 @@ export default function CinemaStudio({
               onChange={(e) =>
                 setSettings((prev) => ({ ...prev, prompt: e.target.value }))
               }
+              onKeyDown={submitOnEnter}
               placeholder={copy.prompt.placeholder}
+              className="min-w-0 flex-1 !min-h-[44px] !pt-[10px]"
             />
           </div>
 
-          {/* Bottom Row: Controls & Generate */}
+          {/* Bottom row: camera rig, output settings | shoot */}
           <PromptFooter>
-            <PromptControls>
-              {/* Aspect Ratio Button */}
-              <div className="relative">
+            <PromptControls ref={controlsRef}>
+              <div className="relative min-w-0">
                 <button
-                  ref={arBtnRef}
-                  className={promptControlClassName({
-                    active: openDropdown === "ar",
-                    className: "text-xs font-semibold",
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={openDropdown === "rig"}
+                  aria-label={rigSummary}
+                  title={rigSummary}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleDropdown("rig");
+                  }}
+                  className={promptModelButtonClassName({
+                    active: openDropdown === "rig",
+                    className: "max-w-full !pl-1",
                   })}
-                  onClick={() =>
-                    setOpenDropdown((d) => (d === "ar" ? null : "ar"))
-                  }
+                  data-cinema-rig
                 >
-                  <PromptAspectRatioIcon />
-                  {settings.aspect_ratio}
+                  <GearThumb name={settings.camera} />
+                  <span className="min-w-0 max-w-[9rem] truncate sm:max-w-[12rem]">{settings.camera}</span>
+                  <span aria-hidden="true" className="hidden h-3.5 w-px shrink-0 bg-white/[0.12] lg:block" />
+                  <span className="hidden max-w-[10rem] truncate text-white/[0.64] lg:block">{settings.lens}</span>
+                  <span aria-hidden="true" className="h-3.5 w-px shrink-0 bg-white/[0.12]" />
+                  <span className="shrink-0 font-mono text-[12px] text-white/[0.64]">
+                    {settings.focal}mm {settings.aperture}
+                  </span>
+                  <PromptChevronIcon className={openDropdown === "rig" ? "rotate-180" : ""} />
                 </button>
-                {openDropdown === "ar" && (
-                  <Dropdown
-                    title={copy.dropdowns.aspectRatio}
-                    items={ASPECT_RATIOS}
-                    selected={settings.aspect_ratio}
-                    onSelect={(val) =>
-                      setSettings((prev) => ({ ...prev, aspect_ratio: val }))
-                    }
-                    triggerRef={arBtnRef}
-                    onClose={() => setOpenDropdown(null)}
-                  />
+
+                {openDropdown === "rig" && (
+                  <PromptPopover
+                    role="dialog"
+                    aria-label={copy.rig.title}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-[384px] max-w-[calc(100vw-2rem)] max-h-[70vh] !p-3"
+                    fitViewport
+                    solid
+                    data-cinema-rig-picker
+                  >
+                    <CameraRigPicker
+                      settings={settings}
+                      onChange={(key, value) =>
+                        setSettings((prev) => ({ ...prev, [key]: value }))
+                      }
+                      onOpenFull={() => {
+                        setOpenDropdown(null);
+                        setIsOverlayOpen(true);
+                      }}
+                      copy={copy}
+                    />
+                  </PromptPopover>
                 )}
               </div>
 
-              {/* Resolution Button */}
-              <div className="relative">
-                <button
-                  ref={resBtnRef}
-                  className={promptControlClassName({
-                    active: openDropdown === "res",
-                    className: "text-xs font-semibold",
-                  })}
-                  onClick={() =>
-                    setOpenDropdown((d) => (d === "res" ? null : "res"))
-                  }
-                >
-                  <PromptQualityIcon />
-                  {resolution}
-                </button>
-                {openDropdown === "res" && (
-                  <Dropdown
-                    title={copy.dropdowns.resolution}
-                    items={RESOLUTIONS}
-                    selected={resolution}
-                    onSelect={setResolution}
-                    triggerRef={resBtnRef}
-                    onClose={() => setOpenDropdown(null)}
-                  />
-                )}
-              </div>
+              <PromptSettingsGroup label={copy.dropdowns.outputSettings}>
+                <div key="ratio" className="relative flex">
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={openDropdown === "ar"}
+                    aria-label={`${copy.dropdowns.aspectRatio}: ${settings.aspect_ratio}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleDropdown("ar");
+                    }}
+                    className={promptSettingClassName({ active: openDropdown === "ar" })}
+                    data-cinema-setting="ratio"
+                  >
+                    <PromptRatioIcon ratio={settings.aspect_ratio} active={openDropdown === "ar"} />
+                    {settings.aspect_ratio}
+                  </button>
 
-              {/* Summary Card (triggers overlay) */}
-              <button
-                className={promptControlClassName({
-                  className: "text-left overflow-hidden text-xs font-semibold text-white/70 hover:text-white",
-                })}
-                onClick={() => setIsOverlayOpen(true)}
-              >
-                <div className="w-1.5 h-1.5 bg-[#22d3ee] rounded-full shadow-lg shadow-[#22d3ee]/20 shrink-0" />
-                <span className="max-w-[120px] truncate text-xs font-semibold text-white/70 group-hover:text-[#22d3ee] transition-colors">
-                  {settings.camera} · {formatSummaryValue()}
-                </span>
-              </button>
+                  {openDropdown === "ar" && (
+                    <PromptPopover
+                      role="dialog"
+                      aria-label={copy.dropdowns.aspectRatio}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-[340px] max-w-[calc(100vw-2rem)] max-h-[60vh]"
+                      fitViewport
+                      data-cinema-ratio-picker
+                    >
+                      <PromptPopoverHeader>{copy.dropdowns.aspectRatio}</PromptPopoverHeader>
+                      <PromptRatioGrid
+                        options={ASPECT_RATIOS}
+                        selected={settings.aspect_ratio}
+                        onSelect={(val) => {
+                          setSettings((prev) => ({ ...prev, aspect_ratio: val }));
+                          setOpenDropdown(null);
+                        }}
+                      />
+                    </PromptPopover>
+                  )}
+                </div>
+
+                <div key="resolution" className="relative flex">
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={openDropdown === "res"}
+                    aria-label={`${copy.dropdowns.resolution}: ${resolution}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleDropdown("res");
+                    }}
+                    className={promptSettingClassName({ active: openDropdown === "res" })}
+                    data-cinema-setting="resolution"
+                  >
+                    {resolution}
+                  </button>
+
+                  {openDropdown === "res" && (
+                    <PromptPopover
+                      role="dialog"
+                      aria-label={copy.dropdowns.resolution}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-[220px]"
+                      data-cinema-resolution-picker
+                    >
+                      <PromptPopoverHeader>{copy.dropdowns.resolution}</PromptPopoverHeader>
+                      <PromptSegmentedControl className="w-full">
+                        {RESOLUTIONS.map((option) => (
+                          <PromptSegmentOption
+                            key={option}
+                            selected={resolution === option}
+                            onClick={() => {
+                              setResolution(option);
+                              setOpenDropdown(null);
+                            }}
+                            className="flex-1 font-mono"
+                          >
+                            {option}
+                          </PromptSegmentOption>
+                        ))}
+                      </PromptSegmentedControl>
+                    </PromptPopover>
+                  )}
+                </div>
+              </PromptSettingsGroup>
             </PromptControls>
 
-<PromptActionGroup>
-<PriceChip locale={locale} endpoint={getEndpointForModelId(uploadedImage ? "nano-banana-pro-edit" : "nano-banana-pro")} payload={{ aspect_ratio: settings.aspect_ratio, resolution: resolution.toLowerCase() }} />
-            {/* Generate Button */}
-            <PromptAction
-              disabled={isGenerating || !settings.prompt.trim()}
-              onClick={handleGenerate}
-            >
-              {isGenerating ? (
-                <>
-                  <span className="animate-spin inline-block text-black">◌</span>
-                  <span>{copy.prompt.generating}</span>
-                </>
-              ) : (
-                <>
-                  <span>{copy.prompt.generate}</span>
-                </>
-              )}
-            </PromptAction>
-</PromptActionGroup>
+            <PromptActionGroup>
+              <PromptShortcutHint />
+              <PromptAction
+                onClick={handleShoot}
+                disabled={isGenerating}
+                addon={
+                  <PriceChip
+                    variant="inset"
+                    locale={locale}
+                    endpoint={getEndpointForModelId(uploadedImage ? "nano-banana-pro-edit" : "nano-banana-pro")}
+                    payload={{ aspect_ratio: settings.aspect_ratio, resolution: resolution.toLowerCase() }}
+                  />
+                }
+                data-cinema-shoot
+              >
+                {isGenerating ? (
+                  <>
+                    <span className="animate-spin inline-block">◌</span>
+                    {copy.prompt.generating}
+                  </>
+                ) : (
+                  copy.prompt.generate
+                )}
+              </PromptAction>
+            </PromptActionGroup>
           </PromptFooter>
       </PromptComposer>
       {fullscreenUrl && (
