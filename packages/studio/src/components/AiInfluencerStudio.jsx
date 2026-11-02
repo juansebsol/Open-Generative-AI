@@ -1,14 +1,45 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import {
+  IconArrowsShuffle,
+  IconBrush,
+  IconDownload,
+  IconMoodSmile,
+  IconTrash,
+  IconUserCheck,
+  IconUserCircle,
+  IconWalk,
+} from "@tabler/icons-react";
 import { generateImage } from "../generation.js";
 import { getEndpointForModelId } from "../models.js";
+import {
+  PromptAction,
+  PromptActionGroup,
+  PromptChevronIcon,
+  PromptComposer,
+  PromptControls,
+  PromptFooter,
+  PromptPopover,
+  PromptPopoverHeader,
+  PromptRatioGrid,
+  PromptRatioIcon,
+  PromptSettingsGroup,
+  PromptShortcutHint,
+  PromptTextarea,
+  promptControlClassName,
+  promptModelButtonClassName,
+  promptSettingClassName,
+} from "./prompt/PromptComposer.jsx";
 import PriceChip from "./prompt/PriceChip.jsx";
 import { formatErrorMessage } from "../utils/formatError.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
 } from "./MobileGenerationActions.jsx";
+import { LibraryActions, LibraryDetails, Lightbox, formatWhen } from "./library/LibraryKit.jsx";
+import StudioEmptyState from "./StudioEmptyState.jsx";
+import { Entrance } from "./motion/index.js";
 import en from "../messages/en/aiInfluencerStudio.json";
 import zh from "../messages/zh/aiInfluencerStudio.json";
 import { resolveCopy } from "../i18nUtils";
@@ -22,7 +53,7 @@ const TABS_CONFIG = {
     subcategories: [
       {
         id: "character_type",
-        label: "Character Type",
+        label: "Character type",
         options: [
           { id: "human",             label: "Human", promptVal: "human features" },
           { id: "elf",               label: "Elf", promptVal: "elf with pointed ears" },
@@ -46,13 +77,13 @@ const TABS_CONFIG = {
           { id: "female",      label: "Female", promptVal: "female" },
           { id: "male",        label: "Male", promptVal: "male" },
           { id: "non_binary",  label: "Non-binary", promptVal: "non-binary character" },
-          { id: "trans_man",   label: "Trans Man", promptVal: "transgender man" },
-          { id: "trans_woman", label: "Trans Woman", promptVal: "transgender woman" },
+          { id: "trans_man",   label: "Trans man", promptVal: "transgender man" },
+          { id: "trans_woman", label: "Trans woman", promptVal: "transgender woman" },
         ],
       },
       {
         id: "ethnicity_origin_base",
-        label: "Ethnicity / Origin",
+        label: "Ethnicity / origin",
         options: [
           { id: "african",        label: "African", promptVal: "african heritage" },
           { id: "asian",          label: "Asian", promptVal: "East Asian supermodel, Korean K-Pop Idol phenotype" },
@@ -64,7 +95,7 @@ const TABS_CONFIG = {
       },
       {
         id: "eye_color",
-        label: "Eye Color",
+        label: "Eye color",
         options: [
           { id: "eye_blue",       label: "Blue", promptVal: "striking blue eyes" },
           { id: "eye_brown",      label: "Brown", promptVal: "warm brown eyes" },
@@ -74,15 +105,15 @@ const TABS_CONFIG = {
           { id: "eye_red",        label: "Red", promptVal: "red eyes" },
           { id: "eye_purple",     label: "Purple", promptVal: "violet purple eyes" },
           { id: "eye_black",      label: "Black", promptVal: "black eyes" },
-          { id: "eye_deep_brown", label: "Deep Brown", promptVal: "deep dark brown eyes" },
+          { id: "eye_deep_brown", label: "Deep brown", promptVal: "deep dark brown eyes" },
           { id: "eye_white",      label: "White", promptVal: "white eyes" },
-          { id: "eye_black_void", label: "Solid Black", promptVal: "solid black void eyes" },
-          { id: "eye_white_void", label: "Blind / Empty", promptVal: "blind empty white eyes" },
+          { id: "eye_black_void", label: "Solid black", promptVal: "solid black void eyes" },
+          { id: "eye_white_void", label: "Blind / empty", promptVal: "blind empty white eyes" },
         ],
       },
       {
         id: "eyes_type",
-        label: "Eye Type",
+        label: "Eye type",
         options: [
           { id: "eyes_human",      label: "Human", promptVal: "normal human eyes" },
           { id: "eyes_reptile",    label: "Reptile", promptVal: "reptile slit-pupil eyes" },
@@ -91,25 +122,25 @@ const TABS_CONFIG = {
       },
       {
         id: "eyes_details",
-        label: "Eye Features",
+        label: "Eye features",
         options: [
           { id: "eyes_different_colors", label: "Heterochromia", promptVal: "heterochromia different eye colors" },
-          { id: "eyes_blind",            label: "Blind Eye", promptVal: "one cloudy blind eye" },
-          { id: "eyes_scarred",          label: "Scarred Eye", promptVal: "scar running across one eye" },
-          { id: "eyes_glowing",          label: "Glowing Eye", promptVal: "glowing magical eyes" },
+          { id: "eyes_blind",            label: "Blind eye", promptVal: "one cloudy blind eye" },
+          { id: "eyes_scarred",          label: "Scarred eye", promptVal: "scar running across one eye" },
+          { id: "eyes_glowing",          label: "Glowing eye", promptVal: "glowing magical eyes" },
         ],
       },
       {
         id: "mouth",
-        label: "Mouth & Teeth",
+        label: "Mouth & teeth",
         options: [
-          { id: "mouth_small",           label: "Small Mouth", promptVal: "small delicate mouth" },
-          { id: "mouth_large",           label: "Large Mouth", promptVal: "wide expressive mouth" },
-          { id: "mouth_no_teeth",        label: "No Teeth", promptVal: "no visible teeth" },
-          { id: "mouth_different_teeth", label: "Unique Teeth", promptVal: "unusual tooth structure" },
-          { id: "mouth_sharp_teeth",     label: "Sharp Teeth", promptVal: "sharp predatory fangs" },
-          { id: "mouth_forked_tongue",   label: "Forked Tongue", promptVal: "reptilian forked tongue" },
-          { id: "mouth_two_tongues",     label: "Two Tongues", promptVal: "two separate tongues" },
+          { id: "mouth_small",           label: "Small mouth", promptVal: "small delicate mouth" },
+          { id: "mouth_large",           label: "Large mouth", promptVal: "wide expressive mouth" },
+          { id: "mouth_no_teeth",        label: "No teeth", promptVal: "no visible teeth" },
+          { id: "mouth_different_teeth", label: "Unique teeth", promptVal: "unusual tooth structure" },
+          { id: "mouth_sharp_teeth",     label: "Sharp teeth", promptVal: "sharp predatory fangs" },
+          { id: "mouth_forked_tongue",   label: "Forked tongue", promptVal: "reptilian forked tongue" },
+          { id: "mouth_two_tongues",     label: "Two tongues", promptVal: "two separate tongues" },
         ],
       },
       {
@@ -117,23 +148,23 @@ const TABS_CONFIG = {
         label: "Ears",
         options: [
           { id: "ears_human", label: "Human", promptVal: "normal human ears" },
-          { id: "ears_elf",   label: "Elf Ears", promptVal: "pointed elf ears" },
-          { id: "ears_no",    label: "No Ears", promptVal: "no visible ears" },
-          { id: "ears_wings", label: "Wing Ears", promptVal: "wing ears" },
+          { id: "ears_elf",   label: "Elf ears", promptVal: "pointed elf ears" },
+          { id: "ears_no",    label: "No ears", promptVal: "no visible ears" },
+          { id: "ears_wings", label: "Wing ears", promptVal: "wing ears" },
         ],
       },
       {
         id: "horns",
         label: "Horns",
         options: [
-          { id: "small_horns", label: "Small Horns", promptVal: "small horns on forehead" },
-          { id: "big_horns",   label: "Big Horns", promptVal: "large curved horns" },
+          { id: "small_horns", label: "Small horns", promptVal: "small horns on forehead" },
+          { id: "big_horns",   label: "Big horns", promptVal: "large curved horns" },
           { id: "antlers",     label: "Antlers", promptVal: "deer antlers on head" },
         ],
       },
       {
         id: "skin_conditions",
-        label: "Skin Conditions",
+        label: "Skin conditions",
         options: [
           { id: "condition_vitiligo",     label: "Vitiligo", promptVal: "vitiligo skin condition" },
           { id: "condition_pigmentation", label: "Pigmentation", promptVal: "hyperpigmentation" },
@@ -142,7 +173,7 @@ const TABS_CONFIG = {
           { id: "condition_scars",        label: "Scars", promptVal: "scarred skin" },
           { id: "condition_burns",        label: "Burns", promptVal: "burn marks on skin" },
           { id: "condition_albinism",     label: "Albinism", promptVal: "albinism pale white skin" },
-          { id: "condition_cracked",      label: "Cracked Skin", promptVal: "cracked dry skin texture" },
+          { id: "condition_cracked",      label: "Cracked skin", promptVal: "cracked dry skin texture" },
           { id: "condition_wrinkled",     label: "Wrinkled", promptVal: "wrinkled aged skin" },
         ],
       },
@@ -153,19 +184,19 @@ const TABS_CONFIG = {
     subcategories: [
       {
         id: "face_skin_material",
-        label: "Face Skin Material",
+        label: "Face skin material",
         options: [
-          { id: "face_skin_human",     label: "Human Skin", promptVal: "smooth human skin" },
+          { id: "face_skin_human",     label: "Human skin", promptVal: "smooth human skin" },
           { id: "face_skin_scales",    label: "Scales", promptVal: "shimmering scales" },
           { id: "face_skin_fur",       label: "Fur", promptVal: "soft fur covered face" },
           { id: "face_skin_amphibian", label: "Amphibian", promptVal: "smooth moist amphibian skin" },
-          { id: "face_skin_fish",      label: "Fish Skin", promptVal: "iridescent fish scale skin" },
+          { id: "face_skin_fish",      label: "Fish skin", promptVal: "iridescent fish scale skin" },
           { id: "face_skin_metallic",  label: "Metallic", promptVal: "polished metallic skin" },
         ],
       },
       {
         id: "face_surface_pattern",
-        label: "Skin Pattern",
+        label: "Skin pattern",
         options: [
           { id: "face_pattern_solid",    label: "Solid", promptVal: "solid color skin" },
           { id: "face_pattern_stripes",  label: "Stripes", promptVal: "exotic striped skin pattern" },
@@ -178,7 +209,7 @@ const TABS_CONFIG = {
       },
       {
         id: "body_type",
-        label: "Body Type",
+        label: "Body type",
         options: [
           { id: "body_slim",     label: "Slim", promptVal: "slim slender physique" },
           { id: "body_lean",     label: "Lean", promptVal: "lean toned physique" },
@@ -191,10 +222,10 @@ const TABS_CONFIG = {
       },
       {
         id: "left_arm",
-        label: "Left Arm",
+        label: "Left arm",
         options: [
           { id: "left_arm_normal",     label: "Normal", promptVal: "normal left arm" },
-          { id: "left_arm_cute",       label: "Cute Prosthetic", promptVal: "stylish pink prosthetic left arm with cute stickers" },
+          { id: "left_arm_cute",       label: "Cute prosthetic", promptVal: "stylish pink prosthetic left arm with cute stickers" },
           { id: "left_arm_robotic",    label: "Robotic", promptVal: "robotic left arm" },
           { id: "left_arm_prosthetic", label: "Prosthetic", promptVal: "prosthetic left arm" },
           { id: "left_arm_mechanical", label: "Mechanical", promptVal: "mechanical left arm" },
@@ -203,10 +234,10 @@ const TABS_CONFIG = {
       },
       {
         id: "right_arm",
-        label: "Right Arm",
+        label: "Right arm",
         options: [
           { id: "right_arm_normal",     label: "Normal", promptVal: "normal right arm" },
-          { id: "right_arm_cute",       label: "Cute Prosthetic", promptVal: "stylish pink prosthetic right arm with cute stickers" },
+          { id: "right_arm_cute",       label: "Cute prosthetic", promptVal: "stylish pink prosthetic right arm with cute stickers" },
           { id: "right_arm_robotic",    label: "Robotic", promptVal: "robotic right arm" },
           { id: "right_arm_prosthetic", label: "Prosthetic", promptVal: "prosthetic right arm" },
           { id: "right_arm_mechanical", label: "Mechanical", promptVal: "mechanical right arm" },
@@ -215,10 +246,10 @@ const TABS_CONFIG = {
       },
       {
         id: "left_leg",
-        label: "Left Leg",
+        label: "Left leg",
         options: [
           { id: "left_leg_normal",     label: "Normal", promptVal: "normal left leg" },
-          { id: "left_leg_cute",       label: "Cute Prosthetic", promptVal: "stylish pink prosthetic left leg with cute stickers" },
+          { id: "left_leg_cute",       label: "Cute prosthetic", promptVal: "stylish pink prosthetic left leg with cute stickers" },
           { id: "left_leg_robotic",    label: "Robotic", promptVal: "robotic left leg" },
           { id: "left_leg_prosthetic", label: "Prosthetic", promptVal: "prosthetic left leg" },
           { id: "left_leg_mechanical", label: "Mechanical", promptVal: "mechanical left leg" },
@@ -227,10 +258,10 @@ const TABS_CONFIG = {
       },
       {
         id: "right_leg",
-        label: "Right Leg",
+        label: "Right leg",
         options: [
           { id: "right_leg_normal",     label: "Normal", promptVal: "normal right leg" },
-          { id: "right_leg_cute",       label: "Cute Prosthetic", promptVal: "stylish pink prosthetic right leg with cute stickers" },
+          { id: "right_leg_cute",       label: "Cute prosthetic", promptVal: "stylish pink prosthetic right leg with cute stickers" },
           { id: "right_leg_robotic",    label: "Robotic", promptVal: "robotic right leg" },
           { id: "right_leg_prosthetic", label: "Prosthetic", promptVal: "prosthetic right leg" },
           { id: "right_leg_mechanical", label: "Mechanical", promptVal: "mechanical right leg" },
@@ -244,77 +275,117 @@ const TABS_CONFIG = {
     subcategories: [
       {
         id: "hair",
-        label: "Hair / Head Growth",
+        label: "Hair / head growth",
         options: [
           { id: "hair_bald",      label: "Bald", promptVal: "bald head" },
-          { id: "hair_short",     label: "Short Hair", promptVal: "short hair" },
-          { id: "hair_long",      label: "Long Hair", promptVal: "long flowing hair" },
+          { id: "hair_short",     label: "Short hair", promptVal: "short hair" },
+          { id: "hair_long",      label: "Long hair", promptVal: "long flowing hair" },
           { id: "hair_afro",      label: "Afro", promptVal: "afro hairstyle" },
           { id: "hair_punk",      label: "Punk", promptVal: "punk mohawk hairstyle" },
-          { id: "hair_fur",       label: "Fur / Mane", promptVal: "fur mane on head" },
+          { id: "hair_fur",       label: "Fur / mane", promptVal: "fur mane on head" },
           { id: "hair_tentacles", label: "Tentacles", promptVal: "tentacles as hair" },
           { id: "hair_spines",    label: "Spines", promptVal: "spines as hair" },
         ],
       },
       {
         id: "accessories",
-        label: "Accessories & Markings",
+        label: "Accessories & markings",
         options: [
           { id: "accessory_tattoos",       label: "Tattoos", promptVal: "covered in tattoos" },
           { id: "accessory_piercing",      label: "Piercings", promptVal: "multiple piercings" },
           { id: "accessory_scarification", label: "Scarification", promptVal: "ritual scarification marks" },
-          { id: "accessory_symbols",       label: "Symbols / Markings", promptVal: "symbolic tribal markings" },
-          { id: "accessory_cyber",         label: "Cyber Markings", promptVal: "cyberpunk circuit markings" },
+          { id: "accessory_symbols",       label: "Symbols / markings", promptVal: "symbolic tribal markings" },
+          { id: "accessory_cyber",         label: "Cyber markings", promptVal: "cyberpunk circuit markings" },
         ],
       },
       {
         id: "rendering_style",
-        label: "Rendering Style",
+        label: "Rendering style",
         options: [
-          { id: "style_hyper_realistic", label: "Hyper-Realistic", promptVal: "hyper-realistic 8k photograph" },
+          { id: "style_hyper_realistic", label: "Hyper-realistic", promptVal: "hyper-realistic 8k photograph" },
           { id: "style_anime",           label: "Anime", promptVal: "anime art style" },
           { id: "style_cartoon",         label: "Cartoon", promptVal: "cartoon illustration style" },
-          { id: "style_2d",              label: "2D Illustration", promptVal: "2D flat illustration style" },
+          { id: "style_2d",              label: "2D illustration", promptVal: "2D flat illustration style" },
         ],
       },
     ],
   },
 };
 
-// ─── SVG Icon Components ────────────────────────────────────────────────────
-const ShuffleIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" />
-    <polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" />
-  </svg>
-);
-const BoltIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-  </svg>
-);
-const CheckIcon = () => (
-  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-const DownloadIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-  </svg>
-);
+// ─── Traits, presets and the bar's pieces ───────────────────────────────────
 
-// ─── Pill — selected option label; click jumps to its builder tab ──────────
-function OptionPill({ label, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="shrink-0 h-[22px] px-2 rounded-md bg-white/[0.07] hover:bg-white/[0.13] border border-white/[0.10] text-[11px] font-medium text-gray-200 whitespace-nowrap transition-all cursor-pointer"
-    >
-      {label}
-    </button>
-  );
+const BASE_PROMPT =
+  "Ultra-realistic professional portrait photograph of an AI influencer character, 8k resolution, cinematic lighting, sharp detail";
+
+const ASPECT_RATIOS = ["3:4", "1:1", "9:16", "16:9"];
+const PERSIST_KEY = "oga_ai_influencer_studio";
+const HISTORY_LIMIT = 50;
+
+const CATEGORY_ICONS = { face: IconMoodSmile, body: IconWalk, style: IconBrush };
+
+const SUBCATEGORIES = Object.values(TABS_CONFIG).flatMap((tab) => tab.subcategories);
+
+// Eye colors show as a dot in front of their name.
+const EYE_DOTS = {
+  eye_blue: "#3b82f6",
+  eye_brown: "#8b5a2b",
+  eye_green: "#22a35a",
+  eye_amber: "#d99a2b",
+  eye_grey: "#9ca3af",
+  eye_red: "#dc2626",
+  eye_purple: "#8b5cf6",
+  eye_black: "#111111",
+  eye_deep_brown: "#4a2c17",
+  eye_white: "#f5f5f5",
+  eye_black_void: "#000000",
+  eye_white_void: "#e5e7eb",
+};
+
+// Starting points for an empty studio: a few traits picked at once.
+const PRESETS = [
+  {
+    id: "elf",
+    picks: { character_type: "elf", gender: "female", ears: "ears_elf", hair: "hair_long", rendering_style: "style_anime" },
+  },
+  {
+    id: "cyborg",
+    picks: { character_type: "human", eyes_type: "eyes_mechanical", right_arm: "right_arm_robotic", accessories: "accessory_cyber", rendering_style: "style_hyper_realistic" },
+  },
+  {
+    id: "reptile",
+    picks: { character_type: "reptile", face_skin_material: "face_skin_scales", eyes_type: "eyes_reptile", mouth: "mouth_forked_tongue", rendering_style: "style_cartoon" },
+  },
+];
+
+// Values that only make sense with their trait's name ("Eye color: Amber").
+const NAMED_TRAITS = new Set([
+  "eye_color",
+  "eyes_type",
+  "ears",
+  "face_skin_material",
+  "face_surface_pattern",
+  "body_type",
+  "left_arm",
+  "right_arm",
+  "left_leg",
+  "right_leg",
+]);
+
+// The picked traits in builder order: [{ sub, opt }].
+function pickedTraits(selected) {
+  return SUBCATEGORIES.flatMap((sub) => {
+    const opt = sub.options.find((option) => option.id === selected[sub.id]);
+    return opt ? [{ sub, opt }] : [];
+  });
+}
+
+// Only picks that still name a trait survive a reload.
+function validPicks(picks) {
+  const next = {};
+  SUBCATEGORIES.forEach((sub) => {
+    if (sub.options.some((option) => option.id === picks?.[sub.id])) next[sub.id] = picks[sub.id];
+  });
+  return next;
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────
@@ -328,71 +399,131 @@ export default function AiInfluencerStudio({
   locale = "en",
 }) {
   const copy = resolveCopy(en, zh, locale);
-  const [activeTab, setActiveTab] = useState("face");
 
-  const [selectedOptions, setSelectedOptions] = useState(() => {
-    const init = {};
-    Object.values(TABS_CONFIG).forEach((tab) =>
-      tab.subcategories.forEach((sub) => {
-        if (sub.options?.length > 0) init[sub.id] = sub.options[0].id;
-      })
-    );
-    return init;
-  });
-
+  // Nothing is picked until the visitor picks: traits are the character.
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [traitTab, setTraitTab] = useState("face");
   const [aspectRatio, setAspectRatio] = useState("3:4");
   const [customPrompt, setCustomPrompt] = useState("");
   const [isGeneratingInternal, setIsGeneratingInternal] = useState(false);
-  const [currentResult, setCurrentResult] = useState(null);   // latest generated image
-  const [history, setHistory] = useState([]);                  // all generated images
-  const [selectedHistoryIdx, setSelectedHistoryIdx] = useState(null);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [history, setHistory] = useState([]);
+  const [fullscreen, setFullscreen] = useState(null); // { entry, idx }
+  const [openDropdown, setOpenDropdown] = useState(null); // 'traits' | 'ratio' | null
+  const [hydrated, setHydrated] = useState(false);
+  const textareaRef = useRef(null);
 
   const isGenerating = externalIsGenerating || isGeneratingInternal;
+  const picked = pickedTraits(selectedOptions);
+  const traitLabels = picked.map(({ sub, opt }) =>
+    NAMED_TRAITS.has(sub.id) ? `${copy.subcategories[sub.id] || sub.label}: ${opt.label}` : opt.label,
+  );
+  const traitsOpen = openDropdown === "traits";
 
-  // ── Build prompt from selections ──────────────────────────────────────────
-  const buildPrompt = useCallback(() => {
-    const parts = [];
-    Object.values(TABS_CONFIG).forEach((tab) =>
-      tab.subcategories.forEach((sub) => {
-        const opt = sub.options.find((o) => o.id === selectedOptions[sub.id]);
-        if (opt?.promptVal) parts.push(opt.promptVal);
-      })
-    );
-    let prompt = "Ultra-realistic professional portrait photograph of an AI influencer character, 8k resolution, cinematic lighting, sharp detail";
-    if (parts.length) prompt += ", " + parts.join(", ");
-    if (customPrompt.trim()) prompt += ", " + customPrompt.trim();
-    return prompt;
-  }, [selectedOptions, customPrompt]);
+  // ── Persistence ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(PERSIST_KEY) || "null");
+      if (stored) {
+        if (Array.isArray(stored.history)) setHistory(stored.history.filter((entry) => entry?.url));
+        if (stored.selectedOptions) setSelectedOptions(validPicks(stored.selectedOptions));
+        if (ASPECT_RATIOS.includes(stored.aspectRatio)) setAspectRatio(stored.aspectRatio);
+      }
+    } catch (err) {
+      console.warn("Failed to load AiInfluencerStudio persistence:", err);
+    }
+    setHydrated(true);
+  }, []);
 
-  // ── Option selection ───────────────────────────────────────────────────────
-  const handleOptionSelect = (subcatId, optId) =>
-    setSelectedOptions((p) => ({ ...p, [subcatId]: optId }));
+  useEffect(() => {
+    if (!hydrated) return undefined;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(PERSIST_KEY, JSON.stringify({ history, selectedOptions, aspectRatio }));
+      } catch (err) {
+        console.warn("Failed to save AiInfluencerStudio persistence:", err);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [hydrated, history, selectedOptions, aspectRatio]);
 
-  // ── Shuffle all options randomly ───────────────────────────────────────────
+  // A click outside a popover (popovers stop their own clicks) or Escape closes it.
+  useEffect(() => {
+    if (!openDropdown) return undefined;
+    const close = () => setOpenDropdown(null);
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") close();
+    };
+    window.addEventListener("click", close);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("click", close);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openDropdown]);
+
+  const toggleDropdown = (name) => (event) => {
+    event.stopPropagation();
+    setOpenDropdown((open) => (open === name ? null : name));
+  };
+
+  // ── Traits ────────────────────────────────────────────────────────────────
+  // Picking the picked trait again clears it.
+  const toggleTrait = (subcatId, optId) =>
+    setSelectedOptions((prev) => {
+      const next = { ...prev };
+      if (next[subcatId] === optId) delete next[subcatId];
+      else next[subcatId] = optId;
+      return next;
+    });
+
   const handleShuffle = () => {
     const next = {};
-    Object.values(TABS_CONFIG).forEach((tab) =>
-      tab.subcategories.forEach((sub) => {
-        if (sub.options?.length > 0)
-          next[sub.id] = sub.options[Math.floor(Math.random() * sub.options.length)].id;
-      })
-    );
+    SUBCATEGORIES.forEach((sub) => {
+      if (sub.options?.length > 0)
+        next[sub.id] = sub.options[Math.floor(Math.random() * sub.options.length)].id;
+    });
     setSelectedOptions(next);
   };
 
+  // A starter picks its traits and shows them in the sheet; a showcase tile
+  // brings its prompt in as extra details.
+  const applyStarter = (value) => {
+    const preset = PRESETS.find((item) => item.id === value);
+    if (!preset) {
+      setCustomPrompt(value);
+      textareaRef.current?.focus();
+      return;
+    }
+    setSelectedOptions({ ...preset.picks });
+    setTraitTab("face");
+    setTimeout(() => setOpenDropdown("traits"), 0);
+  };
+
+  const buildPrompt = () => {
+    let prompt = BASE_PROMPT;
+    const parts = picked.map(({ opt }) => opt.promptVal);
+    if (parts.length) prompt += ", " + parts.join(", ");
+    if (customPrompt.trim()) prompt += ", " + customPrompt.trim();
+    return prompt;
+  };
+
   // ── Generate ──────────────────────────────────────────────────────────────
+  // With no traits picked, Generate opens the traits instead.
   const handleGenerate = async () => {
     if (isGenerating) return;
+    if (picked.length === 0) {
+      setOpenDropdown("traits");
+      return;
+    }
     onGenerationStart?.();
     setIsGeneratingInternal(true);
-    setErrorMsg("");
 
     const prompt = buildPrompt();
+    const picks = { ...selectedOptions };
     try {
       let res;
       if (onGenerate) {
-        res = await onGenerate({ prompt, aspectRatio, selections: selectedOptions });
+        res = await onGenerate({ prompt, aspectRatio, selections: picks });
       } else {
         res = await generateImage({
           model: INFLUENCER_MODEL,
@@ -401,9 +532,16 @@ export default function AiInfluencerStudio({
         });
       }
       if (res?.url) {
-        setCurrentResult(res.url);
-        setHistory((prev) => [{ url: res.url, prompt, ts: Date.now() }, ...prev]);
-        setSelectedHistoryIdx(0);
+        const entry = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          url: res.url,
+          prompt,
+          traits: traitLabels,
+          picks,
+          aspect_ratio: aspectRatio,
+          timestamp: new Date().toISOString(),
+        };
+        setHistory((prev) => [entry, ...prev].slice(0, HISTORY_LIMIT));
         onGenerationComplete?.({
           url: res.url,
           model: INFLUENCER_MODEL,
@@ -421,7 +559,14 @@ export default function AiInfluencerStudio({
     }
   };
 
-  // ── Download helper ───────────────────────────────────────────────────────
+  const submitOnEnter = (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      handleGenerate();
+    }
+  };
+
+  // ── Library ───────────────────────────────────────────────────────────────
   const downloadImg = async (url) => {
     try {
       const res = await fetch(url);
@@ -436,329 +581,373 @@ export default function AiInfluencerStudio({
     }
   };
 
-  // Preview image = selected history or current result
-  const previewUrl =
-    selectedHistoryIdx !== null && history[selectedHistoryIdx]
-      ? history[selectedHistoryIdx].url
-      : currentResult;
+  const deleteEntry = (entry) => {
+    if (!confirm(copy.gallery.deleteConfirm)) return;
+    setHistory((prev) => prev.filter((item) => item !== entry));
+    setFullscreen((current) => (current?.entry === entry ? null : current));
+  };
 
-  const arMap = { "3:4": "3/4", "1:1": "1/1", "9:16": "9/16", "16:9": "16/9" };
+  const reuseTraits = (entry) => {
+    setSelectedOptions(validPicks(entry.picks));
+    setFullscreen(null);
+    toast.success(copy.gallery.traitsReused);
+  };
 
-  // ── Collect all selected options as flat list for the pill tags bar ─────────
-  const selectedTags = [];
-  Object.keys(TABS_CONFIG).forEach((tabKey) => {
-    TABS_CONFIG[tabKey].subcategories.forEach((sub) => {
-      const selId = selectedOptions[sub.id];
-      const opt = sub.options.find((o) => o.id === selId);
-      if (opt) selectedTags.push({ subcatId: sub.id, label: opt.label });
-    });
-  });
+  // The same tools on a card's hover column ("sm") and the viewer's rail ("lg").
+  const characterActions = (entry, size) => {
+    const iconSize = size === "lg" ? 18 : 15;
+    return [
+      { key: "copy", node: <GenerationCopyButtons prompt={entry.prompt} imageUrl={entry.url} onCopyError={onGenerationError} size={size} /> },
+      entry.picks && { key: "reuse", label: copy.gallery.reuseTraits, icon: <IconUserCheck size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => reuseTraits(entry) },
+      { key: "download", label: copy.gallery.download, icon: <IconDownload size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => downloadImg(entry.url) },
+      { key: "delete", label: copy.gallery.delete, danger: true, icon: <IconTrash size={iconSize} stroke={2} aria-hidden="true" />, onSelect: () => deleteEntry(entry) },
+    ];
+  };
 
-  const [showAllTags, setShowAllTags] = useState(false);
-  const TAGS_VISIBLE = 7; // how many pills to show before "show more"
+  const entryFacts = (entry) => [{ key: "ar", value: entry.aspect_ratio, title: copy.bar.aspectRatio }];
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full bg-[#0a0a0a] text-white overflow-hidden select-none font-sans">
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-app-bg p-4 text-white md:p-6">
 
-      {/* ════════════════════════════════════════════════════════════
-          LEFT — Builder / Options Panel
-      ════════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col w-[320px] shrink-0 border-r border-white/[0.07] bg-[#111111] overflow-hidden">
-
-        {/* Builder header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07] shrink-0">
-          <span className="text-[13px] font-bold text-white tracking-tight">{copy.builder.title}</span>
-          <button
-            onClick={() => setSelectedOptions((() => {
-              const init = {};
-              Object.values(TABS_CONFIG).forEach((tab) =>
-                tab.subcategories.forEach((sub) => {
-                  if (sub.options?.length > 0) init[sub.id] = sub.options[0].id;
-                })
-              );
-              return init;
-            })())}
-            className="text-[11px] text-gray-500 hover:text-white transition-colors font-medium"
-          >
-            {copy.builder.reset}
-          </button>
-        </div>
-
-        {/* Tab pills */}
-        <div className="flex gap-1 px-3 py-2 border-b border-white/[0.07] shrink-0">
-          {Object.keys(TABS_CONFIG).map((key) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold transition-all ${
-                activeTab === key
-                  ? "bg-white text-black shadow"
-                  : "text-gray-500 hover:text-white hover:bg-white/[0.06]"
-              }`}
-            >
-              {copy.categoryTabs[key] || TABS_CONFIG[key].label}
-            </button>
-          ))}
-        </div>
-
-        {/* Subcategory options scroll area */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-5">
-          {TABS_CONFIG[activeTab]?.subcategories?.map((subcat) => (
-            <div key={subcat.id}>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-0.5">
-                {copy.subcategories[subcat.id] || subcat.label}
-              </p>
-              <div className="grid grid-cols-3 gap-1.5">
-                {subcat.options?.map((opt) => {
-                  const sel = selectedOptions[subcat.id] === opt.id;
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      aria-pressed={sel}
-                      onClick={() => handleOptionSelect(subcat.id, opt.id)}
-                      className={`relative min-h-[48px] rounded-xl border px-2 py-2 flex items-center justify-center text-center transition-all ${
-                        sel
-                          ? "bg-white/[0.10] border-white/80 ring-1 ring-white/30 shadow-lg text-white"
-                          : "bg-white/[0.03] border-white/[0.08] hover:border-white/25 hover:bg-white/[0.06] text-gray-300"
-                      }`}
-                    >
-                      <span className="text-[11px] font-semibold leading-tight break-words">{opt.label}</span>
-                      {/* Selected check badge */}
-                      {sel && (
-                        <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-white text-black flex items-center justify-center">
-                          <CheckIcon />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════════════════════
-          CENTER — Current Character Preview
-      ════════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-[#0a0a0a]">
-
-        {/* Center top bar: aspect ratio + generate */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-white/[0.07] shrink-0">
-          {/* Aspect ratio */}
-          <div className="flex gap-0.5 bg-white/[0.05] border border-white/[0.08] rounded-xl p-1">
-            {["3:4", "1:1", "9:16", "16:9"].map((r) => (
-              <button
-                key={r}
-                onClick={() => setAspectRatio(r)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                  aspectRatio === r
-                    ? "bg-violet-600 text-white shadow-md shadow-violet-600/40"
-                    : "text-gray-500 hover:text-white"
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Shuffle */}
-            <button
-              onClick={handleShuffle}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.05] border border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/10 text-[12px] font-semibold transition-all"
-            >
-              <ShuffleIcon />
-              {copy.toolbar.shuffle}
-            </button>
-
-            <PriceChip locale={locale} endpoint={getEndpointForModelId(INFLUENCER_MODEL)} payload={{ aspect_ratio: aspectRatio }} />
-
-            {/* Generate */}
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all shadow-lg ${
-                isGenerating
-                  ? "bg-violet-600/40 text-white/60 cursor-not-allowed"
-                  : "bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-violet-600/30 hover:shadow-violet-500/40"
-              }`}
-            >
-              {isGenerating ? (
-                <>
-                  <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity="0.3" />
-                    <path d="M21 12a9 9 0 00-9-9" />
-                  </svg>
-                  {copy.toolbar.generating}
-                </>
-              ) : (
-                <><BoltIcon />{copy.toolbar.generate}</>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Preview area */}
-        <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
-          <div
-            className="relative rounded-2xl overflow-hidden bg-[#141414] border border-white/[0.07] shadow-2xl flex items-center justify-center"
-            style={{ aspectRatio: arMap[aspectRatio] ?? "3/4", maxHeight: "100%", maxWidth: "100%" }}
-          >
-            {isGenerating ? (
-              <div className="flex flex-col items-center gap-4 text-center px-8 py-12">
-                <div className="w-12 h-12 border-[3px] border-violet-500/20 border-t-violet-500 rounded-full animate-spin" />
-                <p className="text-sm text-gray-400 font-medium">{copy.preview.generating}</p>
-              </div>
-            ) : previewUrl ? (
-              <>
-                <img src={previewUrl} alt={copy.preview.altGenerated} className="w-full h-full object-cover" />
-                {/* Download overlay button */}
-                <button
-                  onClick={() => downloadImg(previewUrl)}
-                  className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm border border-white/10 text-white text-[11px] font-semibold hover:bg-black/80 transition-all"
-                >
-                  <DownloadIcon />
-                  {copy.preview.save}
-                </button>
-              </>
-            ) : (
-              <div className="flex flex-col items-center gap-3 text-center px-8 py-12">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8" className="text-gray-700">
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
-                </svg>
-                <p className="text-sm text-gray-600 font-medium">{copy.preview.emptyTitle}</p>
-                <p className="text-xs text-gray-700">{copy.preview.emptySubtitleLine1}<br />{copy.preview.emptySubtitleLine2}</p>
+      {/* ── GALLERY ── */}
+      <div className="custom-scrollbar mx-auto w-full max-w-7xl flex-1 overflow-y-auto px-2 pb-44 lg:pb-36">
+        {history.length > 0 || isGenerating ? (
+          <div className="oga-enter-fade grid w-full grid-cols-2 gap-4 pt-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
+            {isGenerating && (
+              <div className="flex flex-col overflow-hidden rounded-lg border border-primary/30 bg-[#0a0a0a]" data-influencer-pending>
+                <div className="flex aspect-[3/4] w-full flex-col items-center justify-center gap-3 bg-[#111114]">
+                  <span aria-hidden="true" className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#22d3ee]/20 border-t-[#22d3ee]" />
+                  <span className="text-[13px] font-medium text-white/75">{copy.preview.generating}</span>
+                </div>
+                <p className="flex-1 border-t border-white/5 bg-black/80 p-3 text-xs leading-relaxed text-white/70">
+                  {traitLabels.join(" · ")}
+                </p>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* ── Selected option pills ──────────────────────────────────── */}
-        {selectedTags.length > 0 && (
-          <div className="px-6 pb-3 shrink-0">
-            <div className="flex flex-wrap gap-1.5 items-center">
-              {(showAllTags ? selectedTags : selectedTags.slice(0, TAGS_VISIBLE)).map((tag) => (
-                <OptionPill
-                  key={tag.subcatId}
-                  label={tag.label}
-                  onClick={() => {
-                    // Jump builder panel to the tab that owns this subcategory
-                    const ownerTab = Object.keys(TABS_CONFIG).find((tk) =>
-                      TABS_CONFIG[tk].subcategories.some((s) => s.id === tag.subcatId)
-                    );
-                    if (ownerTab) setActiveTab(ownerTab);
-                  }}
-                />
-              ))}
-              {selectedTags.length > TAGS_VISIBLE && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllTags((v) => !v)}
-                  className="h-[22px] px-2 rounded-md bg-white/[0.04] hover:bg-white/[0.09] border border-white/[0.08] text-[11px] text-gray-500 hover:text-gray-300 whitespace-nowrap transition-all"
-                >
-                  {showAllTags ? copy.tags.hide : copy.tags.showMore}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Error */}
-        {errorMsg && (
-          <div className="mx-6 mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[12px] shrink-0">
-            {errorMsg}
-          </div>
-        )}
-
-        {/* Custom prompt bar at bottom */}
-        <div className="px-6 pb-4 shrink-0">
-          <input
-            type="text"
-            value={customPrompt}
-            onChange={(e) => setCustomPrompt(e.target.value)}
-            placeholder={copy.customPrompt.placeholder}
-            className="w-full h-9 bg-[#161616] border border-white/[0.07] rounded-xl px-3 text-[12px] text-gray-200 placeholder-gray-600 outline-none focus:border-violet-500/40 transition-colors"
-          />
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════════════════════
-          RIGHT — Generated Characters History Gallery
-      ════════════════════════════════════════════════════════════ */}
-      <div className="flex flex-col w-[160px] shrink-0 border-l border-white/[0.07] bg-[#111111] overflow-hidden">
-
-        {/* Gallery header */}
-        <div className="px-3 py-3 border-b border-white/[0.07] shrink-0">
-          <p className="text-[11px] font-bold text-white tracking-tight">{copy.gallery.title}</p>
-          <p className="text-[9px] text-gray-600 mt-0.5">{history.length} {copy.gallery.countSuffix}</p>
-        </div>
-
-        {/* Gallery scroll */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2">
-          {history.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 text-center px-2">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-gray-700 mb-2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
-              </svg>
-              <p className="text-[9px] text-gray-700 leading-relaxed">{copy.gallery.emptyText.split('\n')[0]}<br />{copy.gallery.emptyText.split('\n')[1]}</p>
-            </div>
-          ) : (
-            history.map((item, idx) => (
-              <div
-                key={item.ts}
-                role="button"
-                tabIndex={0}
-                onClick={() => setSelectedHistoryIdx(idx)}
-                onKeyDown={(e) => e.key === "Enter" && setSelectedHistoryIdx(idx)}
-                className={`group relative w-full aspect-[3/4] rounded-xl overflow-hidden border transition-all cursor-pointer ${
-                  selectedHistoryIdx === idx
-                    ? "border-violet-500 ring-1 ring-violet-500/40"
-                    : "border-white/[0.08] hover:border-white/20"
-                }`}
+            {history.map((entry, idx) => (
+              <Entrance
+                once
+                variant="card"
+                index={idx}
+                key={entry.id || entry.url}
+                className="group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0a0a0a] shadow-xl transition-all duration-300 hover:border-primary/50"
+                onClick={() => setFullscreen({ entry, idx })}
               >
-                <img src={item.url} alt={`${copy.gallery.altPrefix} ${idx + 1}`} className="w-full h-full object-cover" />
-                {/* Download on hover */}
-                <div className="absolute inset-0 hidden md:flex bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity items-end justify-center pb-2">
-                  <div className="absolute right-2 top-2 flex flex-col gap-2">
-                    <GenerationCopyButtons
-                      prompt={item.prompt}
-                      imageUrl={item.url}
-                      onCopyError={onGenerationError}
-                    />
-                  </div>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); downloadImg(item.url); }}
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); downloadImg(item.url); } }}
-                    className="p-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all cursor-pointer"
-                  >
-                    <DownloadIcon />
-                  </div>
-                </div>
+                <img
+                  src={entry.url}
+                  alt={entry.traits?.join(", ") || copy.preview.altGenerated}
+                  className="aspect-[3/4] w-full bg-black/40 object-cover transition-opacity hover:opacity-80"
+                />
+                <LibraryActions actions={characterActions(entry, "sm")} />
                 <MobileGenerationActions
-                  prompt={item.prompt}
-                  imageUrl={item.url}
+                  prompt={entry.prompt}
+                  imageUrl={entry.url}
                   onCopyError={onGenerationError}
                   actions={[
-                    {
-                      kind: "download",
-                      label: copy.gallery.download,
-                      onSelect: () => downloadImg(item.url),
-                    },
-                  ]}
+                    entry.picks && { kind: "reuse", label: copy.gallery.reuseTraits, onSelect: () => reuseTraits(entry) },
+                    { kind: "download", label: copy.gallery.download, onSelect: () => downloadImg(entry.url) },
+                    { kind: "delete", label: copy.gallery.delete, danger: true, onSelect: () => deleteEntry(entry) },
+                  ].filter(Boolean)}
                 />
-                {/* Index badge */}
-                <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-[8px] text-gray-300 font-bold">
-                  #{history.length - idx}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+                <LibraryDetails
+                  prompt={entry.traits?.join(" · ")}
+                  fallback={copy.gallery.noTraits}
+                  model={copy.gallery.model}
+                  facts={entryFacts(entry)}
+                  trailing={{ value: formatWhen(entry.timestamp, locale), title: copy.gallery.created }}
+                />
+              </Entrance>
+            ))}
+          </div>
+        ) : (
+          <div className="h-full w-full">
+            <StudioEmptyState
+              heading={copy.empty.heading}
+              accent={copy.empty.accent}
+              subtitle={copy.empty.subtitle}
+              starters={PRESETS.map((preset) => ({ label: copy.presets[preset.id], prompt: preset.id }))}
+              onStarter={applyStarter}
+              showcase="image"
+              copy={copy.empty}
+            />
+          </div>
+        )}
       </div>
+
+      {/* ── BOTTOM PROMPT BAR ── */}
+      <PromptComposer>
+          <PromptTextarea
+            ref={textareaRef}
+            value={customPrompt}
+            onChange={(event) => setCustomPrompt(event.target.value)}
+            onKeyDown={submitOnEnter}
+            placeholder={copy.customPrompt.placeholder}
+          />
+
+          <PromptFooter>
+            <PromptControls>
+              <div className="relative min-w-0">
+                <button
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={traitsOpen}
+                  onClick={toggleDropdown("traits")}
+                  className={promptModelButtonClassName({
+                    active: traitsOpen,
+                    className:
+                      picked.length === 0 && !traitsOpen
+                        ? "oga-pulse-ring !border-[#22d3ee]/60 !bg-[#22d3ee]/[0.06] hover:!bg-[#22d3ee]/[0.12]"
+                        : "",
+                  })}
+                  data-influencer-traits
+                >
+                  <IconUserCircle size={16} stroke={1.75} className="shrink-0 text-[#67e8f9]" aria-hidden="true" />
+                  {picked.length === 0 ? copy.bar.pickTraits : copy.bar.traits}
+                  {picked.length > 0 && (
+                    <span className="flex h-[18px] items-center rounded-md bg-[#22d3ee]/[0.14] px-1.5 font-mono text-[11px] text-[#a5f3fc]">
+                      {picked.length}
+                    </span>
+                  )}
+                  <PromptChevronIcon className={traitsOpen ? "rotate-180" : ""} />
+                </button>
+
+                {traitsOpen && (
+                  <PromptPopover
+                    role="dialog"
+                    aria-label={copy.traits.title}
+                    onClick={(event) => event.stopPropagation()}
+                    className="flex h-[min(520px,64vh)] w-[680px] max-w-[calc(100vw-2rem)] !max-h-[70vh] flex-col !overflow-hidden !p-0"
+                    fitViewport
+                    solid
+                    data-influencer-traits-sheet
+                  >
+                    <div className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] pl-4 pr-2">
+                      <div className="flex min-w-0 items-baseline gap-2.5">
+                        <span className="text-[13.5px] font-semibold text-white">{copy.traits.title}</span>
+                        <span className="hidden truncate text-[12px] text-white/45 sm:inline">{copy.traits.hint}</span>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={handleShuffle}
+                          className="flex h-[30px] items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-medium text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+                          data-influencer-shuffle-all
+                        >
+                          <IconArrowsShuffle size={15} stroke={1.75} aria-hidden="true" />
+                          {copy.traits.shuffleAll}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedOptions({})}
+                          disabled={picked.length === 0}
+                          className="h-[30px] rounded-lg px-2.5 text-[12.5px] font-medium text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 disabled:opacity-40 disabled:hover:bg-transparent"
+                          data-influencer-reset
+                        >
+                          {copy.builder.reset}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+                      <div
+                        role="tablist"
+                        aria-label={copy.traits.groups}
+                        className="flex shrink-0 gap-1 border-b border-white/[0.06] p-2 sm:w-[168px] sm:flex-col sm:gap-0.5 sm:border-b-0 sm:border-r"
+                      >
+                        {Object.keys(TABS_CONFIG).map((key) => {
+                          const Icon = CATEGORY_ICONS[key];
+                          const subs = TABS_CONFIG[key].subcategories;
+                          const count = subs.filter((sub) => selectedOptions[sub.id]).length;
+                          const selected = traitTab === key;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              role="tab"
+                              aria-selected={selected}
+                              onClick={() => setTraitTab(key)}
+                              className={`flex h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 sm:flex-none ${
+                                selected
+                                  ? "bg-white/[0.08] text-white"
+                                  : "text-white/[0.65] hover:bg-white/[0.04] hover:text-white"
+                              }`}
+                              data-influencer-trait-tab={key}
+                            >
+                              <Icon size={16} stroke={1.75} aria-hidden="true" className={`hidden shrink-0 sm:block ${selected ? "text-[#67e8f9]" : ""}`} />
+                              <span className="flex-1 truncate text-left">{copy.categoryTabs[key] || TABS_CONFIG[key].label}</span>
+                              <span className="font-mono text-[11px] text-white/45">
+                                {count}/{subs.length}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4">
+                        <div className="flex flex-col gap-[18px]">
+                          {TABS_CONFIG[traitTab].subcategories.map((sub) => {
+                            const current = sub.options.find((option) => option.id === selectedOptions[sub.id]);
+                            const name = copy.subcategories[sub.id] || sub.label;
+                            return (
+                              <div key={sub.id} role="group" aria-label={name} className="flex flex-col gap-2" data-influencer-group={sub.id}>
+                                <div className="flex items-baseline justify-between gap-3">
+                                  <span className="text-[12px] text-white/55">{name}</span>
+                                  <span className={`truncate text-[11.5px] ${current ? "text-[#67e8f9]" : "text-white/30"}`}>
+                                    {current ? current.label : copy.traits.any}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {sub.options.map((opt) => {
+                                    const on = selectedOptions[sub.id] === opt.id;
+                                    return (
+                                      <button
+                                        key={opt.id}
+                                        type="button"
+                                        aria-pressed={on}
+                                        onClick={() => toggleTrait(sub.id, opt.id)}
+                                        className={`flex h-[30px] items-center gap-1.5 rounded-lg border px-2.5 text-[12.5px] font-medium transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 ${
+                                          on
+                                            ? "border-[#22d3ee]/50 bg-[#22d3ee]/10 text-[#a5f3fc]"
+                                            : "border-white/[0.08] bg-white/[0.03] text-white/75 hover:border-white/[0.16] hover:bg-white/[0.06] hover:text-white"
+                                        }`}
+                                      >
+                                        {EYE_DOTS[opt.id] && (
+                                          <span
+                                            aria-hidden="true"
+                                            className="h-[9px] w-[9px] shrink-0 rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)]"
+                                            style={{ backgroundColor: EYE_DOTS[opt.id] }}
+                                          />
+                                        )}
+                                        {opt.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </PromptPopover>
+                )}
+              </div>
+
+              <PromptSettingsGroup label={copy.bar.outputSettings}>
+                <div key="ratio" className="relative flex">
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={openDropdown === "ratio"}
+                    aria-label={`${copy.bar.aspectRatio}: ${aspectRatio}`}
+                    onClick={toggleDropdown("ratio")}
+                    className={promptSettingClassName({ active: openDropdown === "ratio" })}
+                    data-influencer-setting="ratio"
+                  >
+                    <PromptRatioIcon ratio={aspectRatio} active={openDropdown === "ratio"} />
+                    {aspectRatio}
+                  </button>
+                  {openDropdown === "ratio" && (
+                    <PromptPopover
+                      role="dialog"
+                      aria-label={copy.bar.aspectRatio}
+                      onClick={(event) => event.stopPropagation()}
+                      className="w-[300px] max-w-[calc(100vw-2rem)]"
+                      fitViewport
+                      data-influencer-ratio-picker
+                    >
+                      <PromptPopoverHeader>{copy.bar.aspectRatio}</PromptPopoverHeader>
+                      <PromptRatioGrid
+                        options={ASPECT_RATIOS}
+                        selected={aspectRatio}
+                        columns={4}
+                        onSelect={(value) => {
+                          setAspectRatio(value);
+                          setOpenDropdown(null);
+                        }}
+                      />
+                    </PromptPopover>
+                  )}
+                </div>
+              </PromptSettingsGroup>
+
+              <button
+                type="button"
+                onClick={handleShuffle}
+                aria-label={copy.toolbar.shuffleAll}
+                title={copy.toolbar.shuffleAll}
+                className={promptControlClassName({ iconOnly: true })}
+                data-influencer-shuffle
+              >
+                <IconArrowsShuffle size={16} stroke={1.75} className="opacity-70 transition-opacity group-hover:opacity-100" aria-hidden="true" />
+              </button>
+
+              <span className="hidden min-w-0 max-w-[280px] truncate pl-1 text-[12.5px] text-white/45 lg:block" title={traitLabels.join(" · ")}>
+                {picked.length === 0
+                  ? copy.bar.noTraits
+                  : traitLabels.length > 4
+                    ? `${traitLabels.slice(0, 4).join(" · ")} · ${copy.bar.more.replace("{count}", traitLabels.length - 4)}`
+                    : traitLabels.join(" · ")}
+              </span>
+            </PromptControls>
+
+            <PromptActionGroup>
+              <PromptShortcutHint />
+              <PromptAction
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleGenerate();
+                }}
+                disabled={isGenerating}
+                addon={
+                  <PriceChip
+                    variant="inset"
+                    locale={locale}
+                    endpoint={getEndpointForModelId(INFLUENCER_MODEL)}
+                    payload={{ aspect_ratio: aspectRatio }}
+                  />
+                }
+                data-influencer-generate
+              >
+                {isGenerating ? (
+                  <>
+                    <span className="animate-spin inline-block">◌</span>
+                    {copy.toolbar.generating}
+                  </>
+                ) : (
+                  copy.toolbar.generate
+                )}
+              </PromptAction>
+            </PromptActionGroup>
+          </PromptFooter>
+      </PromptComposer>
+
+      {/* ── FULL-SCREEN VIEWER ── */}
+      {fullscreen && (
+        <Lightbox
+          onClose={() => setFullscreen(null)}
+          closeLabel={copy.gallery.close}
+          tools={characterActions(fullscreen.entry, "lg")}
+          caption={
+            <>
+              {fullscreen.entry.traits?.length > 0 && (
+                <span className="line-clamp-2 text-white/80">{fullscreen.entry.traits.join(" · ")}</span>
+              )}
+              <span className="mt-1 block text-white/45">
+                {[copy.gallery.model, fullscreen.entry.aspect_ratio, formatWhen(fullscreen.entry.timestamp, locale)].filter(Boolean).join(" · ")}
+              </span>
+            </>
+          }
+        >
+          <img
+            src={fullscreen.entry.url}
+            alt={fullscreen.entry.traits?.join(", ") || copy.preview.altGenerated}
+            className="max-h-[86vh] max-w-[calc(100vw-9rem)] rounded-2xl object-contain shadow-2xl md:max-w-[calc(100vw-12rem)]"
+          />
+        </Lightbox>
+      )}
+
       <Toaster position="top-right" containerStyle={{ zIndex: 99999 }} toastOptions={{ duration: 5000, style: { background: '#18181b', color: '#ffffff', border: '1px solid rgba(255,255,255,0.15)', fontSize: '13px', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.6)', maxWidth: '440px', wordBreak: 'break-word', whiteSpace: 'pre-wrap', padding: '12px 16px' } }} />
     </div>
   );

@@ -1,6 +1,5 @@
 {
   "builder": {
-    "title": "Builder",
     "reset": "Reset"
   },
   "categoryTabs": {
@@ -9,53 +8,75 @@
     "style": "Style"
   },
   "subcategories": {
-    "character_type": "Character Type",
+    "character_type": "Character type",
     "gender": "Gender",
-    "ethnicity_origin_base": "Ethnicity / Origin",
-    "eye_color": "Eye Color",
-    "eyes_type": "Eye Type",
-    "eyes_details": "Eye Features",
+    "ethnicity_origin_base": "Ethnicity / origin",
+    "eye_color": "Eye color",
+    "eyes_type": "Eye type",
+    "eyes_details": "Eye features",
     "mouth": "Mouth & Teeth",
     "ears": "Ears",
     "horns": "Horns",
-    "skin_conditions": "Skin Conditions",
-    "face_skin_material": "Face Skin Material",
-    "face_surface_pattern": "Skin Pattern",
-    "body_type": "Body Type",
-    "left_arm": "Left Arm",
-    "right_arm": "Right Arm",
-    "left_leg": "Left Leg",
-    "right_leg": "Right Leg",
-    "hair": "Hair / Head Growth",
-    "accessories": "Accessories & Markings",
-    "rendering_style": "Rendering Style"
+    "skin_conditions": "Skin conditions",
+    "face_skin_material": "Face skin material",
+    "face_surface_pattern": "Skin pattern",
+    "body_type": "Body type",
+    "left_arm": "Left arm",
+    "right_arm": "Right arm",
+    "left_leg": "Left leg",
+    "right_leg": "Right leg",
+    "hair": "Hair / head growth",
+    "accessories": "Accessories & markings",
+    "rendering_style": "Rendering style"
   },
   "toolbar": {
-    "shuffle": "Shuffle",
-    "generate": "Generate Character",
-    "generating": "Generating…"
+    "generate": "Generate",
+    "generating": "Generating…",
+    "shuffleAll": "Shuffle every trait"
+  },
+  "bar": {
+    "pickTraits": "Pick traits",
+    "traits": "Traits",
+    "noTraits": "Pick at least one trait to generate",
+    "more": "{count} more",
+    "outputSettings": "Output settings",
+    "aspectRatio": "Aspect ratio"
+  },
+  "traits": {
+    "title": "Traits",
+    "hint": "Every pick goes into the prompt",
+    "groups": "Trait groups",
+    "shuffleAll": "Shuffle all",
+    "any": "Any"
+  },
+  "presets": {
+    "elf": "Elf with long hair, anime",
+    "cyborg": "Cyborg with a robotic arm",
+    "reptile": "Scaled reptile humanoid, cartoon"
+  },
+  "empty": {
+    "heading": "Start creating your",
+    "accent": "AI influencer",
+    "subtitle": "Pick traits for your character, then generate. Every pick goes into the prompt.",
+    "usePrompt": "Use as details"
   },
   "preview": {
-    "generating": "Generating your AI influencer…",
-    "emptyTitle": "Your AI influencer lives here.",
-    "emptySubtitleLine1": "Design and build your AI influencer",
-    "emptySubtitleLine2": "from scratch",
-    "save": "Save",
+    "generating": "Generating your character…",
     "altGenerated": "Generated AI Character"
   },
-  "tags": {
-    "showMore": "show more",
-    "hide": "hide"
-  },
   "customPrompt": {
-    "placeholder": "Add extra details… e.g. neon cyberpunk lighting, dramatic shadows"
+    "placeholder": "Add details, e.g. neon cyberpunk lighting, dramatic shadows"
   },
   "gallery": {
-    "title": "Generated",
-    "countSuffix": "characters",
-    "emptyText": "Generated characters\nappear here",
-    "altPrefix": "Character",
-    "download": "Download"
+    "model": "Nano Banana Pro",
+    "noTraits": "No traits",
+    "created": "Created",
+    "reuseTraits": "Use these traits",
+    "traitsReused": "Loaded this character's traits",
+    "download": "Download",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this character?",
+    "close": "Close"
   },
   "errors": {
     "generationFailed": "Generation failed. Please try again."
