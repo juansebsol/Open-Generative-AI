@@ -68,8 +68,6 @@
   "providersModal": {
     "localHint": "本地引擎由浏览器直接调用。Chrome 首次可能会请求允许访问本地网络。",
     "getKey": "获取密钥",
-    "chatModel": "对话模型（可选）",
-    "chatModelHint": "用于智能体、动感运镜、工作流和设计智能体。留空则使用默认模型。",
     "balanceCheck": "查询余额",
     "balanceRefresh": "刷新",
     "balanceLoading": "正在查询余额…",
@@ -160,6 +158,7 @@
     "open": "打开",
     "actions": "操作",
     "addKey": "添加服务商密钥",
+    "agentModel": "选择助手模型",
     "exportLibrary": "导出素材库…",
     "importLibrary": "导入素材库…",
     "openSettings": "打开设置",
@@ -200,7 +199,9 @@
     "footer": "这里的一切都只保存在此浏览器中。除每次运行所需的请求外，不会向任何地方发送数据。",
     "status": {
       "connected": "已连接 {count} 个",
-      "none": "尚无密钥"
+      "none": "尚无密钥",
+      "notChosen": "未选择",
+      "needsKey": "需要密钥"
     },
     "sections": {
       "general": {
@@ -210,6 +211,10 @@
       "providers": {
         "label": "服务提供商",
         "description": "使用你自己的密钥。连接了能提供某个模型的服务商后，该模型即会出现。"
+      },
+      "agent": {
+        "label": "助手模型",
+        "description": "Design Agent、Agents、Vibe Motion 和工作流助手背后的语言模型。整个应用只需选择一次。"
       },
       "local": {
         "label": "本地引擎",
@@ -282,6 +287,70 @@
       "sizeHint": "相对于较短边的比例。",
       "opacity": "不透明度",
       "color": "文字颜色"
+    },
+    "agent": {
+      "inUse": "使用中",
+      "runsOn": "通过你的 {provider} 密钥运行",
+      "perMessage": "每条助手消息",
+      "perMillion": "每 100 万 token：输入 {input} · 输出 {output}",
+      "usedBy": "使用方",
+      "usedByList": [
+        "Design Agent",
+        "Agents",
+        "Vibe Motion",
+        "工作流助手"
+      ],
+      "varies": "不固定",
+      "perModel": "按模型",
+      "noPrice": "无价格",
+      "unchosenTitle": "尚未选择助手模型",
+      "unchosenBody": "在你选择之前，助手会通过你的 {provider} 密钥使用 {model}。",
+      "unchosenAuto": "在你选择之前，助手会通过你的 OpenRouter 密钥使用 OpenRouter Auto，因此每条消息的模型和价格都可能不同。",
+      "useRecommended": "使用 {model}",
+      "noKeyTitle": "尚无聊天密钥",
+      "noKeyBody": "助手需要 OpenRouter、OpenAI 或 Google Gemini 密钥。添加后再在这里选择模型。",
+      "blockedTitle": "{model} 需要 {providers} 密钥",
+      "blockedBody": "在此之前，助手会通过你的 {provider} 密钥使用 {fallback}。",
+      "addKey": "添加密钥",
+      "chooseTitle": "选择模型",
+      "ratesLive": "OpenRouter 实时价格。一条消息约输入 1.5 万、输出 1200 个 token。",
+      "ratesTable": "公开价格。一条消息约输入 1.5 万、输出 1200 个 token。",
+      "ratesLoading": "正在获取价格…",
+      "connect": "连接 {providers}",
+      "or": " 或 ",
+      "columns": {
+        "model": "模型",
+        "runsOn": "运行于",
+        "perMessage": "每条消息",
+        "perMillion": "每 100 万 输入 / 输出"
+      },
+      "tags": {
+        "recommended": "推荐",
+        "cheapest": "最便宜",
+        "custom": "自定义"
+      },
+      "routeChoice": "运行于",
+      "routeNote": "同一模型、同一价格，由该密钥计费",
+      "addProviderKey": "添加 {provider} 密钥即可在那里运行",
+      "customPlaceholder": "任意 OpenRouter 模型…",
+      "customLabel": "OpenRouter 模型 ID",
+      "customNote": "OpenRouter 上列出的任意模型 ID",
+      "customNeedsKey": "需要 OpenRouter 密钥",
+      "providers": {
+        "openrouter": "OpenRouter",
+        "openai": "OpenAI",
+        "google": "Gemini"
+      },
+      "models": {
+        "claude-sonnet-5-5": "规划细致，调用工具最稳",
+        "gpt-6-1-sol": "全能型，工具调用快",
+        "gemini-4-argon": "Google 旗舰，擅长长对话",
+        "gemini-3-8-flash": "快速轻量",
+        "claude-haiku-5-5": "非常便宜，适合小改动",
+        "gpt-6-luna": "OpenAI 小模型，便宜",
+        "openrouter-auto": "为每条消息选择模型"
+      },
+      "applies": "更改会从下一条消息起应用到所有工作室。"
     }
   }
 }

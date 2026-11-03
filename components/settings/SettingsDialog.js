@@ -3,16 +3,17 @@
 // Settings: every setting that applies to the whole studio, in one dialog
 // with a section list on the left and the open section on the right. A
 // tool's own options stay with that tool; what lands here is global:
-// language, provider keys and order, local engines, spend, the watermark
-// defaults and the library file. It is a dialog rather than a page so the
+// language, provider keys and order, the agent model, local engines, spend,
+// the watermark defaults and the library file. It is a dialog rather than a page so the
 // studios behind it keep whatever is in progress.
 
 import { useEffect, useMemo, useState } from 'react';
-import { IconAdjustmentsHorizontal, IconArchive, IconCoins, IconKey, IconServer, IconSettings, IconTypography, IconX } from '@tabler/icons-react';
-import { PROVIDERS, loadProviderSettings, subscribeProviderSettings } from 'studio';
+import { IconAdjustmentsHorizontal, IconArchive, IconCoins, IconKey, IconMessageChatbot, IconServer, IconSettings, IconTypography, IconX } from '@tabler/icons-react';
+import { PROVIDERS, loadProviderSettings, resolveAgentModel, subscribeProviderSettings } from 'studio';
 import { getCommonCopy } from '@/lib/locales';
 import GeneralSection from './GeneralSection';
 import ProvidersSection from './ProvidersSection';
+import AgentModelSection from './AgentModelSection';
 import LocalEnginesSection from './LocalEnginesSection';
 import UsageSection from './UsageSection';
 import WatermarkSection from './WatermarkSection';
@@ -20,15 +21,23 @@ import LibrarySection from './LibrarySection';
 import { fill } from './ui';
 import pkg from '../../package.json';
 
-export const SETTINGS_SECTIONS = ['general', 'providers', 'local', 'usage', 'watermark', 'library'];
+export const SETTINGS_SECTIONS = ['general', 'providers', 'agent', 'local', 'usage', 'watermark', 'library'];
 
 const ICONS = {
   general: IconAdjustmentsHorizontal,
   providers: IconKey,
+  agent: IconMessageChatbot,
   local: IconServer,
   usage: IconCoins,
   watermark: IconTypography,
   library: IconArchive,
+};
+
+// The nav names the agent model once one is chosen and can run.
+const agentStatus = () => {
+  const agent = resolveAgentModel();
+  if (agent?.chosen && !agent.blocked) return { tone: 'ok', name: agent.name };
+  return { tone: 'warn', name: null, blocked: Boolean(agent?.blocked) };
 };
 
 const countConfigured = (kind) => {
@@ -41,7 +50,7 @@ export default function SettingsDialog({ locale = 'en', section = 'general', lib
   const copy = common.settings;
   const providerCopy = common.providersModal;
   const [active, setActive] = useState(SETTINGS_SECTIONS.includes(section) ? section : 'general');
-  const [counts, setCounts] = useState(() => ({ cloud: countConfigured('cloud'), local: countConfigured('local') }));
+  const [counts, setCounts] = useState(() => ({ cloud: countConfigured('cloud'), local: countConfigured('local'), agent: agentStatus() }));
 
   useEffect(() => {
     const onKey = (event) => { if (event.key === 'Escape') onClose(); };
@@ -49,16 +58,18 @@ export default function SettingsDialog({ locale = 'en', section = 'general', lib
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  useEffect(() => subscribeProviderSettings(() => setCounts({ cloud: countConfigured('cloud'), local: countConfigured('local') })), []);
+  useEffect(() => subscribeProviderSettings(() => setCounts({ cloud: countConfigured('cloud'), local: countConfigured('local'), agent: agentStatus() })), []);
 
   const meta = useMemo(() => ({
     providers: counts.cloud > 0 ? { tone: 'ok', text: fill(copy.status.connected, { count: counts.cloud }) } : { tone: 'warn', text: copy.status.none },
+    agent: counts.agent.name ? { tone: 'ok', text: counts.agent.name } : { tone: 'warn', text: counts.agent.blocked ? copy.status.needsKey : copy.status.notChosen },
     local: counts.local > 0 ? { tone: 'ok', text: fill(copy.status.connected, { count: counts.local }) } : null,
   }), [counts, copy.status]);
 
   const body = {
     general: <GeneralSection locale={locale} copy={copy.general} version={pkg.version} languagePath={languagePath} />,
     providers: <ProvidersSection locale={locale} copy={providerCopy} />,
+    agent: <AgentModelSection locale={locale} copy={copy.agent} onNavigate={setActive} />,
     local: <LocalEnginesSection copy={providerCopy} />,
     usage: <UsageSection locale={locale} copy={copy.usage} />,
     watermark: <WatermarkSection copy={copy.watermark} />,
@@ -108,9 +119,9 @@ export default function SettingsDialog({ locale = 'en', section = 'general', lib
                   <Icon size={16} stroke={1.75} className={isActive ? 'text-primary' : 'text-white/40 group-hover:text-white/70'} aria-hidden="true" />
                   <span className="whitespace-nowrap">{copy.sections[id].label}</span>
                   {status && (
-                    <span className={`ml-auto hidden items-center gap-1.5 text-[10.5px] font-semibold md:flex ${status.tone === 'ok' ? 'text-white/35' : 'text-red-300'}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${status.tone === 'ok' ? 'bg-emerald-400' : 'bg-red-500'}`} aria-hidden="true" />
-                      {status.text}
+                    <span className={`ml-auto hidden min-w-0 items-center gap-1.5 text-[10.5px] font-semibold md:flex ${status.tone === 'ok' ? 'text-white/35' : 'text-red-300'}`} title={status.text}>
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${status.tone === 'ok' ? 'bg-emerald-400' : 'bg-red-500'}`} aria-hidden="true" />
+                      <span className="max-w-[84px] truncate">{status.text}</span>
                     </span>
                   )}
                 </button>

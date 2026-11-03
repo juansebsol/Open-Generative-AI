@@ -84,15 +84,12 @@
     "priceNote": "Each image the agent makes costs about this. A message can make none or several; with Plan first on, the plan shows the total before more than one runs."
   },
   "agent": {
-    "label": "Agent",
-    "hint": "plans and runs the design",
-    "router": "picks a model per message",
-    "billing": "Plans the design and runs the image tools. Its replies are billed on your {provider} key.",
-    "last": "Last reply: {model}",
-    "none": "No chat key yet",
-    "noneHint": "Needs an OpenRouter, OpenAI or Gemini key.",
-    "change": "Change",
-    "add": "Add a key"
+    "unchosen": "No agent model chosen",
+    "using": "Using {model} for now",
+    "blocked": "{model} needs a key",
+    "noKey": "Needs a chat key",
+    "choose": "Choose the agent model in Settings",
+    "costTitle": "What the agent's steps for this reply cost, as the provider reported or priced from the tokens"
   },
   "plan": {
     "title": "Plan",

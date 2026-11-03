@@ -1,7 +1,7 @@
 'use client';
 
-// The provider settings store as a hook, shared by the Providers and Local
-// engines sections. Saving notifies every studio (and the other section),
+// The provider settings store as a hook, shared by the Providers, Agent model
+// and Local engines sections. Saving notifies every studio (and the other section),
 // so it runs outside React's state updater.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -25,6 +25,7 @@ export function useProviderSettings() {
   const setKey = useCallback((id, value) => update((current) => ({ ...current, keys: { ...current.keys, [id]: value.trim() } })), [update]);
   const setUrl = useCallback((id, value) => update((current) => ({ ...current, urls: { ...current.urls, [id]: value.trim() } })), [update]);
   const setOptions = useCallback((id, value) => update((current) => ({ ...current, options: { ...current.options, [id]: value } })), [update]);
+  const setAgent = useCallback((agent) => update((current) => ({ ...current, agent })), [update]);
   const move = useCallback((id, delta) => update((current) => {
     const order = [...current.order];
     const index = order.indexOf(id);
@@ -36,5 +37,5 @@ export function useProviderSettings() {
 
   const isConfigured = useCallback((provider) => Boolean(provider.kind === 'local' ? settings.urls[provider.id] : settings.keys[provider.id]), [settings]);
 
-  return { settings, setKey, setUrl, setOptions, move, isConfigured };
+  return { settings, setKey, setUrl, setOptions, setAgent, move, isConfigured };
 }

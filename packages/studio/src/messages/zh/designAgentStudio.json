@@ -84,15 +84,12 @@
     "priceNote": "助手每生成一张图像大约花费此金额。一条消息可能不生成，也可能生成多张；开启“先出计划”后，运行多于一个付费步骤前，计划会显示总价。"
   },
   "agent": {
-    "label": "助手",
-    "hint": "规划并执行设计",
-    "router": "为每条消息选择模型",
-    "billing": "负责规划设计并调用图像工具。它的回复按你的 {provider} 密钥计费。",
-    "last": "上次回复：{model}",
-    "none": "尚未添加聊天密钥",
-    "noneHint": "需要 OpenRouter、OpenAI 或 Gemini 密钥。",
-    "change": "更换",
-    "add": "添加密钥"
+    "unchosen": "尚未选择助手模型",
+    "using": "暂时使用 {model}",
+    "blocked": "{model} 需要密钥",
+    "noKey": "需要聊天密钥",
+    "choose": "在设置中选择助手模型",
+    "costTitle": "助手为这条回复所执行步骤的费用，来自服务商报告或按 token 计算"
   },
   "plan": {
     "title": "计划",

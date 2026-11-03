@@ -3,6 +3,8 @@
 // request shape, including tools and JSON response formats.
 
 import { ProviderError, requestJson } from './http.js';
+import { agentRate, liveRates } from './pricing.js';
+import { rateIdFor, tokenCost } from '../agentModel.js';
 
 const CHAT_ENDPOINTS = {
   openrouter: 'https://openrouter.ai/api/v1/chat/completions',
@@ -50,5 +52,24 @@ export async function chatCompletion({ provider, key, body, origin }) {
 
   const message = data?.choices?.[0]?.message;
   if (!message) throw new ProviderError(`${provider} returned no message`, { provider, status: 502 });
-  return { message, usage: data.usage || null, model: data.model || request.model };
+  const usage = data.usage || null;
+  return { message, usage, model: data.model || request.model, ...(await replyCost(provider, request.model, data.model, usage)) };
+}
+
+// What one reply cost: OpenRouter reports the charge itself; the others are
+// priced from the token counts at the model's rate (the one asked for, since
+// vendors answer with dated ids). { cost: null } when it cannot be priced.
+export async function replyCost(provider, requested, answered, usage) {
+  if (!usage) return { cost: null, costExact: false };
+  if (typeof usage.cost === 'number' && Number.isFinite(usage.cost)) return { cost: usage.cost, costExact: true };
+  const id = rateIdFor(provider, requested) || rateIdFor(provider, answered);
+  if (!id) return { cost: null, costExact: false };
+  let live = null;
+  try {
+    live = await liveRates();
+  } catch {
+    // the table rate still prices it
+  }
+  const cost = tokenCost(agentRate(id, live), { input: usage.prompt_tokens, output: usage.completion_tokens });
+  return { cost, costExact: false };
 }

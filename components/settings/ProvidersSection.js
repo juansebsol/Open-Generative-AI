@@ -1,11 +1,12 @@
 'use client';
 
-// Providers: one card per cloud provider with its key, balance and chat
-// model, in the visitor's priority order.
+// Providers: one card per cloud provider with its key and balance, in the
+// visitor's priority order. Which chat model the assistants use is chosen in
+// Agent model.
 
 import { useCallback, useEffect, useState } from 'react';
 import { IconChevronDown, IconChevronUp, IconExternalLink, IconEye, IconEyeOff } from '@tabler/icons-react';
-import { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, NO_BALANCE_PROVIDER_IDS, PROVIDERS } from 'studio';
+import { NO_BALANCE_PROVIDER_IDS, PROVIDERS } from 'studio';
 import { useProviderSettings } from './providerSettings';
 import { BUTTON_SMALL, FIELD_MONO, LINK, Pill, fill } from './ui';
 
@@ -108,7 +109,7 @@ function BalanceLine({ providerId, apiKey, autoCheck, locale, copy }) {
   );
 }
 
-function ProviderCard({ provider, rank, count, settings, savedKeys, configured, locale, copy, onKey, onOptions, onMove }) {
+function ProviderCard({ provider, rank, count, settings, savedKeys, configured, locale, copy, onKey, onMove }) {
   const key = settings.keys[provider.id] || '';
   const noBalance = NO_BALANCE_PROVIDER_IDS.includes(provider.id);
   return (
@@ -163,27 +164,12 @@ function ProviderCard({ provider, rank, count, settings, savedKeys, configured, 
         )}
       </div>
 
-      {CHAT_PROVIDER_IDS.includes(provider.id) && (
-        <div className="mt-4 border-t border-white/[0.06] pt-3">
-          <label className="mb-1 block text-[11.5px] font-semibold text-white/45" htmlFor={`chat-model-${provider.id}`}>{copy.chatModel}</label>
-          <input
-            id={`chat-model-${provider.id}`}
-            type="text"
-            value={settings.options[provider.id]?.chatModel || ''}
-            onChange={(event) => onOptions(provider.id, { ...(settings.options[provider.id] || {}), chatModel: event.target.value })}
-            placeholder={DEFAULT_CHAT_MODELS[provider.id]}
-            spellCheck={false}
-            className={FIELD_MONO}
-          />
-          <p className="mt-1 text-[11.5px] text-white/35">{copy.chatModelHint}</p>
-        </div>
-      )}
     </div>
   );
 }
 
 export default function ProvidersSection({ locale, copy }) {
-  const { settings, setKey, setOptions, move, isConfigured } = useProviderSettings();
+  const { settings, setKey, move, isConfigured } = useProviderSettings();
   // Balances are checked on open only for keys that were already saved.
   const [savedKeys] = useState(() => settings.keys);
   const cloud = settings.order.map((id) => PROVIDERS.find((provider) => provider.id === id)).filter((provider) => provider?.kind === 'cloud');
@@ -204,7 +190,6 @@ export default function ProvidersSection({ locale, copy }) {
             locale={locale}
             copy={copy}
             onKey={setKey}
-            onOptions={setOptions}
             onMove={move}
           />
         ))}

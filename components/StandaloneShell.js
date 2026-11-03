@@ -7,7 +7,7 @@ import {
   PROVIDERS, StudioVisibility, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
-  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconLanguage, IconMenu2, IconMessages, IconMicrophone, IconMicrophone2, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen, IconWaveSine
+  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconLanguage, IconMenu2, IconMessageChatbot, IconMessages, IconMicrophone, IconMicrophone2, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen, IconWaveSine
 } from '@tabler/icons-react';
 import SettingsDialog from './settings/SettingsDialog';
 import CommandPalette from './CommandPalette';
@@ -349,6 +349,7 @@ export default function StandaloneShell({ locale = 'en' }) {
     }))),
     { id: 'settings', group: copy.palette.actions, label: copy.palette.openSettings, icon: IconSettings, onSelect: () => openSettings('general') },
     { id: 'add-key', group: copy.palette.actions, label: copy.palette.addKey, icon: IconKey, onSelect: () => openSettings('providers') },
+    { id: 'agent-model', group: copy.palette.actions, label: copy.palette.agentModel, icon: IconMessageChatbot, onSelect: () => openSettings('agent') },
     { id: 'language', group: copy.palette.actions, label: copy.palette.language, icon: IconLanguage, onSelect: () => openSettings('general') },
     { id: 'export-library', group: copy.palette.actions, label: copy.palette.exportLibrary, icon: IconDownload, onSelect: () => openSettings('library', 'export') },
     { id: 'import-library', group: copy.palette.actions, label: copy.palette.importLibrary, icon: IconFolderOpen, onSelect: () => openSettings('library', 'import') },
@@ -373,10 +374,14 @@ export default function StandaloneShell({ locale = 'en' }) {
     if (!hasAnyProvider()) openSettings('providers');
     const unsubscribe = subscribeProviderSettings(sync);
     const openProviders = () => openSettings('providers');
+    // A studio asks for a section by name, e.g. the agent model from Design Agent.
+    const openSection = (event) => openSettings(event.detail?.section || 'general');
     window.addEventListener('oga:provider-setup-needed', openProviders);
+    window.addEventListener('oga:open-settings', openSection);
     return () => {
       unsubscribe();
       window.removeEventListener('oga:provider-setup-needed', openProviders);
+      window.removeEventListener('oga:open-settings', openSection);
     };
   }, [openSettings]);
 

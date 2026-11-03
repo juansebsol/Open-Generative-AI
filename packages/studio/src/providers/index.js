@@ -20,3 +20,17 @@ export { registerMediaServiceWorker, removeUnusedMedia, listMediaRecords, import
 export { quoteRun, quoteRuns, quoteListPrice, routeFor, pricedInputs, describeQuote, formatMoney } from './pricing.js';
 export { recordSpend, monthlySpend, subscribeSpend, getSpend, clearSpend } from './spend.js';
 export { chatComplete, chatJson, parseJsonReply, hasChatProvider, chatProvider, chatModelFor, CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, ChatSetupError } from './chat.js';
+export {
+  AGENT_MODELS,
+  AGENT_MESSAGE_TOKENS,
+  CUSTOM_AGENT_MODEL,
+  RECOMMENDED_AGENT_MODEL,
+  agentModelForEndpoint,
+  agentModelName,
+  fetchAgentRates,
+  findAgentModel,
+  messageCost,
+  rateIdFor,
+  resolveAgentModel,
+  tokenCost,
+} from './agentModel.js';

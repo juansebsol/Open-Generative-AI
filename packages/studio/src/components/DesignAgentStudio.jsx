@@ -18,12 +18,14 @@ import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
   IconMaximize,
+  IconMessageChatbot,
   IconMinus,
   IconPhoto,
   IconPlayerStopFilled,
   IconPlus,
   IconRuler,
   IconSend,
+  IconSettings,
   IconSparkles,
   IconTrash,
   IconTypography,
@@ -58,8 +60,8 @@ import {
   expandImage,
   uploadFile,
 } from "../generation.js";
-import { chatCompleteDetailed, chatModelFor, chatProvider, hasChatProvider, ChatSetupError, CHAT_PROVIDER_IDS } from "../providers/chat.js";
-import { getProvider } from "../providers/directProviders.js";
+import { chatCompleteDetailed, hasChatProvider, ChatSetupError, CHAT_PROVIDER_IDS } from "../providers/chat.js";
+import { agentModelName, resolveAgentModel } from "../providers/agentModel.js";
 import { subscribeProviderSettings } from "../providers/keys.js";
 import { formatMoney } from "../providers/pricing.js";
 import { formatErrorMessage } from "../utils/formatError.js";
@@ -441,8 +443,7 @@ export default function DesignAgentStudio({
   const [reviseTarget, setReviseTarget] = useState(null);
   const [chatReady, setChatReady] = useState(false);
   const [modelLists, setModelLists] = useState({ image: [], edit: [] });
-  const [chatInfo, setChatInfo] = useState(null); // { provider, model } the agent's replies come from
-  const [lastReply, setLastReply] = useState(null); // { provider, configured, model } of the last reply, for routers like openrouter/auto
+  const [agent, setAgent] = useState(null); // the agent model the replies come from (Settings → Agent model)
   const [planEstimate, setPlanEstimate] = useState(null); // the price of the plan waiting for approval, with its message id
   const [openMenu, setOpenMenu] = useState(null); // 'sessions' | 'images' | 'export' | 'format' | null
   const [trashTarget, setTrashTarget] = useState(null); // { session, fresh } while the trash dialog is open
@@ -584,9 +585,8 @@ export default function DesignAgentStudio({
   // ── Provider availability ───────────────────────────────────────────────
   useEffect(() => {
     const sync = () => {
-      const provider = chatProvider();
       setChatReady(hasChatProvider());
-      setChatInfo(provider ? { provider, model: chatModelFor(provider) } : null);
+      setAgent(resolveAgentModel());
       setModelLists({ image: availableImageModels(), edit: availableEditModels() });
     };
     sync();
@@ -1151,6 +1151,7 @@ export default function DesignAgentStudio({
     runningRef.current = true;
     cancelRef.current = false;
     setRunning(true);
+    let spend = { cost: 0, priced: true };
     try {
       for (let step = 0; step < MAX_AGENT_STEPS; step += 1) {
         if (cancelRef.current) break;
@@ -1170,21 +1171,25 @@ export default function DesignAgentStudio({
           askFirst: currentSettings.askFirst,
           frame: frameForAgent(boardRef.current.frame),
         });
-        const provider = chatProvider();
-        const { message: reply, model: answeredBy } = await chatCompleteDetailed({
+        const { message: reply, model: answeredBy, cost } = await chatCompleteDetailed({
           messages: [{ role: "system", content: system }, ...toChatMessages(trimHistory(messagesRef.current, 60))],
           tools: DESIGN_TOOLS,
           temperature: 0.5,
         });
-        setLastReply({ provider, configured: chatModelFor(provider), model: answeredBy });
+        spend = { cost: spend.cost + (cost ?? 0), priced: spend.priced && cost !== null };
         if (cancelRef.current) break;
 
         const calls = (reply?.tool_calls || [])
           .filter((call) => call?.function?.name)
           .map((call) => ({ ...call, type: "function", id: call.id || `call_${uid()}` }));
+        const content = typeof reply?.content === "string" ? reply.content : "";
+        // A reply with text notes the model that wrote it and what the steps since the last one cost.
+        const meta = content.trim() ? { model: agentModelName(answeredBy), cost: spend.priced ? spend.cost : null } : null;
+        if (meta) spend = { cost: 0, priced: true };
         addMessage({
           role: "assistant",
-          content: typeof reply?.content === "string" ? reply.content : "",
+          content,
+          ...(meta ? { meta } : {}),
           ...(calls.length ? { tool_calls: calls } : {}),
           // OpenRouter reasoning models need this echoed back with tool results.
           ...(calls.length && reply?.reasoning_details ? { reasoning_details: reply.reasoning_details } : {}),
@@ -1519,8 +1524,14 @@ export default function DesignAgentStudio({
   const imageModelName = imageModel?.name || copy.settings.auto;
   // Auto, or a picked model the current keys cannot run (Auto stands in for it).
   const imageAuto = Boolean(imageModel) && imageModel.id !== settings.imageModelId;
-  const chatProviderName = chatInfo ? getProvider(chatInfo.provider)?.label || chatInfo.provider : "";
-  const lastReplyModel = lastReply && chatInfo && lastReply.provider === chatInfo.provider && lastReply.configured === chatInfo.model && lastReply.model !== chatInfo.model ? lastReply.model : null;
+  // Said in the models menu until an agent model is chosen in Settings (and can run).
+  const agentNotice = agent?.chosen && !agent.blocked
+    ? null
+    : !agent
+      ? { title: copy.agent.unchosen, body: copy.agent.noKey }
+      : agent.blocked
+        ? { title: fill(copy.agent.blocked, { model: agent.blocked.name }), body: fill(copy.agent.using, { model: agent.name }) }
+        : { title: copy.agent.unchosen, body: fill(copy.agent.using, { model: agent.name }) };
 
   // "≈ $0.45" (or "from $0.45" when a step has no price) and the steps behind it.
   const estimateView = (estimate) => {
@@ -1947,8 +1958,16 @@ export default function DesignAgentStudio({
               }
               if (message.role === "assistant") {
                 return (
-                  <div key={message.id} className={`max-w-[92%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md border px-3.5 py-2 text-[13px] leading-relaxed ${message.error ? "border-red-500/20 bg-red-500/[0.08] text-red-200" : "border-white/[0.06] bg-white/[0.04] text-white/85"}`}>
-                    {message.content}
+                  <div key={message.id} className="flex flex-col items-start gap-1">
+                    <div className={`max-w-[92%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md border px-3.5 py-2 text-[13px] leading-relaxed ${message.error ? "border-red-500/20 bg-red-500/[0.08] text-red-200" : "border-white/[0.06] bg-white/[0.04] text-white/85"}`}>
+                      {message.content}
+                    </div>
+                    {message.meta && (
+                      <span className="max-w-[92%] truncate pl-1 font-mono text-[10.5px] text-white/35" title={message.meta.cost !== null ? copy.agent.costTitle : undefined} data-design-reply-meta>
+                        {message.meta.model}
+                        {message.meta.cost !== null ? ` · ${formatMoney(message.meta.cost, "USD", locale)}` : ""}
+                      </span>
+                    )}
                   </div>
                 );
               }
@@ -2222,43 +2241,35 @@ export default function DesignAgentStudio({
                         role="dialog"
                         aria-label={copy.bar.models}
                         onClick={(event) => event.stopPropagation()}
-                        className="w-[290px] max-w-[calc(100vw-24px)]"
+                        className="w-[310px] max-w-[calc(100vw-24px)]"
                         fitViewport
                         solid
                         data-design-images-menu
                       >
-                        <PromptPopoverHeader>{copy.agent.label}</PromptPopoverHeader>
-                        {/* The model and Change share the first line, so the description below gets the full width. */}
-                        <div className="py-1 pl-2.5 pr-1" data-design-agent-model>
-                          <div className="flex items-center gap-2">
-                            {chatInfo ? (
-                              <span className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-white/85" title={chatInfo.model}>{chatInfo.model}</span>
-                            ) : (
-                              <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-white/85">{copy.agent.none}</span>
-                            )}
+                        {agentNotice && (
+                          <div className="mx-0.5 mb-1.5 mt-0.5 flex items-center gap-2.5 rounded-[11px] border border-amber-400/20 bg-amber-400/[0.05] py-2 pl-2.5 pr-1.5" data-design-agent-notice>
+                            <span aria-hidden="true" className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-amber-400/[0.12] text-amber-300">
+                              <IconMessageChatbot size={16} stroke={1.75} />
+                            </span>
+                            <span className="flex min-w-0 flex-1 flex-col">
+                              <span className="truncate text-[12.5px] font-semibold text-white/90">{agentNotice.title}</span>
+                              <span className="truncate text-[11.5px] text-white/50" title={agentNotice.body}>{agentNotice.body}</span>
+                            </span>
                             <button
                               type="button"
                               onClick={() => {
                                 setOpenMenu(null);
-                                openProviderSettings(chatInfo ? [chatInfo.provider] : CHAT_PROVIDER_IDS);
+                                window.dispatchEvent(new CustomEvent("oga:open-settings", { detail: { section: "agent" } }));
                               }}
-                              className={`${toolButtonClassName({ accent: true })} !h-7`}
+                              aria-label={copy.agent.choose}
+                              title={copy.agent.choose}
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-amber-400/10 text-amber-300 transition-colors hover:bg-amber-400/20 focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-300/50"
                             >
-                              {chatInfo ? copy.agent.change : copy.agent.add}
+                              <IconSettings size={16} stroke={1.75} aria-hidden="true" />
                             </button>
                           </div>
-                          {chatInfo ? (
-                            <>
-                              <p className="line-clamp-2 pr-1.5 text-[11.5px] leading-snug text-white/45" title={fill(copy.agent.billing, { provider: chatProviderName })}>
-                                {chatProviderName} · {chatInfo.model === "openrouter/auto" ? copy.agent.router : copy.agent.hint}
-                              </p>
-                              {lastReplyModel && <p className="mt-0.5 truncate pr-1.5 font-mono text-[11px] text-white/60" title={lastReplyModel}>{fill(copy.agent.last, { model: lastReplyModel })}</p>}
-                            </>
-                          ) : (
-                            <p className="line-clamp-2 pr-1.5 text-[11.5px] leading-snug text-white/45">{copy.agent.noneHint}</p>
-                          )}
-                        </div>
-                        <div className="mt-2 border-t border-white/[0.06] pt-2">
+                        )}
+                        <div className={agentNotice ? "" : "-mt-1"}>
                           {modelMenu("imageModelId", copy.settings.imageModel, modelLists.image, imageModel)}
                         </div>
                         <div className="mt-2 border-t border-white/[0.06] pt-2">

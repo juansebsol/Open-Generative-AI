@@ -380,6 +380,30 @@ export function chatPrice(catalogId, payload = {}, live = null) {
   };
 }
 
+// ── The agent model: per-token rates for Settings and each reply's cost ────
+
+/**
+ * Input and output USD per token for an OpenRouter model id: OpenRouter's
+ * live figure (it mirrors the vendors' own prices), else the table in
+ * prices.js → chat. Null when neither knows it, or when the price varies
+ * per message (openrouter/auto lists a negative rate).
+ */
+export function agentRate(openrouterId, live = null) {
+  const model = live?.models?.get(openrouterId);
+  const input = model ? money(model.prompt) : null;
+  const output = model ? money(model.completion) : null;
+  if (input !== null && output !== null && input >= 0 && output >= 0) return { input, output, source: 'openrouter' };
+  const entry = Object.values(PRICES.chat || {}).find((candidate) => candidate.openrouter === openrouterId);
+  return entry ? { input: entry.input, output: entry.output, source: 'table' } : null;
+}
+
+/** Rates for several OpenRouter ids, with when OpenRouter's list was read. */
+export async function agentRates(ids = []) {
+  const live = await liveRates();
+  const unique = [...new Set(ids.filter((id) => typeof id === 'string' && id))].slice(0, 60);
+  return { rates: Object.fromEntries(unique.map((id) => [id, agentRate(id, live)])), checkedAt: live?.fetchedAt || null };
+}
+
 // ── ElevenLabs: characters × the published API rate for the model ───────────
 
 export function elevenlabsRate(model) {

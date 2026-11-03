@@ -16,7 +16,7 @@ import * as elevenlabs from './adapters/elevenlabs.js';
 export { chatCompletion, CHAT_PROVIDER_IDS } from './chat.js';
 export { generateSvgChat } from './svgChat.js';
 export { getBalance, BALANCE_PROVIDER_IDS } from './balance.js';
-export { getPrice, getPrices, PRICE_PROVIDER_IDS } from './pricing.js';
+export { getPrice, getPrices, agentRates, PRICE_PROVIDER_IDS } from './pricing.js';
 
 const ADAPTERS = { fal, wavespeed, google, openai, openrouter, elevenlabs };
 

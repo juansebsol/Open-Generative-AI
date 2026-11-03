@@ -7,7 +7,7 @@ import { PROVIDER_IDS, getProvider } from './directProviders.js';
 const STORAGE_KEY = 'oga_providers_v1';
 const CHANGE_EVENT = 'oga:providers-changed';
 
-const EMPTY = Object.freeze({ keys: {}, urls: {}, options: {}, order: PROVIDER_IDS });
+const EMPTY = Object.freeze({ keys: {}, urls: {}, options: {}, order: PROVIDER_IDS, agent: null });
 
 let cache = null;
 
@@ -19,6 +19,17 @@ function hasStorage() {
   }
 }
 
+// The agent model choice (agentModel.js): { model, provider, custom }, or
+// null until the visitor picks one.
+function normaliseAgent(raw) {
+  if (!raw || typeof raw !== 'object' || typeof raw.model !== 'string' || !raw.model) return null;
+  return {
+    model: raw.model,
+    provider: typeof raw.provider === 'string' ? raw.provider : '',
+    custom: typeof raw.custom === 'string' ? raw.custom.trim() : '',
+  };
+}
+
 function normalise(raw) {
   const order = Array.isArray(raw?.order) ? raw.order.filter((id) => PROVIDER_IDS.includes(id)) : [];
   for (const id of PROVIDER_IDS) if (!order.includes(id)) order.push(id);
@@ -27,6 +38,7 @@ function normalise(raw) {
     urls: { ...(raw?.urls || {}) },
     options: { ...(raw?.options || {}) },
     order,
+    agent: normaliseAgent(raw?.agent),
   };
 }
 

@@ -1,17 +1,13 @@
-// Browser-side helper for the assistant features. Uses the first configured
+// Browser-side helper for the assistant features. Runs on the agent model
+// chosen in Settings (agentModel.js), or until one is chosen, the first
 // chat-capable provider (OpenRouter, OpenAI, Gemini) in the visitor's order.
 
 import { getProvider } from './directProviders.js';
-import { configuredProviders, getProviderKey, getProviderOptions } from './keys.js';
+import { getProviderKey, getProviderOptions } from './keys.js';
+import { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS, resolveAgentModel } from './agentModel.js';
+import { recordSpend } from './spend.js';
 
-export const CHAT_PROVIDER_IDS = ['openrouter', 'openai', 'google'];
-
-// Defaults when the visitor hasn't picked a chat model in Settings.
-export const DEFAULT_CHAT_MODELS = {
-  openrouter: 'openrouter/auto',
-  openai: 'gpt-5-mini',
-  google: 'gemini-flash-latest',
-};
+export { CHAT_PROVIDER_IDS, DEFAULT_CHAT_MODELS };
 
 export class ChatSetupError extends Error {
   constructor() {
@@ -21,13 +17,14 @@ export class ChatSetupError extends Error {
 }
 
 export function chatProvider() {
-  return configuredProviders().find((id) => CHAT_PROVIDER_IDS.includes(id)) || null;
+  return resolveAgentModel()?.provider || null;
 }
 
 export function hasChatProvider() {
   return Boolean(chatProvider());
 }
 
+/** The model a provider runs when no agent model is chosen. */
 export function chatModelFor(provider) {
   return getProviderOptions(provider).chatModel?.trim() || DEFAULT_CHAT_MODELS[provider];
 }
@@ -41,20 +38,23 @@ export async function chatComplete(request) {
 }
 
 /**
- * chatComplete, plus the model that answered (OpenRouter's auto router names
- * the one it picked) and the usage the provider reported.
- * @returns {Promise<{ message: object, model: string, usage: object|null }>}
+ * chatComplete, plus the provider and model that answered (OpenRouter's auto
+ * router names the one it picked), the usage the provider reported and what
+ * the reply cost in USD (null when it cannot be priced). The cost also lands
+ * in Settings → Usage.
+ * @returns {Promise<{ message: object, provider: string, model: string, usage: object|null, cost: number|null }>}
  */
 export async function chatCompleteDetailed({ messages, tools, toolChoice, responseFormat, temperature }) {
-  const provider = chatProvider();
-  if (!provider) {
+  const agent = resolveAgentModel();
+  if (!agent) {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('oga:provider-setup-needed', { detail: { providers: CHAT_PROVIDER_IDS } }));
     }
     throw new ChatSetupError();
   }
+  const { provider } = agent;
   const body = {
-    model: chatModelFor(provider),
+    model: agent.endpoint,
     messages,
     ...(tools?.length ? { tools, ...(toolChoice ? { tool_choice: toolChoice } : {}) } : {}),
     ...(responseFormat ? { response_format: responseFormat } : {}),
@@ -69,7 +69,10 @@ export async function chatCompleteDetailed({ messages, tools, toolChoice, respon
   if (!response.ok) {
     throw new Error(data?.error || `${getProvider(provider)?.label || provider} chat failed (${response.status})`);
   }
-  return { message: data.message, model: data.model || body.model, usage: data.usage || null };
+  const model = data.model || body.model;
+  const cost = Number.isFinite(data.cost) ? data.cost : null;
+  recordSpend({ provider, endpoint: model, amount: cost, estimated: !data.costExact });
+  return { message: data.message, provider, model, usage: data.usage || null, cost };
 }
 
 // Pulls a JSON value out of a model reply, tolerating ```json fences.
