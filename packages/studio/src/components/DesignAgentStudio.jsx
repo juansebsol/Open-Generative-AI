@@ -304,8 +304,9 @@ function BoardItem({ item, selected, showLabel = true, scale, copy, onPointerDow
 }
 
 // The format frame: the area Export saves, filled with the export background
-// (a checkerboard when that is transparent), its name riding above it.
-function BoardFrame({ frame, name, size, background, scale, z }) {
+// (a checkerboard when that is transparent). Its name rides above it in the
+// frame bar.
+function BoardFrame({ frame, background, scale, z }) {
   const inverse = 1 / scale;
   const tile = 16 * inverse;
   const fillStyle = background === "transparent"
@@ -322,12 +323,7 @@ function BoardFrame({ frame, name, size, background, scale, z }) {
       className="pointer-events-none absolute left-0 top-0"
       style={{ width: frame.width, height: frame.height, zIndex: z, boxShadow: `0 0 0 ${inverse}px rgba(255,255,255,0.14), 0 ${24 * inverse}px ${60 * inverse}px rgba(0,0,0,0.5)`, ...fillStyle }}
       data-design-frame
-    >
-      <span className="absolute bottom-full left-0 flex items-baseline gap-2 whitespace-nowrap" style={{ marginBottom: 6 * inverse, transform: `scale(${inverse})`, transformOrigin: "left bottom" }}>
-        <span className="text-[12px] font-medium text-white/75">{name}</span>
-        <span className="font-mono text-[11px] text-white/40">{size}</span>
-      </span>
-    </div>
+    />
   );
 }
 
@@ -431,7 +427,8 @@ export default function DesignAgentStudio({
   const [reviseTarget, setReviseTarget] = useState(null);
   const [chatReady, setChatReady] = useState(false);
   const [modelLists, setModelLists] = useState({ image: [], edit: [] });
-  const [openMenu, setOpenMenu] = useState(null); // 'sessions' | 'images' | 'export' | null
+  const [openMenu, setOpenMenu] = useState(null); // 'sessions' | 'images' | 'export' | 'format' | null
+  const [trashTarget, setTrashTarget] = useState(null); // { session, fresh } while the trash dialog is open
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [formatGroup, setFormatGroup] = useState(FORMAT_GROUPS[0]);
   const [customSize, setCustomSize] = useState({ width: "1080", height: "1350", unit: "px" });
@@ -1409,12 +1406,30 @@ export default function DesignAgentStudio({
     setOpenMenu(null);
   };
 
-  const deleteSession = (session) => {
-    if (runningRef.current || !confirm(copy.sessions.confirmDelete)) return;
+  // Trashing asks first. `fresh` (the frame's trash button) starts a new board
+  // in its place; otherwise the most recent other board opens.
+  const requestTrash = (session, fresh = false) => {
+    if (runningRef.current) {
+      toast(copy.trash.lockedWhileRunning);
+      return;
+    }
+    setOpenMenu(null);
+    setTrashTarget({ session, fresh });
+  };
+
+  const confirmTrash = () => {
+    const { session, fresh } = trashTarget;
+    setTrashTarget(null);
+    if (runningRef.current) return;
     const remaining = sessions.filter((entry) => entry.id !== session.id);
-    const next = remaining.length ? remaining : [createSession()];
-    setSessions(next);
-    if (session.id === activeIdRef.current) loadSession([...next].sort((a, b) => b.updatedAt - a.updatedAt)[0]);
+    if (session.id !== activeIdRef.current) {
+      setSessions(remaining);
+      return;
+    }
+    const reopen = !fresh && remaining.length > 0;
+    const next = reopen ? [...remaining].sort((a, b) => b.updatedAt - a.updatedAt)[0] : createSession();
+    setSessions(reopen ? remaining : [next, ...remaining]);
+    loadSession(next);
   };
 
   // ── Render helpers ──────────────────────────────────────────────────────
@@ -1432,9 +1447,13 @@ export default function DesignAgentStudio({
   // The dot grid spreads out when zoomed far out (a print frame) instead of blurring into a wash.
   let gridStep = 24 * viewport.scale;
   while (gridStep < 10) gridStep *= 5;
-  const placedCount = board.items.filter((item) => item.kind !== "pending").length;
-  const itemsLabel = placedCount === 0 ? copy.sessions.itemsNone : placedCount === 1 ? copy.sessions.itemsOne : fill(copy.sessions.items, { count: placedCount });
-  const sessionDetail = frame ? `${frameCopy.name} · ${frameSize}` : itemsLabel;
+  // A board's format and size, or how much is on it when it has no frame.
+  const describeBoard = (target) => {
+    if (target.frame) return `${(copy.formats[target.frame.format] || copy.formats.custom).name} · ${formatSize(target.frame)}`;
+    const count = target.items.filter((item) => item.kind !== "pending").length;
+    return count === 0 ? copy.sessions.itemsNone : count === 1 ? copy.sessions.itemsOne : fill(copy.sessions.items, { count });
+  };
+  const sessionDetail = describeBoard(board);
   const imageModelName = modelLists.image.find((model) => model.id === settings.imageModelId)?.name || copy.settings.auto;
   const exportTransparent = board.background === "transparent";
   const inspecting = selectedItem && selectedItem.kind !== "pending" ? selectedItem : null;
@@ -1444,22 +1463,35 @@ export default function DesignAgentStudio({
       ? { title: copy.setup.imageTitle, body: copy.setup.imageBody, providers: ["fal", "wavespeed", "openrouter", "google", "openai"] }
       : null;
 
-  // A format puts its frame on the board (none for a free board) and shows it whole.
+  // A format puts its frame on the board (none for a free board) and shows it
+  // whole, fitted a frame later, once the intro is gone and a setup notice has
+  // shrunk to its one-line form.
   const chooseFormat = (next) => {
     setBoard((current) => ({ ...current, frame: next }));
     setOpenMenu(null);
-    if (next) fitToContent();
+    if (next) requestAnimationFrame(() => fitToContent());
     textareaRef.current?.focus();
+  };
+
+  // The format menu opens on the current format's tab and size.
+  const openFormatMenu = () => {
+    const group = findFormat(frame?.format)?.group;
+    if (group) setFormatGroup(group);
+    if (frame?.format === "custom") setCustomSize({ width: String(frame.width), height: String(frame.height), unit: "px" });
+    setOpenMenu("format");
   };
 
   const toggleFormatMenu = (event) => {
     event.stopPropagation();
-    if (openMenu !== "format") {
-      const group = findFormat(frame?.format)?.group;
-      if (group) setFormatGroup(group);
-      if (frame?.format === "custom") setCustomSize({ width: String(frame.width), height: String(frame.height), unit: "px" });
-    }
-    setOpenMenu((current) => (current === "format" ? null : "format"));
+    if (openMenu === "format") setOpenMenu(null);
+    else openFormatMenu();
+  };
+
+  // From the trash dialog: keep the board and pick another size.
+  const changeFormatInstead = (event) => {
+    event.stopPropagation();
+    setTrashTarget(null);
+    openFormatMenu();
   };
 
   const openCustomSize = (event) => {
@@ -1678,7 +1710,7 @@ export default function DesignAgentStudio({
         }}
       >
         <div className="absolute left-0 top-0" style={{ transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`, transformOrigin: "0 0" }}>
-          {frame && <BoardFrame frame={frame} name={frameCopy.name} size={findFormat(frame.format)?.print ? `${frameSize} · ${frame.width} × ${frame.height}` : frameSize} background={board.background} scale={viewport.scale} z={frameZ} />}
+          {frame && <BoardFrame frame={frame} background={board.background} scale={viewport.scale} z={frameZ} />}
           {sortedItems.map((item) => (
             <BoardItem
               key={item.id}
@@ -1693,6 +1725,35 @@ export default function DesignAgentStudio({
             />
           ))}
         </div>
+        {/* The frame bar: the frame's name and its trash button, in screen space so both stay full size at any zoom.
+            It spans the frame, or runs past it when the frame is narrower than the name. */}
+        {frame && (
+          <div
+            className="pointer-events-none absolute flex items-center gap-2 pb-0.5"
+            style={{ left: viewport.x, top: viewport.y, minWidth: frame.width * viewport.scale, transform: "translateY(-100%)" }}
+            data-design-frame-bar
+          >
+            <span className="flex items-baseline gap-2 whitespace-nowrap">
+              <span className="text-[12px] font-medium text-white/75">{frameCopy.name}</span>
+              <span className="font-mono text-[11px] text-white/40">{findFormat(frame.format)?.print ? `${frameSize} · ${frame.width} × ${frame.height}` : frameSize}</span>
+            </span>
+            <button
+              type="button"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                requestTrash(activeSession, true);
+              }}
+              disabled={running}
+              aria-label={copy.trash.button}
+              title={copy.trash.button}
+              className="pointer-events-auto ml-auto flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-red-500/15 hover:text-red-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-red-400/50 disabled:pointer-events-none disabled:opacity-30"
+              data-design-frame-trash
+            >
+              <IconTrash size={15} stroke={1.75} aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Chat card (a session pill until the conversation starts) ── */}
@@ -1753,7 +1814,7 @@ export default function DesignAgentStudio({
                           type="button"
                           aria-label={copy.sessions.delete}
                           title={copy.sessions.delete}
-                          onClick={() => deleteSession(session)}
+                          onClick={() => requestTrash(session)}
                           className={`${SMALL_ICON_BUTTON_CLASS} opacity-0 hover:!text-red-400 focus-visible:opacity-100 group-hover/session:opacity-100 [@media(hover:none)]:opacity-100`}
                         >
                           <IconTrash size={14} stroke={1.75} aria-hidden="true" />
@@ -2163,6 +2224,70 @@ export default function DesignAgentStudio({
           </section>
         )}
       </div>
+
+      {/* ── Trash dialog ── */}
+      {trashTarget && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/70 p-4" onClick={() => setTrashTarget(null)} role="presentation">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="design-trash-title"
+            aria-describedby="design-trash-body"
+            tabIndex={-1}
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => {
+              // Keys stay in the dialog, so Delete or Escape never reaches the board behind it.
+              event.stopPropagation();
+              if (event.key === "Escape") setTrashTarget(null);
+            }}
+            className={`oga-dialog-in w-full max-w-[400px] rounded-2xl p-5 focus:outline-none ${FLOATING_CARD_CLASS}`}
+            data-design-trash-dialog
+          >
+            <div className="flex items-start gap-3">
+              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-red-500/20 bg-red-500/10 text-red-300">
+                <IconTrash size={17} stroke={1.75} />
+              </span>
+              <div className="min-w-0">
+                <h2 id="design-trash-title" className="text-[15px] font-semibold text-white">{copy.trash.title}</h2>
+                <p className="mt-0.5 truncate text-[12.5px] text-white/45">
+                  {trashTarget.session.title || copy.sessions.untitled} · {describeBoard(trashTarget.session.board)}
+                </p>
+              </div>
+            </div>
+            <p id="design-trash-body" className="mt-4 text-[13px] leading-relaxed text-white/65">
+              {copy.trash.body}{trashTarget.fresh ? ` ${copy.trash.fresh}` : ""}
+            </p>
+            {trashTarget.session.id === activeId && trashTarget.session.board.frame && (
+              <div className="mt-3 flex items-center gap-2.5 rounded-[10px] border border-white/[0.06] bg-white/[0.03] py-1.5 pl-3 pr-1.5 text-[12.5px] leading-snug text-white/55">
+                <IconRuler size={14} stroke={1.75} aria-hidden="true" className="shrink-0 text-white/40" />
+                <span className="min-w-0 flex-1">{copy.trash.changeHint}</span>
+                <button type="button" onClick={changeFormatInstead} className={toolButtonClassName({ accent: true })} data-design-trash-change-format>
+                  {copy.trash.changeFormat}
+                </button>
+              </div>
+            )}
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setTrashTarget(null)}
+                className="h-9 rounded-[10px] border border-white/[0.1] px-4 text-[13px] font-medium text-white/80 transition-colors hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50"
+              >
+                {copy.trash.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={confirmTrash}
+                className="flex h-9 items-center justify-center gap-2 rounded-[10px] bg-red-600 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-red-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
+                data-design-trash-confirm
+              >
+                <IconTrash size={15} stroke={1.75} aria-hidden="true" />
+                {copy.trash.confirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,7 +6,6 @@
     "new": "新建会话",
     "untitled": "未命名画板",
     "delete": "删除会话",
-    "confirmDelete": "删除此会话及其画板？",
     "lockedWhileRunning": "请等待助手完成后再切换会话。",
     "items": "画板上有 {count} 个元素",
     "itemsOne": "画板上有 1 个元素",
@@ -39,6 +38,17 @@
     "framePlaceholder": "描述你的{noun}…",
     "you": "你",
     "agent": "助手"
+  },
+  "trash": {
+    "button": "删除画板",
+    "title": "删除此画板？",
+    "body": "画板上的设计和对话将被永久删除。",
+    "fresh": "随后会打开一个新画板，你可以重新选择格式。",
+    "changeHint": "只是尺寸选错了？更换格式即可保留现有内容。",
+    "changeFormat": "更换格式",
+    "cancel": "取消",
+    "confirm": "删除画板",
+    "lockedWhileRunning": "请等待助手完成后再删除画板。"
   },
   "formats": {
     "label": "格式",

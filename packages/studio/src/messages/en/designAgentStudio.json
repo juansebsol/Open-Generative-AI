@@ -6,7 +6,6 @@
     "new": "New session",
     "untitled": "Untitled board",
     "delete": "Delete session",
-    "confirmDelete": "Delete this session and its board?",
     "lockedWhileRunning": "Wait for the agent to finish before switching sessions.",
     "items": "{count} items on the board",
     "itemsOne": "1 item on the board",
@@ -39,6 +38,17 @@
     "framePlaceholder": "Describe your {noun}…",
     "you": "You",
     "agent": "Agent"
+  },
+  "trash": {
+    "button": "Trash board",
+    "title": "Trash this board?",
+    "body": "Its designs and chat are deleted for good.",
+    "fresh": "You start again on a new board and pick a format.",
+    "changeHint": "Only the size is wrong? Change the format and keep your work.",
+    "changeFormat": "Change format",
+    "cancel": "Cancel",
+    "confirm": "Trash board",
+    "lockedWhileRunning": "Wait for the agent to finish before trashing a board."
   },
   "formats": {
     "label": "Format",
