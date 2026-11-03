@@ -85,11 +85,12 @@
   },
   "agent": {
     "label": "Agent",
-    "hint": "Plans the design and runs the image tools. Its replies are billed on your {provider} key.",
-    "router": "OpenRouter picks a model for each message.",
+    "hint": "plans and runs the design",
+    "router": "picks a model per message",
+    "billing": "Plans the design and runs the image tools. Its replies are billed on your {provider} key.",
     "last": "Last reply: {model}",
     "none": "No chat key yet",
-    "noneHint": "The agent needs an OpenRouter, OpenAI or Google Gemini key.",
+    "noneHint": "Needs an OpenRouter, OpenAI or Gemini key.",
     "change": "Change",
     "add": "Add a key"
   },

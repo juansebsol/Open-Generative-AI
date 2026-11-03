@@ -85,11 +85,12 @@
   },
   "agent": {
     "label": "助手",
-    "hint": "负责规划设计并调用图像工具。它的回复按你的 {provider} 密钥计费。",
-    "router": "OpenRouter 会为每条消息选择模型。",
+    "hint": "规划并执行设计",
+    "router": "为每条消息选择模型",
+    "billing": "负责规划设计并调用图像工具。它的回复按你的 {provider} 密钥计费。",
     "last": "上次回复：{model}",
     "none": "尚未添加聊天密钥",
-    "noneHint": "助手需要 OpenRouter、OpenAI 或 Google Gemini 密钥。",
+    "noneHint": "需要 OpenRouter、OpenAI 或 Gemini 密钥。",
     "change": "更换",
     "add": "添加密钥"
   },

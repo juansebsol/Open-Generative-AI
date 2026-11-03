@@ -2228,37 +2228,35 @@ export default function DesignAgentStudio({
                         data-design-images-menu
                       >
                         <PromptPopoverHeader>{copy.agent.label}</PromptPopoverHeader>
-                        <div className="flex items-start gap-2 rounded-[10px] py-1.5 pl-2.5 pr-1" data-design-agent-model>
-                          <div className="min-w-0 flex-1">
+                        {/* The model and Change share the first line, so the description below gets the full width. */}
+                        <div className="py-1 pl-2.5 pr-1" data-design-agent-model>
+                          <div className="flex items-center gap-2">
                             {chatInfo ? (
-                              <>
-                                <div className="flex min-w-0 items-center gap-1.5">
-                                  <span className="truncate font-mono text-[12.5px] text-white/85" title={chatInfo.model}>{chatInfo.model}</span>
-                                  <span className="shrink-0 rounded-[5px] bg-white/[0.07] px-1.5 py-px text-[10.5px] font-medium text-white/50">{chatProviderName}</span>
-                                </div>
-                                <p className="mt-1 text-[11.5px] leading-snug text-white/45">
-                                  {fill(copy.agent.hint, { provider: chatProviderName })}
-                                  {chatInfo.model === "openrouter/auto" ? ` ${copy.agent.router}` : ""}
-                                </p>
-                                {lastReplyModel && <p className="mt-1 truncate font-mono text-[11px] text-white/60" title={lastReplyModel}>{fill(copy.agent.last, { model: lastReplyModel })}</p>}
-                              </>
+                              <span className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-white/85" title={chatInfo.model}>{chatInfo.model}</span>
                             ) : (
-                              <>
-                                <div className="text-[12.5px] font-medium text-white/85">{copy.agent.none}</div>
-                                <p className="mt-1 text-[11.5px] leading-snug text-white/45">{copy.agent.noneHint}</p>
-                              </>
+                              <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-white/85">{copy.agent.none}</span>
                             )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setOpenMenu(null);
+                                openProviderSettings(chatInfo ? [chatInfo.provider] : CHAT_PROVIDER_IDS);
+                              }}
+                              className={`${toolButtonClassName({ accent: true })} !h-7`}
+                            >
+                              {chatInfo ? copy.agent.change : copy.agent.add}
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenMenu(null);
-                              openProviderSettings(chatInfo ? [chatInfo.provider] : CHAT_PROVIDER_IDS);
-                            }}
-                            className={`${toolButtonClassName({ accent: true })} !h-7`}
-                          >
-                            {chatInfo ? copy.agent.change : copy.agent.add}
-                          </button>
+                          {chatInfo ? (
+                            <>
+                              <p className="line-clamp-2 pr-1.5 text-[11.5px] leading-snug text-white/45" title={fill(copy.agent.billing, { provider: chatProviderName })}>
+                                {chatProviderName} · {chatInfo.model === "openrouter/auto" ? copy.agent.router : copy.agent.hint}
+                              </p>
+                              {lastReplyModel && <p className="mt-0.5 truncate pr-1.5 font-mono text-[11px] text-white/60" title={lastReplyModel}>{fill(copy.agent.last, { model: lastReplyModel })}</p>}
+                            </>
+                          ) : (
+                            <p className="line-clamp-2 pr-1.5 text-[11.5px] leading-snug text-white/45">{copy.agent.noneHint}</p>
+                          )}
                         </div>
                         <div className="mt-2 border-t border-white/[0.06] pt-2">
                           {modelMenu("imageModelId", copy.settings.imageModel, modelLists.image, imageModel)}
