@@ -2,6 +2,7 @@
 
 export { default as ImageStudio } from './components/ImageStudio';
 export { default as VideoStudio } from './components/VideoStudio';
+export { default as UgcStudio } from './components/UgcStudio';
 export { default as LipSyncStudio } from './components/LipSyncStudio';
 export { default as RecastStudio } from './components/RecastStudio';
 export { default as CinemaStudio } from './components/CinemaStudio';

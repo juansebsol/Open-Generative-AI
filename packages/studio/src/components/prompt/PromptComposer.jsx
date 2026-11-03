@@ -612,6 +612,21 @@ export const PromptTextarea = forwardRef(function PromptTextarea(
     resize();
   }, [resize, value]);
 
+  // A textarea measured before its row laid out (or while its studio was
+  // hidden) measures again once its width settles.
+  useEffect(() => {
+    const element = internalRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return undefined;
+    let width = element.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (element.clientWidth === width) return;
+      width = element.clientWidth;
+      resize(element);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [resize]);
+
   const handleChange = (event) => {
     onChange?.(event);
     resize(event.currentTarget);

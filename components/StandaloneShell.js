@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  ImageStudio, VideoStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio, ThreeDStudio, VectorStudio, BenchmarksStudio, BenchmarksHelper,
+  ImageStudio, VideoStudio, UgcStudio, MotionControlStudio, ClippingStudio, LipSyncStudio, RecastStudio, CinemaStudio, AudioStudio, MarketingStudio, AiInfluencerStudio, LayersStudio, DesignAgentStudio, WorkflowStudio, AgentsStudio, VibeMotionStudio, ThreeDStudio, VectorStudio, BenchmarksStudio, BenchmarksHelper,
   PROVIDERS, StudioVisibility, hasAnyProvider, isStudioAvailable, loadProviderSettings, registerMediaServiceWorker, removeUnusedMedia, subscribeProviderSettings,
 } from 'studio';
 import {
-  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconKey, IconLanguage, IconMenu2, IconMessageChatbot, IconMessages, IconMicrophone, IconMicrophone2, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen, IconWaveSine
+  IconAlertCircle, IconAperture, IconChartBar, IconCheck, IconChevronDown, IconCube, IconDeviceMobile, IconKey, IconLanguage, IconMenu2, IconMessageChatbot, IconMessages, IconMicrophone, IconMicrophone2, IconMusic, IconPalette, IconPhoto, IconReplace, IconRobot, IconScissors, IconSearch, IconSettings, IconSitemap, IconSpeakerphone, IconStack2, IconUpload, IconUsers, IconVideo, IconWalk, IconWand, IconX, IconPhotoScan, IconBrush, IconBone, IconTopologyStar3, IconVectorBezier2, IconIcons, IconVectorSpline, IconDownload, IconFolderOpen, IconWaveSine
 } from '@tabler/icons-react';
 import SettingsDialog from './settings/SettingsDialog';
 import CommandPalette from './CommandPalette';
@@ -24,6 +24,7 @@ const TABS = [
   { id: 'ai-influencer', label: 'AI Influencer Studio', icon: IconUsers },
   { id: 'design-agent', label: 'Design Agent', icon: IconPalette },
   { id: 'video', label: 'Video Studio', icon: IconVideo },
+  { id: 'ugc', label: 'UGC Studio', icon: IconDeviceMobile },
   { id: 'clipping', label: 'AI Clipping', icon: IconScissors },
   { id: 'motion-control', label: 'Motion Control', icon: IconWalk },
   { id: 'lipsync', label: 'Lip Sync', icon: IconMicrophone },
@@ -49,7 +50,7 @@ const TABS = [
 
 const NAVIGATION_CATEGORIES = [
   { id: 'images', label: 'Images', tabIds: ['image', 'layers', 'cinema', 'ai-influencer', 'design-agent'] },
-  { id: 'video', label: 'Video', tabIds: ['video', 'clipping', 'motion-control', 'lipsync', 'body-swap', 'marketing', 'vibe-motion'] },
+  { id: 'video', label: 'Video', tabIds: ['video', 'ugc', 'clipping', 'motion-control', 'lipsync', 'body-swap', 'marketing', 'vibe-motion'] },
   { id: 'audio', label: 'Audio', tabIds: ['audio-speech', 'audio-dialogue', 'audio-music', 'audio-remix'] },
   { id: '3d', label: '3D', tabIds: ['three-d-text', 'three-d-image', 'three-d-retexture', 'three-d-rig', 'three-d-mesh'] },
   { id: 'vector', label: 'Vector', tabIds: ['vector-logo', 'vector-icons', 'vector-vectorize'] },
@@ -656,6 +657,11 @@ export default function StandaloneShell({ locale = 'en' }) {
             <AudioStudio page={tabId.slice('audio-'.length)} locale={locale} droppedFiles={activeTab === tabId ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback(tabId)} onGenerationEnd={makeGenerationEndCallback(tabId)} onGenerationComplete={makeSuccessCallback(tabId)} onGenerationError={makeErrorCallback(tabId)} />
           </StudioPane>
         ))}
+        {AVAILABLE_TAB_IDS.has('ugc') && (
+          <StudioPane visible={activeTab === 'ugc'}>
+            <UgcStudio locale={locale} droppedFiles={activeTab === 'ugc' ? droppedFiles : null} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('ugc')} onGenerationEnd={makeGenerationEndCallback('ugc')} onGenerationComplete={makeSuccessCallback('ugc')} onGenerationError={makeErrorCallback('ugc')} />
+          </StudioPane>
+        )}
         {AVAILABLE_TAB_IDS.has('marketing') && (
           <StudioPane visible={activeTab === 'marketing'}>
             <MarketingStudio locale={locale} droppedFiles={droppedFiles} onFilesHandled={handleFilesHandled} onGenerationStart={makeGenerationStartCallback('marketing')} onGenerationEnd={makeGenerationEndCallback('marketing')} onGenerationComplete={makeSuccessCallback('marketing')} onGenerationError={makeErrorCallback('marketing')} />

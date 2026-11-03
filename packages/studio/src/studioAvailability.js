@@ -34,6 +34,8 @@ const STUDIO_REQUIREMENTS = {
   image: () => t2iModels.length > 0 || i2iModels.length > 0,
   layers: () => ['bytedance-seedream-5.0-pro-layer', 'topaz-image-upscale', 'seedvr2-image-upscale', 'ai-image-upscale', 'ai-background-remover', 'ai-image-extension'].some(hasRoute),
   video: () => t2vModels.length > 0 || i2vModels.length > 0 || v2vModels.length > 0,
+  // Sets the scene with an image edit, then films it image-to-video.
+  ugc: () => i2vModels.length > 0 && i2iModels.length > 0,
   'audio-speech': () => audioModelsFor('speech', audioModels).length > 0,
   'audio-dialogue': () => audioModelsFor('dialogue', audioModels).length > 0,
   'audio-music': () => audioModelsFor('music', audioModels).length > 0,
