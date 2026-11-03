@@ -18,7 +18,8 @@
     "auto": "Auto",
     "background": "Board export background",
     "transparent": "Transparent",
-    "unavailable": "needs a key"
+    "unavailable": "needs a key",
+    "autoUses": "Now using {model}"
   },
   "chat": {
     "placeholder": "Describe what to design, or ask for a change…",
@@ -73,10 +74,24 @@
     "settings": "Agent settings",
     "planFirst": "Plan first",
     "images": "Images: {model}",
-    "imageModels": "Image models",
     "enterHint": "↵ send",
     "selection": "The agent sees {id} as selected",
-    "clearSelection": "Clear the selection"
+    "clearSelection": "Clear the selection",
+    "models": "Models",
+    "auto": "auto",
+    "autoTitle": "Auto picks {model}, the best image model your keys can run. Pick a model to keep it.",
+    "perImage": " / image",
+    "priceNote": "Each image the agent makes costs about this. A message can make none or several; with Plan first on, the plan shows the total before more than one runs."
+  },
+  "agent": {
+    "label": "Agent",
+    "hint": "Plans the design and runs the image tools. Its replies are billed on your {provider} key.",
+    "router": "OpenRouter picks a model for each message.",
+    "last": "Last reply: {model}",
+    "none": "No chat key yet",
+    "noneHint": "The agent needs an OpenRouter, OpenAI or Google Gemini key.",
+    "change": "Change",
+    "add": "Add a key"
   },
   "plan": {
     "title": "Plan",
@@ -86,7 +101,12 @@
     "approved": "Approved",
     "autoApproved": "Auto-approved",
     "revised": "Revision requested",
-    "waiting": "Waiting for your approval"
+    "waiting": "Waiting for your approval",
+    "cost": "≈ {amount}",
+    "costFrom": "from {amount}",
+    "costTitle": "Estimated on the models these steps run on now: {lines}. The provider bills the real amount, which can differ.",
+    "costLine": "{count} × {name}",
+    "noPrice": "no price listed"
   },
   "tools": {
     "plan": "Planning",

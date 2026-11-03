@@ -23,8 +23,12 @@ export const DESIGN_TOOLS = [
   fn('plan', 'Show the user a short plan and wait for approval. Required before running more than one paid image operation. The result says whether the user approved or what to change.', {
     title: { type: 'string', description: 'One-line goal.' },
     steps: { type: 'array', items: { type: 'string' }, description: '2-6 short steps, each naming the tool it uses.' },
-    paid_operations: { type: 'integer', description: 'How many generate/edit/upscale/remove_background/expand calls the plan needs.' },
-  }, ['title', 'steps']),
+    paid_steps: {
+      type: 'array',
+      items: { type: 'string', enum: [...COSTLY_TOOLS] },
+      description: 'Every paid call the plan makes, one entry per call in order, e.g. ["generate_image", "generate_image", "upscale"]. The user sees the price of these before approving.',
+    },
+  }, ['title', 'steps', 'paid_steps']),
   fn('generate_image', 'Generate a new image from a text prompt and put it on the board as a new asset.', {
     prompt: { type: 'string', description: 'Detailed visual prompt: subject, composition, style, lighting, palette.' },
     aspect_ratio: aspect,
@@ -113,7 +117,7 @@ export function systemPrompt({ boardText, imageModel, editModel, capabilities, a
     'You act by calling tools. Board coordinates are pixels, origin top-left, x to the right, y down. Images are 512 wide by default; their height follows their aspect ratio.',
     frameBrief(frame),
     askFirst
-      ? 'Paid image operations are generate_image, edit_image, upscale, remove_background and expand_image. When a request needs more than one of them, call plan first (2-6 short steps) and wait for the result before running them. A single paid operation the user asked for directly can run without a plan. If the plan result asks for changes, call plan again with a revised plan.'
+      ? 'Paid image operations are generate_image, edit_image, upscale, remove_background and expand_image. When a request needs more than one of them, call plan first (2-6 short steps, with every paid call listed in paid_steps so the user sees the price) and wait for the result before running them. A single paid operation the user asked for directly can run without a plan. If the plan result asks for changes, call plan again with a revised plan.'
       : 'The user has turned off plan approval: run the steps directly, but still keep paid image operations to what the request needs.',
     'Layout tools (place_asset, add_text, arrange, delete_item, export_board) are free; use them to finish the design.',
     'Write specific image prompts: subject, composition, framing, style, lighting, palette. For posters and social posts, generate artwork without lettering and add the headline and copy with add_text (size it to the artwork, keep it readable, use max_width and align center for centred text), unless the user wants the text drawn into the image.',

@@ -49,6 +49,7 @@ import {
   promptModelButtonClassName,
   promptSettingClassName,
 } from "./prompt/PromptComposer.jsx";
+import PriceChip from "./prompt/PriceChip.jsx";
 import {
   generateImage,
   generateI2I,
@@ -57,8 +58,10 @@ import {
   expandImage,
   uploadFile,
 } from "../generation.js";
-import { chatComplete, hasChatProvider, ChatSetupError, CHAT_PROVIDER_IDS } from "../providers/chat.js";
+import { chatCompleteDetailed, chatModelFor, chatProvider, hasChatProvider, ChatSetupError, CHAT_PROVIDER_IDS } from "../providers/chat.js";
+import { getProvider } from "../providers/directProviders.js";
 import { subscribeProviderSettings } from "../providers/keys.js";
+import { formatMoney } from "../providers/pricing.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import {
   ASPECT_RATIOS,
@@ -100,8 +103,11 @@ import {
   availableImageModels,
   canExpand,
   canRemoveBackground,
+  endpointOf,
+  estimatePlan,
   highResolutionOption,
   maxEditImages,
+  paidStepRoute,
   pickEditModel,
   pickImageModel,
   pickUpscaler,
@@ -330,7 +336,7 @@ function BoardFrame({ frame, background, scale, z }) {
 // ---------------------------------------------------------------------------
 // Chat pieces
 // ---------------------------------------------------------------------------
-function PlanCard({ message, copy, disabled, onApprove, onRevise, reviseActive }) {
+function PlanCard({ message, copy, estimate, disabled, onApprove, onRevise, reviseActive }) {
   const plan = message.plan || {};
   const status = message.status;
   return (
@@ -350,9 +356,16 @@ function PlanCard({ message, copy, disabled, onApprove, onRevise, reviseActive }
             type="button"
             disabled={disabled}
             onClick={onApprove}
-            className="h-8 rounded-[9px] bg-[#22d3ee] px-3 text-[12.5px] font-semibold text-[#04202a] transition-[filter,transform] hover:brightness-105 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/40 disabled:opacity-40"
+            title={estimate?.title}
+            className="flex h-8 items-center gap-2 rounded-[9px] bg-[#22d3ee] pl-3 pr-1.5 text-[12.5px] font-semibold text-[#04202a] transition-[filter,transform] hover:brightness-105 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/40 disabled:opacity-40"
+            data-design-plan-approve
           >
             {copy.plan.approve}
+            {estimate ? (
+              <span className="rounded-md bg-[#04202a]/[0.14] px-1.5 py-0.5 font-mono text-[11.5px] font-medium tabular-nums" data-design-plan-cost>{estimate.label}</span>
+            ) : (
+              <span aria-hidden="true" className="w-1.5" />
+            )}
           </button>
           <button
             type="button"
@@ -368,6 +381,7 @@ function PlanCard({ message, copy, disabled, onApprove, onRevise, reviseActive }
         <div className="mt-2 flex items-center gap-1.5 text-[11.5px] text-white/50">
           {status === "revised" ? <IconX size={12} stroke={2.5} aria-hidden="true" className="shrink-0" /> : <IconCheck size={12} stroke={2.5} aria-hidden="true" className="shrink-0" />}
           {status === "approved" ? copy.plan.approved : status === "auto" ? copy.plan.autoApproved : copy.plan.revised}
+          {status === "approved" && estimate ? <span className="font-mono tabular-nums text-white/45" title={estimate.title}>· {estimate.label}</span> : null}
           {status === "revised" && message.feedback ? <span className="truncate text-white/60">— {message.feedback}</span> : null}
         </div>
       )}
@@ -427,6 +441,9 @@ export default function DesignAgentStudio({
   const [reviseTarget, setReviseTarget] = useState(null);
   const [chatReady, setChatReady] = useState(false);
   const [modelLists, setModelLists] = useState({ image: [], edit: [] });
+  const [chatInfo, setChatInfo] = useState(null); // { provider, model } the agent's replies come from
+  const [lastReply, setLastReply] = useState(null); // { provider, configured, model } of the last reply, for routers like openrouter/auto
+  const [planEstimate, setPlanEstimate] = useState(null); // the price of the plan waiting for approval, with its message id
   const [openMenu, setOpenMenu] = useState(null); // 'sessions' | 'images' | 'export' | 'format' | null
   const [trashTarget, setTrashTarget] = useState(null); // { session, fresh } while the trash dialog is open
   const [chatCollapsed, setChatCollapsed] = useState(false);
@@ -567,12 +584,46 @@ export default function DesignAgentStudio({
   // ── Provider availability ───────────────────────────────────────────────
   useEffect(() => {
     const sync = () => {
+      const provider = chatProvider();
       setChatReady(hasChatProvider());
+      setChatInfo(provider ? { provider, model: chatModelFor(provider) } : null);
       setModelLists({ image: availableImageModels(), edit: availableEditModels() });
     };
     sync();
     return subscribeProviderSettings(sync);
   }, []);
+
+  // ── Models and prices ───────────────────────────────────────────────────
+  // What Auto resolves to with the current keys, and what one generated image
+  // costs on it: the Send button shows that per-image price.
+  const imageModel = useMemo(() => pickImageModel(settings.imageModelId), [settings.imageModelId, modelLists]);
+  const editModel = useMemo(() => pickEditModel(settings.editModelId), [settings.editModelId, modelLists]);
+  const pricingAspect = board.frame ? closestAspect(board.frame.width, board.frame.height) : "1:1";
+  const imagePrice = useMemo(
+    () => paidStepRoute("generate_image", { imageModelId: settings.imageModelId, aspect: pricingAspect }),
+    [settings.imageModelId, pricingAspect, modelLists],
+  );
+
+  // A plan waiting for approval is priced on the models its steps would run on now.
+  const awaitingSteps = awaitingPlan?.plan?.paidSteps;
+  useEffect(() => {
+    if (!awaitingPlan || !awaitingSteps?.length) {
+      setPlanEstimate(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const id = awaitingPlan.id;
+    estimatePlan(awaitingSteps, { imageModelId: settings.imageModelId, editModelId: settings.editModelId, aspect: pricingAspect })
+      .then((estimate) => {
+        if (!cancelled) setPlanEstimate(estimate && { id, ...estimate });
+      })
+      .catch(() => {
+        if (!cancelled) setPlanEstimate(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [awaitingPlan?.id, awaitingSteps, settings.imageModelId, settings.editModelId, pricingAspect, modelLists]);
 
   const hasConversation = messages.length > 0;
   const chatOpen = hasConversation && !chatCollapsed;
@@ -1079,10 +1130,12 @@ export default function DesignAgentStudio({
     } catch {
       // Show whatever we got; the steps list just comes out empty.
     }
+    const paidSteps = Array.isArray(args.paid_steps) ? args.paid_steps.map(String).filter((name) => COSTLY_TOOLS.has(name)).slice(0, 24) : [];
     const plan = {
       title: String(args.title || ""),
       steps: Array.isArray(args.steps) ? args.steps.map(String).slice(0, 12) : [],
-      paid: Number(args.paid_operations) || 0,
+      paid: paidSteps.length || Number(args.paid_operations) || 0,
+      paidSteps,
     };
     if (!settingsRef.current.askFirst) {
       turnRef.current.approved = true;
@@ -1117,11 +1170,13 @@ export default function DesignAgentStudio({
           askFirst: currentSettings.askFirst,
           frame: frameForAgent(boardRef.current.frame),
         });
-        const reply = await chatComplete({
+        const provider = chatProvider();
+        const { message: reply, model: answeredBy } = await chatCompleteDetailed({
           messages: [{ role: "system", content: system }, ...toChatMessages(trimHistory(messagesRef.current, 60))],
           tools: DESIGN_TOOLS,
           temperature: 0.5,
         });
+        setLastReply({ provider, configured: chatModelFor(provider), model: answeredBy });
         if (cancelRef.current) break;
 
         const calls = (reply?.tool_calls || [])
@@ -1163,7 +1218,13 @@ export default function DesignAgentStudio({
 
   const approvePlan = (message) => {
     if (runningRef.current) return;
-    updateMessage(message.id, { status: "approved", content: JSON.stringify({ approved: true, note: "The user approved. Run the plan now." }) });
+    // The plan keeps the price it was approved at.
+    const estimate = planEstimate?.id === message.id ? { amount: planEstimate.amount, currency: planEstimate.currency, partial: planEstimate.partial, lines: planEstimate.lines } : null;
+    updateMessage(message.id, {
+      status: "approved",
+      content: JSON.stringify({ approved: true, note: "The user approved. Run the plan now." }),
+      ...(estimate ? { plan: { ...message.plan, estimate } } : {}),
+    });
     turnRef.current = { approved: true, paid: 0 };
     setReviseTarget(null);
     runAgent();
@@ -1454,7 +1515,22 @@ export default function DesignAgentStudio({
     return count === 0 ? copy.sessions.itemsNone : count === 1 ? copy.sessions.itemsOne : fill(copy.sessions.items, { count });
   };
   const sessionDetail = describeBoard(board);
-  const imageModelName = modelLists.image.find((model) => model.id === settings.imageModelId)?.name || copy.settings.auto;
+  const imageModelName = imageModel?.name || copy.settings.auto;
+  // Auto, or a picked model the current keys cannot run (Auto stands in for it).
+  const imageAuto = Boolean(imageModel) && imageModel.id !== settings.imageModelId;
+  const chatProviderName = chatInfo ? getProvider(chatInfo.provider)?.label || chatInfo.provider : "";
+  const lastReplyModel = lastReply && chatInfo && lastReply.provider === chatInfo.provider && lastReply.configured === chatInfo.model && lastReply.model !== chatInfo.model ? lastReply.model : null;
+
+  // "≈ $0.45" (or "from $0.45" when a step has no price) and the steps behind it.
+  const estimateView = (estimate) => {
+    if (!estimate) return null;
+    const lines = estimate.lines.map(({ name, count, each }) => {
+      const line = fill(copy.plan.costLine, { count, name });
+      return each === null ? `${line} (${copy.plan.noPrice})` : `${line} ${fill(copy.plan.cost, { amount: formatMoney(each * count, estimate.currency, locale) })}`;
+    });
+    const amount = formatMoney(estimate.amount, estimate.currency, locale);
+    return { label: fill(estimate.partial ? copy.plan.costFrom : copy.plan.cost, { amount }), title: fill(copy.plan.costTitle, { lines: lines.join(", ") }) };
+  };
   const exportTransparent = board.background === "transparent";
   const inspecting = selectedItem && selectedItem.kind !== "pending" ? selectedItem : null;
   const setupNotice = !chatReady
@@ -1595,13 +1671,14 @@ export default function DesignAgentStudio({
     setOpenMenu(null);
   };
 
-  const modelMenu = (key, label, list) => (
+  // `resolved` is the model Auto picks now; its row says so.
+  const modelMenu = (key, label, list, resolved) => (
     <>
       <PromptPopoverHeader>{label}</PromptPopoverHeader>
       <PromptMenuList>
         <PromptMenuItem
           selected={!settings[key]}
-          description={list.length === 0 ? copy.settings.unavailable : undefined}
+          description={list.length === 0 ? copy.settings.unavailable : resolved ? fill(copy.settings.autoUses, { model: resolved.name }) : undefined}
           onClick={() => pickModel(key, "")}
         >
           {copy.settings.auto}
@@ -1882,6 +1959,7 @@ export default function DesignAgentStudio({
                     copy={copy}
                     disabled={running}
                     reviseActive={reviseTarget === message.id}
+                    estimate={estimateView(message.status === "awaiting" ? (planEstimate?.id === message.id ? planEstimate : null) : message.plan?.estimate)}
                     onApprove={() => approvePlan(message)}
                     onRevise={() => { setReviseTarget(message.id); textareaRef.current?.focus(); }}
                   />
@@ -2085,7 +2163,8 @@ export default function DesignAgentStudio({
                 className="min-w-0 flex-1"
               />
             </div>
-            <PromptFooter>
+            {/* Wraps Send (and its price) onto its own line when the chat card leaves the bar narrow. */}
+            <PromptFooter className="sm:flex-wrap">
               <PromptControls>
                 <div className="relative flex min-w-0">
                   <button
@@ -2127,32 +2206,69 @@ export default function DesignAgentStudio({
                       aria-haspopup="dialog"
                       aria-expanded={openMenu === "images"}
                       onClick={toggleMenu("images")}
+                      title={imageAuto ? fill(copy.bar.autoTitle, { model: imageModel.name }) : undefined}
                       className={promptSettingClassName({ active: openMenu === "images" })}
                       data-design-images
                     >
                       <IconPhoto size={14} stroke={1.75} aria-hidden="true" className="opacity-60" />
                       <span className="max-w-[170px] truncate">{fill(copy.bar.images, { model: imageModelName })}</span>
+                      {imageAuto && <span className="rounded-[5px] bg-white/[0.07] px-1.5 py-px text-[10.5px] font-medium text-white/50" data-design-images-auto>{copy.bar.auto}</span>}
                     </button>
                     {openMenu === "images" && (
                       <PromptPopover
                         role="dialog"
-                        aria-label={copy.bar.imageModels}
+                        aria-label={copy.bar.models}
                         onClick={(event) => event.stopPropagation()}
-                        className="w-[260px]"
+                        className="w-[290px] max-w-[calc(100vw-24px)]"
                         fitViewport
                         solid
                         data-design-images-menu
                       >
-                        {modelMenu("imageModelId", copy.settings.imageModel, modelLists.image)}
+                        <PromptPopoverHeader>{copy.agent.label}</PromptPopoverHeader>
+                        <div className="flex items-start gap-2 rounded-[10px] py-1.5 pl-2.5 pr-1" data-design-agent-model>
+                          <div className="min-w-0 flex-1">
+                            {chatInfo ? (
+                              <>
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                  <span className="truncate font-mono text-[12.5px] text-white/85" title={chatInfo.model}>{chatInfo.model}</span>
+                                  <span className="shrink-0 rounded-[5px] bg-white/[0.07] px-1.5 py-px text-[10.5px] font-medium text-white/50">{chatProviderName}</span>
+                                </div>
+                                <p className="mt-1 text-[11.5px] leading-snug text-white/45">
+                                  {fill(copy.agent.hint, { provider: chatProviderName })}
+                                  {chatInfo.model === "openrouter/auto" ? ` ${copy.agent.router}` : ""}
+                                </p>
+                                {lastReplyModel && <p className="mt-1 truncate font-mono text-[11px] text-white/60" title={lastReplyModel}>{fill(copy.agent.last, { model: lastReplyModel })}</p>}
+                              </>
+                            ) : (
+                              <>
+                                <div className="text-[12.5px] font-medium text-white/85">{copy.agent.none}</div>
+                                <p className="mt-1 text-[11.5px] leading-snug text-white/45">{copy.agent.noneHint}</p>
+                              </>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenu(null);
+                              openProviderSettings(chatInfo ? [chatInfo.provider] : CHAT_PROVIDER_IDS);
+                            }}
+                            className={`${toolButtonClassName({ accent: true })} !h-7`}
+                          >
+                            {chatInfo ? copy.agent.change : copy.agent.add}
+                          </button>
+                        </div>
                         <div className="mt-2 border-t border-white/[0.06] pt-2">
-                          {modelMenu("editModelId", copy.settings.editModel, modelLists.edit)}
+                          {modelMenu("imageModelId", copy.settings.imageModel, modelLists.image, imageModel)}
+                        </div>
+                        <div className="mt-2 border-t border-white/[0.06] pt-2">
+                          {modelMenu("editModelId", copy.settings.editModel, modelLists.edit, editModel)}
                         </div>
                       </PromptPopover>
                     )}
                   </div>
                 </PromptSettingsGroup>
               </PromptControls>
-              <PromptActionGroup>
+              <PromptActionGroup className="sm:ml-auto">
                 <span aria-hidden="true" className="hidden whitespace-nowrap font-mono text-[11px] text-white/50 md:inline">{copy.bar.enterHint}</span>
                 {running ? (
                   <button
@@ -2165,7 +2281,14 @@ export default function DesignAgentStudio({
                     {copy.chat.stop}
                   </button>
                 ) : (
-                  <PromptAction onClick={() => send()} disabled={!input.trim()} data-design-send>
+                  <PromptAction
+                    onClick={() => send()}
+                    disabled={!input.trim()}
+                    addon={imagePrice && (
+                      <PriceChip variant="inset" locale={locale} endpoint={imagePrice.endpoint} payload={imagePrice.payload} suffix={copy.bar.perImage} note={copy.bar.priceNote} />
+                    )}
+                    data-design-send
+                  >
                     <IconSend size={15} stroke={2} aria-hidden="true" />
                     {copy.chat.send}
                   </PromptAction>

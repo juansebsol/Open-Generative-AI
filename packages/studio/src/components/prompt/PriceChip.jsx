@@ -95,9 +95,11 @@ const TONE = {
 };
 
 /**
- * @param {{ endpoint?: string, payload?: object, enabled?: boolean, runs?: number, locale?: string, variant?: "chip"|"inset", className?: string }} props
+ * `suffix` follows a quoted amount (" / image" where one click can mean any
+ * number of runs) and `note` leads the tooltip.
+ * @param {{ endpoint?: string, payload?: object, enabled?: boolean, runs?: number, locale?: string, variant?: "chip"|"inset", suffix?: string, note?: string, className?: string }} props
  */
-export default function PriceChip({ endpoint, payload, enabled = true, runs = 1, locale = "en", variant = "chip", className = "" }) {
+export default function PriceChip({ endpoint, payload, enabled = true, runs = 1, locale = "en", variant = "chip", suffix = "", note = "", className = "" }) {
   const copy = resolveCopy(en, zh, locale);
   const { status, quote } = usePriceQuote(endpoint, payload, { enabled });
 
@@ -107,6 +109,8 @@ export default function PriceChip({ endpoint, payload, enabled = true, runs = 1,
   else if (quote) view = describeQuote(multiply(quote, runs), copy, locale);
   if (!view && status === "loading") view = { provider, label: copy.loading, title: copy.loading, tone: "muted" };
   if (!view) return null;
+  if (suffix && quote?.kind === "total" && status !== "error") view = { ...view, label: `${view.label}${suffix}` };
+  if (note) view = { ...view, title: `${note} ${view.title}` };
 
   const openProviders = () => window.dispatchEvent(new CustomEvent("oga:provider-setup-needed"));
 

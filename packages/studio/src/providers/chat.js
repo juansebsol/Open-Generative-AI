@@ -36,7 +36,16 @@ export function chatModelFor(provider) {
  * One chat completion. Returns the assistant message ({ content, tool_calls }).
  * @param {{ messages: object[], tools?: object[], toolChoice?: any, responseFormat?: object, temperature?: number }} request
  */
-export async function chatComplete({ messages, tools, toolChoice, responseFormat, temperature }) {
+export async function chatComplete(request) {
+  return (await chatCompleteDetailed(request)).message;
+}
+
+/**
+ * chatComplete, plus the model that answered (OpenRouter's auto router names
+ * the one it picked) and the usage the provider reported.
+ * @returns {Promise<{ message: object, model: string, usage: object|null }>}
+ */
+export async function chatCompleteDetailed({ messages, tools, toolChoice, responseFormat, temperature }) {
   const provider = chatProvider();
   if (!provider) {
     if (typeof window !== 'undefined') {
@@ -60,7 +69,7 @@ export async function chatComplete({ messages, tools, toolChoice, responseFormat
   if (!response.ok) {
     throw new Error(data?.error || `${getProvider(provider)?.label || provider} chat failed (${response.status})`);
   }
-  return data.message;
+  return { message: data.message, model: data.model || body.model, usage: data.usage || null };
 }
 
 // Pulls a JSON value out of a model reply, tolerating ```json fences.

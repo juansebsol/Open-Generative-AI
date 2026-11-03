@@ -18,7 +18,8 @@
     "auto": "自动",
     "background": "导出背景",
     "transparent": "透明",
-    "unavailable": "需要密钥"
+    "unavailable": "需要密钥",
+    "autoUses": "当前使用 {model}"
   },
   "chat": {
     "placeholder": "描述要设计的内容，或提出修改…",
@@ -73,10 +74,24 @@
     "settings": "助手设置",
     "planFirst": "先出计划",
     "images": "图像：{model}",
-    "imageModels": "图像模型",
     "enterHint": "↵ 发送",
     "selection": "助手会把 {id} 视为已选中",
-    "clearSelection": "取消选择"
+    "clearSelection": "取消选择",
+    "models": "模型",
+    "auto": "自动",
+    "autoTitle": "自动模式选择了 {model}，即你的密钥可用的最佳图像模型。选择一个模型即可固定使用。",
+    "perImage": " / 张",
+    "priceNote": "助手每生成一张图像大约花费此金额。一条消息可能不生成，也可能生成多张；开启“先出计划”后，运行多于一个付费步骤前，计划会显示总价。"
+  },
+  "agent": {
+    "label": "助手",
+    "hint": "负责规划设计并调用图像工具。它的回复按你的 {provider} 密钥计费。",
+    "router": "OpenRouter 会为每条消息选择模型。",
+    "last": "上次回复：{model}",
+    "none": "尚未添加聊天密钥",
+    "noneHint": "助手需要 OpenRouter、OpenAI 或 Google Gemini 密钥。",
+    "change": "更换",
+    "add": "添加密钥"
   },
   "plan": {
     "title": "计划",
@@ -86,7 +101,12 @@
     "approved": "已批准",
     "autoApproved": "已自动批准",
     "revised": "已要求修改",
-    "waiting": "等待你的批准"
+    "waiting": "等待你的批准",
+    "cost": "≈ {amount}",
+    "costFrom": "{amount} 起",
+    "costTitle": "按这些步骤当前将使用的模型估算：{lines}。实际金额以服务商账单为准，可能有所不同。",
+    "costLine": "{count} × {name}",
+    "noPrice": "未公布价格"
   },
   "tools": {
     "plan": "规划中",
