@@ -1,4 +1,18 @@
 {
+  "intro": {
+    "heading": "Your creators, talking about",
+    "accent": "your product",
+    "subtitle": "Cast one of your AI influencers, hand them a script, and get phone-style takes: handheld, talking to camera, a different hook in each.",
+    "startersLabel": "Start from a scene",
+    "starters": [
+      { "scene": "talking", "label": "A quick review, talking to camera" },
+      { "scene": "unboxing", "label": "Unboxing, first reaction" },
+      { "scene": "car", "label": "Parked in the car, real talk" }
+    ],
+    "cta": "Make a UGC video",
+    "ctaHint": "Cast your AI influencers, a saved character or any photo",
+    "hooks": ["I tried them all so you don’t have to", "Okay, I need to talk about this for a second", "POV: you finally found one that actually works"]
+  },
   "empty": {
     "heading": "Who’s",
     "accent": "talking",

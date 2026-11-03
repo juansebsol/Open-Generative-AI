@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
+  IconArrowRight,
   IconArrowsLeftRight,
   IconBox,
   IconBrush,
@@ -166,6 +167,73 @@ function CreatorCard({ creator, selected, copy, onPick, tall = false }) {
   );
 }
 
+// ── The intro: three floating takes ─────────────────────────────────────────
+// Placed like AI Influencer Studio's fan, so the two intros read as a pair.
+// The side cards keep their tag and caption on the side the middle card
+// doesn't cover.
+const TAKE_FAN = [
+  { place: "left-[3%] top-[17%] z-10 w-[34%] -rotate-[7deg] group-hover:-translate-x-[7%] group-hover:-rotate-[10deg]", delay: "0s", hook: 0, progress: "62%", time: "0:09", chip: "left-[6%]", caption: "left-[7%] right-[30%] text-left" },
+  { place: "left-1/2 top-[4%] z-20 w-[43%] -translate-x-1/2 group-hover:-translate-y-[2%]", delay: "-2.4s", hook: 1, progress: "44%", time: "0:05 / 0:11", lead: true, chip: "left-[6%]", caption: "inset-x-[7%] text-center" },
+  { place: "right-[3%] top-[21%] z-10 w-[32%] rotate-[6deg] group-hover:translate-x-[7%] group-hover:rotate-[9deg]", delay: "-4.8s", hook: 2, progress: "28%", time: "0:12", chip: "right-[6%]", caption: "left-[30%] right-[7%] text-right" },
+];
+
+// Shown until the visitor has creators of their own: the AI Influencer
+// Studio intro's creator, three takes of her.
+const SAMPLE_CREATORS = [
+  { name: "Maya", image: "/assets/influencer/feed.jpg", position: "64% 24%", flip: true },
+  { name: "Maya", image: "/assets/influencer/portrait.jpg", position: "center 20%" },
+  { name: "Maya", image: "/assets/influencer/feed.jpg", position: "center 30%" },
+];
+
+function TakeFan({ creators, copy }) {
+  return (
+    <div aria-hidden="true" className="flex h-full min-h-0 items-center justify-center">
+      <div className="group relative aspect-[16/15] max-h-full w-full max-w-[660px]">
+        <span className="absolute inset-x-[15%] bottom-[6%] h-[40%] rounded-full bg-[#22d3ee]/[0.08] blur-[80px]" />
+        {TAKE_FAN.map((card, index) => {
+          const creator = creators[index] || creators[0];
+          return (
+            <div key={index} className={`absolute flex flex-col items-center gap-3 transition-transform duration-500 ease-out ${card.place}`}>
+              <div
+                className={`oga-float relative aspect-[9/16] w-full overflow-hidden rounded-[24px] border bg-[#111114] shadow-[0_30px_80px_rgba(0,0,0,0.7)] ${card.lead ? "border-white/[0.18]" : "border-white/[0.14]"}`}
+                style={{ animationDelay: card.delay }}
+              >
+                <img src={creator.image} alt="" className="h-full w-full object-cover" style={{ objectPosition: creator.position || "center 22%", transform: creator.flip ? "scaleX(-1) scale(1.15)" : undefined }} />
+                {creator.name && (
+                  <span className={`absolute top-[3.5%] flex h-[clamp(20px,2vw,28px)] items-center gap-1.5 rounded-full bg-black/55 pl-1 pr-2.5 text-[clamp(10px,0.85vw,12px)] font-semibold ${card.chip}`}>
+                    <img src={creator.image} alt="" className="aspect-square h-[78%] rounded-full object-cover" style={{ objectPosition: creator.position || "center 22%" }} />
+                    @{characterHandle(creator.name)}
+                  </span>
+                )}
+                {card.lead && (
+                  <span className="absolute right-[6%] top-[3.5%] flex h-[clamp(20px,2vw,28px)] items-center rounded-full bg-[#04202a]/75 px-2.5 text-[clamp(10px,0.8vw,11.5px)] font-semibold text-[#67e8f9]">{copy.scenes.talking.name}</span>
+                )}
+                <span className={`absolute top-[59%] font-extrabold leading-[1.25] text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_10px_rgba(0,0,0,0.6)] ${card.caption} ${card.lead ? "text-[clamp(13px,1.25vw,18px)]" : "text-[clamp(11px,1vw,15px)]"}`}>
+                  {copy.intro.hooks[card.hook]}
+                </span>
+                <span className="absolute inset-x-0 bottom-0 h-[16%] bg-gradient-to-b from-transparent to-black/75" />
+                <span className="absolute inset-x-[6%] bottom-[3.5%] flex items-center gap-2">
+                  {card.lead ? (
+                    <span className="flex aspect-square h-[clamp(22px,2.1vw,30px)] items-center justify-center rounded-full bg-white/[0.92] text-black"><IconPlayerPauseFilled size={12} /></span>
+                  ) : (
+                    <IconPlayerPlayFilled size={12} className="shrink-0 text-white" />
+                  )}
+                  <span className="h-[3px] flex-1 rounded bg-white/30"><span className="block h-full rounded bg-white" style={{ width: card.progress }} /></span>
+                  <span className="font-mono text-[clamp(9.5px,0.8vw,11px)] text-white">{card.time}</span>
+                </span>
+              </div>
+              <span className={`flex h-[30px] items-center gap-1.5 rounded-[10px] border px-2.5 text-[12px] ${card.lead ? "border-[#22d3ee]/35 bg-[#04202a]/90 text-[#cffafe]" : "border-white/10 bg-[#111114]/90 text-white/75"}`}>
+                <span className="font-mono text-[#67e8f9]">{index + 1}</span>
+                {fill(copy.feed.takeLabel, { index: index + 1 })}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // One take: plays in place, the hook over it while paused.
 function TakeCard({ batch, take, index, playing, copy, onPlay, onAgain }) {
   const videoRef = useRef(null);
@@ -299,6 +367,7 @@ export default function UgcStudio({
   const [editingHook, setEditingHook] = useState(null); // index | 'new'
   const [playing, setPlaying] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [started, setStarted] = useState(false); // past the intro this visit
 
   const creatorFileRef = useRef(null);
   const productFileRef = useRef(null);
@@ -613,6 +682,13 @@ export default function UgcStudio({
   const query = castQuery.trim().toLowerCase();
   const castShown = query ? castList.filter((creator) => `${creator.name} ${creator.label}`.toLowerCase().includes(query)) : castList;
   const startCreators = [...influencers.slice(0, 3), ...characters].slice(0, 3);
+  // The fan shows the visitor's own creators, the first one in the middle.
+  const fanCreators = useMemo(() => {
+    const own = [...characters, ...influencers].filter((creator) => creator.image);
+    if (!own.length) return SAMPLE_CREATORS;
+    const pick = (index) => own[index] || own[0];
+    return [pick(1), pick(0), pick(2)].map((creator) => ({ name: creator.name, image: creator.image }));
+  }, [characters, influencers]);
   const sceneCopy = (id) => copy.scenes[id] || copy.scenes.talking;
   const currentScene = SCENES.find((scene) => scene.id === draft.scene) || SCENES[0];
   const takesLabel = (count) => (count === 1 ? copy.bar.takesOne : fill(copy.bar.takesCount, { count }));
@@ -624,6 +700,12 @@ export default function UgcStudio({
     : null;
   const canFilm = Boolean(draft.creator && hasScript && engine && sceneModel && !uploading);
   const showEmpty = batches.length === 0;
+  // Until anything is filmed or set up, the visit opens on the intro.
+  const showIntro = hydrated && !started && showEmpty && !draft.creator && !draft.body.trim();
+  const start = (scene) => {
+    if (scene) patchDraft({ scene });
+    setStarted(true);
+  };
 
   const placeholder = creatorName ? fill(copy.bar.placeholder, { name: creatorName }) : copy.bar.placeholderNoCreator;
 
@@ -681,8 +763,42 @@ export default function UgcStudio({
       <input ref={productFileRef} type="file" accept="image/*" className="hidden" onChange={(event) => { uploadImage(event.target.files?.[0], "product"); event.target.value = ""; }} />
 
       {/* ── Start, or the takes ── */}
-      <div className="custom-scrollbar w-full flex-1 overflow-y-auto px-4 pb-64 pt-6 md:px-6">
-        {showEmpty ? (
+      <div className={`custom-scrollbar w-full flex-1 overflow-y-auto px-4 pt-6 md:px-6 ${showIntro ? "pb-6" : "pb-64"}`}>
+        {!hydrated ? null : showIntro ? (
+          <div className="mx-auto grid h-full w-full max-w-[1280px] grid-cols-1 items-center gap-6 md:grid-cols-[5fr_7fr] md:gap-12 md:px-8" data-ugc-intro>
+            <div className="min-w-0 max-w-[470px]">
+              <h1 className="oga-enter text-[30px] font-semibold leading-[1.1] tracking-[-0.025em] text-white/[0.92] md:text-[38px]">
+                {copy.intro.heading} <span className="text-[#22d3ee]">{copy.intro.accent}</span>
+              </h1>
+              <p className="oga-enter mt-4 max-w-[42ch] text-[15.5px] leading-relaxed text-white/55" style={{ "--i": 1 }}>{copy.intro.subtitle}</p>
+              <nav aria-label={copy.intro.startersLabel} className="mt-7">
+                {copy.intro.starters.map((starter, index) => (
+                  <button
+                    key={starter.scene}
+                    type="button"
+                    onClick={() => start(starter.scene)}
+                    style={{ "--i": index + 2 }}
+                    className="oga-enter group flex w-full items-center justify-between gap-4 border-t border-white/[0.08] py-3.5 text-left text-[14.5px] leading-snug text-white/75 transition-colors last:border-b hover:text-white"
+                    data-ugc-starter={starter.scene}
+                  >
+                    <span>{starter.label}</span>
+                    <IconArrowRight size={15} stroke={1.75} aria-hidden="true" className="shrink-0 text-white/35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#22d3ee]" />
+                  </button>
+                ))}
+              </nav>
+              <div className="oga-enter mt-7 flex flex-wrap items-center gap-4" style={{ "--i": 5 }}>
+                <button type="button" onClick={() => start()} className="flex h-[46px] items-center gap-2.5 rounded-[13px] bg-[#22d3ee] pl-[18px] pr-5 text-[15px] font-bold text-[#04202a] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-[filter,transform] hover:brightness-105 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b0d]" data-ugc-begin>
+                  <IconPlayerPlayFilled size={16} aria-hidden="true" />
+                  {copy.intro.cta}
+                </button>
+                <span className="max-w-[230px] text-[12.5px] leading-snug text-white/45">{copy.intro.ctaHint}</span>
+              </div>
+            </div>
+            <div className="oga-enter-fade hidden h-full min-h-0 md:block" style={{ "--i": 2 }}>
+              <TakeFan creators={fanCreators} copy={copy} />
+            </div>
+          </div>
+        ) : showEmpty ? (
           <div className="oga-enter-fade mx-auto flex w-full max-w-4xl flex-col" data-ugc-start>
             <h1 className="text-[28px] font-semibold leading-[1.12] tracking-[-0.025em] text-white/[0.92] md:text-[32px]">
               {copy.empty.heading} <span className="text-[#22d3ee]">{copy.empty.accent}</span> {copy.empty.headingEnd}
@@ -790,7 +906,8 @@ export default function UgcStudio({
         )}
       </div>
 
-      {/* ── The prompt bar ── */}
+      {/* ── The prompt bar, once past the intro ── */}
+      {hydrated && !showIntro && (
       <PromptComposer>
         {(draft.hooks.length > 0 || editingHook === "new") && (
           <div className="flex min-w-0 items-center gap-2 overflow-x-auto oga-scroll-hide" data-ugc-hooks>
@@ -1115,6 +1232,7 @@ export default function UgcStudio({
           </PromptActionGroup>
         </PromptFooter>
       </PromptComposer>
+      )}
     </div>
   );
 }
