@@ -24,7 +24,21 @@ const clampNumber = (value, min, max, fallback) => {
 };
 
 export function createBoard() {
-  return { items: [], counters: { asset: 0, text: 0 }, background: '#ffffff' };
+  return { items: [], counters: { asset: 0, text: 0 }, background: '#ffffff', frame: null };
+}
+
+/** The format frame's box on the board: it always sits at the origin. */
+export function frameBox(frame) {
+  return { x: 0, y: 0, width: frame.width, height: frame.height };
+}
+
+/** A stored frame if it is usable, otherwise null (a free board). */
+export function sanitizeFrame(frame) {
+  if (!frame || typeof frame !== 'object' || typeof frame.format !== 'string') return null;
+  const width = Math.round(Number(frame.width));
+  const height = Math.round(Number(frame.height));
+  if (!(width > 0) || !(height > 0)) return null;
+  return { format: frame.format, width, height };
 }
 
 export function createSession(now = Date.now()) {
@@ -290,6 +304,7 @@ export function sanitizeSessions(raw) {
         ...createBoard(),
         ...(session.board || {}),
         items: (session.board?.items || []).map(sanitizeItem).filter(Boolean),
+        frame: sanitizeFrame(session.board?.frame),
       },
       viewport: {
         x: Number(session.viewport?.x) || 0,

@@ -34,16 +34,29 @@
     "show": "Show the conversation",
     "emptyTitle": "What are we",
     "emptyAccent": "designing?",
-    "emptyBody": "Ask for a poster, a social post, a product mockup or a logo. The agent plans the steps, makes the images on this board and lays out the text.",
-    "starters": "Starters",
-    "dropHint": "Drop images anywhere on the board to work with your own assets.",
-    "examples": [
-      "A minimalist jazz festival poster, deep blue and gold, with the headline “Blue Notes 2026”",
-      "Instagram post for a coffee brand launch: latte art close-up with a short headline",
-      "Mockup of my logo (asset_1) on a white ceramic mug in a bright kitchen"
-    ],
+    "emptyBody": "Pick a format so the agent knows the size it is designing for. It puts a frame on the board, works inside it, and Export saves the frame at that size.",
+    "describeHint": "or just describe it below",
+    "framePlaceholder": "Describe your {noun}…",
     "you": "You",
     "agent": "Agent"
+  },
+  "formats": {
+    "label": "Format",
+    "groups": { "social": "Social", "print": "Print", "web": "Web" },
+    "free": { "name": "Free board", "noun": "design", "hint": "No frame. Export crops to what is on the board" },
+    "custom": { "name": "Custom size", "noun": "design", "width": "Width", "height": "Height", "unit": "Unit", "use": "Use" },
+    "instagram-post": { "name": "Instagram post", "noun": "Instagram post" },
+    "instagram-story": { "name": "Instagram story", "noun": "Instagram story" },
+    "square-post": { "name": "Square post", "noun": "post" },
+    "youtube-thumbnail": { "name": "YouTube thumbnail", "noun": "YouTube thumbnail" },
+    "x-post": { "name": "X or LinkedIn post", "noun": "post" },
+    "poster": { "name": "Poster", "noun": "poster" },
+    "flyer": { "name": "Flyer", "noun": "flyer" },
+    "business-card": { "name": "Business card", "noun": "business card" },
+    "postcard": { "name": "Postcard", "noun": "postcard" },
+    "website": { "name": "Website mockup", "noun": "website" },
+    "hero-banner": { "name": "Hero banner", "noun": "banner" },
+    "link-preview": { "name": "Link preview", "noun": "link preview image" }
   },
   "bar": {
     "message": "Message the agent",

@@ -34,16 +34,29 @@
     "show": "展开对话",
     "emptyTitle": "我们来设计",
     "emptyAccent": "什么？",
-    "emptyBody": "可以让助手做海报、社媒图、产品样机或标志。它会规划步骤、在这块画板上生成图像并排版文字。",
-    "starters": "示例",
-    "dropHint": "把图片拖到画板任意位置，即可使用你自己的素材。",
-    "examples": [
-      "极简风爵士音乐节海报，深蓝配金色，标题“Blue Notes 2026”",
-      "咖啡品牌新品的 Instagram 帖子：拉花特写加一句简短标题",
-      "把我的标志（asset_1）放到明亮厨房里的白色陶瓷杯上做样机"
-    ],
+    "emptyBody": "选一个格式，助手就知道要按多大尺寸来设计。它会在画板上放一个画框并在框内创作，导出时按这个尺寸保存画框。",
+    "describeHint": "或者直接在下方描述",
+    "framePlaceholder": "描述你的{noun}…",
     "you": "你",
     "agent": "助手"
+  },
+  "formats": {
+    "label": "格式",
+    "groups": { "social": "社交", "print": "印刷", "web": "网页" },
+    "free": { "name": "自由画板", "noun": "设计", "hint": "没有画框，导出时裁切到画板上的内容" },
+    "custom": { "name": "自定义尺寸", "noun": "设计", "width": "宽度", "height": "高度", "unit": "单位", "use": "使用" },
+    "instagram-post": { "name": "Instagram 帖子", "noun": "Instagram 帖子" },
+    "instagram-story": { "name": "Instagram 快拍", "noun": "Instagram 快拍" },
+    "square-post": { "name": "方形帖子", "noun": "帖子" },
+    "youtube-thumbnail": { "name": "YouTube 缩略图", "noun": "YouTube 缩略图" },
+    "x-post": { "name": "X 或领英帖子", "noun": "帖子" },
+    "poster": { "name": "海报", "noun": "海报" },
+    "flyer": { "name": "传单", "noun": "传单" },
+    "business-card": { "name": "名片", "noun": "名片" },
+    "postcard": { "name": "明信片", "noun": "明信片" },
+    "website": { "name": "网站样机", "noun": "网站" },
+    "hero-banner": { "name": "首屏横幅", "noun": "横幅" },
+    "link-preview": { "name": "链接预览图", "noun": "链接预览图" }
   },
   "bar": {
     "message": "给助手发消息",

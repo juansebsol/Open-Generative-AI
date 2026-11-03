@@ -31,7 +31,7 @@ export const DESIGN_TOOLS = [
     label: { type: 'string', description: 'Short human label, e.g. "poster background".' },
     x: { type: 'number' },
     y: { type: 'number' },
-    width: { type: 'number', description: 'Display width on the board (default 512).' },
+    width: { type: 'number', description: 'Display width on the board (default 512). With a format frame, leave x, y and width out to cover the frame edge to edge.' },
   }, ['prompt']),
   fn('edit_image', 'Edit an existing image asset with an instruction (image-to-image). Creates a new asset next to it unless replace is true. Extra reference assets can be combined into the result (e.g. put a logo on a product).', {
     asset_id: itemId('Image asset to edit.'),
@@ -65,7 +65,7 @@ export const DESIGN_TOOLS = [
     text_id: itemId('Existing text layer to update.'),
     x: { type: 'number' },
     y: { type: 'number' },
-    font_size: { type: 'number', description: 'Pixels (board units). Headlines 64-160, body 24-40.' },
+    font_size: { type: 'number', description: 'Pixels (board units). On a free board, headlines 64-160 and body 24-40; in a format frame, size them to the frame.' },
     color: { type: 'string', description: 'CSS hex colour, e.g. #ffffff.' },
     font_weight: { type: 'string', enum: ['normal', 'bold'] },
     font_family: { type: 'string', enum: ['sans', 'serif', 'mono', 'display'] },
@@ -84,18 +84,34 @@ export const DESIGN_TOOLS = [
   fn('delete_item', 'Remove an item from the board. Free.', {
     asset_id: itemId(),
   }, ['asset_id']),
-  fn('export_board', 'Render the board (or some items) to a PNG and download it. Free.', {
-    asset_ids: { type: 'array', items: { type: 'string' }, description: 'Items to include. Defaults to every item.' },
+  fn('export_board', 'Render the board (or some items) to a PNG and download it. With a format frame, saves the frame at its exact size. Free.', {
+    asset_ids: { type: 'array', items: { type: 'string' }, description: 'Items to include. Defaults to the frame, or to every item on a free board.' },
     background: { type: 'string', description: 'CSS hex colour or "transparent". Defaults to the board background.' },
     padding: { type: 'number', description: 'Margin around the content in board units (default 0).' },
     filename: { type: 'string' },
   }),
 ];
 
-export function systemPrompt({ boardText, imageModel, editModel, capabilities, askFirst }) {
+// What the agent is told about the format frame (or its absence).
+function frameBrief(frame) {
+  if (!frame) return 'There is no format frame: the board is free-form and export crops to the content.';
+  const { name, size, width, height, aspect, print } = frame;
+  const sharpness = Math.max(width, height) > 2048
+    ? `${print ? 'It is printed at 300 dpi. ' : ''}Generated images come out around 1-2K pixels, so include an upscale of the background in the plan to keep it sharp.`
+    : '';
+  return [
+    `The format is ${name} (${size}): a frame at (0, 0) sized ${width}x${height} board pixels, exactly what Export saves. Anything outside the frame is left out.`,
+    `Keep the design inside the frame. For a full-bleed background call generate_image without x, y or width: the first one covers the frame using the closest aspect ratio, ${aspect}; once the frame has a background, new ones land beside it so the user can compare.`,
+    `Set text in proportion to the frame: a headline around ${Math.round(height / 9)}px, body copy around ${Math.round(height / 40)}px, max_width under ${width}.`,
+    sharpness,
+  ].filter(Boolean).join(' ');
+}
+
+export function systemPrompt({ boardText, imageModel, editModel, capabilities, askFirst, frame = null }) {
   return [
     'You are Design Agent, a design assistant that works on an infinite canvas board with the user: posters, social posts, product mockups, brand assets.',
     'You act by calling tools. Board coordinates are pixels, origin top-left, x to the right, y down. Images are 512 wide by default; their height follows their aspect ratio.',
+    frameBrief(frame),
     askFirst
       ? 'Paid image operations are generate_image, edit_image, upscale, remove_background and expand_image. When a request needs more than one of them, call plan first (2-6 short steps) and wait for the result before running them. A single paid operation the user asked for directly can run without a plan. If the plan result asks for changes, call plan again with a revised plan.'
       : 'The user has turned off plan approval: run the steps directly, but still keep paid image operations to what the request needs.',

@@ -22,6 +22,7 @@ import {
   IconPhoto,
   IconPlayerStopFilled,
   IconPlus,
+  IconRuler,
   IconSend,
   IconSparkles,
   IconTrash,
@@ -40,10 +41,12 @@ import {
   PromptMenuList,
   PromptPopover,
   PromptPopoverHeader,
+  PromptRatioIcon,
   PromptSegmentOption,
   PromptSegmentedControl,
   PromptSettingsGroup,
   PromptTextarea,
+  promptModelButtonClassName,
   promptSettingClassName,
 } from "./prompt/PromptComposer.jsx";
 import {
@@ -70,6 +73,7 @@ import {
   contentBounds,
   createSession,
   findFreeSpot,
+  frameBox,
   itemBox,
   resizeItem,
   rotatedBounds,
@@ -78,6 +82,18 @@ import {
   topZ,
   trimHistory,
 } from "../designAgent/board.js";
+import {
+  FORMATS,
+  FORMAT_GROUPS,
+  FRAME_UNITS,
+  closestAspect,
+  coverFrame,
+  customFrame,
+  findFormat,
+  formatSize,
+  frameFor,
+  ratioLabel,
+} from "../designAgent/formats.js";
 import { COSTLY_TOOLS, DESIGN_TOOLS, systemPrompt } from "../designAgent/tools.js";
 import {
   availableEditModels,
@@ -120,6 +136,23 @@ function resultUrl(result) {
 
 function boxesOverlap(a, b) {
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+// A new text layer's size: the usual headline on a free board, in proportion inside a frame.
+const textSizeFor = (frame) => (frame ? clamp(Math.round(frame.height / 12), 12, 2000) : 64);
+
+// The frame as the agent hears about it, in English like the rest of its instructions.
+function frameForAgent(frame) {
+  if (!frame) return null;
+  const format = findFormat(frame.format);
+  return {
+    name: (en.formats[frame.format] || en.formats.custom).name,
+    size: formatSize(frame),
+    width: frame.width,
+    height: frame.height,
+    aspect: closestAspect(frame.width, frame.height),
+    print: format?.group === "print",
+  };
 }
 
 // OpenAI-format history for the chat model. Tool calls that never got a
@@ -188,7 +221,7 @@ const ALIGN_ICONS = { left: IconAlignLeft, center: IconAlignCenter, right: IconA
 // ---------------------------------------------------------------------------
 // Board item
 // ---------------------------------------------------------------------------
-function BoardItem({ item, selected, scale, copy, onPointerDown, onHandleDown, onDoubleClick }) {
+function BoardItem({ item, selected, showLabel = true, scale, copy, onPointerDown, onHandleDown, onDoubleClick }) {
   const inverse = 1 / scale;
   const style = {
     position: "absolute",
@@ -239,7 +272,7 @@ function BoardItem({ item, selected, scale, copy, onPointerDown, onHandleDown, o
       onDoubleClick={item.kind === "text" ? () => onDoubleClick(item) : undefined}
     >
       {body}
-      {item.kind === "image" && (
+      {item.kind === "image" && (selected || showLabel) && (
         <span
           className={`absolute left-0 bottom-full mb-1 whitespace-nowrap rounded px-1.5 py-0.5 font-mono font-semibold pointer-events-none ${selected ? "bg-[#22d3ee] text-black" : "bg-black/70 text-white/80"}`}
           style={{ fontSize: 11, transform: `scale(${inverse})`, transformOrigin: "left bottom" }}
@@ -266,6 +299,34 @@ function BoardItem({ item, selected, scale, copy, onPointerDown, onHandleDown, o
           />
         </>
       )}
+    </div>
+  );
+}
+
+// The format frame: the area Export saves, filled with the export background
+// (a checkerboard when that is transparent), its name riding above it.
+function BoardFrame({ frame, name, size, background, scale, z }) {
+  const inverse = 1 / scale;
+  const tile = 16 * inverse;
+  const fillStyle = background === "transparent"
+    ? {
+        backgroundColor: "#17171a",
+        backgroundImage: "linear-gradient(45deg, #24242a 25%, transparent 25%), linear-gradient(-45deg, #24242a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #24242a 75%), linear-gradient(-45deg, transparent 75%, #24242a 75%)",
+        backgroundSize: `${tile}px ${tile}px`,
+        backgroundPosition: `0 0, 0 ${tile / 2}px, ${tile / 2}px -${tile / 2}px, -${tile / 2}px 0`,
+      }
+    : { background };
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute left-0 top-0"
+      style={{ width: frame.width, height: frame.height, zIndex: z, boxShadow: `0 0 0 ${inverse}px rgba(255,255,255,0.14), 0 ${24 * inverse}px ${60 * inverse}px rgba(0,0,0,0.5)`, ...fillStyle }}
+      data-design-frame
+    >
+      <span className="absolute bottom-full left-0 flex items-baseline gap-2 whitespace-nowrap" style={{ marginBottom: 6 * inverse, transform: `scale(${inverse})`, transformOrigin: "left bottom" }}>
+        <span className="text-[12px] font-medium text-white/75">{name}</span>
+        <span className="font-mono text-[11px] text-white/40">{size}</span>
+      </span>
     </div>
   );
 }
@@ -372,6 +433,8 @@ export default function DesignAgentStudio({
   const [modelLists, setModelLists] = useState({ image: [], edit: [] });
   const [openMenu, setOpenMenu] = useState(null); // 'sessions' | 'images' | 'export' | null
   const [chatCollapsed, setChatCollapsed] = useState(false);
+  const [formatGroup, setFormatGroup] = useState(FORMAT_GROUPS[0]);
+  const [customSize, setCustomSize] = useState({ width: "1080", height: "1350", unit: "px" });
   const [exporting, setExporting] = useState(false);
   const [restored, setRestored] = useState(false);
 
@@ -383,6 +446,8 @@ export default function DesignAgentStudio({
   const textareaRef = useRef(null);
   const messagesListRef = useRef(null);
   const inspectorTextRef = useRef(null);
+  const customWidthRef = useRef(null);
+  const noticeRef = useRef(null);
 
   const activeIdRef = useRef(activeId);
   const boardRef = useRef(sessions[0].board);
@@ -545,24 +610,32 @@ export default function DesignAgentStudio({
     setOpenMenu((current) => (current === name ? null : name));
   };
 
+  // Everything new things should keep clear of: the items and the frame.
+  const occupied = () => {
+    const current = boardRef.current;
+    return current.frame ? [...current.items, { id: "frame", kind: "frame", ...frameBox(current.frame) }] : current.items;
+  };
+
   // ── Viewport helpers ────────────────────────────────────────────────────
-  // The part of the board the chat card, the tools and the prompt bar leave
-  // uncovered, in canvas pixels: fitting, revealing and new items aim here.
+  // The part of the board the chat card, the tools, a setup notice and the
+  // prompt bar leave uncovered, in canvas pixels: fitting, revealing and new
+  // items aim here.
   const openArea = () => {
     const canvas = canvasRef.current?.getBoundingClientRect();
     if (!canvas) return { x: 0, y: 0, width: 800, height: 600 };
     const area = boardAreaRef.current?.getBoundingClientRect() || canvas;
     const bar = composerRef.current?.getBoundingClientRect();
-    const top = area.top - canvas.top + 64;
+    const notice = noticeRef.current?.getBoundingClientRect();
+    const top = Math.max(area.top - canvas.top + 64, notice ? notice.bottom - canvas.top + 8 : 0);
     const bottom = bar ? bar.top - canvas.top - 8 : area.bottom - canvas.top;
     return { x: area.left - canvas.left, y: top, width: area.width, height: Math.max(120, bottom - top) };
   };
 
-  const fitToContent = useCallback((items = boardRef.current.items) => {
+  const fitToContent = useCallback((items = occupied()) => {
     const bounds = contentBounds(items);
     if (!bounds) return;
     const area = openArea();
-    const scale = clamp(Math.min((area.width - 96) / Math.max(bounds.width, 1), (area.height - 48) / Math.max(bounds.height, 1)), MIN_SCALE, 2);
+    const scale = clamp(Math.min((area.width - 96) / Math.max(bounds.width, 1), (area.height - 72) / Math.max(bounds.height, 1)), MIN_SCALE, 2);
     setViewport({
       scale,
       x: area.x + (area.width - bounds.width * scale) / 2 - bounds.x * scale,
@@ -663,8 +736,8 @@ export default function DesignAgentStudio({
 
   const placementNextTo = (source, height) => {
     const candidate = { x: source.x + source.width + ITEM_GAP, y: source.y, width: source.width, height };
-    const blocked = boardRef.current.items.some((item) => item.id !== source.id && boxesOverlap(candidate, rotatedBounds(itemBox(item), item.rotation)));
-    return blocked ? findFreeSpot(boardRef.current.items) : { x: candidate.x, y: candidate.y };
+    const blocked = occupied().some((item) => item.id !== source.id && boxesOverlap(candidate, rotatedBounds(itemBox(item), item.rotation)));
+    return blocked ? findFreeSpot(occupied()) : { x: candidate.x, y: candidate.y };
   };
 
   const getImage = (id) => {
@@ -690,7 +763,7 @@ export default function DesignAgentStudio({
     const placeholderHeight = source
       ? (aspect ? source.width * aspectToRatio(aspect) : source.height)
       : DEFAULT_IMAGE_WIDTH;
-    const spot = source ? placementNextTo(source, placeholderHeight) : findFreeSpot(boardRef.current.items);
+    const spot = source ? placementNextTo(source, placeholderHeight) : findFreeSpot(occupied());
     const pendingId = replace && source
       ? null
       : addPending({ x: spot.x, y: spot.y, width: source?.width || DEFAULT_IMAGE_WIDTH, height: placeholderHeight });
@@ -721,9 +794,14 @@ export default function DesignAgentStudio({
       if (!model) throw noImageModel();
       const prompt = String(args.prompt || "").trim();
       if (!prompt) throw new Error("A prompt is required.");
-      const aspect = ASPECT_RATIOS.includes(args.aspect_ratio) ? args.aspect_ratio : "1:1";
-      const width = clamp(Number(args.width) || DEFAULT_IMAGE_WIDTH, 32, 8000);
-      const spot = finite(args.x) && finite(args.y) ? { x: args.x, y: args.y } : findFreeSpot(boardRef.current.items);
+      const frame = boardRef.current.frame;
+      const aspect = ASPECT_RATIOS.includes(args.aspect_ratio) ? args.aspect_ratio : frame ? closestAspect(frame.width, frame.height) : "1:1";
+      // With no placement given, the first background covers the frame; later ones go beside it to compare.
+      const placed = finite(args.x) || finite(args.y) || finite(Number(args.width));
+      const frameTaken = frame && boardRef.current.items.some((item) => item.kind !== "text" && boxesOverlap(itemBox(item), frameBox(frame)));
+      const cover = frame && !placed && !frameTaken ? coverFrame(frame, aspect) : null;
+      const width = cover ? cover.width : clamp(Number(args.width) || DEFAULT_IMAGE_WIDTH, 32, 8192);
+      const spot = cover ? { x: cover.x, y: cover.y } : finite(args.x) && finite(args.y) ? { x: args.x, y: args.y } : findFreeSpot(occupied());
       const pendingId = addPending({ ...spot, width, height: width * aspectToRatio(aspect) });
       try {
         const url = resultUrl(await paid(() => generateImage({ model: model.id, prompt, aspect_ratio: aspect })));
@@ -874,8 +952,9 @@ export default function DesignAgentStudio({
         setBoard((current) => {
           const [nextId, withId] = allocateId(current, "text");
           id = nextId;
-          const spot = finite(patch.x) && finite(patch.y) ? {} : findFreeSpot(current.items);
-          const item = { id, kind: "text", fontSize: 64, color: "#ffffff", fontWeight: "bold", fontFamily: "sans", align: "left", rotation: 0, ...spot, ...patch, z: topZ(current.items) + 1, createdAt: Date.now() };
+          const inset = current.frame ? { x: Math.round(current.frame.width * 0.08), y: Math.round(current.frame.height * 0.08) } : null;
+          const spot = finite(patch.x) && finite(patch.y) ? {} : inset || findFreeSpot(current.items);
+          const item = { id, kind: "text", fontSize: textSizeFor(current.frame), color: "#ffffff", fontWeight: "bold", fontFamily: "sans", align: "left", rotation: 0, ...spot, ...patch, z: topZ(current.items) + 1, createdAt: Date.now() };
           return { ...withId, items: [...withId.items, item] };
         });
       }
@@ -920,10 +999,14 @@ export default function DesignAgentStudio({
 
   // ── Export ──────────────────────────────────────────────────────────────
   const exportBoard = async ({ ids = null, background, padding = 0, filename } = {}) => {
-    const items = boardRef.current.items.filter((item) => item.kind !== "pending" && (!ids || ids.includes(item.id)));
-    const fillColor = typeof background === "string" && background.trim() ? background.trim() : boardRef.current.background || "transparent";
-    const safeName = String(filename || `design-board-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, "-")}`).replace(/[^\w.-]+/g, "-").replace(/\.png$/i, "");
-    const { blob, width, height } = await renderBoardToBlob(items, { background: fillColor, padding });
+    const current = boardRef.current;
+    const items = current.items.filter((item) => item.kind !== "pending" && (!ids || ids.includes(item.id)));
+    const fillColor = typeof background === "string" && background.trim() ? background.trim() : current.background || "transparent";
+    // The frame is the export unless the agent picked items.
+    const area = current.frame && !ids ? frameBox(current.frame) : null;
+    const baseName = area ? current.frame.format : "design-board";
+    const safeName = String(filename || `${baseName}-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, "-")}`).replace(/[^\w.-]+/g, "-").replace(/\.png$/i, "");
+    const { blob, width, height } = await renderBoardToBlob(items, { background: fillColor, padding, area });
     saveBlob(blob, `${safeName}.png`);
     return { width, height, filename: `${safeName}.png` };
   };
@@ -1035,6 +1118,7 @@ export default function DesignAgentStudio({
           editModel: editModel?.name,
           capabilities,
           askFirst: currentSettings.askFirst,
+          frame: frameForAgent(boardRef.current.frame),
         });
         const reply = await chatComplete({
           messages: [{ role: "system", content: system }, ...toChatMessages(trimHistory(messagesRef.current, 60))],
@@ -1131,9 +1215,11 @@ export default function DesignAgentStudio({
         continue;
       }
       const center = viewCenter();
-      const occupied = boardRef.current.items.length > 0;
-      const spot = occupied ? findFreeSpot(boardRef.current.items) : { x: Math.round(center.x - DEFAULT_IMAGE_WIDTH / 2), y: Math.round(center.y - DEFAULT_IMAGE_WIDTH / 2) };
-      const pendingId = addPending({ ...spot, width: DEFAULT_IMAGE_WIDTH, height: DEFAULT_IMAGE_WIDTH });
+      const frame = boardRef.current.frame;
+      // Half the frame's width inside a frame, so an upload reads at the design's scale.
+      const width = frame ? Math.round(clamp(frame.width / 2, 64, 4096)) : DEFAULT_IMAGE_WIDTH;
+      const spot = boardRef.current.items.length > 0 ? findFreeSpot(occupied()) : { x: Math.round(center.x - width / 2), y: Math.round(center.y - width / 2) };
+      const pendingId = addPending({ ...spot, width, height: width });
       try {
         const url = await uploadFile(file);
         const item = await placeImage({ url, pendingId, label: file.name, source: "upload" });
@@ -1162,7 +1248,8 @@ export default function DesignAgentStudio({
     setBoard((current) => {
       const [nextId, withId] = allocateId(current, "text");
       id = nextId;
-      const item = { id, kind: "text", text: copy.canvas.newText, x: Math.round(center.x - 150), y: Math.round(center.y - 40), fontSize: 64, color: current.items.length ? "#ffffff" : "#111111", fontWeight: "bold", fontFamily: "sans", align: "left", rotation: 0, z: topZ(current.items) + 1, createdAt: Date.now() };
+      const fontSize = textSizeFor(current.frame);
+      const item = { id, kind: "text", text: copy.canvas.newText, x: Math.round(center.x - fontSize * 2.3), y: Math.round(center.y - fontSize * 0.6), fontSize, color: current.items.length ? "#ffffff" : "#111111", fontWeight: "bold", fontFamily: "sans", align: "left", rotation: 0, z: topZ(current.items) + 1, createdAt: Date.now() };
       return { ...withId, items: [...withId.items, item] };
     });
     setSelectedId(id);
@@ -1335,10 +1422,19 @@ export default function DesignAgentStudio({
   const visibleMessages = messages.filter((message) => message.role !== "assistant" || message.content);
   const isEmptyChat = messages.length === 0;
   const isEmptyBoard = board.items.length === 0;
-  const showIntro = isEmptyChat && isEmptyBoard;
+  const frame = board.frame || null;
+  const frameCopy = frame ? copy.formats[frame.format] || copy.formats.custom : null;
+  const frameSize = formatSize(frame);
+  const frameZ = Math.min(0, ...board.items.map((item) => item.z || 0)) - 1;
+  const formatLabel = !frame ? copy.formats.free.name : frame.format === "custom" ? frameSize : findFormat(frame.format)?.print ? `${frameCopy.name} · ${frameSize}` : frameCopy.name;
+  const showIntro = isEmptyChat && isEmptyBoard && !frame;
   const pct = Math.round(viewport.scale * 100);
+  // The dot grid spreads out when zoomed far out (a print frame) instead of blurring into a wash.
+  let gridStep = 24 * viewport.scale;
+  while (gridStep < 10) gridStep *= 5;
   const placedCount = board.items.filter((item) => item.kind !== "pending").length;
   const itemsLabel = placedCount === 0 ? copy.sessions.itemsNone : placedCount === 1 ? copy.sessions.itemsOne : fill(copy.sessions.items, { count: placedCount });
+  const sessionDetail = frame ? `${frameCopy.name} · ${frameSize}` : itemsLabel;
   const imageModelName = modelLists.image.find((model) => model.id === settings.imageModelId)?.name || copy.settings.auto;
   const exportTransparent = board.background === "transparent";
   const inspecting = selectedItem && selectedItem.kind !== "pending" ? selectedItem : null;
@@ -1347,6 +1443,120 @@ export default function DesignAgentStudio({
     : !imageReady
       ? { title: copy.setup.imageTitle, body: copy.setup.imageBody, providers: ["fal", "wavespeed", "openrouter", "google", "openai"] }
       : null;
+
+  // A format puts its frame on the board (none for a free board) and shows it whole.
+  const chooseFormat = (next) => {
+    setBoard((current) => ({ ...current, frame: next }));
+    setOpenMenu(null);
+    if (next) fitToContent();
+    textareaRef.current?.focus();
+  };
+
+  const toggleFormatMenu = (event) => {
+    event.stopPropagation();
+    if (openMenu !== "format") {
+      const group = findFormat(frame?.format)?.group;
+      if (group) setFormatGroup(group);
+      if (frame?.format === "custom") setCustomSize({ width: String(frame.width), height: String(frame.height), unit: "px" });
+    }
+    setOpenMenu((current) => (current === "format" ? null : "format"));
+  };
+
+  const openCustomSize = (event) => {
+    event.stopPropagation();
+    setOpenMenu("format");
+    setTimeout(() => customWidthRef.current?.select(), 0);
+  };
+
+  const pendingCustomFrame = customFrame(customSize.width, customSize.height, customSize.unit);
+
+  const formatMenu = (
+    <PromptPopover
+      role="dialog"
+      aria-label={copy.formats.label}
+      onClick={(event) => event.stopPropagation()}
+      className="w-[340px] max-w-[calc(100vw-24px)] !max-h-[70vh]"
+      fitViewport
+      solid
+      data-design-format-menu
+    >
+      <PromptPopoverHeader>{copy.formats.label}</PromptPopoverHeader>
+      <PromptSegmentedControl className="w-full">
+        {FORMAT_GROUPS.map((group) => (
+          <PromptSegmentOption key={group} className="flex-1" selected={formatGroup === group} onClick={() => setFormatGroup(group)}>
+            {copy.formats.groups[group]}
+          </PromptSegmentOption>
+        ))}
+      </PromptSegmentedControl>
+      <div role="menu" className="mt-1.5 flex flex-col gap-0.5">
+        {FORMATS.filter((format) => format.group === formatGroup).map((format) => {
+          const on = frame?.format === format.id;
+          return (
+            <button
+              key={format.id}
+              type="button"
+              role="menuitemradio"
+              aria-checked={on}
+              onClick={() => chooseFormat(frameFor(format.id))}
+              className={`flex min-h-[46px] w-full items-center gap-3 rounded-[10px] px-2.5 text-left transition-colors focus:outline-none focus-visible:bg-white/[0.06] ${on ? "bg-[#22d3ee]/[0.08]" : "hover:bg-white/[0.06]"}`}
+              data-design-format-option={format.id}
+            >
+              <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center">
+                <PromptRatioIcon ratio={`${format.width}:${format.height}`} width={24} height={24} active={on} />
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className={`truncate text-[13px] font-medium ${on ? "text-[#67e8f9]" : "text-white/80"}`}>{copy.formats[format.id].name}</span>
+                <span className="truncate font-mono text-[11px] text-white/45" title={`${format.width} × ${format.height}`}>{format.print || `${format.width} × ${format.height}`}</span>
+              </span>
+              <span className="shrink-0 font-mono text-[11px] text-white/35">{ratioLabel(format.width, format.height)}</span>
+              {on ? <IconCheck size={12} stroke={3} aria-hidden="true" className="shrink-0 text-[#22d3ee]" /> : <span aria-hidden="true" className="w-3 shrink-0" />}
+            </button>
+          );
+        })}
+      </div>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (pendingCustomFrame) chooseFormat(pendingCustomFrame);
+        }}
+        className="mt-1.5 border-t border-white/[0.06] px-2.5 pb-2 pt-2.5"
+        data-design-custom-size
+      >
+        <p className="mb-2 text-[11px] font-medium text-white/40">{copy.formats.custom.name}</p>
+        <div className="flex items-center gap-1.5">
+          <input ref={customWidthRef} type="number" min={1} inputMode="decimal" aria-label={copy.formats.custom.width} value={customSize.width} onChange={(event) => setCustomSize((current) => ({ ...current, width: event.target.value }))} className={`${FIELD_CLASS} w-[76px] font-mono`} />
+          <span aria-hidden="true" className="text-[12px] text-white/40">×</span>
+          <input type="number" min={1} inputMode="decimal" aria-label={copy.formats.custom.height} value={customSize.height} onChange={(event) => setCustomSize((current) => ({ ...current, height: event.target.value }))} className={`${FIELD_CLASS} w-[76px] font-mono`} />
+          <span className="group relative flex">
+            <select aria-label={copy.formats.custom.unit} value={customSize.unit} onChange={(event) => setCustomSize((current) => ({ ...current, unit: event.target.value }))} className={`${FIELD_CLASS} w-[62px] cursor-pointer appearance-none pr-6 font-mono`}>
+              {FRAME_UNITS.map((unit) => <option key={unit} value={unit} className="bg-[#111114]">{unit}</option>)}
+            </select>
+            <PromptChevronIcon className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />
+          </span>
+          <button type="submit" disabled={!pendingCustomFrame} className="ml-auto h-8 shrink-0 rounded-[9px] border border-white/[0.12] px-3 text-[12.5px] font-medium text-white/85 transition-colors hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50 disabled:opacity-40">
+            {copy.formats.custom.use}
+          </button>
+        </div>
+      </form>
+      <button
+        type="button"
+        role="menuitemradio"
+        aria-checked={!frame}
+        onClick={() => chooseFormat(null)}
+        className={`flex min-h-[46px] w-full items-center gap-3 rounded-[10px] px-2.5 py-1.5 text-left transition-colors focus:outline-none focus-visible:bg-white/[0.06] ${!frame ? "bg-[#22d3ee]/[0.08]" : "hover:bg-white/[0.06]"}`}
+        data-design-format-option="free"
+      >
+        <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center">
+          <PromptRatioIcon ratio="free" width={18} height={18} active={!frame} />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className={`text-[13px] font-medium ${!frame ? "text-[#67e8f9]" : "text-white/80"}`}>{copy.formats.free.name}</span>
+          <span className="text-[11.5px] leading-snug text-white/45">{copy.formats.free.hint}</span>
+        </span>
+        {!frame ? <IconCheck size={12} stroke={3} aria-hidden="true" className="shrink-0 text-[#22d3ee]" /> : <span aria-hidden="true" className="w-3 shrink-0" />}
+      </button>
+    </PromptPopover>
+  );
 
   const pickModel = (key, id) => {
     setSettings((current) => ({ ...current, [key]: id }));
@@ -1463,16 +1673,18 @@ export default function DesignAgentStudio({
           touchAction: "none",
           backgroundColor: "#0b0b0d",
           backgroundImage: "radial-gradient(rgba(255,255,255,0.09) 1px, transparent 1px)",
-          backgroundSize: `${24 * viewport.scale}px ${24 * viewport.scale}px`,
+          backgroundSize: `${gridStep}px ${gridStep}px`,
           backgroundPosition: `${viewport.x}px ${viewport.y}px`,
         }}
       >
         <div className="absolute left-0 top-0" style={{ transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`, transformOrigin: "0 0" }}>
+          {frame && <BoardFrame frame={frame} name={frameCopy.name} size={findFormat(frame.format)?.print ? `${frameSize} · ${frame.width} × ${frame.height}` : frameSize} background={board.background} scale={viewport.scale} z={frameZ} />}
           {sortedItems.map((item) => (
             <BoardItem
               key={item.id}
               item={item}
               selected={item.id === selectedId}
+              showLabel={item.kind !== "image" || !frame || !boxesOverlap(itemBox(item), frameBox(frame))}
               scale={viewport.scale}
               copy={copy}
               onPointerDown={startItemDrag}
@@ -1508,7 +1720,7 @@ export default function DesignAgentStudio({
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-[13.5px] font-semibold text-white">{activeSession.title || copy.sessions.untitled}</span>
                 <span className="flex min-w-0 items-center gap-1.5 text-[11.5px] text-white/45">
-                  {!chatOpen && running && activity ? <><Spinner className="h-2.5 w-2.5" /><span className="truncate">{activity}</span></> : <span className="truncate">{itemsLabel}</span>}
+                  {!chatOpen && running && activity ? <><Spinner className="h-2.5 w-2.5" /><span className="truncate">{activity}</span></> : <span className="truncate">{sessionDetail}</span>}
                 </span>
               </span>
               <PromptChevronIcon className={`ml-auto ${openMenu === "sessions" ? "rotate-180" : ""}`} />
@@ -1627,7 +1839,7 @@ export default function DesignAgentStudio({
       {/* ── What floats over the open board: tools, notices, the prompt bar ── */}
       <div
         ref={boardAreaRef}
-        className={`pointer-events-none absolute inset-x-0 bottom-0 flex flex-col ${openMenu === "images" || openMenu === "export" ? "z-40" : "z-20"} ${
+        className={`pointer-events-none absolute inset-x-0 bottom-0 flex flex-col ${openMenu === "images" || openMenu === "export" || openMenu === "format" ? "z-40" : "z-20"} ${
           chatOpen ? "top-[calc(min(34%,300px)+20px)] md:top-0 md:left-[352px] lg:left-[392px]" : "top-[72px] md:top-0"
         }`}
         data-design-board-area
@@ -1652,7 +1864,7 @@ export default function DesignAgentStudio({
             <button type="button" onClick={() => zoomBy(1.25)} aria-label={copy.canvas.zoomIn} title={copy.canvas.zoomIn} className={toolButtonClassName({ iconOnly: true })}>
               <IconPlus size={14} stroke={2} aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => fitToContent()} disabled={isEmptyBoard} aria-label={copy.canvas.fit} title={copy.canvas.fit} className={toolButtonClassName({ iconOnly: true })}>
+            <button type="button" onClick={() => fitToContent()} disabled={isEmptyBoard && !frame} aria-label={copy.canvas.fit} title={copy.canvas.fit} className={toolButtonClassName({ iconOnly: true })}>
               <IconMaximize size={15} stroke={1.75} aria-hidden="true" />
             </button>
           </div>
@@ -1661,6 +1873,7 @@ export default function DesignAgentStudio({
             <button type="button" onClick={handleExportClick} disabled={isEmptyBoard || exporting} aria-label={copy.canvas.export} title={copy.canvas.export} className={toolButtonClassName({ accent: true })}>
               {exporting ? <Spinner /> : <IconDownload size={15} stroke={1.75} aria-hidden="true" />}
               <span className="hidden lg:inline">{exporting ? copy.canvas.exporting : copy.canvas.export}</span>
+              {frame && <span className="hidden font-mono text-[11.5px] font-normal text-white/45 xl:inline">{frame.width} × {frame.height}</span>}
             </button>
             <button
               type="button"
@@ -1725,7 +1938,7 @@ export default function DesignAgentStudio({
         {/* Provider setup: the chat key first, then an image key. Over a
             board with work on it, the title alone. */}
         {setupNotice && (
-          <div className={`pointer-events-auto mx-auto mt-2 flex w-[min(440px,calc(100%-24px))] gap-3 rounded-xl border border-amber-400/20 bg-[#141210]/95 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur-md ${showIntro ? "items-start p-3" : "items-center py-2 pl-3 pr-2"}`} data-design-setup>
+          <div ref={noticeRef} className={`pointer-events-auto mx-auto mt-2 flex w-[min(440px,calc(100%-24px))] gap-3 rounded-xl border border-amber-400/20 bg-[#141210]/95 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur-md ${showIntro ? "items-start p-3" : "items-center py-2 pl-3 pr-2"}`} data-design-setup>
             <IconKey size={16} stroke={1.75} aria-hidden="true" className={`shrink-0 text-amber-300 ${showIntro ? "mt-0.5" : ""}`} />
             <div className="min-w-0 flex-1">
               <p className={`text-[13px] font-semibold text-amber-200 ${showIntro ? "" : "truncate"}`} title={showIntro ? undefined : setupNotice.body}>{setupNotice.title}</p>
@@ -1739,30 +1952,42 @@ export default function DesignAgentStudio({
 
         <div className={`flex min-h-0 flex-1 ${showIntro ? "no-scrollbar pointer-events-auto overflow-y-auto" : ""}`}>
           {showIntro ? (
-            <div className="oga-enter m-auto flex w-full max-w-[460px] flex-col items-start px-5 py-6" data-design-intro>
-              <span aria-hidden="true" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#22d3ee]/20 bg-[#22d3ee]/10 text-[#22d3ee]">
-                <IconSparkles size={20} stroke={1.75} />
-              </span>
-              <h2 className="mt-[18px] text-[26px] font-semibold leading-[1.12] tracking-[-0.025em] text-white/[0.92] md:text-[32px]">
+            <div className="oga-enter m-auto flex w-full max-w-[720px] flex-col items-start px-5 py-6" data-design-intro>
+              <h2 className="text-[26px] font-semibold leading-[1.12] tracking-[-0.025em] text-white/[0.92] md:text-[32px]">
                 {copy.chat.emptyTitle} <span className="text-[#22d3ee]">{copy.chat.emptyAccent}</span>
               </h2>
-              <p className="mt-3 text-[14px] leading-relaxed text-white/55 md:text-[15px]">{copy.chat.emptyBody}</p>
-              <nav aria-label={copy.chat.starters} className="mt-[22px] w-full">
-                {copy.chat.examples.map((example, index) => (
+              <p className="mt-2.5 max-w-[560px] text-[14px] leading-relaxed text-white/55 md:text-[15px]">{copy.chat.emptyBody}</p>
+              <nav aria-label={copy.formats.label} className="mt-[22px] grid w-full grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {FORMATS.filter((format) => format.featured).map((format) => (
                   <button
-                    key={example}
+                    key={format.id}
                     type="button"
-                    onClick={() => { setInput(example); textareaRef.current?.focus(); }}
-                    className={`group flex w-full items-center justify-between gap-4 border-t border-white/[0.08] py-3 text-left text-[14px] leading-[1.45] text-white/70 transition-colors hover:text-white focus:outline-none focus-visible:text-white ${index === copy.chat.examples.length - 1 ? "border-b" : ""}`}
+                    onClick={() => chooseFormat(frameFor(format.id))}
+                    className="group relative flex h-32 flex-col rounded-[14px] border border-white/[0.08] bg-white/[0.025] px-3 pb-3 text-left transition-colors hover:border-[#22d3ee]/45 hover:bg-[#22d3ee]/[0.05] focus:outline-none focus-visible:border-[#22d3ee]/60"
+                    data-design-format-tile={format.id}
                   >
-                    {example}
-                    <IconArrowRight size={14} stroke={1.75} aria-hidden="true" className="shrink-0 text-white/35 transition-[color,transform] group-hover:translate-x-0.5 group-hover:text-[#22d3ee]" />
+                    <span className="absolute left-3 top-2.5 text-[10.5px] font-medium text-white/35">{copy.formats.groups[format.group]}</span>
+                    <span aria-hidden="true" className="flex h-[74px] items-center justify-center">
+                      <PromptRatioIcon ratio={`${format.width}:${format.height}`} width={64} height={50} className="bg-white/[0.04] group-hover:border-[#22d3ee] group-hover:bg-[#22d3ee]/[0.12]" />
+                    </span>
+                    <span className="truncate text-[13px] font-medium text-white/[0.86] group-hover:text-white">{copy.formats[format.id].name}</span>
+                    <span className="mt-0.5 truncate font-mono text-[11px] text-white/45">{format.print || `${format.width} × ${format.height}`}</span>
                   </button>
                 ))}
               </nav>
-              <p className="mt-4 text-[12.5px] text-white/40">{copy.chat.dropHint}</p>
+              <div className="mt-3.5 flex flex-wrap items-center gap-2">
+                <button type="button" onClick={openCustomSize} className="flex h-[34px] items-center gap-2 rounded-[10px] border border-white/10 pl-2.5 pr-3 text-[13px] font-medium text-white/[0.78] transition-colors hover:bg-white/[0.05] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50" data-design-custom-start>
+                  <IconRuler size={15} stroke={1.75} aria-hidden="true" />
+                  {copy.formats.custom.name}
+                </button>
+                <button type="button" onClick={() => textareaRef.current?.focus()} className="flex h-[34px] items-center gap-2 rounded-[10px] border border-white/10 pl-2.5 pr-3 text-[13px] font-medium text-white/[0.78] transition-colors hover:bg-white/[0.05] hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-[#22d3ee]/50">
+                  <PromptRatioIcon ratio="free" width={13} height={13} />
+                  {copy.formats.free.name}
+                </button>
+                <span className="ml-1.5 text-[12.5px] text-white/40">{copy.chat.describeHint}</span>
+              </div>
             </div>
-          ) : isEmptyBoard ? (
+          ) : isEmptyBoard && !frame ? (
             <div className="m-auto max-w-sm px-6 text-center">
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white/35"><IconPhoto size={22} stroke={1.75} aria-hidden="true" /></div>
               <p className="text-[15px] font-semibold text-white/80">{copy.canvas.emptyTitle}</p>
@@ -1795,12 +2020,30 @@ export default function DesignAgentStudio({
                   }
                 }}
                 aria-label={copy.bar.message}
-                placeholder={awaitingPlan || reviseTarget ? copy.chat.revisePlaceholder : copy.chat.placeholder}
+                placeholder={awaitingPlan || reviseTarget ? copy.chat.revisePlaceholder : frame ? fill(copy.chat.framePlaceholder, { noun: frameCopy.noun }) : copy.chat.placeholder}
                 className="min-w-0 flex-1"
               />
             </div>
             <PromptFooter>
               <PromptControls>
+                <div className="relative flex min-w-0">
+                  <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={openMenu === "format"}
+                    aria-label={`${copy.formats.label}: ${formatLabel}`}
+                    onClick={toggleFormatMenu}
+                    className={promptModelButtonClassName({ active: openMenu === "format" })}
+                    data-design-format
+                  >
+                    <span aria-hidden="true" className="flex h-4 w-[18px] shrink-0 items-center justify-center">
+                      <PromptRatioIcon ratio={frame ? `${frame.width}:${frame.height}` : "free"} width={16} height={14} />
+                    </span>
+                    <span className="max-w-[190px] truncate">{formatLabel}</span>
+                    <PromptChevronIcon className={openMenu === "format" ? "rotate-180" : ""} />
+                  </button>
+                  {openMenu === "format" && formatMenu}
+                </div>
                 <PromptSettingsGroup label={copy.bar.settings}>
                   <button
                     key="plan"

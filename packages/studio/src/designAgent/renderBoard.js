@@ -59,6 +59,8 @@ export function imageSize(url) {
   });
 }
 
+const overlaps = (a, b) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+
 const fontFor = (item) => `${item.fontWeight === 'bold' ? '700' : '400'} ${item.fontSize}px ${TEXT_FONTS[item.fontFamily] || TEXT_FONTS.sans}`;
 
 function textLayout(ctx, item) {
@@ -70,11 +72,13 @@ function textLayout(ctx, item) {
 }
 
 /**
- * Renders items (sorted by z) to a PNG blob.
+ * Renders items (sorted by z) to a PNG blob. With `area` (a format frame), the
+ * PNG is exactly that box at one pixel per board unit and what lies outside
+ * it is cut off; otherwise it is the items' bounds at their native density.
  * @returns {Promise<{ blob: Blob, width: number, height: number }>}
  */
-export async function renderBoardToBlob(items, { background = 'transparent', padding = 0 } = {}) {
-  const drawable = items.filter((item) => item.kind === 'image' || item.kind === 'text').sort((a, b) => (a.z || 0) - (b.z || 0));
+export async function renderBoardToBlob(items, { background = 'transparent', padding = 0, area: frameArea = null } = {}) {
+  let drawable = items.filter((item) => item.kind === 'image' || item.kind === 'text').sort((a, b) => (a.z || 0) - (b.z || 0));
   if (drawable.length === 0) throw new Error('Nothing to export: the board is empty.');
 
   const measureCanvas = document.createElement('canvas').getContext('2d');
@@ -88,21 +92,32 @@ export async function renderBoardToBlob(items, { background = 'transparent', pad
     }
   }
 
-  const pad = Math.max(0, Number(padding) || 0);
-  const bounds = unionBounds(drawable.map((item) => rotatedBounds(boxes.get(item.id), item.rotation)));
-  const area = { x: bounds.x - pad, y: bounds.y - pad, width: bounds.width + pad * 2, height: bounds.height + pad * 2 };
+  let area;
+  if (frameArea) {
+    area = frameArea;
+    drawable = drawable.filter((item) => overlaps(rotatedBounds(boxes.get(item.id), item.rotation), area));
+    if (drawable.length === 0) throw new Error('Nothing to export: the frame is empty.');
+  } else {
+    const pad = Math.max(0, Number(padding) || 0);
+    const bounds = unionBounds(drawable.map((item) => rotatedBounds(boxes.get(item.id), item.rotation)));
+    area = { x: bounds.x - pad, y: bounds.y - pad, width: bounds.width + pad * 2, height: bounds.height + pad * 2 };
+  }
 
-  // Render at the images' native density so exports aren't softer than the sources.
   const bitmaps = new Map();
   await Promise.all(drawable.filter((item) => item.kind === 'image').map(async (item) => {
     bitmaps.set(item.id, await loadBitmap(item.url));
   }));
+  // A frame exports at its own size; free content at the images' native
+  // density so exports aren't softer than the sources.
   let scale = 1;
-  for (const item of drawable) {
-    const bitmap = bitmaps.get(item.id);
-    if (bitmap && item.width > 0) scale = Math.max(scale, bitmap.width / item.width);
+  if (!frameArea) {
+    for (const item of drawable) {
+      const bitmap = bitmaps.get(item.id);
+      if (bitmap && item.width > 0) scale = Math.max(scale, bitmap.width / item.width);
+    }
+    scale = Math.min(scale, 4);
   }
-  scale = Math.min(scale, 4, MAX_SIDE / area.width, MAX_SIDE / area.height, Math.sqrt(MAX_PIXELS / (area.width * area.height)));
+  scale = Math.min(scale, MAX_SIDE / area.width, MAX_SIDE / area.height, Math.sqrt(MAX_PIXELS / (area.width * area.height)));
   scale = Math.max(scale, 0.1);
 
   const canvas = document.createElement('canvas');
