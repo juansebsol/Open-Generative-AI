@@ -1502,7 +1502,8 @@ export default function DesignAgentStudio({
   const frameCopy = frame ? copy.formats[frame.format] || copy.formats.custom : null;
   const frameSize = formatSize(frame);
   const frameZ = Math.min(0, ...board.items.map((item) => item.z || 0)) - 1;
-  const formatLabel = !frame ? copy.formats.free.name : frame.format === "custom" ? frameSize : findFormat(frame.format)?.print ? `${frameCopy.name} · ${frameSize}` : frameCopy.name;
+  const formatLabel = !frame ? copy.formats.free.name : frame.format === "custom" ? frameSize : frameCopy.name;
+  const formatTitle = frame && frame.format !== "custom" ? `${frameCopy.name} · ${frameSize}` : formatLabel;
   const showIntro = isEmptyChat && isEmptyBoard && !frame;
   const pct = Math.round(viewport.scale * 100);
   // The dot grid spreads out when zoomed far out (a print frame) instead of blurring into a wash.
@@ -2136,7 +2137,7 @@ export default function DesignAgentStudio({
         </div>
 
         {/* The prompt bar talks to the agent */}
-        <div ref={composerRef} className="pointer-events-auto relative z-10 mx-auto w-full max-w-[680px] px-3 pb-3 md:px-4 md:pb-5" data-design-composer>
+        <div ref={composerRef} className="pointer-events-auto relative z-10 mx-auto w-full max-w-4xl px-3 pb-3 md:px-4 md:pb-5" data-design-composer>
           <PromptComposer positionClassName="relative w-full oga-enter-bar">
             <div className="flex items-start gap-2.5">
               {inspecting && (
@@ -2171,7 +2172,8 @@ export default function DesignAgentStudio({
                     type="button"
                     aria-haspopup="dialog"
                     aria-expanded={openMenu === "format"}
-                    aria-label={`${copy.formats.label}: ${formatLabel}`}
+                    aria-label={`${copy.formats.label}: ${formatTitle}`}
+                    title={formatTitle}
                     onClick={toggleFormatMenu}
                     className={promptModelButtonClassName({ active: openMenu === "format" })}
                     data-design-format
@@ -2206,12 +2208,13 @@ export default function DesignAgentStudio({
                       aria-haspopup="dialog"
                       aria-expanded={openMenu === "images"}
                       onClick={toggleMenu("images")}
+                      aria-label={fill(copy.bar.images, { model: imageModelName })}
                       title={imageAuto ? fill(copy.bar.autoTitle, { model: imageModel.name }) : undefined}
                       className={promptSettingClassName({ active: openMenu === "images" })}
                       data-design-images
                     >
                       <IconPhoto size={14} stroke={1.75} aria-hidden="true" className="opacity-60" />
-                      <span className="max-w-[170px] truncate">{fill(copy.bar.images, { model: imageModelName })}</span>
+                      <span className="max-w-[170px] truncate">{imageModelName}</span>
                       {imageAuto && <span className="rounded-[5px] bg-white/[0.07] px-1.5 py-px text-[10.5px] font-medium text-white/50" data-design-images-auto>{copy.bar.auto}</span>}
                     </button>
                     {openMenu === "images" && (
@@ -2269,7 +2272,7 @@ export default function DesignAgentStudio({
                 </PromptSettingsGroup>
               </PromptControls>
               <PromptActionGroup className="sm:ml-auto">
-                <span aria-hidden="true" className="hidden whitespace-nowrap font-mono text-[11px] text-white/50 md:inline">{copy.bar.enterHint}</span>
+                <span aria-hidden="true" className="hidden whitespace-nowrap font-mono text-[11px] text-white/50 xl:inline">{copy.bar.enterHint}</span>
                 {running ? (
                   <button
                     type="button"
