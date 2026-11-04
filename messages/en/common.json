@@ -246,7 +246,7 @@
       "about": "About",
       "version": "Openstudio {version}",
       "aboutHint": "Open source, self-hosted, bring your own keys.",
-      "github": "Source on GitHub",
+      "author": "Made by Juan Sebastian Solano",
       "privacyTitle": "Privacy",
       "privacy": "Keys stay in this browser. Each request sends only the key it needs to this site's server, which forwards it to the provider and never stores or logs it."
     },

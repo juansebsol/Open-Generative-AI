@@ -4,11 +4,11 @@
 // this build is. Language is a route tree (/ and /zh), so changing it
 // reloads the page on the same studio.
 
-import { IconBrandGithub, IconExternalLink } from '@tabler/icons-react';
+import { IconBrandLinkedin, IconExternalLink } from '@tabler/icons-react';
 import { LOCALE_CONFIGS, SUPPORTED_LOCALES } from '@/lib/locales';
 import { Group, Row, SELECT, LINK, fill } from './ui';
 
-const REPOSITORY_URL = 'https://github.com/Anil-matcha/Open-Generative-AI';
+const AUTHOR_URL = 'https://www.linkedin.com/in/juansebastiansolano/';
 
 export default function GeneralSection({ locale, copy, version, languagePath }) {
   const shortcuts = [
@@ -46,9 +46,9 @@ export default function GeneralSection({ locale, copy, version, languagePath }) 
 
       <Group title={copy.about}>
         <Row title={fill(copy.version, { version })} hint={copy.aboutHint}>
-          <a href={REPOSITORY_URL} target="_blank" rel="noopener noreferrer" className={LINK}>
-            <IconBrandGithub size={14} stroke={1.75} aria-hidden="true" />
-            {copy.github}
+          <a href={AUTHOR_URL} target="_blank" rel="noopener noreferrer" className={LINK} data-settings-author>
+            <IconBrandLinkedin size={14} stroke={1.75} aria-hidden="true" />
+            {copy.author}
             <IconExternalLink size={12} stroke={2} aria-hidden="true" />
           </a>
         </Row>

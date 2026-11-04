@@ -246,7 +246,7 @@
       "about": "关于",
       "version": "Openstudio {version}",
       "aboutHint": "开源、自托管，使用你自己的密钥。",
-      "github": "GitHub 源码",
+      "author": "由 Juan Sebastian Solano 制作",
       "privacyTitle": "隐私",
       "privacy": "密钥只保存在此浏览器中。每次请求只把所需的密钥发送到本站服务器，由其转发给服务商，不会存储或记录。"
     },
