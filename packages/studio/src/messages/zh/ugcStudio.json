@@ -1,31 +1,17 @@
 {
-  "intro": {
-    "heading": "让你的创作者聊聊",
-    "accent": "你的产品",
-    "subtitle": "选一位你的 AI 网红，给他们一段脚本，就能得到手机风格的视频：手持拍摄、对着镜头说话，每条用不同的开头。",
-    "startersLabel": "从一个场景开始",
-    "starters": [
-      { "scene": "talking", "label": "对着镜头的简短测评" },
-      { "scene": "unboxing", "label": "开箱，第一反应" },
-      { "scene": "car", "label": "停在车里，真心话" }
-    ],
-    "cta": "制作 UGC 视频",
-    "ctaHint": "可选用你的 AI 网红、保存的角色或任意照片",
-    "hooks": ["我都试过了，你不用再试", "好吧，我得花一秒聊聊这个", "POV：终于找到一个真的好用的"]
-  },
   "empty": {
     "heading": "今天谁来",
     "accent": "出镜",
     "headingEnd": "？",
     "subtitle": "选一位创作者，给他们一段脚本。他们会像拍手机视频一样拍出来：手持、对着镜头说话、手里拿着你的产品。",
     "creators": "你的创作者",
-    "creatorsHint": "来自 AI 网红工作室和你保存的角色",
     "scenes": "选一个场景",
     "scenesHint": "决定他们在哪里、镜头怎么拍、怎么说话",
     "upload": "上传照片",
     "uploadHint": "正脸清晰的照片",
     "create": "新建一位",
-    "createHint": "在 AI 网红工作室中"
+    "createHint": "在 AI 网红工作室中",
+    "sampleHooks": ["我都试过了，你不用再试", "好吧，我得花一秒聊聊这个", "POV：终于找到一个真的好用的"]
   },
   "sources": {
     "influencer": "AI 网红",

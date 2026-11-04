@@ -11,7 +11,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
-  IconArrowRight,
   IconArrowsLeftRight,
   IconBox,
   IconBrush,
@@ -136,7 +135,7 @@ function SceneIcon({ scene, size = 17 }) {
 }
 
 // One creator in the empty state and the cast picker.
-function CreatorCard({ creator, selected, copy, onPick, tall = false }) {
+function CreatorCard({ creator, selected, copy, onPick, compact = false }) {
   const source = copy.sources[creator.source] || "";
   return (
     <button
@@ -144,7 +143,7 @@ function CreatorCard({ creator, selected, copy, onPick, tall = false }) {
       role="radio"
       aria-checked={selected}
       onClick={onPick}
-      className={`group relative w-full overflow-hidden rounded-[14px] text-left transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/60 ${tall ? "h-[196px]" : "h-[176px]"} ${
+      className={`group relative w-full overflow-hidden rounded-[14px] text-left transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/60 ${compact ? "h-[136px]" : "h-[176px]"} ${
         selected ? "shadow-[0_0_0_2px_#22d3ee]" : "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)]"
       }`}
       data-ugc-creator={creator.id}
@@ -159,33 +158,34 @@ function CreatorCard({ creator, selected, copy, onPick, tall = false }) {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5l10 -10" /></svg>
         </span>
       )}
-      <span className="absolute inset-x-3 bottom-2.5 flex min-w-0 flex-col">
-        {creator.name && <span className="truncate text-[14px] font-semibold text-white">{creator.name}</span>}
-        {creator.label && <span className="truncate text-[11.5px] text-white/70">{creator.label}</span>}
+      <span className={`absolute bottom-2.5 flex min-w-0 flex-col ${compact ? "inset-x-2.5" : "inset-x-3"}`}>
+        {creator.name && <span className={`truncate font-semibold text-white ${compact ? "text-[13px]" : "text-[14px]"}`}>{creator.name}</span>}
+        {creator.label && <span className={`truncate text-white/70 ${compact ? "text-[11px]" : "text-[11.5px]"}`}>{creator.label}</span>}
       </span>
     </button>
   );
 }
 
-// ── The intro: three floating takes ─────────────────────────────────────────
-// Placed like AI Influencer Studio's fan, so the two intros read as a pair.
-// The side cards keep their tag and caption on the side the middle card
-// doesn't cover.
+// ── The start screen's preview: three floating takes ───────────────────────
+// Placed like AI Influencer Studio's fan, so the two studios read as a pair.
+// It previews the takes being set up: the cast creator, the scene and the
+// hooks once they exist. The side cards keep their tag and caption on the
+// side the middle card doesn't cover.
 const TAKE_FAN = [
   { place: "left-[3%] top-[17%] z-10 w-[34%] -rotate-[7deg] group-hover:-translate-x-[7%] group-hover:-rotate-[10deg]", delay: "0s", hook: 0, progress: "62%", time: "0:09", chip: "left-[6%]", caption: "left-[7%] right-[30%] text-left" },
   { place: "left-1/2 top-[4%] z-20 w-[43%] -translate-x-1/2 group-hover:-translate-y-[2%]", delay: "-2.4s", hook: 1, progress: "44%", time: "0:05 / 0:11", lead: true, chip: "left-[6%]", caption: "inset-x-[7%] text-center" },
   { place: "right-[3%] top-[21%] z-10 w-[32%] rotate-[6deg] group-hover:translate-x-[7%] group-hover:rotate-[9deg]", delay: "-4.8s", hook: 2, progress: "28%", time: "0:12", chip: "right-[6%]", caption: "left-[30%] right-[7%] text-right" },
 ];
 
-// Shown until the visitor has creators of their own: the AI Influencer
-// Studio intro's creator, three takes of her.
+// Shown until the visitor has creators of their own: the creator from AI
+// Influencer Studio's intro, three takes of her.
 const SAMPLE_CREATORS = [
   { name: "Maya", image: "/assets/influencer/feed.jpg", position: "64% 24%", flip: true },
   { name: "Maya", image: "/assets/influencer/portrait.jpg", position: "center 20%" },
   { name: "Maya", image: "/assets/influencer/feed.jpg", position: "center 30%" },
 ];
 
-function TakeFan({ creators, copy }) {
+function TakeFan({ creators, hooks, scene, product, copy }) {
   return (
     <div aria-hidden="true" className="flex h-full min-h-0 items-center justify-center">
       <div className="group relative aspect-[16/15] max-h-full w-full max-w-[660px]">
@@ -198,7 +198,7 @@ function TakeFan({ creators, copy }) {
                 className={`oga-float relative aspect-[9/16] w-full overflow-hidden rounded-[24px] border bg-[#111114] shadow-[0_30px_80px_rgba(0,0,0,0.7)] ${card.lead ? "border-white/[0.18]" : "border-white/[0.14]"}`}
                 style={{ animationDelay: card.delay }}
               >
-                <img src={creator.image} alt="" className="h-full w-full object-cover" style={{ objectPosition: creator.position || "center 22%", transform: creator.flip ? "scaleX(-1) scale(1.15)" : undefined }} />
+                <img src={creator.image} alt="" className="h-full w-full object-cover" style={{ objectPosition: creator.position || "center 22%", transform: [creator.flip && "scaleX(-1)", (creator.flip || creator.zoom) && "scale(1.15)"].filter(Boolean).join(" ") || undefined }} />
                 {creator.name && (
                   <span className={`absolute top-[3.5%] flex h-[clamp(20px,2vw,28px)] items-center gap-1.5 rounded-full bg-black/55 pl-1 pr-2.5 text-[clamp(10px,0.85vw,12px)] font-semibold ${card.chip}`}>
                     <img src={creator.image} alt="" className="aspect-square h-[78%] rounded-full object-cover" style={{ objectPosition: creator.position || "center 22%" }} />
@@ -206,10 +206,16 @@ function TakeFan({ creators, copy }) {
                   </span>
                 )}
                 {card.lead && (
-                  <span className="absolute right-[6%] top-[3.5%] flex h-[clamp(20px,2vw,28px)] items-center rounded-full bg-[#04202a]/75 px-2.5 text-[clamp(10px,0.8vw,11.5px)] font-semibold text-[#67e8f9]">{copy.scenes.talking.name}</span>
+                  <span className="absolute right-[6%] top-[3.5%] flex h-[clamp(20px,2vw,28px)] max-w-[52%] items-center rounded-full bg-[#04202a]/75 px-2.5 text-[clamp(10px,0.8vw,11.5px)] font-semibold text-[#67e8f9]"><span className="truncate">{scene}</span></span>
+                )}
+                {card.lead && product && (
+                  <span className="absolute right-[6%] top-[11%] flex h-[clamp(20px,2vw,28px)] max-w-[60%] items-center gap-1.5 rounded-full bg-black/55 pl-1 pr-2.5 text-[clamp(10px,0.8vw,11.5px)] font-medium">
+                    <img src={product.image} alt="" className="aspect-square h-[78%] rounded-full object-cover" />
+                    <span className="truncate">{product.name || copy.product.add}</span>
+                  </span>
                 )}
                 <span className={`absolute top-[59%] font-extrabold leading-[1.25] text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_10px_rgba(0,0,0,0.6)] ${card.caption} ${card.lead ? "text-[clamp(13px,1.25vw,18px)]" : "text-[clamp(11px,1vw,15px)]"}`}>
-                  {copy.intro.hooks[card.hook]}
+                  {hooks[card.hook]}
                 </span>
                 <span className="absolute inset-x-0 bottom-0 h-[16%] bg-gradient-to-b from-transparent to-black/75" />
                 <span className="absolute inset-x-[6%] bottom-[3.5%] flex items-center gap-2">
@@ -367,7 +373,6 @@ export default function UgcStudio({
   const [editingHook, setEditingHook] = useState(null); // index | 'new'
   const [playing, setPlaying] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [started, setStarted] = useState(false); // past the intro this visit
 
   const creatorFileRef = useRef(null);
   const productFileRef = useRef(null);
@@ -682,13 +687,22 @@ export default function UgcStudio({
   const query = castQuery.trim().toLowerCase();
   const castShown = query ? castList.filter((creator) => `${creator.name} ${creator.label}`.toLowerCase().includes(query)) : castList;
   const startCreators = [...influencers.slice(0, 3), ...characters].slice(0, 3);
-  // The fan shows the visitor's own creators, the first one in the middle.
+  // The preview shows the cast creator in three takes; before anyone is cast,
+  // the visitor's own creators (the first in the middle), else the sample.
   const fanCreators = useMemo(() => {
+    if (draft.creator) {
+      const cast = { name: draft.creator.name, image: draft.creator.image };
+      return [{ ...cast, flip: true, position: "60% 22%" }, cast, { ...cast, zoom: true, position: "center 30%" }];
+    }
     const own = [...characters, ...influencers].filter((creator) => creator.image);
     if (!own.length) return SAMPLE_CREATORS;
     const pick = (index) => own[index] || own[0];
     return [pick(1), pick(0), pick(2)].map((creator) => ({ name: creator.name, image: creator.image }));
-  }, [characters, influencers]);
+  }, [draft.creator, characters, influencers]);
+  const fanHooks = useMemo(() => {
+    const hooks = draft.hooks.length ? draft.hooks : copy.empty.sampleHooks;
+    return [0, 1, 2].map((index) => hooks[index % hooks.length]);
+  }, [draft.hooks, copy]);
   const sceneCopy = (id) => copy.scenes[id] || copy.scenes.talking;
   const currentScene = SCENES.find((scene) => scene.id === draft.scene) || SCENES[0];
   const takesLabel = (count) => (count === 1 ? copy.bar.takesOne : fill(copy.bar.takesCount, { count }));
@@ -700,12 +714,6 @@ export default function UgcStudio({
     : null;
   const canFilm = Boolean(draft.creator && hasScript && engine && sceneModel && !uploading);
   const showEmpty = batches.length === 0;
-  // Until anything is filmed or set up, the visit opens on the intro.
-  const showIntro = hydrated && !started && showEmpty && !draft.creator && !draft.body.trim();
-  const start = (scene) => {
-    if (scene) patchDraft({ scene });
-    setStarted(true);
-  };
 
   const placeholder = creatorName ? fill(copy.bar.placeholder, { name: creatorName }) : copy.bar.placeholderNoCreator;
 
@@ -763,93 +771,63 @@ export default function UgcStudio({
       <input ref={productFileRef} type="file" accept="image/*" className="hidden" onChange={(event) => { uploadImage(event.target.files?.[0], "product"); event.target.value = ""; }} />
 
       {/* ── Start, or the takes ── */}
-      <div className={`custom-scrollbar w-full flex-1 overflow-y-auto px-4 pt-6 md:px-6 ${showIntro ? "pb-6" : "pb-64"}`}>
-        {!hydrated ? null : showIntro ? (
-          <div className="mx-auto grid h-full w-full max-w-[1280px] grid-cols-1 items-center gap-6 md:grid-cols-[5fr_7fr] md:gap-12 md:px-8" data-ugc-intro>
-            <div className="min-w-0 max-w-[470px]">
-              <h1 className="oga-enter text-[30px] font-semibold leading-[1.1] tracking-[-0.025em] text-white/[0.92] md:text-[38px]">
-                {copy.intro.heading} <span className="text-[#22d3ee]">{copy.intro.accent}</span>
+      <div className={`custom-scrollbar w-full flex-1 overflow-y-auto px-4 pt-6 md:px-6 ${showEmpty ? "pb-44" : "pb-64"}`}>
+        {!hydrated ? null : showEmpty ? (
+          <div className="mx-auto grid min-h-full w-full max-w-[1280px] grid-cols-1 items-center gap-8 md:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] md:gap-10 md:px-2 lg:gap-14" data-ugc-start>
+            <div className="oga-enter-fade flex min-w-0 flex-col">
+              <h1 className="text-[28px] font-semibold leading-[1.12] tracking-[-0.025em] text-white/[0.92] md:text-[32px]">
+                {copy.empty.heading} <span className="text-[#22d3ee]">{copy.empty.accent}</span> {copy.empty.headingEnd}
               </h1>
-              <p className="oga-enter mt-4 max-w-[42ch] text-[15.5px] leading-relaxed text-white/55" style={{ "--i": 1 }}>{copy.intro.subtitle}</p>
-              <nav aria-label={copy.intro.startersLabel} className="mt-7">
-                {copy.intro.starters.map((starter, index) => (
-                  <button
-                    key={starter.scene}
-                    type="button"
-                    onClick={() => start(starter.scene)}
-                    style={{ "--i": index + 2 }}
-                    className="oga-enter group flex w-full items-center justify-between gap-4 border-t border-white/[0.08] py-3.5 text-left text-[14.5px] leading-snug text-white/75 transition-colors last:border-b hover:text-white"
-                    data-ugc-starter={starter.scene}
-                  >
-                    <span>{starter.label}</span>
-                    <IconArrowRight size={15} stroke={1.75} aria-hidden="true" className="shrink-0 text-white/35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#22d3ee]" />
-                  </button>
+              <p className="mt-2.5 max-w-[560px] text-[15px] leading-relaxed text-white/55">{copy.empty.subtitle}</p>
+
+              <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <h2 className={SECTION_TITLE}>{copy.empty.creators}</h2>
+              </div>
+              <div role="radiogroup" aria-label={copy.empty.creators} className="mt-2.5 grid grid-cols-3 gap-2.5 sm:grid-cols-5">
+                {startCreators.map((creator) => (
+                  <CreatorCard key={creator.id} creator={creator} compact selected={draft.creator?.image === creator.image} copy={copy} onPick={() => patchDraft({ creator })} />
                 ))}
-              </nav>
-              <div className="oga-enter mt-7 flex flex-wrap items-center gap-4" style={{ "--i": 5 }}>
-                <button type="button" onClick={() => start()} className="flex h-[46px] items-center gap-2.5 rounded-[13px] bg-[#22d3ee] pl-[18px] pr-5 text-[15px] font-bold text-[#04202a] shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] transition-[filter,transform] hover:brightness-105 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b0d]" data-ugc-begin>
-                  <IconPlayerPlayFilled size={16} aria-hidden="true" />
-                  {copy.intro.cta}
+                <button type="button" onClick={() => creatorFileRef.current?.click()} disabled={uploading === "creator"} className="flex h-[136px] flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-white/[0.16] bg-white/[0.02] px-2 text-center text-white/70 transition-colors hover:border-white/30 hover:text-white disabled:opacity-60">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white/[0.06]"><IconUpload size={17} stroke={1.75} aria-hidden="true" /></span>
+                  <span className="text-[12.5px] font-medium leading-tight">{uploading === "creator" ? copy.cast.uploading : copy.empty.upload}</span>
+                  <span className="-mt-1 text-[11px] leading-tight text-white/45">{copy.empty.uploadHint}</span>
                 </button>
-                <span className="max-w-[230px] text-[12.5px] leading-snug text-white/45">{copy.intro.ctaHint}</span>
+                <button type="button" onClick={openInfluencerStudio} className="flex h-[136px] flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-[#22d3ee]/30 bg-[#22d3ee]/[0.04] px-2 text-center text-[#a5f3fc] transition-colors hover:border-[#22d3ee]/50">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#22d3ee]/[0.12]"><IconSparkles size={17} stroke={1.75} aria-hidden="true" /></span>
+                  <span className="text-[12.5px] font-medium leading-tight">{copy.empty.create}</span>
+                  <span className="-mt-1 text-[11px] leading-tight text-[#a5f3fc]/60">{copy.empty.createHint}</span>
+                </button>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <h2 className={SECTION_TITLE}>{copy.empty.scenes}</h2>
+                <span className="text-[12px] text-white/45">{copy.empty.scenesHint}</span>
+              </div>
+              <div role="radiogroup" aria-label={copy.empty.scenes} className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {SCENES.map((scene) => {
+                  const on = draft.scene === scene.id;
+                  return (
+                    <button
+                      key={scene.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={on}
+                      onClick={() => patchDraft({ scene: scene.id })}
+                      className={`flex h-[52px] items-center gap-3 rounded-xl border px-2.5 text-left transition-colors ${on ? "border-[#22d3ee]/45 bg-[#22d3ee]/[0.06]" : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16]"}`}
+                      data-ugc-scene={scene.id}
+                    >
+                      <span className={`flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[9px] ${on ? "bg-[#22d3ee]/[0.12] text-[#22d3ee]" : "bg-white/[0.06] text-white/75"}`}><SceneIcon scene={scene} size={16} /></span>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate text-[13px] font-medium">{sceneCopy(scene.id).name}</span>
+                        <span className="truncate text-[11.5px] text-white/50">{sceneCopy(scene.id).hint}</span>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div className="oga-enter-fade hidden h-full min-h-0 md:block" style={{ "--i": 2 }}>
-              <TakeFan creators={fanCreators} copy={copy} />
-            </div>
-          </div>
-        ) : showEmpty ? (
-          <div className="oga-enter-fade mx-auto flex w-full max-w-4xl flex-col" data-ugc-start>
-            <h1 className="text-[28px] font-semibold leading-[1.12] tracking-[-0.025em] text-white/[0.92] md:text-[32px]">
-              {copy.empty.heading} <span className="text-[#22d3ee]">{copy.empty.accent}</span> {copy.empty.headingEnd}
-            </h1>
-            <p className="mt-2.5 max-w-[600px] text-[15px] leading-relaxed text-white/55">{copy.empty.subtitle}</p>
-
-            <div className="mt-7 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h2 className={SECTION_TITLE}>{copy.empty.creators}</h2>
-              <span className="text-[12px] text-white/45">{copy.empty.creatorsHint}</span>
-            </div>
-            <div role="radiogroup" aria-label={copy.empty.creators} className="mt-2.5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {startCreators.map((creator) => (
-                <CreatorCard key={creator.id} creator={creator} tall selected={draft.creator?.image === creator.image} copy={copy} onPick={() => patchDraft({ creator })} />
-              ))}
-              <button type="button" onClick={() => creatorFileRef.current?.click()} disabled={uploading === "creator"} className="flex h-[196px] flex-col items-center justify-center gap-2.5 rounded-[14px] border border-dashed border-white/[0.16] bg-white/[0.02] text-white/70 transition-colors hover:border-white/30 hover:text-white disabled:opacity-60">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06]"><IconUpload size={18} stroke={1.75} aria-hidden="true" /></span>
-                <span className="text-[13px] font-medium">{uploading === "creator" ? copy.cast.uploading : copy.empty.upload}</span>
-                <span className="-mt-1.5 text-[11.5px] text-white/45">{copy.empty.uploadHint}</span>
-              </button>
-              <button type="button" onClick={openInfluencerStudio} className="flex h-[196px] flex-col items-center justify-center gap-2.5 rounded-[14px] border border-dashed border-[#22d3ee]/30 bg-[#22d3ee]/[0.04] text-[#a5f3fc] transition-colors hover:border-[#22d3ee]/50">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#22d3ee]/[0.12]"><IconSparkles size={18} stroke={1.75} aria-hidden="true" /></span>
-                <span className="text-[13px] font-medium">{copy.empty.create}</span>
-                <span className="-mt-1.5 text-[11.5px] text-[#a5f3fc]/60">{copy.empty.createHint}</span>
-              </button>
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h2 className={SECTION_TITLE}>{copy.empty.scenes}</h2>
-              <span className="text-[12px] text-white/45">{copy.empty.scenesHint}</span>
-            </div>
-            <div role="radiogroup" aria-label={copy.empty.scenes} className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-              {SCENES.map((scene) => {
-                const on = draft.scene === scene.id;
-                return (
-                  <button
-                    key={scene.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => patchDraft({ scene: scene.id })}
-                    className={`flex h-16 items-center gap-3 rounded-xl border px-3 text-left transition-colors ${on ? "border-[#22d3ee]/45 bg-[#22d3ee]/[0.06]" : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16]"}`}
-                    data-ugc-scene={scene.id}
-                  >
-                    <span className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] ${on ? "bg-[#22d3ee]/[0.12] text-[#22d3ee]" : "bg-white/[0.06] text-white/75"}`}><SceneIcon scene={scene} /></span>
-                    <span className="flex min-w-0 flex-col">
-                      <span className="truncate text-[13px] font-medium">{sceneCopy(scene.id).name}</span>
-                      <span className="truncate text-[11.5px] text-white/50">{sceneCopy(scene.id).hint}</span>
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="oga-enter-fade hidden h-[min(580px,calc(100vh-320px))] min-h-[360px] md:block" style={{ "--i": 2 }} data-ugc-preview>
+              <TakeFan creators={fanCreators} hooks={fanHooks} scene={sceneCopy(draft.scene).name} product={draft.product} copy={copy} />
             </div>
           </div>
         ) : (
@@ -906,8 +884,8 @@ export default function UgcStudio({
         )}
       </div>
 
-      {/* ── The prompt bar, once past the intro ── */}
-      {hydrated && !showIntro && (
+      {/* ── The prompt bar ── */}
+      {hydrated && (
       <PromptComposer>
         {(draft.hooks.length > 0 || editingHook === "new") && (
           <div className="flex min-w-0 items-center gap-2 overflow-x-auto oga-scroll-hide" data-ugc-hooks>
@@ -1184,6 +1162,12 @@ export default function UgcStudio({
                         <PromptMenuItem key={count} selected={draft.takes === count} onClick={() => { patchDraft({ takes: count }); setOpenMenu(null); }}>{takesLabel(count)}</PromptMenuItem>
                       ))}
                     </PromptMenuList>
+                    <div className="mt-1.5 border-t border-white/[0.06] pt-1.5">
+                      <button type="button" onClick={() => { setOpenMenu(null); setEditingHook("new"); }} className="flex min-h-9 w-full items-center gap-2 rounded-[10px] px-2.5 text-left text-[13px] font-medium text-[#67e8f9] hover:bg-white/[0.06]" data-ugc-add-hook>
+                        <IconPlus size={14} stroke={2} aria-hidden="true" />
+                        {copy.bar.addHook}
+                      </button>
+                    </div>
                   </PromptPopover>
                 )}
               </div>
