@@ -209,10 +209,11 @@ const TAKE_FAN = [
 ];
 
 // Shown until the visitor has creators of their own. `video` (muted, looping)
-// plays over the still once there is one; the still is its poster.
+// plays over the still; `poster` is the video's first frame, so playback
+// starts without a jump, and the still stays for reduced motion.
 const SAMPLE_CREATORS = [
   { name: "Leo", image: "/assets/ugc/take-left.jpg" },
-  { name: "Lucia", image: "/assets/ugc/take-middle.jpg" },
+  { name: "Lucia", image: "/assets/ugc/take-middle.jpg", video: "/assets/ugc/take-middle.mp4", poster: "/assets/ugc/take-middle-poster.jpg" },
   { name: "Mei", image: "/assets/ugc/take-right.jpg" },
 ];
 
@@ -220,6 +221,7 @@ const FAN_CHIP = "absolute flex h-[clamp(20px,2vw,28px)] items-center rounded-fu
 const clock = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 
 function FanCard({ card, creator, product, copy }) {
+  const videoRef = useRef(null);
   const barRef = useRef(null);
   const timeRef = useRef(null);
   // Reduced motion keeps the still.
@@ -228,13 +230,26 @@ function FanCard({ card, creator, product, copy }) {
     objectPosition: creator.position || "center 22%",
     transform: [creator.flip && "scaleX(-1)", (creator.flip || creator.zoom) && "scale(1.15)"].filter(Boolean).join(" ") || undefined,
   };
-  // The progress bar and the clock follow the video without re-rendering.
-  const follow = (event) => {
-    const video = event.currentTarget;
-    if (!video.duration) return;
+  const playing = Boolean(creator.video) && !still;
+  // The progress bar and the clock follow the video without re-rendering:
+  // every frame while the page is shown, and on the video's own time updates
+  // when frames are paused (a background tab).
+  const paint = () => {
+    const video = videoRef.current;
+    if (!video?.duration) return;
     if (barRef.current) barRef.current.style.width = `${(video.currentTime / video.duration) * 100}%`;
     if (timeRef.current) timeRef.current.textContent = `${clock(video.currentTime)} / ${clock(video.duration)}`;
   };
+  useEffect(() => {
+    if (!playing) return undefined;
+    let frame;
+    const tick = () => {
+      paint();
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [playing]);
   return (
     <div className={`absolute transition-transform duration-500 ease-out ${card.place}`}>
       <div
@@ -242,8 +257,8 @@ function FanCard({ card, creator, product, copy }) {
         style={{ animationDelay: card.delay }}
       >
         <img src={creator.image} alt="" className="h-full w-full object-cover" style={media} />
-        {creator.video && !still && (
-          <video src={creator.video} poster={creator.image} autoPlay muted loop playsInline preload="auto" onTimeUpdate={follow} className="absolute inset-0 h-full w-full object-cover" style={media} data-ugc-preview-video />
+        {playing && (
+          <video ref={videoRef} src={creator.video} poster={creator.poster || creator.image} autoPlay muted loop playsInline preload="auto" onTimeUpdate={paint} className="absolute inset-0 h-full w-full object-cover" style={media} data-ugc-preview-video />
         )}
         {creator.name && (
           <span className={`${FAN_CHIP} top-[3.5%] gap-1.5 bg-black/55 pl-1 pr-2.5 font-semibold ${card.chip}`}>
