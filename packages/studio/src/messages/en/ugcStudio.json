@@ -12,8 +12,7 @@
     "createHint": "Make a new one in AI Influencer Studio",
     "more": "+{count}",
     "moreLabel": "More",
-    "moreHint": "See all your creators",
-    "sampleHooks": ["I tried them all so you don’t have to", "Okay, I need to talk about this for a second", "POV: you finally found one that actually works"]
+    "moreHint": "See all your creators"
   },
   "sources": {
     "influencer": "AI Influencer",

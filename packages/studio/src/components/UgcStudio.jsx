@@ -198,72 +198,87 @@ function CreatorFace({ creator, selected, copy, onPick }) {
 
 // ── The start screen's preview: three floating takes ───────────────────────
 // Placed like AI Influencer Studio's fan, so the two studios read as a pair.
-// It previews the takes being set up: the cast creator, the scene and the
-// hooks once they exist. The side cards keep their tag and caption on the
-// side the middle card doesn't cover.
+// Before anyone is cast it shows what the studio makes: three creators, the
+// middle take playing. Once someone is cast it previews their takes: that
+// creator and the product. Only the middle card shows the player; the side
+// cards keep their name on the side the middle card doesn't cover.
 const TAKE_FAN = [
-  { place: "left-[3%] top-[17%] z-10 w-[34%] -rotate-[7deg] group-hover:-translate-x-[7%] group-hover:-rotate-[10deg]", delay: "0s", hook: 0, progress: "62%", time: "0:09", chip: "left-[6%]", caption: "left-[7%] right-[30%] text-left" },
-  { place: "left-1/2 top-[4%] z-20 w-[43%] -translate-x-1/2 group-hover:-translate-y-[2%]", delay: "-2.4s", hook: 1, progress: "44%", time: "0:05 / 0:11", lead: true, chip: "left-[6%]", caption: "inset-x-[7%] text-center" },
-  { place: "right-[3%] top-[21%] z-10 w-[32%] rotate-[6deg] group-hover:translate-x-[7%] group-hover:rotate-[9deg]", delay: "-4.8s", hook: 2, progress: "28%", time: "0:12", chip: "right-[6%]", caption: "left-[30%] right-[7%] text-right" },
+  { place: "left-[3%] top-[17%] z-10 w-[34%] -rotate-[7deg] group-hover:-translate-x-[7%] group-hover:-rotate-[10deg]", delay: "0s", chip: "left-[6%]" },
+  { place: "left-1/2 top-[4%] z-20 w-[43%] -translate-x-1/2 group-hover:-translate-y-[2%]", delay: "-2.4s", progress: "44%", time: "0:05 / 0:11", lead: true, chip: "left-[6%]" },
+  { place: "right-[3%] top-[21%] z-10 w-[32%] rotate-[6deg] group-hover:translate-x-[7%] group-hover:rotate-[9deg]", delay: "-4.8s", chip: "right-[6%]" },
 ];
 
-// Shown until the visitor has creators of their own: the creator from AI
-// Influencer Studio's intro, three takes of her.
+// Shown until the visitor has creators of their own. `video` (muted, looping)
+// plays over the still once there is one; the still is its poster.
 const SAMPLE_CREATORS = [
-  { name: "Maya", image: "/assets/influencer/feed.jpg", position: "64% 24%", flip: true },
-  { name: "Maya", image: "/assets/influencer/portrait.jpg", position: "center 20%" },
-  { name: "Maya", image: "/assets/influencer/feed.jpg", position: "center 30%" },
+  { name: "Leo", image: "/assets/ugc/take-left.jpg" },
+  { name: "Lucia", image: "/assets/ugc/take-middle.jpg" },
+  { name: "Mei", image: "/assets/ugc/take-right.jpg" },
 ];
 
-function TakeFan({ creators, hooks, scene, product, copy }) {
+const FAN_CHIP = "absolute flex h-[clamp(20px,2vw,28px)] items-center rounded-full text-[clamp(10px,0.8vw,11.5px)]";
+const clock = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+
+function FanCard({ card, creator, product, copy }) {
+  const barRef = useRef(null);
+  const timeRef = useRef(null);
+  // Reduced motion keeps the still.
+  const [still] = useState(() => typeof window !== "undefined" && Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches));
+  const media = {
+    objectPosition: creator.position || "center 22%",
+    transform: [creator.flip && "scaleX(-1)", (creator.flip || creator.zoom) && "scale(1.15)"].filter(Boolean).join(" ") || undefined,
+  };
+  // The progress bar and the clock follow the video without re-rendering.
+  const follow = (event) => {
+    const video = event.currentTarget;
+    if (!video.duration) return;
+    if (barRef.current) barRef.current.style.width = `${(video.currentTime / video.duration) * 100}%`;
+    if (timeRef.current) timeRef.current.textContent = `${clock(video.currentTime)} / ${clock(video.duration)}`;
+  };
+  return (
+    <div className={`absolute transition-transform duration-500 ease-out ${card.place}`}>
+      <div
+        className={`oga-float relative aspect-[9/16] w-full overflow-hidden rounded-[24px] border bg-[#111114] shadow-[0_30px_80px_rgba(0,0,0,0.7)] ${card.lead ? "border-white/[0.18]" : "border-white/[0.14]"}`}
+        style={{ animationDelay: card.delay }}
+      >
+        <img src={creator.image} alt="" className="h-full w-full object-cover" style={media} />
+        {creator.video && !still && (
+          <video src={creator.video} poster={creator.image} autoPlay muted loop playsInline preload="auto" onTimeUpdate={follow} className="absolute inset-0 h-full w-full object-cover" style={media} data-ugc-preview-video />
+        )}
+        {creator.name && (
+          <span className={`${FAN_CHIP} top-[3.5%] gap-1.5 bg-black/55 pl-1 pr-2.5 font-semibold ${card.chip}`}>
+            <img src={creator.image} alt="" className="aspect-square h-[78%] rounded-full object-cover" style={{ objectPosition: creator.position || "center 22%" }} />
+            @{characterHandle(creator.name)}
+          </span>
+        )}
+        {card.lead && product && (
+          <span className={`${FAN_CHIP} right-[6%] top-[3.5%] max-w-[46%] gap-1.5 bg-black/55 pl-1 pr-2.5 font-medium`}>
+            <img src={product.image} alt="" className="aspect-square h-[78%] rounded-full object-cover" />
+            <span className="truncate">{product.name || copy.product.add}</span>
+          </span>
+        )}
+        {card.lead && (
+          <>
+            <span className="absolute inset-x-0 bottom-0 h-[16%] bg-gradient-to-b from-transparent to-black/75" />
+            <span className="absolute inset-x-[6%] bottom-[3.5%] flex items-center gap-2">
+              <span className="flex aspect-square h-[clamp(22px,2.1vw,30px)] items-center justify-center rounded-full bg-white/[0.92] text-black"><IconPlayerPauseFilled size={12} /></span>
+              <span className="h-[3px] flex-1 rounded bg-white/30"><span ref={barRef} className="block h-full rounded bg-white" style={{ width: card.progress }} /></span>
+              <span ref={timeRef} className="font-mono text-[clamp(9.5px,0.8vw,11px)] text-white">{card.time}</span>
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TakeFan({ creators, product, copy }) {
   return (
     <div aria-hidden="true" className="flex h-full min-h-0 items-center justify-center">
       <div className="group relative aspect-[16/15] max-h-full w-full max-w-[660px]">
         <span className="absolute inset-x-[15%] bottom-[6%] h-[40%] rounded-full bg-[#22d3ee]/[0.08] blur-[80px]" />
         {TAKE_FAN.map((card, index) => {
-          const creator = creators[index] || creators[0];
-          return (
-            <div key={index} className={`absolute flex flex-col items-center gap-3 transition-transform duration-500 ease-out ${card.place}`}>
-              <div
-                className={`oga-float relative aspect-[9/16] w-full overflow-hidden rounded-[24px] border bg-[#111114] shadow-[0_30px_80px_rgba(0,0,0,0.7)] ${card.lead ? "border-white/[0.18]" : "border-white/[0.14]"}`}
-                style={{ animationDelay: card.delay }}
-              >
-                <img src={creator.image} alt="" className="h-full w-full object-cover" style={{ objectPosition: creator.position || "center 22%", transform: [creator.flip && "scaleX(-1)", (creator.flip || creator.zoom) && "scale(1.15)"].filter(Boolean).join(" ") || undefined }} />
-                {creator.name && (
-                  <span className={`absolute top-[3.5%] flex h-[clamp(20px,2vw,28px)] items-center gap-1.5 rounded-full bg-black/55 pl-1 pr-2.5 text-[clamp(10px,0.85vw,12px)] font-semibold ${card.chip}`}>
-                    <img src={creator.image} alt="" className="aspect-square h-[78%] rounded-full object-cover" style={{ objectPosition: creator.position || "center 22%" }} />
-                    @{characterHandle(creator.name)}
-                  </span>
-                )}
-                {card.lead && (
-                  <span className="absolute right-[6%] top-[3.5%] flex h-[clamp(20px,2vw,28px)] max-w-[52%] items-center rounded-full bg-[#04202a]/75 px-2.5 text-[clamp(10px,0.8vw,11.5px)] font-semibold text-[#67e8f9]"><span className="truncate">{scene}</span></span>
-                )}
-                {card.lead && product && (
-                  <span className="absolute right-[6%] top-[11%] flex h-[clamp(20px,2vw,28px)] max-w-[60%] items-center gap-1.5 rounded-full bg-black/55 pl-1 pr-2.5 text-[clamp(10px,0.8vw,11.5px)] font-medium">
-                    <img src={product.image} alt="" className="aspect-square h-[78%] rounded-full object-cover" />
-                    <span className="truncate">{product.name || copy.product.add}</span>
-                  </span>
-                )}
-                <span className={`absolute top-[59%] font-extrabold leading-[1.25] text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_10px_rgba(0,0,0,0.6)] ${card.caption} ${card.lead ? "text-[clamp(13px,1.25vw,18px)]" : "text-[clamp(11px,1vw,15px)]"}`}>
-                  {hooks[card.hook]}
-                </span>
-                <span className="absolute inset-x-0 bottom-0 h-[16%] bg-gradient-to-b from-transparent to-black/75" />
-                <span className="absolute inset-x-[6%] bottom-[3.5%] flex items-center gap-2">
-                  {card.lead ? (
-                    <span className="flex aspect-square h-[clamp(22px,2.1vw,30px)] items-center justify-center rounded-full bg-white/[0.92] text-black"><IconPlayerPauseFilled size={12} /></span>
-                  ) : (
-                    <IconPlayerPlayFilled size={12} className="shrink-0 text-white" />
-                  )}
-                  <span className="h-[3px] flex-1 rounded bg-white/30"><span className="block h-full rounded bg-white" style={{ width: card.progress }} /></span>
-                  <span className="font-mono text-[clamp(9.5px,0.8vw,11px)] text-white">{card.time}</span>
-                </span>
-              </div>
-              <span className={`flex h-[30px] items-center gap-1.5 rounded-[10px] border px-2.5 text-[12px] ${card.lead ? "border-[#22d3ee]/35 bg-[#04202a]/90 text-[#cffafe]" : "border-white/10 bg-[#111114]/90 text-white/75"}`}>
-                <span className="font-mono text-[#67e8f9]">{index + 1}</span>
-                {fill(copy.feed.takeLabel, { index: index + 1 })}
-              </span>
-            </div>
-          );
+          return <FanCard key={index} card={card} creator={creators[index] || creators[0]} product={card.lead ? product : null} copy={copy} />;
         })}
       </div>
     </div>
@@ -746,10 +761,6 @@ export default function UgcStudio({
     const pick = (index) => own[index] || own[0];
     return [pick(1), pick(0), pick(2)].map((creator) => ({ name: creator.name, image: creator.image }));
   }, [draft.creator, characters, influencers]);
-  const fanHooks = useMemo(() => {
-    const hooks = draft.hooks.length ? draft.hooks : copy.empty.sampleHooks;
-    return [0, 1, 2].map((index) => hooks[index % hooks.length]);
-  }, [draft.hooks, copy]);
   const sceneCopy = (id) => copy.scenes[id] || copy.scenes.talking;
   const currentScene = SCENES.find((scene) => scene.id === draft.scene) || SCENES[0];
   const takesLabel = (count) => (count === 1 ? copy.bar.takesOne : fill(copy.bar.takesCount, { count }));
@@ -874,7 +885,7 @@ export default function UgcStudio({
               </p>
             </div>
             <div className="oga-enter-fade hidden h-[min(580px,calc(100vh-320px))] min-h-[360px] md:block" style={{ "--i": 2 }} data-ugc-preview>
-              <TakeFan creators={fanCreators} hooks={fanHooks} scene={sceneCopy(draft.scene).name} product={draft.product} copy={copy} />
+              <TakeFan creators={fanCreators} product={draft.product} copy={copy} />
             </div>
           </div>
         ) : (

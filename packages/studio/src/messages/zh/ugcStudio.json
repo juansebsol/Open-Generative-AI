@@ -12,8 +12,7 @@
     "createHint": "在 AI 网红工作室中新建一位",
     "more": "+{count}",
     "moreLabel": "更多",
-    "moreHint": "查看全部创作者",
-    "sampleHooks": ["我都试过了，你不用再试", "好吧，我得花一秒聊聊这个", "POV：终于找到一个真的好用的"]
+    "moreHint": "查看全部创作者"
   },
   "sources": {
     "influencer": "AI 网红",
