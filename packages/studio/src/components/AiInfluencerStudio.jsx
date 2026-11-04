@@ -33,6 +33,7 @@ import {
   promptSettingClassName,
 } from "./prompt/PromptComposer.jsx";
 import PriceChip from "./prompt/PriceChip.jsx";
+import { influencerPrompt } from "../influencerPrompt.js";
 import { formatErrorMessage } from "../utils/formatError.js";
 import MobileGenerationActions, {
   GenerationCopyButtons,
@@ -86,8 +87,8 @@ const TABS_CONFIG = {
         label: "Ethnicity / origin",
         options: [
           { id: "african",        label: "African", promptVal: "african heritage" },
-          { id: "asian",          label: "Asian", promptVal: "East Asian supermodel, Korean K-Pop Idol phenotype" },
-          { id: "european",       label: "European", promptVal: "Scandinavian Supermodel" },
+          { id: "asian",          label: "Asian", promptVal: "east asian heritage" },
+          { id: "european",       label: "European", promptVal: "european heritage" },
           { id: "indian",         label: "Indian", promptVal: "south asian indian heritage" },
           { id: "middle_eastern", label: "Middle Eastern", promptVal: "middle eastern heritage" },
           { id: "mixed",          label: "Mixed", promptVal: "multiracial mixed heritage" },
@@ -302,7 +303,7 @@ const TABS_CONFIG = {
         id: "rendering_style",
         label: "Rendering style",
         options: [
-          { id: "style_hyper_realistic", label: "Hyper-realistic", promptVal: "hyper-realistic 8k photograph" },
+          { id: "style_hyper_realistic", label: "Hyper-realistic", promptVal: "realistic photo" },
           { id: "style_anime",           label: "Anime", promptVal: "anime art style" },
           { id: "style_cartoon",         label: "Cartoon", promptVal: "cartoon illustration style" },
           { id: "style_2d",              label: "2D illustration", promptVal: "2D flat illustration style" },
@@ -313,9 +314,6 @@ const TABS_CONFIG = {
 };
 
 // ─── Traits, presets and the bar's pieces ───────────────────────────────────
-
-const BASE_PROMPT =
-  "Ultra-realistic professional portrait photograph of an AI influencer character, 8k resolution, cinematic lighting, sharp detail";
 
 const ASPECT_RATIOS = ["3:4", "1:1", "9:16", "16:9"];
 const PERSIST_KEY = "oga_ai_influencer_studio";
@@ -535,13 +533,12 @@ export default function AiInfluencerStudio({
     setTimeout(() => setOpenDropdown("traits"), 0);
   };
 
-  const buildPrompt = () => {
-    let prompt = BASE_PROMPT;
-    const parts = picked.map(({ opt }) => opt.promptVal);
-    if (parts.length) prompt += ", " + parts.join(", ");
-    if (customPrompt.trim()) prompt += ", " + customPrompt.trim();
-    return prompt;
-  };
+  const buildPrompt = () =>
+    influencerPrompt({
+      traits: picked.map(({ sub, opt }) => ({ sub: sub.id, opt: opt.id, value: opt.promptVal })),
+      custom: customPrompt,
+      aspect: aspectRatio,
+    });
 
   // ── Generate ──────────────────────────────────────────────────────────────
   // With no traits picked, Generate opens the traits instead.
