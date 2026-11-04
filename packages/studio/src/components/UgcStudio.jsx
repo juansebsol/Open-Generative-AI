@@ -134,8 +134,8 @@ function SceneIcon({ scene, size = 17 }) {
   return <Icon size={size} stroke={1.75} aria-hidden="true" />;
 }
 
-// One creator in the empty state and the cast picker.
-function CreatorCard({ creator, selected, copy, onPick, compact = false }) {
+// One creator in the cast picker.
+function CreatorCard({ creator, selected, copy, onPick }) {
   const source = copy.sources[creator.source] || "";
   return (
     <button
@@ -143,7 +143,7 @@ function CreatorCard({ creator, selected, copy, onPick, compact = false }) {
       role="radio"
       aria-checked={selected}
       onClick={onPick}
-      className={`group relative w-full overflow-hidden rounded-[14px] text-left transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/60 ${compact ? "h-[136px]" : "h-[176px]"} ${
+      className={`group relative w-full overflow-hidden rounded-[14px] text-left transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/60 h-[176px] ${
         selected ? "shadow-[0_0_0_2px_#22d3ee]" : "shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.25)]"
       }`}
       data-ugc-creator={creator.id}
@@ -158,10 +158,40 @@ function CreatorCard({ creator, selected, copy, onPick, compact = false }) {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5l10 -10" /></svg>
         </span>
       )}
-      <span className={`absolute bottom-2.5 flex min-w-0 flex-col ${compact ? "inset-x-2.5" : "inset-x-3"}`}>
-        {creator.name && <span className={`truncate font-semibold text-white ${compact ? "text-[13px]" : "text-[14px]"}`}>{creator.name}</span>}
-        {creator.label && <span className={`truncate text-white/70 ${compact ? "text-[11px]" : "text-[11.5px]"}`}>{creator.label}</span>}
+      <span className="absolute inset-x-3 bottom-2.5 flex min-w-0 flex-col">
+        {creator.name && <span className="truncate text-[14px] font-semibold text-white">{creator.name}</span>}
+        {creator.label && <span className="truncate text-[11.5px] text-white/70">{creator.label}</span>}
       </span>
+    </button>
+  );
+}
+
+// The start screen's creators: round faces with the name under them, and the
+// round buttons beside them, all the same size so the row lines up.
+const FACE = "flex h-[62px] w-[62px] items-center justify-center rounded-full border-2 transition-colors";
+const START_FACES = 6;
+
+function CreatorFace({ creator, selected, copy, onPick }) {
+  const source = copy.sources[creator.source] || "";
+  // AI influencers have no name, so their first plain trait stands in.
+  const label = creator.name || creator.traits?.find((trait) => !trait.includes(":")) || copy.bar.unnamed;
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onPick}
+      title={[label, source].filter(Boolean).join(" · ")}
+      className="group flex w-[68px] flex-col items-center gap-[7px] rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/60"
+      data-ugc-creator={creator.id}
+    >
+      <span className={`${FACE} ${selected ? "border-[#22d3ee]" : "border-transparent group-hover:border-white/20"}`}>
+        <span className="relative h-[52px] w-[52px] overflow-hidden rounded-full">
+          <img src={creator.image} alt="" className="h-full w-full object-cover object-[center_22%] transition-transform duration-500 group-hover:scale-[1.06]" />
+          <span aria-hidden="true" className="absolute inset-0 rounded-full ring-1 ring-inset ring-white/[0.12]" />
+        </span>
+      </span>
+      <span className={`max-w-full truncate text-[12px] font-medium transition-colors ${selected ? "text-white" : "text-white/60 group-hover:text-white/85"}`}>{label}</span>
     </button>
   );
 }
@@ -686,7 +716,24 @@ export default function UgcStudio({
   const castList = castTab === "influencers" ? influencers : castTab === "characters" ? characters : castPick?.source === "upload" ? [castPick] : [];
   const query = castQuery.trim().toLowerCase();
   const castShown = query ? castList.filter((creator) => `${creator.name} ${creator.label}`.toLowerCase().includes(query)) : castList;
-  const startCreators = [...influencers.slice(0, 3), ...characters].slice(0, 3);
+  const startFaces = useMemo(() => {
+    // Naming an AI influencer saves them as a character with the same photo:
+    // one face per photo, under the saved name, in the influencer's place.
+    const named = new Map(characters.map((creator) => [creator.image, creator]));
+    const seen = new Set();
+    const own = [];
+    for (const creator of [...influencers, ...characters]) {
+      if (!creator.image || seen.has(creator.image)) continue;
+      seen.add(creator.image);
+      own.push(named.get(creator.image) || creator);
+    }
+    const cast = draft.creator?.image ? draft.creator : null;
+    const pool = cast && !own.some((creator) => creator.image === cast.image) ? [{ ...cast, id: cast.id || "cast" }, ...own] : own;
+    if (pool.length <= START_FACES) return { faces: pool, more: 0 };
+    let faces = pool.slice(0, START_FACES - 1);
+    if (cast && !faces.some((creator) => creator.image === cast.image)) faces = [pool.find((creator) => creator.image === cast.image), ...faces.slice(0, -1)];
+    return { faces, more: pool.length - faces.length };
+  }, [influencers, characters, draft.creator]);
   // The preview shows the cast creator in three takes; before anyone is cast,
   // the visitor's own creators (the first in the middle), else the sample.
   const fanCreators = useMemo(() => {
@@ -780,30 +827,29 @@ export default function UgcStudio({
               </h1>
               <p className="mt-2.5 max-w-[560px] text-[15px] leading-relaxed text-white/55">{copy.empty.subtitle}</p>
 
-              <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h2 className={SECTION_TITLE}>{copy.empty.creators}</h2>
-              </div>
-              <div role="radiogroup" aria-label={copy.empty.creators} className="mt-2.5 grid grid-cols-3 gap-2.5 sm:grid-cols-5">
-                {startCreators.map((creator) => (
-                  <CreatorCard key={creator.id} creator={creator} compact selected={draft.creator?.image === creator.image} copy={copy} onPick={() => patchDraft({ creator })} />
+              <h2 className={`mt-6 ${SECTION_TITLE}`}>{copy.empty.creators}</h2>
+              <div role="radiogroup" aria-label={copy.empty.creators} className="mt-3 flex flex-wrap gap-x-3.5 gap-y-3">
+                {startFaces.faces.map((creator) => (
+                  <CreatorFace key={creator.id} creator={creator} selected={draft.creator?.image === creator.image} copy={copy} onPick={() => patchDraft({ creator })} />
                 ))}
-                <button type="button" onClick={() => creatorFileRef.current?.click()} disabled={uploading === "creator"} className="flex h-[136px] flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-white/[0.16] bg-white/[0.02] px-2 text-center text-white/70 transition-colors hover:border-white/30 hover:text-white disabled:opacity-60">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white/[0.06]"><IconUpload size={17} stroke={1.75} aria-hidden="true" /></span>
-                  <span className="text-[12.5px] font-medium leading-tight">{uploading === "creator" ? copy.cast.uploading : copy.empty.upload}</span>
-                  <span className="-mt-1 text-[11px] leading-tight text-white/45">{copy.empty.uploadHint}</span>
+                {startFaces.more > 0 && (
+                  <button type="button" onClick={openCast} title={copy.empty.moreHint} className="group flex w-[68px] flex-col items-center gap-[7px] rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/60" data-ugc-more>
+                    <span className={`${FACE} border-white/[0.08] bg-white/[0.04] text-[14px] font-semibold text-white/75 group-hover:border-white/20 group-hover:text-white`}>{fill(copy.empty.more, { count: startFaces.more })}</span>
+                    <span className="text-[12px] font-medium text-white/60 group-hover:text-white/85">{copy.empty.moreLabel}</span>
+                  </button>
+                )}
+                <button type="button" onClick={() => creatorFileRef.current?.click()} disabled={uploading === "creator"} title={copy.empty.uploadHint} className="group flex w-[68px] flex-col items-center gap-[7px] rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/60 disabled:opacity-60" data-ugc-upload>
+                  <span className={`${FACE} !border border-dashed border-white/20 bg-white/[0.02] text-white/70 group-hover:border-white/35 group-hover:text-white`}><IconUpload size={18} stroke={1.75} aria-hidden="true" /></span>
+                  <span className="text-[12px] font-medium text-white/60 group-hover:text-white/85">{uploading === "creator" ? copy.cast.uploading : copy.empty.upload}</span>
                 </button>
-                <button type="button" onClick={openInfluencerStudio} className="flex h-[136px] flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-[#22d3ee]/30 bg-[#22d3ee]/[0.04] px-2 text-center text-[#a5f3fc] transition-colors hover:border-[#22d3ee]/50">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#22d3ee]/[0.12]"><IconSparkles size={17} stroke={1.75} aria-hidden="true" /></span>
-                  <span className="text-[12.5px] font-medium leading-tight">{copy.empty.create}</span>
-                  <span className="-mt-1 text-[11px] leading-tight text-[#a5f3fc]/60">{copy.empty.createHint}</span>
+                <button type="button" onClick={openInfluencerStudio} title={copy.empty.createHint} className="group flex w-[68px] flex-col items-center gap-[7px] rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22d3ee]/60" data-ugc-create>
+                  <span className={`${FACE} !border border-dashed border-[#22d3ee]/40 bg-[#22d3ee]/[0.05] text-[#67e8f9] group-hover:border-[#22d3ee]/60`}><IconSparkles size={18} stroke={1.75} aria-hidden="true" /></span>
+                  <span className="text-[12px] font-medium text-[#a5f3fc]">{copy.empty.create}</span>
                 </button>
               </div>
 
-              <div className="mt-6 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h2 className={SECTION_TITLE}>{copy.empty.scenes}</h2>
-                <span className="text-[12px] text-white/45">{copy.empty.scenesHint}</span>
-              </div>
-              <div role="radiogroup" aria-label={copy.empty.scenes} className="mt-2.5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <h2 className={`mt-6 ${SECTION_TITLE}`}>{copy.empty.scenes}</h2>
+              <div role="radiogroup" aria-label={copy.empty.scenes} className="mt-3 flex flex-wrap gap-2">
                 {SCENES.map((scene) => {
                   const on = draft.scene === scene.id;
                   return (
@@ -812,19 +858,20 @@ export default function UgcStudio({
                       type="button"
                       role="radio"
                       aria-checked={on}
+                      title={sceneCopy(scene.id).hint}
                       onClick={() => patchDraft({ scene: scene.id })}
-                      className={`flex h-[52px] items-center gap-3 rounded-xl border px-2.5 text-left transition-colors ${on ? "border-[#22d3ee]/45 bg-[#22d3ee]/[0.06]" : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16]"}`}
+                      className={`flex h-9 items-center gap-[7px] whitespace-nowrap rounded-full border pl-[11px] pr-3.5 text-[13px] font-medium transition-colors ${on ? "border-[#22d3ee]/45 bg-[#22d3ee]/[0.08] text-[#cffafe]" : "border-white/[0.09] bg-white/[0.03] text-white/[0.82] hover:border-white/[0.18] hover:text-white"}`}
                       data-ugc-scene={scene.id}
                     >
-                      <span className={`flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-[9px] ${on ? "bg-[#22d3ee]/[0.12] text-[#22d3ee]" : "bg-white/[0.06] text-white/75"}`}><SceneIcon scene={scene} size={16} /></span>
-                      <span className="flex min-w-0 flex-col">
-                        <span className="truncate text-[13px] font-medium">{sceneCopy(scene.id).name}</span>
-                        <span className="truncate text-[11.5px] text-white/50">{sceneCopy(scene.id).hint}</span>
-                      </span>
+                      <span className={`flex ${on ? "text-[#22d3ee]" : "opacity-60"}`}><SceneIcon scene={scene} size={15} /></span>
+                      {sceneCopy(scene.id).name}
                     </button>
                   );
                 })}
               </div>
+              <p className="mt-3 text-[12.5px] text-white/[0.48]" data-ugc-scene-hint>
+                <span className="text-white/[0.78]">{sceneCopy(draft.scene).name}</span> · {sceneCopy(draft.scene).hint}
+              </p>
             </div>
             <div className="oga-enter-fade hidden h-[min(580px,calc(100vh-320px))] min-h-[360px] md:block" style={{ "--i": 2 }} data-ugc-preview>
               <TakeFan creators={fanCreators} hooks={fanHooks} scene={sceneCopy(draft.scene).name} product={draft.product} copy={copy} />

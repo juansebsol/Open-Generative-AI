@@ -6,11 +6,13 @@
     "subtitle": "选一位创作者，给他们一段脚本。他们会像拍手机视频一样拍出来：手持、对着镜头说话、手里拿着你的产品。",
     "creators": "你的创作者",
     "scenes": "选一个场景",
-    "scenesHint": "决定他们在哪里、镜头怎么拍、怎么说话",
-    "upload": "上传照片",
-    "uploadHint": "正脸清晰的照片",
-    "create": "新建一位",
-    "createHint": "在 AI 网红工作室中",
+    "upload": "上传",
+    "uploadHint": "上传一张正脸清晰的照片",
+    "create": "新建",
+    "createHint": "在 AI 网红工作室中新建一位",
+    "more": "+{count}",
+    "moreLabel": "更多",
+    "moreHint": "查看全部创作者",
     "sampleHooks": ["我都试过了，你不用再试", "好吧，我得花一秒聊聊这个", "POV：终于找到一个真的好用的"]
   },
   "sources": {

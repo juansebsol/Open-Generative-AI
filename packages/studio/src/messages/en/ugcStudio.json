@@ -6,11 +6,13 @@
     "subtitle": "Pick a creator and give them a script. They film it like a phone video: handheld, talking to camera, your product in their hand.",
     "creators": "Your creators",
     "scenes": "Pick a scene",
-    "scenesHint": "Sets where they are, the camera and how they talk",
-    "upload": "Upload a photo",
-    "uploadHint": "A face, front on",
-    "create": "Create a new one",
-    "createHint": "in AI Influencer Studio",
+    "upload": "Upload",
+    "uploadHint": "Upload a photo of a face, front on",
+    "create": "Create",
+    "createHint": "Make a new one in AI Influencer Studio",
+    "more": "+{count}",
+    "moreLabel": "More",
+    "moreHint": "See all your creators",
     "sampleHooks": ["I tried them all so you don’t have to", "Okay, I need to talk about this for a second", "POV: you finally found one that actually works"]
   },
   "sources": {
