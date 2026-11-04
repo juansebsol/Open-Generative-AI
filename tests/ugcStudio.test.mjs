@@ -14,7 +14,7 @@ const localStorage = {
 globalThis.window = { localStorage, addEventListener() {}, removeEventListener() {}, dispatchEvent() {}, location: { origin: 'http://localhost' } };
 globalThis.localStorage = localStorage;
 
-const { SCENES, framePrompt, spokenSeconds, takeLines, takePrompt, wordCount } = await import('../packages/studio/src/ugc/scenes.js');
+const { SCENES, TONES, framePrompt, spokenSeconds, takeLines, takePrompt, wordCount } = await import('../packages/studio/src/ugc/scenes.js');
 const { audioKey, durationOptions, fitDuration, pricePayload, resolveEngine, takeRequest, voicesOf } = await import('../packages/studio/src/ugc/engines.js');
 const { loadInfluencers, loadStudio, parseScript, saveStudio, scriptRequest } = await import('../packages/studio/src/ugc/library.js');
 const { saveProviderSettings } = await import('../packages/studio/src/providers/keys.js');
@@ -40,6 +40,28 @@ test('the prompts carry the scene, the product and the line', () => {
   assert.match(take, /deadpan/);
   assert.match(take, /says: "It just works\."/);
   assert.equal(new Set(SCENES.map((scene) => scene.id)).size, SCENES.length);
+});
+
+test('the first frame looks like a top creator’s video, set by the scene and the tone', () => {
+  const upbeat = framePrompt({ scene: 'talking', aspect: '9:16' });
+  assert.match(upbeat, /genuine smile/);
+  assert.match(upbeat, /arm holding it out of frame/);
+  assert.match(upbeat, /upper half of the frame/);
+  assert.match(upbeat, /No flat or grey light/);
+  assert.match(framePrompt({ scene: 'talking', tone: 'deadpan' }), /straight face/);
+  assert.match(framePrompt({ scene: 'car' }), /dashboard mount/);
+  assert.match(framePrompt({ scene: 'talking', aspect: '16:9' }), /^Horizontal 16:9.*a third from the top/s);
+  for (const scene of SCENES) assert.ok(scene.setting && scene.action && scene.framing && scene.camera, scene.id);
+  for (const tone of TONES) assert.ok(tone.voice && tone.face && tone.energy, tone.id);
+});
+
+test('the take moves with the tone and keeps the person and the framing', () => {
+  const take = takePrompt({ scene: 'podcast', tone: 'whisper', line: 'Okay, listen.' });
+  assert.match(take, /intimate/);
+  assert.match(take, /same person in the same outfit/);
+  assert.match(take, /no cuts/);
+  assert.doesNotMatch(take, /handheld/i);
+  assert.match(takePrompt({ scene: 'talking', tone: 'upbeat', line: 'Hi.' }), /animated from the first word/);
 });
 
 test('durations fit the script, or say when they cannot', () => {

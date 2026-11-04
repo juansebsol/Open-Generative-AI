@@ -548,7 +548,7 @@ export default function UgcStudio({
     try {
       const productShown = Boolean(snapshot.product && snapshot.product.placement !== "none" && frameTakesProduct(sceneModel));
       const images = [snapshot.creator.image, ...(productShown ? [snapshot.product.image] : [])];
-      const prompt = framePrompt({ scene: snapshot.scene, placement: snapshot.product?.placement, product: snapshot.product, productShown, aspect: snapshot.aspect });
+      const prompt = framePrompt({ scene: snapshot.scene, tone: snapshot.tone, placement: snapshot.product?.placement, product: snapshot.product, productShown, aspect: snapshot.aspect });
       const frameUrl = (await generateI2I({ model: sceneModel.id, images_list: images, prompt, aspect_ratio: snapshot.aspect }))?.url;
       if (!frameUrl) throw new Error(copy.errors.noVideo);
       patchBatch(batch.id, { frame: frameUrl });
